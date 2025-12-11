@@ -1,6 +1,7 @@
 use clap::Parser;
 use itertools::Itertools as _;
-use rustc_codegen_spirv_target_specs::TARGET_SPEC_DIR_PATH;
+use rustc_codegen_spirv_types::{SpirvTarget, TargetSpecVersion, query_rustc_version};
+use std::ffi::OsString;
 use std::{
     env, io,
     path::{Path, PathBuf},
@@ -28,12 +29,6 @@ impl Opt {
     }
 }
 
-const SPIRV_TARGET_PREFIX: &str = "spirv-unknown-";
-
-fn target_spec_json(target: &str) -> String {
-    format!("{TARGET_SPEC_DIR_PATH}/{target}.json")
-}
-
 #[derive(Copy, Clone)]
 enum DepKind {
     SpirvLib,
@@ -48,9 +43,9 @@ impl DepKind {
         }
     }
 
-    fn target_dir_suffix(self, target: &str) -> String {
+    fn target_dir_suffix(self, target: &SpirvTarget) -> String {
         match self {
-            Self::SpirvLib => format!("{target}/debug/deps"),
+            Self::SpirvLib => format!("{}/debug/deps", target.target()),
             Self::ProcMacro => "debug/deps".into(),
         }
     }
@@ -161,8 +156,8 @@ impl Runner {
 
             println!("Testing env: {stage_id}\n");
 
-            let target = format!("{SPIRV_TARGET_PREFIX}{env}");
-            let libs = build_deps(&self.deps_target_dir, &self.codegen_backend_path, &target);
+            let target = SpirvTarget::from_env(env).unwrap();
+            let libs = self.build_deps(&target);
             let mut flags = test_rustc_flags(
                 &self.codegen_backend_path,
                 &libs,
@@ -181,7 +176,7 @@ impl Runner {
                 stage_id,
                 target_rustcflags: Some(flags),
                 mode: mode.parse().expect("Invalid mode"),
-                target: target_spec_json(&target),
+                target: self.target_spec_json(&target).into_string().unwrap(),
                 src_base: self.tests_dir.join(mode),
                 build_base: self.compiletest_build_dir.clone(),
                 bless: self.opt.bless,
@@ -194,90 +189,86 @@ impl Runner {
             compiletest::run_tests(&config);
         }
     }
-}
 
-/// Runs the processes needed to build `spirv-std` & other deps.
-fn build_deps(deps_target_dir: &Path, codegen_backend_path: &Path, target: &str) -> TestDeps {
-    // Build compiletests-deps-helper
-    std::process::Command::new("cargo")
-        .args([
-            "build",
-            "-p",
-            "compiletests-deps-helper",
-            "-Zbuild-std=core",
-            "-Zbuild-std-features=compiler-builtins-mem",
-            &*format!("--target={}", target_spec_json(target)),
-        ])
-        .arg("--target-dir")
-        .arg(deps_target_dir)
-        .env("RUSTFLAGS", rust_flags(codegen_backend_path))
-        .stderr(std::process::Stdio::inherit())
-        .stdout(std::process::Stdio::inherit())
-        .status()
-        .and_then(map_status_to_result)
-        .unwrap();
+    /// Runs the processes needed to build `spirv-std` & other deps.
+    fn build_deps(&self, target: &SpirvTarget) -> TestDeps {
+        // Build compiletests-deps-helper
+        std::process::Command::new("cargo")
+            .args([
+                "build",
+                "-p",
+                "compiletests-deps-helper",
+                "-Zbuild-std=core",
+                "-Zbuild-std-features=compiler-builtins-mem",
+                "--target",
+            ])
+            .arg(self.target_spec_json(target))
+            .arg("--target-dir")
+            .arg(&self.deps_target_dir)
+            .env("RUSTFLAGS", rust_flags(&self.codegen_backend_path))
+            .stderr(std::process::Stdio::inherit())
+            .stdout(std::process::Stdio::inherit())
+            .status()
+            .and_then(map_status_to_result)
+            .unwrap();
 
-    let compiler_builtins = find_lib(
-        deps_target_dir,
-        "compiler_builtins",
-        DepKind::SpirvLib,
-        target,
-    );
-    let core = find_lib(deps_target_dir, "core", DepKind::SpirvLib, target);
-    let spirv_std = find_lib(deps_target_dir, "spirv_std", DepKind::SpirvLib, target);
-    let glam = find_lib(deps_target_dir, "glam", DepKind::SpirvLib, target);
-    let spirv_std_macros = find_lib(
-        deps_target_dir,
-        "spirv_std_macros",
-        DepKind::ProcMacro,
-        target,
-    );
+        let compiler_builtins = self.find_lib("compiler_builtins", DepKind::SpirvLib, target);
+        let core = self.find_lib("core", DepKind::SpirvLib, target);
+        let spirv_std = self.find_lib("spirv_std", DepKind::SpirvLib, target);
+        let glam = self.find_lib("glam", DepKind::SpirvLib, target);
+        let spirv_std_macros = self.find_lib("spirv_std_macros", DepKind::ProcMacro, target);
 
-    let all_libs = [
-        &compiler_builtins,
-        &core,
-        &spirv_std,
-        &glam,
-        &spirv_std_macros,
-    ];
-    if all_libs.iter().any(|r| r.is_err()) {
-        // FIXME(eddyb) `missing_count` should always be `0` anyway.
-        // FIXME(eddyb) use `--message-format=json-render-diagnostics` to
-        // avoid caring about duplicates (or search within files at all).
-        let missing_count = all_libs
-            .iter()
-            .filter(|r| matches!(r, Err(FindLibError::Missing)))
-            .count();
-        let duplicate_count = all_libs
-            .iter()
-            .filter(|r| matches!(r, Err(FindLibError::Duplicate)))
-            .count();
-        eprintln!(
-            "warning: cleaning deps ({missing_count} missing libs, {duplicate_count} duplicated libs)"
-        );
-        clean_deps(deps_target_dir);
-        build_deps(deps_target_dir, codegen_backend_path, target)
-    } else {
-        TestDeps {
-            core: core.ok().unwrap(),
-            glam: glam.ok().unwrap(),
-            compiler_builtins: compiler_builtins.ok().unwrap(),
-            spirv_std: spirv_std.ok().unwrap(),
-            spirv_std_macros: spirv_std_macros.ok().unwrap(),
+        let all_libs = [
+            &compiler_builtins,
+            &core,
+            &spirv_std,
+            &glam,
+            &spirv_std_macros,
+        ];
+        if all_libs.iter().any(|r| r.is_err()) {
+            // FIXME(eddyb) `missing_count` should always be `0` anyway.
+            // FIXME(eddyb) use `--message-format=json-render-diagnostics` to
+            // avoid caring about duplicates (or search within files at all).
+            let missing_count = all_libs
+                .iter()
+                .filter(|r| matches!(r, Err(FindLibError::Missing)))
+                .count();
+            let duplicate_count = all_libs
+                .iter()
+                .filter(|r| matches!(r, Err(FindLibError::Duplicate)))
+                .count();
+            eprintln!(
+                "warning: cleaning deps ({missing_count} missing libs, {duplicate_count} duplicated libs)"
+            );
+            self.clean_deps();
+            self.build_deps(target)
+        } else {
+            TestDeps {
+                core: core.ok().unwrap(),
+                glam: glam.ok().unwrap(),
+                compiler_builtins: compiler_builtins.ok().unwrap(),
+                spirv_std: spirv_std.ok().unwrap(),
+                spirv_std_macros: spirv_std_macros.ok().unwrap(),
+            }
         }
     }
-}
 
-fn clean_deps(deps_target_dir: &Path) {
-    std::process::Command::new("cargo")
-        .arg("clean")
-        .arg("--target-dir")
-        .arg(deps_target_dir)
-        .stderr(std::process::Stdio::inherit())
-        .stdout(std::process::Stdio::inherit())
-        .status()
-        .and_then(map_status_to_result)
-        .unwrap();
+    fn clean_deps(&self) {
+        std::process::Command::new("cargo")
+            .arg("clean")
+            .arg("--target-dir")
+            .arg(&self.deps_target_dir)
+            .stderr(std::process::Stdio::inherit())
+            .stdout(std::process::Stdio::inherit())
+            .status()
+            .and_then(map_status_to_result)
+            .unwrap();
+    }
+
+    fn target_spec_json(&self, target: &SpirvTarget) -> OsString {
+        let rustc_version = query_rustc_version(None).unwrap();
+        TargetSpecVersion::target_arg(rustc_version, target, &self.deps_target_dir).unwrap()
+    }
 }
 
 enum FindLibError {
@@ -285,49 +276,53 @@ enum FindLibError {
     Duplicate,
 }
 
-/// Attempt find the rlib that matches `base`, if multiple rlibs are found then
-/// a clean build is required and `Err(FindLibError::Duplicate)` is returned.
-fn find_lib(
-    deps_target_dir: &Path,
-    base: impl AsRef<Path>,
-    dep_kind: DepKind,
-    target: &str,
-) -> Result<PathBuf, FindLibError> {
-    let base = base.as_ref();
-    let (expected_prefix, expected_extension) = dep_kind.prefix_and_extension();
-    let expected_name = format!("{}{}", expected_prefix, base.display());
+impl Runner {
+    /// Attempt find the rlib that matches `base`, if multiple rlibs are found then
+    /// a clean build is required and `Err(FindLibError::Duplicate)` is returned.
+    fn find_lib(
+        &self,
+        base: impl AsRef<Path>,
+        dep_kind: DepKind,
+        target: &SpirvTarget,
+    ) -> Result<PathBuf, FindLibError> {
+        let base = base.as_ref();
+        let (expected_prefix, expected_extension) = dep_kind.prefix_and_extension();
+        let expected_name = format!("{}{}", expected_prefix, base.display());
 
-    let dir = deps_target_dir.join(dep_kind.target_dir_suffix(target));
+        let dir = self
+            .deps_target_dir
+            .join(dep_kind.target_dir_suffix(target));
 
-    std::fs::read_dir(dir)
-        .unwrap()
-        .map(|entry| entry.unwrap().path())
-        .filter(move |path| {
-            let name = {
-                let name = path.file_stem();
-                if name.is_none() {
-                    return false;
-                }
-                name.unwrap()
-            };
+        std::fs::read_dir(dir)
+            .unwrap()
+            .map(|entry| entry.unwrap().path())
+            .filter(move |path| {
+                let name = {
+                    let name = path.file_stem();
+                    if name.is_none() {
+                        return false;
+                    }
+                    name.unwrap()
+                };
 
-            let name_matches = name.to_str().unwrap().starts_with(&expected_name)
+                let name_matches = name.to_str().unwrap().starts_with(&expected_name)
                 && name.len() == expected_name.len() + 17   // we expect our name, '-', and then 16 hexadecimal digits
                 && ends_with_dash_hash(name.to_str().unwrap());
-            let extension_matches = path
-                .extension()
-                .is_some_and(|ext| ext == expected_extension);
+                let extension_matches = path
+                    .extension()
+                    .is_some_and(|ext| ext == expected_extension);
 
-            name_matches && extension_matches
-        })
-        .exactly_one()
-        .map_err(|mut iter| {
-            if iter.next().is_none() {
-                FindLibError::Missing
-            } else {
-                FindLibError::Duplicate
-            }
-        })
+                name_matches && extension_matches
+            })
+            .exactly_one()
+            .map_err(|mut iter| {
+                if iter.next().is_none() {
+                    FindLibError::Missing
+                } else {
+                    FindLibError::Duplicate
+                }
+            })
+    }
 }
 
 /// Returns whether this string ends with a dash ('-'), followed by 16 lowercase hexadecimal characters
