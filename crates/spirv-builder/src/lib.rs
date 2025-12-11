@@ -94,9 +94,6 @@ pub use rustc_codegen_spirv_types::{CompileResult, ModuleResult};
 #[cfg(feature = "watch")]
 pub use self::watch::{SpirvWatcher, SpirvWatcherError};
 
-#[cfg(feature = "include-target-specs")]
-pub use rustc_codegen_spirv_target_specs::TARGET_SPEC_DIR_PATH;
-
 #[derive(Debug, Error)]
 #[non_exhaustive]
 pub enum SpirvBuilderError {
@@ -1047,16 +1044,7 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
     // version fails with them (notably our 0.9.0 release)
     if toolchain_rustc_version >= Version::new(1, 76, 0) {
         let path_opt = builder.path_to_target_spec.clone();
-        let path;
-        #[cfg(feature = "include-target-specs")]
-        {
-            path = path_opt
-                .unwrap_or_else(|| PathBuf::from(format!("{TARGET_SPEC_DIR_PATH}/{target}.json")));
-        }
-        #[cfg(not(feature = "include-target-specs"))]
-        {
-            path = path_opt.ok_or(SpirvBuilderError::MissingTargetSpec)?;
-        }
+        let path = path_opt.ok_or(SpirvBuilderError::MissingTargetSpec)?;
         cargo.arg("--target").arg(path);
     } else {
         cargo.arg("--target").arg(target);
