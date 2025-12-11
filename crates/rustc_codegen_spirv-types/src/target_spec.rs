@@ -1,3 +1,4 @@
+use crate::SpirvTarget;
 use semver::Version;
 use std::ffi::OsString;
 use std::path::Path;
@@ -19,16 +20,16 @@ impl TargetSpecVersion {
     /// the absolute path to it, on older rustc versions may return the target name.
     pub fn target_arg(
         rustc_version: Version,
-        target_env: &str,
+        target: &SpirvTarget,
         target_spec_folder: &Path,
     ) -> std::io::Result<OsString> {
         if let Some(target_spec) = Self::from_rustc_version(rustc_version) {
             std::fs::create_dir_all(target_spec_folder)?;
-            let spec_file = target_spec_folder.join(format!("spirv-unknown-{target_env}.json"));
-            std::fs::write(&spec_file, target_spec.format_spec(target_env))?;
+            let spec_file = target_spec_folder.join(format!("{}.json", target.target()));
+            std::fs::write(&spec_file, target_spec.format_spec(target))?;
             Ok(std::fs::canonicalize(spec_file)?.into_os_string())
         } else {
-            Ok(OsString::from(target_env))
+            Ok(OsString::from(target.target()))
         }
     }
 
@@ -43,7 +44,8 @@ impl TargetSpecVersion {
     }
 
     /// format the target spec json
-    pub fn format_spec(&self, target_env: &str) -> String {
+    pub fn format_spec(&self, target: &SpirvTarget) -> String {
+        let target_env = target.target_env();
         match self {
             TargetSpecVersion::Rustc_1_76_0 => {
                 format!(

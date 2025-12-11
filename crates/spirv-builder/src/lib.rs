@@ -85,24 +85,20 @@ use std::env;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 use thiserror::Error;
 
 #[cfg(feature = "watch")]
 pub use self::watch::{SpirvWatcher, SpirvWatcherError};
-pub use rustc_codegen_spirv_types::Capability;
-use rustc_codegen_spirv_types::query_rustc_version;
-pub use rustc_codegen_spirv_types::{CompileResult, ModuleResult, TargetSpecVersion};
+pub use rustc_codegen_spirv_types::*;
 
 #[derive(Debug, Error)]
 #[non_exhaustive]
 pub enum SpirvBuilderError {
     #[error("`target` must be set, for example `spirv-unknown-vulkan1.2`")]
     MissingTarget,
-    #[error("expected `{SPIRV_TARGET_PREFIX}...` target, found `{target}`")]
-    NonSpirvTarget { target: String },
-    #[error("SPIR-V target `{SPIRV_TARGET_PREFIX}-{target_env}` is not supported")]
-    UnsupportedSpirvTargetEnv { target_env: String },
+    #[error("TargetError: {0}")]
+    TargetError(#[from] TargetError),
     #[error("`path_to_crate` must be set")]
     MissingCratePath,
     #[error("crate path '{0}' does not exist")]
@@ -131,8 +127,6 @@ pub enum SpirvBuilderError {
     #[error(transparent)]
     WatchFailed(#[from] SpirvWatcherError),
 }
-
-const SPIRV_TARGET_PREFIX: &str = "spirv-unknown-";
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default, serde::Deserialize, serde::Serialize)]
 #[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
@@ -788,36 +782,13 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
         .path_to_crate
         .as_ref()
         .ok_or(SpirvBuilderError::MissingCratePath)?;
-    let target_env;
+    let target;
     {
-        let target = builder
+        let target_str = builder
             .target
             .as_ref()
             .ok_or(SpirvBuilderError::MissingTarget)?;
-        target_env = target.strip_prefix(SPIRV_TARGET_PREFIX).ok_or_else(|| {
-            SpirvBuilderError::NonSpirvTarget {
-                target: target.clone(),
-            }
-        })?;
-        // HACK(eddyb) used only to split the full list into groups.
-        #[allow(clippy::match_same_arms)]
-        match target_env {
-            // HACK(eddyb) hardcoded list to avoid checking if the JSON file
-            // for a particular target exists (and sanitizing strings for paths).
-            //
-            // FIXME(eddyb) consider moving this list, or even `target-specs`,
-            // into `rustc_codegen_spirv_types`'s code/source.
-            "spv1.0" | "spv1.1" | "spv1.2" | "spv1.3" | "spv1.4" | "spv1.5" | "spv1.6" => {}
-            "opengl4.0" | "opengl4.1" | "opengl4.2" | "opengl4.3" | "opengl4.5" => {}
-            "vulkan1.0" | "vulkan1.1" | "vulkan1.1spv1.4" | "vulkan1.2" | "vulkan1.3"
-            | "vulkan1.4" => {}
-
-            _ => {
-                return Err(SpirvBuilderError::UnsupportedSpirvTargetEnv {
-                    target_env: target_env.into(),
-                });
-            }
-        }
+        target = SpirvTarget::from_target(target_str)?;
 
         if (builder.print_metadata == MetadataPrintout::Full) && builder.multimodule {
             return Err(SpirvBuilderError::MultiModuleWithPrintMetadata);
@@ -1016,8 +987,7 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
     }
 
     let target_spec_dir = target_dir.join("target-specs");
-    let target =
-        TargetSpecVersion::target_arg(toolchain_rustc_version, target_env, &target_spec_dir)?;
+    let target = TargetSpecVersion::target_arg(toolchain_rustc_version, &target, &target_spec_dir)?;
     cargo.arg("--target").arg(target);
 
     if !builder.shader_crate_features.default_features {
