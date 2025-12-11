@@ -710,6 +710,41 @@ impl<'tcx> CodegenCx<'tcx> {
                 .name(var_id.or(spec_const_id).unwrap(), ident.to_string());
         }
 
+        // location assignment
+        // Note(@firestar99): UniformConstant are things like `SampledImage`, `StorageImage`, `Sampler` and
+        // `Acceleration structure`. Almost always they are assigned a `descriptor_set` and binding, thus never end up
+        // here being assigned locations. I think this is one of those occasions where spirv allows us to assign
+        // locations, but the "client API" Vulkan doesn't describe any use-case for them, or at least none I'm aware of.
+        // A quick scour through the spec revealed that `VK_KHR_dynamic_rendering_local_read` may need this, and while
+        // we don't support it yet (I assume), I'll just keep it here in case it becomes useful in the future.
+        let has_location = matches!(
+            storage_class,
+            Ok(StorageClass::Input | StorageClass::Output | StorageClass::UniformConstant)
+        );
+        let mut assign_location = |var_id: Result<Word, &str>, explicit: Option<u32>| {
+            let location = decoration_locations
+                .entry(storage_class.unwrap())
+                .or_insert_with(|| 0);
+            if let Some(explicit) = explicit {
+                *location = explicit;
+            }
+            self.emit_global().decorate(
+                var_id.unwrap(),
+                Decoration::Location,
+                std::iter::once(Operand::LiteralBit32(*location)),
+            );
+            let spirv_type = self.lookup_type(value_spirv_type);
+            if let Some(location_size) = spirv_type.location_size(self) {
+                *location += location_size;
+            } else {
+                *location += 1;
+                self.tcx.dcx().span_err(
+                    hir_param.ty_span,
+                    "Type not supported in Input or Output declarations",
+                );
+            }
+        };
+
         // Emit `OpDecorate`s based on attributes.
         let mut decoration_supersedes_location = false;
         if let Some(builtin) = attrs.builtin {
@@ -755,6 +790,35 @@ impl<'tcx> CodegenCx<'tcx> {
                 Decoration::Binding,
                 std::iter::once(Operand::LiteralBit32(binding.value)),
             );
+            decoration_supersedes_location = true;
+        }
+        if let Some(location) = attrs.location {
+            if let Err(SpecConstant { .. }) = storage_class {
+                self.tcx.dcx().span_fatal(
+                    location.span,
+                    "`#[spirv(location = ...)]` cannot apply to `#[spirv(spec_constant)]`",
+                );
+            }
+            if attrs.descriptor_set.is_some() {
+                self.tcx.dcx().span_fatal(
+                    location.span,
+                    "`#[spirv(location = ...)]` cannot be combined with `#[spirv(descriptor_set = ...)]`",
+                );
+            }
+            if attrs.binding.is_some() {
+                self.tcx.dcx().span_fatal(
+                    location.span,
+                    "`#[spirv(location = ...)]` cannot be combined with `#[spirv(binding = ...)]`",
+                );
+            }
+            if !has_location {
+                self.tcx.dcx().span_fatal(
+                    location.span,
+                    "`#[spirv(location = ...)]` can only be used on Inputs (declared as plain values, eg. `Vec4`)\
+                     or Outputs (declared as mut ref, eg. `&mut Vec4`)",
+                );
+            }
+            assign_location(var_id, Some(location.value));
             decoration_supersedes_location = true;
         }
         if let Some(flat) = attrs.flat {
@@ -867,21 +931,8 @@ impl<'tcx> CodegenCx<'tcx> {
         // individually.
         // TODO: Is this right for UniformConstant? Do they share locations with
         // input/outpus?
-        let has_location = !decoration_supersedes_location
-            && matches!(
-                storage_class,
-                Ok(StorageClass::Input | StorageClass::Output | StorageClass::UniformConstant)
-            );
-        if has_location {
-            let location = decoration_locations
-                .entry(storage_class.unwrap())
-                .or_insert_with(|| 0);
-            self.emit_global().decorate(
-                var_id.unwrap(),
-                Decoration::Location,
-                std::iter::once(Operand::LiteralBit32(*location)),
-            );
-            *location += 1;
+        if !decoration_supersedes_location && has_location {
+            assign_location(var_id, None);
         }
 
         match storage_class {

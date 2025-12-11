@@ -276,6 +276,34 @@ impl SpirvType<'_> {
         id
     }
 
+    /// Returns how many Input / Output `location`s this type occupies, or None if this type is not allowed to be sent.
+    ///
+    /// See [Vulkan Spec 16.1.4. Location and Component Assignment](https://registry.khronos.org/vulkan/specs/latest/html/vkspec.html#interfaces-iointerfaces-locations)
+    #[allow(clippy::match_same_arms)]
+    pub fn location_size(&self, cx: &CodegenCx<'_>) -> Option<u32> {
+        let result = match *self {
+            // bools cannot be in an Input / Output interface
+            Self::Bool => return None,
+            Self::Integer(_, _) | Self::Float(_) => 1,
+            Self::Vector { .. } => 1,
+            Self::Adt { field_types, .. } => {
+                let mut locations = 0;
+                for f in field_types {
+                    locations += cx.lookup_type(*f).location_size(cx)?;
+                }
+                locations
+            }
+            Self::Matrix { element, count } => cx.lookup_type(element).location_size(cx)? * count,
+            Self::Array { element, count } => {
+                let count = cx.builder.lookup_const_scalar(count).unwrap();
+                let count: u32 = count.try_into().unwrap();
+                cx.lookup_type(element).location_size(cx)? * count
+            }
+            _ => return None,
+        };
+        Some(result)
+    }
+
     pub fn sizeof(&self, cx: &CodegenCx<'_>) -> Option<Size> {
         let result = match *self {
             // Types that have a dynamic size, or no concept of size at all.
@@ -287,12 +315,9 @@ impl SpirvType<'_> {
             Self::Vector { size, .. } => size,
             Self::Matrix { element, count } => cx.lookup_type(element).sizeof(cx)? * count as u64,
             Self::Array { element, count } => {
-                cx.lookup_type(element).sizeof(cx)?
-                    * cx.builder
-                        .lookup_const_scalar(count)
-                        .unwrap()
-                        .try_into()
-                        .unwrap()
+                let count = cx.builder.lookup_const_scalar(count).unwrap();
+                let count = count.try_into().unwrap();
+                cx.lookup_type(element).sizeof(cx)? * count
             }
             Self::Pointer { .. } => cx.tcx.data_layout.pointer_size,
             Self::Image { .. }

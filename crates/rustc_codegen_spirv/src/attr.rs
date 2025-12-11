@@ -94,6 +94,7 @@ pub enum SpirvAttribute {
     Builtin(BuiltIn),
     DescriptorSet(u32),
     Binding(u32),
+    Location(u32),
     Flat,
     PerPrimitiveExt,
     Invariant,
@@ -130,6 +131,7 @@ pub struct AggregatedSpirvAttributes {
     pub builtin: Option<Spanned<BuiltIn>>,
     pub descriptor_set: Option<Spanned<u32>>,
     pub binding: Option<Spanned<u32>>,
+    pub location: Option<Spanned<u32>>,
     pub flat: Option<Spanned<()>>,
     pub invariant: Option<Spanned<()>>,
     pub per_primitive_ext: Option<Spanned<()>>,
@@ -216,6 +218,7 @@ impl AggregatedSpirvAttributes {
                 "#[spirv(descriptor_set)]",
             ),
             Binding(value) => try_insert(&mut self.binding, value, span, "#[spirv(binding)]"),
+            Location(value) => try_insert(&mut self.location, value, span, "#[spirv(location)]"),
             Flat => try_insert(&mut self.flat, (), span, "#[spirv(flat)]"),
             Invariant => try_insert(&mut self.invariant, (), span, "#[spirv(invariant)]"),
             PerPrimitiveExt => try_insert(
@@ -323,6 +326,7 @@ impl CheckSpirvAttrVisitor<'_> {
                 | SpirvAttribute::Builtin(_)
                 | SpirvAttribute::DescriptorSet(_)
                 | SpirvAttribute::Binding(_)
+                | SpirvAttribute::Location(_)
                 | SpirvAttribute::Flat
                 | SpirvAttribute::Invariant
                 | SpirvAttribute::PerPrimitiveExt
@@ -602,6 +606,8 @@ fn parse_spirv_attr<'a>(
                 SpirvAttribute::DescriptorSet(parse_attr_int_value(arg)?)
             } else if arg.has_name(sym.binding) {
                 SpirvAttribute::Binding(parse_attr_int_value(arg)?)
+            } else if arg.has_name(sym.location) {
+                SpirvAttribute::Location(parse_attr_int_value(arg)?)
             } else if arg.has_name(sym.input_attachment_index) {
                 SpirvAttribute::InputAttachmentIndex(parse_attr_int_value(arg)?)
             } else if arg.has_name(sym.spec_constant) {
