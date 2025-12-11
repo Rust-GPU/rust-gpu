@@ -54,6 +54,10 @@ impl DepKind {
 fn main() {
     let opt = Opt::parse();
 
+    // Pull in rustc_codegen_spirv as a dynamic library in the same way
+    // spirv-builder does.
+    let codegen_backend_path = find_rustc_codegen_spirv();
+
     let tests_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let workspace_root = tests_dir.parent().unwrap().parent().unwrap();
     let original_target_dir = workspace_root.join("target");
@@ -66,10 +70,6 @@ fn main() {
     // `compiletest` limits being hit by e.g. users with slightly longer paths).
     std::env::set_current_dir(tests_dir).unwrap();
     let tests_dir = PathBuf::from("");
-
-    // Pull in rustc_codegen_spirv as a dynamic library in the same way
-    // spirv-builder does.
-    let codegen_backend_path = find_rustc_codegen_spirv();
 
     let runner = Runner {
         opt,
@@ -409,10 +409,14 @@ fn dylib_path_envvar() -> &'static str {
 }
 
 fn dylib_path() -> Vec<PathBuf> {
-    match env::var_os(dylib_path_envvar()) {
+    let mut dylibs = match env::var_os(dylib_path_envvar()) {
         Some(var) => env::split_paths(&var).collect(),
         None => Vec::new(),
+    };
+    if let Ok(dir) = env::current_dir() {
+        dylibs.push(dir);
     }
+    dylibs
 }
 
 fn find_rustc_codegen_spirv() -> PathBuf {
@@ -421,7 +425,8 @@ fn find_rustc_codegen_spirv() -> PathBuf {
         env::consts::DLL_PREFIX,
         env::consts::DLL_SUFFIX
     );
-    for mut path in dylib_path() {
+    let dylib_paths = dylib_path();
+    for mut path in dylib_paths {
         path.push(&filename);
         if path.is_file() {
             return path;
