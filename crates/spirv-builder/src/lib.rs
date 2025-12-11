@@ -91,6 +91,7 @@ use thiserror::Error;
 #[cfg(feature = "watch")]
 pub use self::watch::{SpirvWatcher, SpirvWatcherError};
 pub use rustc_codegen_spirv_types::Capability;
+use rustc_codegen_spirv_types::query_rustc_version;
 pub use rustc_codegen_spirv_types::{CompileResult, ModuleResult, TargetSpecVersion};
 
 #[derive(Debug, Error)]
@@ -1124,22 +1125,4 @@ fn leaf_deps(artifact: &Path, mut handle: impl FnMut(&RawStr)) -> std::io::Resul
     }
     recurse(&deps_map, artifact.to_str().unwrap().into(), &mut handle);
     Ok(())
-}
-
-pub fn query_rustc_version(toolchain: Option<&str>) -> std::io::Result<Version> {
-    let mut cmd = Command::new("rustc");
-    if let Some(toolchain) = toolchain {
-        cmd.arg(format!("+{toolchain}"));
-    }
-    cmd.arg("--version");
-    let output = cmd.output()?;
-
-    let stdout = String::from_utf8(output.stdout).expect("stdout must be utf-8");
-    let parse = |output: &str| {
-        let output = output.strip_prefix("rustc ")?;
-        let version = &output[..output.find(|c| !"0123456789.".contains(c))?];
-        Version::parse(version).ok()
-    };
-    Ok(parse(&stdout)
-        .unwrap_or_else(|| panic!("failed parsing `rustc --version` output `{stdout}`")))
 }
