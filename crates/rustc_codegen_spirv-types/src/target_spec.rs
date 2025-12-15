@@ -9,6 +9,9 @@ use std::path::Path;
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug)]
 pub enum TargetSpecVersion {
+    /// Introduced in `489c3ee6fd63da3ca7cf2b15e1ee709d8e078aab` in the old v2 target spec way, later ported to here.
+    /// remove `os: unknown`, add `crt-static-respected: true`
+    Rustc_1_85_0,
     /// rustc 1.76 has been tested to correctly parse modern target spec jsons.
     /// Some later version requires them.
     /// Some earlier version fails with them (notably our 0.9.0 release).
@@ -36,7 +39,9 @@ impl TargetSpecVersion {
     /// Returns the version of the target spec required for a certain rustc version. May return `None` if the version
     /// is old enough to not need target specs.
     pub fn from_rustc_version(rustc_version: Version) -> Option<Self> {
-        if rustc_version >= Version::new(1, 76, 0) {
+        if rustc_version >= Version::new(1, 85, 0) {
+            Some(Self::Rustc_1_85_0)
+        } else if rustc_version >= Version::new(1, 76, 0) {
             Some(Self::Rustc_1_76_0)
         } else {
             None
@@ -46,15 +51,16 @@ impl TargetSpecVersion {
     /// format the target spec json
     pub fn format_spec(&self, target: &SpirvTarget) -> String {
         let target_env = target.target_env();
-        match self {
-            TargetSpecVersion::Rustc_1_76_0 => {
-                format!(
-                    r#"{{
+        let extra = match self {
+            TargetSpecVersion::Rustc_1_85_0 => r#""crt-static-respected": true,"#,
+            TargetSpecVersion::Rustc_1_76_0 => r#""os": "unknown","#,
+        };
+        format!(
+            r#"{{
   "allows-weak-linkage": false,
   "arch": "spirv",
   "crt-objects-fallback": "false",
   "crt-static-allows-dylibs": true,
-  "crt-static-respected": true,
   "data-layout": "e-m:e-p:32:32:32-i64:64-n8:16:32:64",
   "dll-prefix": "",
   "dll-suffix": ".spv.json",
@@ -71,12 +77,11 @@ impl TargetSpecVersion {
     "std": null,
     "tier": null
   }},
+  {extra}
   "panic-strategy": "abort",
   "simd-types-indirect": false,
   "target-pointer-width": "32"
 }}"#
-                )
-            }
-        }
+        )
     }
 }
