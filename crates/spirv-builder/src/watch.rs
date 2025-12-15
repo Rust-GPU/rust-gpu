@@ -55,7 +55,7 @@ impl SpirvWatcher {
             .as_ref()
             .ok_or(SpirvBuilderError::MissingCratePath)?
             .clone();
-        if !matches!(builder.print_metadata, crate::MetadataPrintout::None) {
+        if builder.build_script.get_env_shader_spv_path() {
             return Err(SpirvWatcherError::WatchWithPrintMetadata.into());
         }
 
