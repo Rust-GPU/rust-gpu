@@ -129,7 +129,7 @@ fn maybe_watch(
 ) -> CompiledShaderModules {
     #[cfg(not(any(target_os = "android", target_arch = "wasm32")))]
     {
-        use spirv_builder::{CompileResult, MetadataPrintout, SpirvBuilder};
+        use spirv_builder::{CompileResult, SpirvBuilder};
         use std::path::PathBuf;
 
         let crate_name = match options.shader {
@@ -147,7 +147,6 @@ fn maybe_watch(
         let has_debug_printf = options.force_spirv_passthru;
 
         let builder = SpirvBuilder::new(crate_path, "spirv-unknown-vulkan1.1")
-            .print_metadata(MetadataPrintout::None)
             .shader_panic_strategy(if has_debug_printf {
                 spirv_builder::ShaderPanicStrategy::DebugPrintfThenExit {
                     print_inputs: true,
