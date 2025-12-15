@@ -380,7 +380,7 @@ impl Default for ShaderCrateFeatures {
 #[non_exhaustive]
 pub struct BuildScriptConfig {
     /// Enable this if you are using `spirv-builder` from a build script to apply some recommended default options, such
-    /// as [`Self::dependency_info`].
+    /// as [`Self::dependency_info`], [`Self::forward_rustc_warnings`] and [`Self::cargo_color_always`].
     pub defaults: bool,
 
     /// Print dependency information for cargo build scripts (with `cargo::rerun-if-changed={}` and such).
@@ -407,6 +407,20 @@ pub struct BuildScriptConfig {
     ///
     /// Default: `false`
     pub env_shader_spv_path: Option<bool>,
+
+    /// Forwards any warnings or errors by rustc as build script warnings (via `cargo::warning=`). Not enabling this
+    /// option may hide warnings if the build succeeds.
+    ///
+    /// Default: [`Self::defaults`]
+    pub forward_rustc_warnings: Option<bool>,
+
+    /// Pass `--color always` to cargo to force enable colorful error messages. Particularly in build scripts, these
+    /// are disabled by default, even though we'll forward them to your console. Should your console not support colors,
+    /// then the outer cargo executing the build script will filter out all ansi escape sequences anyway, so we're free
+    /// to always emit them.
+    ///
+    /// Default: [`Self::defaults`]
+    pub cargo_color_always: Option<bool>,
 }
 
 /// these all have the prefix `get` so the doc items link to the members, not these private fns
@@ -416,6 +430,12 @@ impl BuildScriptConfig {
     }
     fn get_env_shader_spv_path(&self) -> bool {
         self.env_shader_spv_path.unwrap_or(false)
+    }
+    fn get_forward_rustc_warnings(&self) -> bool {
+        self.forward_rustc_warnings.unwrap_or(self.defaults)
+    }
+    fn get_cargo_color_always(&self) -> bool {
+        self.cargo_color_always.unwrap_or(self.defaults)
     }
 }
 
@@ -1024,6 +1044,16 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
 
     cargo.arg("--target-dir").arg(target_dir);
 
+    // Args for warning and error forwarding
+    if builder.build_script.get_forward_rustc_warnings() {
+        // Quiet to remove all the status messages and only emit errors and warnings
+        cargo.args(["--quiet"]);
+    }
+    if builder.build_script.get_cargo_color_always() {
+        // Always emit color, since the outer cargo will remove ascii escape sequences if color is turned off
+        cargo.args(["--color", "always"]);
+    }
+
     // NOTE(eddyb) this used to be just `RUSTFLAGS` but at some point Cargo
     // added a separate environment variable using `\x1f` instead of spaces,
     // which allows us to have spaces within individual `rustc` flags.
@@ -1041,9 +1071,19 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
         num_cgus.to_string(),
     );
 
-    cargo.stderr(Stdio::inherit()).current_dir(path_to_crate);
+    if !builder.build_script.get_forward_rustc_warnings() {
+        cargo.stderr(Stdio::inherit());
+    }
+    cargo.current_dir(path_to_crate);
     log::debug!("building shaders with `{cargo:?}`");
     let build = cargo.output().expect("failed to execute cargo build");
+
+    if builder.build_script.get_forward_rustc_warnings() {
+        let stderr = String::from_utf8_lossy(&build.stderr);
+        for line in stderr.lines() {
+            println!("cargo::warning={line}");
+        }
+    }
 
     // `get_last_artifact` has the side-effect of printing invalid lines, so
     // we do that even in case of an error, to let through any useful messages
