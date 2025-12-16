@@ -788,7 +788,7 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
             .target
             .as_ref()
             .ok_or(SpirvBuilderError::MissingTarget)?;
-        target = SpirvTarget::from_target(target_str)?;
+        target = SpirvTarget::parse(target_str)?;
 
         if (builder.print_metadata == MetadataPrintout::Full) && builder.multimodule {
             return Err(SpirvBuilderError::MultiModuleWithPrintMetadata);

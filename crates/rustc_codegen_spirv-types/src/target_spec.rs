@@ -50,7 +50,7 @@ impl TargetSpecVersion {
 
     /// format the target spec json
     pub fn format_spec(&self, target: &SpirvTarget) -> String {
-        let target_env = target.target_env();
+        let target_env = target.env();
         let extra = match self {
             TargetSpecVersion::Rustc_1_85_0 => r#""crt-static-respected": true,"#,
             TargetSpecVersion::Rustc_1_76_0 => r#""os": "unknown","#,
