@@ -156,7 +156,7 @@ impl Runner {
 
             println!("Testing env: {stage_id}\n");
 
-            let target = SpirvTarget::from_env(env).unwrap();
+            let target = SpirvTarget::parse(env).unwrap();
             let libs = self.build_deps(&target);
             let mut flags = test_rustc_flags(
                 &self.codegen_backend_path,
