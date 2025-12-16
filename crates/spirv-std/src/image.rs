@@ -144,21 +144,7 @@ impl<
     where
         I: Integer,
     {
-        let mut result = SampledType::Vec4::default();
-        unsafe {
-            asm! {
-                "OpDecorate %image NonUniform",
-                "OpDecorate %result NonUniform",
-                "%image = OpLoad _ {this}",
-                "%coordinate = OpLoad _ {coordinate}",
-                "%result = OpImageFetch typeof*{result} %image %coordinate",
-                "OpStore {result} %result",
-                result = in(reg) &mut result,
-                this = in(reg) self,
-                coordinate = in(reg) &coordinate,
-            }
-        }
-        result.truncate_into()
+        self.fetch_with_lod(coordinate, 0)
     }
 
     /// Fetch a single texel at a mipmap `lod` with a sampler set at compile time
