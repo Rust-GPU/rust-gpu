@@ -1,6 +1,7 @@
 use std::fmt::{Debug, Formatter};
 use thiserror::Error;
 
+pub const SPIRV_ARCH: &str = "spirv";
 pub const SPIRV_TARGET_PREFIX: &str = "spirv-unknown-";
 
 /// A well-formed rust-gpu target.
