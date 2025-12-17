@@ -1,4 +1,5 @@
 use super::{LinkResult, link};
+use crate::target::SpirvTarget;
 use rspirv::dr::Module;
 use rustc_session::CompilerIO;
 use rustc_session::config::{Input, OutputFilenames, OutputTypes};
@@ -113,10 +114,7 @@ fn link_with_linker_opts(
             };
         let sopts = rustc_session::config::build_session_options(&mut early_dcx, &matches);
 
-        let target = "spirv-unknown-spv1.0"
-            .parse::<crate::target::SpirvTarget>()
-            .unwrap()
-            .rustc_target();
+        let target = SpirvTarget::UNIVERSAL_1_0.rustc_target();
         let sm_inputs = rustc_span::source_map::SourceMapInputs {
             file_loader: Box::new(rustc_span::source_map::RealFileLoader),
             path_mapping: sopts.file_path_mapping(),

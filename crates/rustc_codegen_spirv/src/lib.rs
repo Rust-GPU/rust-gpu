@@ -130,7 +130,7 @@ mod linker;
 mod spirv_type;
 mod spirv_type_constraints;
 mod symbols;
-mod target;
+pub mod target;
 mod target_feature;
 
 use crate::maybe_pqp_cg_ssa::back::write::ThinLtoInput;
