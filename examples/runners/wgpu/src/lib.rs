@@ -74,6 +74,7 @@ use clap::Parser;
 use clap::ValueEnum;
 use std::borrow::Cow;
 use strum::{Display, EnumString};
+use wgpu::ShaderSource;
 
 // NOTE(eddyb) while this could theoretically work on the web, it needs more work.
 #[cfg(not(any(target_os = "android", target_arch = "wasm32")))]
@@ -90,19 +91,23 @@ pub enum RustGPUShader {
 }
 
 struct CompiledShaderModules {
-    named_spv_modules: Vec<(Option<String>, wgpu::ShaderModuleDescriptorSpirV<'static>)>,
+    named_spv_modules: Vec<(Option<String>, wgpu::ShaderModuleDescriptor<'static>)>,
 }
 
 impl CompiledShaderModules {
     fn spv_module_for_entry_point<'a>(
         &'a self,
         wanted_entry: &str,
-    ) -> wgpu::ShaderModuleDescriptorSpirV<'a> {
+    ) -> wgpu::ShaderModuleDescriptor<'a> {
         for (name, spv_module) in &self.named_spv_modules {
             if name.as_ref().is_none_or(|name| name == wanted_entry) {
-                return wgpu::ShaderModuleDescriptorSpirV {
+                let spirv = match &spv_module.source {
+                    ShaderSource::SpirV(spirv) => spirv,
+                    _ => unreachable!(),
+                };
+                return wgpu::ShaderModuleDescriptor {
                     label: name.as_deref(),
-                    source: Cow::Borrowed(&spv_module.source),
+                    source: ShaderSource::SpirV(Cow::Borrowed(spirv)),
                 };
             }
         }
@@ -158,9 +163,9 @@ fn maybe_watch(
                 // FIXME(eddyb) this reallocates all the data pointlessly, there is
                 // not a good reason to use `ShaderModuleDescriptorSpirV` specifically.
                 let spirv = Cow::Owned(wgpu::util::make_spirv_raw(&data).into_owned());
-                wgpu::ShaderModuleDescriptorSpirV {
+                wgpu::ShaderModuleDescriptor {
                     label: None,
-                    source: spirv,
+                    source: ShaderSource::SpirV(spirv),
                 }
             };
             CompiledShaderModules {

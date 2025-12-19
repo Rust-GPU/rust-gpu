@@ -9,9 +9,11 @@
 //! The individual Collatz sequence lengths are computed via a computer shader on the GPU.
 
 use crate::{CompiledShaderModules, Options, maybe_watch};
+use std::borrow::Cow;
 
 use std::time::Duration;
 use wgpu::util::DeviceExt;
+use wgpu::{ExperimentalFeatures, ShaderSource};
 
 pub fn start(options: &Options) {
     env_logger::init();
@@ -48,7 +50,7 @@ async fn start_internal(options: &Options, compiled_shader_modules: CompiledShad
         );
     }
     if options.force_spirv_passthru {
-        required_features |= wgpu::Features::SPIRV_SHADER_PASSTHROUGH;
+        required_features |= wgpu::Features::EXPERIMENTAL_PASSTHROUGH_SHADERS;
     }
 
     let (device, queue) = adapter
@@ -56,6 +58,11 @@ async fn start_internal(options: &Options, compiled_shader_modules: CompiledShad
             label: None,
             required_features,
             required_limits: wgpu::Limits::default(),
+            experimental_features: if options.force_spirv_passthru {
+                unsafe { ExperimentalFeatures::enabled() }
+            } else {
+                ExperimentalFeatures::disabled()
+            },
             memory_hints: wgpu::MemoryHints::Performance,
             trace: Default::default(),
         })
@@ -75,16 +82,18 @@ async fn start_internal(options: &Options, compiled_shader_modules: CompiledShad
     let module = compiled_shader_modules.spv_module_for_entry_point(entry_point);
     let module = if options.force_spirv_passthru {
         unsafe {
-            device.create_shader_module_passthrough(wgpu::ShaderModuleDescriptorPassthrough::SpirV(
-                module,
-            ))
+            let spirv = match &module.source {
+                ShaderSource::SpirV(spirv) => spirv,
+                _ => unreachable!(),
+            };
+            device.create_shader_module_passthrough(wgpu::ShaderModuleDescriptorPassthrough {
+                label: module.label,
+                spirv: Some(Cow::Borrowed(spirv)),
+                ..Default::default()
+            })
         }
     } else {
-        let wgpu::ShaderModuleDescriptorSpirV { label, source } = module;
-        device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label,
-            source: wgpu::ShaderSource::SpirV(source),
-        })
+        device.create_shader_module(module)
     };
 
     let top = 2u32.pow(20);
@@ -230,7 +239,7 @@ async fn start_internal(options: &Options, compiled_shader_modules: CompiledShad
     buffer_slice.map_async(wgpu::MapMode::Read, |r| r.unwrap());
     // NOTE(eddyb) `poll` should return only after the above callbacks fire
     // (see also https://github.com/gfx-rs/wgpu/pull/2698 for more details).
-    device.poll(wgpu::PollType::Wait).unwrap();
+    device.poll(wgpu::PollType::wait_indefinitely()).unwrap();
 
     if timestamping
         && let (Some(timestamp_readback_buffer), Some(timestamp_period)) =

@@ -1,5 +1,6 @@
 use crate::{CompiledShaderModules, Options, maybe_watch};
-use wgpu::ShaderModuleDescriptorPassthrough;
+use std::borrow::Cow;
+use wgpu::{ExperimentalFeatures, ShaderModuleDescriptor, ShaderSource};
 
 use shared::ShaderConstants;
 use std::slice;
@@ -77,7 +78,7 @@ async fn run(
 
     let mut required_features = wgpu::Features::PUSH_CONSTANTS;
     if options.force_spirv_passthru {
-        required_features |= wgpu::Features::SPIRV_SHADER_PASSTHROUGH;
+        required_features |= wgpu::Features::EXPERIMENTAL_PASSTHROUGH_SHADERS;
     }
     let required_limits = wgpu::Limits {
         max_push_constant_size: 128,
@@ -90,6 +91,11 @@ async fn run(
             label: None,
             required_features,
             required_limits,
+            experimental_features: if options.force_spirv_passthru {
+                unsafe { ExperimentalFeatures::enabled() }
+            } else {
+                ExperimentalFeatures::disabled()
+            },
             memory_hints: wgpu::MemoryHints::Performance,
             trace: Default::default(),
         })
@@ -438,8 +444,12 @@ fn create_pipeline(
     if options.emulate_push_constants_with_storage_buffer {
         let (ds, b) = (0, 0);
 
-        for (_, shader_module_descr) in &mut compiled_shader_modules.named_spv_modules {
-            let w = shader_module_descr.source.to_mut();
+        for (_, module) in &mut compiled_shader_modules.named_spv_modules {
+            let spirv = match &mut module.source {
+                ShaderSource::SpirV(spirv) => spirv,
+                _ => unreachable!(),
+            };
+            let w = spirv.to_mut();
             assert_eq!((w[0], w[4]), (0x07230203, 0));
             let mut last_op_decorate_start = None;
             let mut i = 5;
@@ -467,39 +477,30 @@ fn create_pipeline(
     }
 
     // FIXME(eddyb) automate this decision by default.
-    let create_module = |module| {
+    let create_module = |module: ShaderModuleDescriptor<'_>| {
         if options.force_spirv_passthru {
             unsafe {
-                device.create_shader_module_passthrough(ShaderModuleDescriptorPassthrough::SpirV(
-                    module,
-                ))
+                let spirv = match &module.source {
+                    ShaderSource::SpirV(spirv) => spirv,
+                    _ => unreachable!(),
+                };
+                device.create_shader_module_passthrough(wgpu::ShaderModuleDescriptorPassthrough {
+                    label: module.label,
+                    spirv: Some(Cow::Borrowed(spirv)),
+                    ..Default::default()
+                })
             }
         } else {
-            let wgpu::ShaderModuleDescriptorSpirV { label, source } = module;
-            device.create_shader_module(wgpu::ShaderModuleDescriptor {
-                label,
-                source: wgpu::ShaderSource::SpirV(source),
-            })
+            device.create_shader_module(module)
         }
     };
 
     let vs_entry_point = shaders::main_vs;
     let fs_entry_point = shaders::main_fs;
-
     let vs_module_descr = compiled_shader_modules.spv_module_for_entry_point(vs_entry_point);
     let fs_module_descr = compiled_shader_modules.spv_module_for_entry_point(fs_entry_point);
-
-    // HACK(eddyb) avoid calling `device.create_shader_module` twice unnecessarily.
-    let vs_fs_same_module = std::ptr::eq(&vs_module_descr.source[..], &fs_module_descr.source[..]);
-
     let vs_module = &create_module(vs_module_descr);
-    let fs_module;
-    let fs_module = if vs_fs_same_module {
-        vs_module
-    } else {
-        fs_module = create_module(fs_module_descr);
-        &fs_module
-    };
+    let fs_module = &create_module(fs_module_descr);
 
     device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
         cache: None,
