@@ -18,7 +18,7 @@ mod differ;
 mod runner;
 mod testcase;
 
-fn main() -> Result<()> {
+fn run() -> Result<()> {
     let subscriber = FmtSubscriber::builder()
         .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
         .finish();
