@@ -7,7 +7,7 @@ use anyhow::Context;
 use bytemuck::Pod;
 use futures::executor::block_on;
 use std::{borrow::Cow, sync::Arc};
-use wgpu::{PipelineCompilationOptions, util::DeviceExt};
+use wgpu::{ExperimentalFeatures, PipelineCompilationOptions, util::DeviceExt};
 
 pub type BufferConfig = backend::BufferConfig;
 pub type BufferUsage = backend::BufferUsage;
@@ -81,13 +81,14 @@ where
                 .request_device(&wgpu::DeviceDescriptor {
                     label: Some("wgpu Device"),
                     #[cfg(target_os = "linux")]
-                    required_features: wgpu::Features::SPIRV_SHADER_PASSTHROUGH | features,
+                    required_features: wgpu::Features::EXPERIMENTAL_PASSTHROUGH_SHADERS | features,
                     #[cfg(not(target_os = "linux"))]
                     required_features: features,
                     required_limits: wgpu::Limits {
                         max_push_constant_size: 128,
                         ..wgpu::Limits::default()
                     },
+                    experimental_features: unsafe { ExperimentalFeatures::enabled() },
                     memory_hints: Default::default(),
                     trace: Default::default(),
                 })
@@ -193,7 +194,7 @@ where
         buffer_slice.map_async(wgpu::MapMode::Read, move |res| {
             let _ = sender.send(res);
         });
-        device.poll(wgpu::PollType::Wait)?;
+        device.poll(wgpu::PollType::wait_indefinitely())?;
         block_on(receiver)
             .context("mapping canceled")?
             .context("mapping failed")?;
@@ -387,7 +388,7 @@ impl ComputeBackend for WgpuBackend {
                 buffer_slice.map_async(wgpu::MapMode::Read, move |res| {
                     let _ = sender.send(res);
                 });
-                self.device.poll(wgpu::PollType::Wait)?;
+                self.device.poll(wgpu::PollType::wait_indefinitely())?;
                 block_on(receiver)
                     .context("mapping canceled")?
                     .context("mapping failed")?;
@@ -543,7 +544,7 @@ where
                 buffer_slice.map_async(wgpu::MapMode::Read, move |res| {
                     let _ = sender.send(res);
                 });
-                device.poll(wgpu::PollType::Wait)?;
+                device.poll(wgpu::PollType::wait_indefinitely())?;
                 block_on(receiver)
                     .context("mapping canceled")?
                     .context("mapping failed")?;
@@ -752,7 +753,7 @@ where
                 buffer_slice.map_async(wgpu::MapMode::Read, move |res| {
                     let _ = sender.send(res);
                 });
-                device.poll(wgpu::PollType::Wait)?;
+                device.poll(wgpu::PollType::wait_indefinitely())?;
                 block_on(receiver)
                     .context("mapping canceled")?
                     .context("mapping failed")?;
