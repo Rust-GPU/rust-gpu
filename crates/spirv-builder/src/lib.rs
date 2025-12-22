@@ -117,9 +117,9 @@ pub enum SpirvBuilderError {
         "`multimodule: true` build cannot be used together with `build_script.env_shader_spv_path: true`"
     )]
     MultiModuleWithEnvShaderSpvPath,
-    #[error("multi-module metadata file missing")]
+    #[error("some metadata file is missing")]
     MetadataFileMissing(#[from] std::io::Error),
-    #[error("unable to parse multi-module metadata file")]
+    #[error("unable to parse some metadata file")]
     MetadataFileMalformed(#[from] serde_json::Error),
     #[error(
         "`{ARTIFACT_SUFFIX}` artifact not found in (supposedly successful) build output.\n--- build output ---\n{stdout}"
@@ -739,17 +739,13 @@ impl SpirvBuilder {
 
     /// Builds the module
     pub fn build(&self) -> Result<CompileResult, SpirvBuilderError> {
-        let metadata_file = invoke_rustc(self)?;
+        let out = invoke_rustc(self)?;
         if self.build_script.get_dependency_info() {
-            leaf_deps(&metadata_file, |artifact| {
-                println!("cargo:rerun-if-changed={artifact}");
-            })
-            // Close enough
-            .map_err(SpirvBuilderError::MetadataFileMissing)?;
+            for dep in &out.deps {
+                println!("cargo:rerun-if-changed={dep}");
+            }
         }
-        let metadata = self.parse_metadata_file(&metadata_file)?;
-
-        Ok(metadata)
+        Ok(out.compile_result)
     }
 
     pub(crate) fn parse_metadata_file(
@@ -836,8 +832,12 @@ fn join_checking_for_separators(strings: Vec<impl Borrow<str>>, sep: &str) -> St
     strings.join(sep)
 }
 
-// Returns path to the metadata json.
-fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
+pub struct RustcOutput {
+    pub compile_result: CompileResult,
+    pub deps: Vec<RawString>,
+}
+
+fn invoke_rustc(builder: &SpirvBuilder) -> Result<RustcOutput, SpirvBuilderError> {
     let path_to_crate = builder
         .path_to_crate
         .as_ref()
@@ -1108,24 +1108,35 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
     // that ended up on stdout instead of stderr.
     let stdout = String::from_utf8(build.stdout).unwrap();
     if build.status.success() {
-        get_sole_artifact(&stdout).ok_or(SpirvBuilderError::NoArtifactProduced { stdout })
+        let metadata_file =
+            get_sole_artifact(&stdout).ok_or(SpirvBuilderError::NoArtifactProduced { stdout })?;
+        let compile_result = builder.parse_metadata_file(&metadata_file)?;
+        let mut deps = Vec::new();
+        leaf_deps(&metadata_file, |artifact| {
+            deps.push(RawString::from(artifact));
+        })
+        .map_err(SpirvBuilderError::MetadataFileMissing)?;
+        Ok(RustcOutput {
+            compile_result,
+            deps,
+        })
     } else {
         Err(SpirvBuilderError::BuildFailed)
     }
 }
 
-#[derive(Deserialize)]
-struct RustcOutput {
-    reason: String,
-    filenames: Option<Vec<String>>,
-}
-
 const ARTIFACT_SUFFIX: &str = ".spv.json";
 
 fn get_sole_artifact(out: &str) -> Option<PathBuf> {
+    #[derive(Deserialize)]
+    struct RustcLine {
+        reason: String,
+        filenames: Option<Vec<String>>,
+    }
+
     let mut last_compiler_artifact = None;
     for line in out.lines() {
-        let Ok(msg) = serde_json::from_str::<RustcOutput>(line) else {
+        let Ok(msg) = serde_json::from_str::<RustcLine>(line) else {
             // Pass through invalid lines
             println!("{line}");
             continue;
