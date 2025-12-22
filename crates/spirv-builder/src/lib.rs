@@ -129,6 +129,10 @@ pub enum SpirvBuilderError {
     MetadataFileMissing(#[from] std::io::Error),
     #[error("unable to parse multi-module metadata file")]
     MetadataFileMalformed(#[from] serde_json::Error),
+    #[error(
+        "`{ARTIFACT_SUFFIX}` artifact not found in (supposedly successful) build output.\n--- build output ---\n{stdout}"
+    )]
+    NoArtifactProduced { stdout: String },
     #[error("cargo metadata error")]
     CargoMetadata(#[from] cargo_metadata::Error),
     #[cfg(feature = "watch")]
@@ -1096,12 +1100,7 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
     // that ended up on stdout instead of stderr.
     let stdout = String::from_utf8(build.stdout).unwrap();
     if build.status.success() {
-        get_sole_artifact(&stdout).ok_or_else(|| {
-            eprintln!("--- build output ---\n{stdout}");
-            panic!(
-                "`{ARTIFACT_SUFFIX}` artifact not found in (supposedly successful) build output (see above). Verify that `crate-type` is set correctly"
-            );
-        })
+        get_sole_artifact(&stdout).ok_or(SpirvBuilderError::NoArtifactProduced { stdout })
     } else {
         Err(SpirvBuilderError::BuildFailed)
     }
