@@ -121,7 +121,7 @@ impl SpirvWatcher {
         }
 
         let result = (|| {
-            let out = crate::invoke_rustc(&self.builder)?;
+            let out = self.builder.invoke_rustc()?;
             self.watch_leaf_deps(out.deps.iter().map(|d| d.as_ref()));
             Ok(out.compile_result)
         })();
