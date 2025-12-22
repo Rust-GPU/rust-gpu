@@ -739,7 +739,7 @@ impl SpirvBuilder {
 
     /// Builds the module
     pub fn build(&self) -> Result<CompileResult, SpirvBuilderError> {
-        let out = invoke_rustc(self)?;
+        let out = self.invoke_rustc()?;
         if self.build_script.get_dependency_info() {
             for dep in &out.deps {
                 println!("cargo:rerun-if-changed={dep}");
@@ -835,287 +835,290 @@ pub struct RustcOutput {
     pub deps: Vec<RawString>,
 }
 
-fn invoke_rustc(builder: &SpirvBuilder) -> Result<RustcOutput, SpirvBuilderError> {
-    let path_to_crate = builder
-        .path_to_crate
-        .as_ref()
-        .ok_or(SpirvBuilderError::MissingCratePath)?;
-    let target;
-    {
-        let target_str = builder
-            .target
+impl SpirvBuilder {
+    fn invoke_rustc(&self) -> Result<RustcOutput, SpirvBuilderError> {
+        let path_to_crate = self
+            .path_to_crate
             .as_ref()
-            .ok_or(SpirvBuilderError::MissingTarget)?;
-        target = SpirvTarget::parse(target_str)?;
-        if !path_to_crate.is_dir() {
-            return Err(SpirvBuilderError::CratePathDoesntExist(
-                path_to_crate.clone(),
+            .ok_or(SpirvBuilderError::MissingCratePath)?;
+        let target;
+        {
+            let target_str = self
+                .target
+                .as_ref()
+                .ok_or(SpirvBuilderError::MissingTarget)?;
+            target = SpirvTarget::parse(target_str)?;
+            if !path_to_crate.is_dir() {
+                return Err(SpirvBuilderError::CratePathDoesntExist(
+                    path_to_crate.clone(),
+                ));
+            }
+        }
+
+        let toolchain_rustc_version =
+            if let Some(toolchain_rustc_version) = &self.toolchain_rustc_version {
+                toolchain_rustc_version.clone()
+            } else {
+                query_rustc_version(self.toolchain_overwrite.as_deref())?
+            };
+
+        // Okay, this is a little bonkers: in a normal world, we'd have the user clone
+        // rustc_codegen_spirv and pass in the path to it, and then we'd invoke cargo to build it, grab
+        // the resulting .so, and pass it into -Z codegen-backend. But that's really gross: the user
+        // needs to clone rustc_codegen_spirv and tell us its path! So instead, we *directly reference
+        // rustc_codegen_spirv in spirv-self's Cargo.toml*, which means that it will get built
+        // alongside build.rs, and cargo will helpfully add it to LD_LIBRARY_PATH for us! However,
+        // rustc expects a full path, instead of a filename looked up via LD_LIBRARY_PATH, so we need
+        // to copy cargo's understanding of library lookup and find the library and its full path.
+        let rustc_codegen_spirv = Ok(self.rustc_codegen_spirv_location.clone())
+            .transpose()
+            .unwrap_or_else(find_rustc_codegen_spirv)?;
+        if !rustc_codegen_spirv.is_file() {
+            return Err(SpirvBuilderError::RustcCodegenSpirvDylibDoesNotExist(
+                rustc_codegen_spirv,
             ));
         }
-    }
 
-    let toolchain_rustc_version =
-        if let Some(toolchain_rustc_version) = &builder.toolchain_rustc_version {
-            toolchain_rustc_version.clone()
-        } else {
-            query_rustc_version(builder.toolchain_overwrite.as_deref())?
+        let mut rustflags = vec![
+            format!("-Zcodegen-backend={}", rustc_codegen_spirv.display()),
+            // Ensure the codegen backend is emitted in `.d` files to force Cargo
+            // to rebuild crates compiled with it when it changes (this used to be
+            // the default until https://github.com/rust-lang/rust/pull/93969).
+            "-Zbinary-dep-depinfo".to_string(),
+            "-Csymbol-mangling-version=v0".to_string(),
+            "-Zcrate-attr=feature(register_tool)".to_string(),
+            "-Zcrate-attr=register_tool(rust_gpu)".to_string(),
+            // HACK(eddyb) this is the same configuration that we test with, and
+            // ensures no unwanted surprises from e.g. `core` debug assertions.
+            "-Coverflow-checks=off".to_string(),
+            "-Cdebug-assertions=off".to_string(),
+            // HACK(eddyb) we need this for `core::fmt::rt::Argument::new_*` calls
+            // to *never* be inlined, so we can pattern-match the calls themselves.
+            "-Zinline-mir=off".to_string(),
+            // HACK(eddyb) similar to turning MIR inlining off, we also can't allow
+            // optimizations that drastically impact (the quality of) codegen, and
+            // GVN currently can lead to the memcpy-out-of-const-alloc-global-var
+            // pattern, even for `ScalarPair` (e.g. `return None::<u32>;`).
+            "-Zmir-enable-passes=-GVN".to_string(),
+            // HACK(eddyb) avoid ever reusing instantiations from `compiler_builtins`
+            // which is special-cased to turn calls to functions that never return,
+            // into aborts, and this applies to the panics of UB-checking helpers
+            // (https://github.com/rust-lang/rust/pull/122580#issuecomment-3033026194)
+            // but while upstream that only loses the panic message, for us it's even
+            // worse, as we lose the chance to remove otherwise-dead `fmt::Arguments`.
+            "-Zshare-generics=off".to_string(),
+        ];
+
+        // Wrapper for `env::var` that appropriately informs Cargo of the dependency.
+        let tracked_env_var_get = |name| {
+            if self.build_script.get_dependency_info() {
+                println!("cargo:rerun-if-env-changed={name}");
+            }
+            env::var(name)
         };
 
-    // Okay, this is a little bonkers: in a normal world, we'd have the user clone
-    // rustc_codegen_spirv and pass in the path to it, and then we'd invoke cargo to build it, grab
-    // the resulting .so, and pass it into -Z codegen-backend. But that's really gross: the user
-    // needs to clone rustc_codegen_spirv and tell us its path! So instead, we *directly reference
-    // rustc_codegen_spirv in spirv-builder's Cargo.toml*, which means that it will get built
-    // alongside build.rs, and cargo will helpfully add it to LD_LIBRARY_PATH for us! However,
-    // rustc expects a full path, instead of a filename looked up via LD_LIBRARY_PATH, so we need
-    // to copy cargo's understanding of library lookup and find the library and its full path.
-    let rustc_codegen_spirv = Ok(builder.rustc_codegen_spirv_location.clone())
-        .transpose()
-        .unwrap_or_else(find_rustc_codegen_spirv)?;
-    if !rustc_codegen_spirv.is_file() {
-        return Err(SpirvBuilderError::RustcCodegenSpirvDylibDoesNotExist(
-            rustc_codegen_spirv,
-        ));
-    }
-
-    let mut rustflags = vec![
-        format!("-Zcodegen-backend={}", rustc_codegen_spirv.display()),
-        // Ensure the codegen backend is emitted in `.d` files to force Cargo
-        // to rebuild crates compiled with it when it changes (this used to be
-        // the default until https://github.com/rust-lang/rust/pull/93969).
-        "-Zbinary-dep-depinfo".to_string(),
-        "-Csymbol-mangling-version=v0".to_string(),
-        "-Zcrate-attr=feature(register_tool)".to_string(),
-        "-Zcrate-attr=register_tool(rust_gpu)".to_string(),
-        // HACK(eddyb) this is the same configuration that we test with, and
-        // ensures no unwanted surprises from e.g. `core` debug assertions.
-        "-Coverflow-checks=off".to_string(),
-        "-Cdebug-assertions=off".to_string(),
-        // HACK(eddyb) we need this for `core::fmt::rt::Argument::new_*` calls
-        // to *never* be inlined, so we can pattern-match the calls themselves.
-        "-Zinline-mir=off".to_string(),
-        // HACK(eddyb) similar to turning MIR inlining off, we also can't allow
-        // optimizations that drastically impact (the quality of) codegen, and
-        // GVN currently can lead to the memcpy-out-of-const-alloc-global-var
-        // pattern, even for `ScalarPair` (e.g. `return None::<u32>;`).
-        "-Zmir-enable-passes=-GVN".to_string(),
-        // HACK(eddyb) avoid ever reusing instantiations from `compiler_builtins`
-        // which is special-cased to turn calls to functions that never return,
-        // into aborts, and this applies to the panics of UB-checking helpers
-        // (https://github.com/rust-lang/rust/pull/122580#issuecomment-3033026194)
-        // but while upstream that only loses the panic message, for us it's even
-        // worse, as we lose the chance to remove otherwise-dead `fmt::Arguments`.
-        "-Zshare-generics=off".to_string(),
-    ];
-
-    // Wrapper for `env::var` that appropriately informs Cargo of the dependency.
-    let tracked_env_var_get = |name| {
-        if builder.build_script.get_dependency_info() {
-            println!("cargo:rerun-if-env-changed={name}");
+        let mut llvm_args = vec![];
+        if self.multimodule {
+            llvm_args.push("--module-output=multiple".to_string());
         }
-        env::var(name)
-    };
-
-    let mut llvm_args = vec![];
-    if builder.multimodule {
-        llvm_args.push("--module-output=multiple".to_string());
-    }
-    match builder.spirv_metadata {
-        SpirvMetadata::None => (),
-        SpirvMetadata::NameVariables => {
-            llvm_args.push("--spirv-metadata=name-variables".to_string());
+        match self.spirv_metadata {
+            SpirvMetadata::None => (),
+            SpirvMetadata::NameVariables => {
+                llvm_args.push("--spirv-metadata=name-variables".to_string());
+            }
+            SpirvMetadata::Full => llvm_args.push("--spirv-metadata=full".to_string()),
         }
-        SpirvMetadata::Full => llvm_args.push("--spirv-metadata=full".to_string()),
-    }
-    if builder.validator.relax_struct_store {
-        llvm_args.push("--relax-struct-store".to_string());
-    }
-    if builder.validator.relax_logical_pointer {
-        llvm_args.push("--relax-logical-pointer".to_string());
-    }
-    if builder.validator.relax_block_layout.unwrap_or(false) {
-        llvm_args.push("--relax-block-layout".to_string());
-    }
-    if builder.validator.uniform_buffer_standard_layout {
-        llvm_args.push("--uniform-buffer-standard-layout".to_string());
-    }
-    if builder.validator.scalar_block_layout {
-        llvm_args.push("--scalar-block-layout".to_string());
-    }
-    if builder.validator.skip_block_layout {
-        llvm_args.push("--skip-block-layout".to_string());
-    }
-    if builder.optimizer.preserve_bindings {
-        llvm_args.push("--preserve-bindings".to_string());
-    }
-    let mut target_features = vec![];
-    let abort_strategy = match builder.shader_panic_strategy {
-        ShaderPanicStrategy::SilentExit => None,
-        ShaderPanicStrategy::DebugPrintfThenExit {
-            print_inputs,
-            print_backtrace,
-        } => {
-            target_features.push("+ext:SPV_KHR_non_semantic_info".into());
-            Some(format!(
-                "debug-printf{}{}",
-                if print_inputs { "+inputs" } else { "" },
-                if print_backtrace { "+backtrace" } else { "" }
-            ))
+        if self.validator.relax_struct_store {
+            llvm_args.push("--relax-struct-store".to_string());
         }
-        ShaderPanicStrategy::UNSOUND_DO_NOT_USE_UndefinedBehaviorViaUnreachable => {
-            Some("unreachable".into())
+        if self.validator.relax_logical_pointer {
+            llvm_args.push("--relax-logical-pointer".to_string());
         }
-    };
-    llvm_args.extend(abort_strategy.map(|strategy| format!("--abort-strategy={strategy}")));
-
-    if let Ok(extra_codegen_args) = tracked_env_var_get("RUSTGPU_CODEGEN_ARGS") {
-        llvm_args.extend(extra_codegen_args.split_whitespace().map(|s| s.to_string()));
-    } else {
-        llvm_args.extend(builder.extra_args.iter().cloned());
-    }
-
-    let llvm_args = join_checking_for_separators(llvm_args, " ");
-    if !llvm_args.is_empty() {
-        rustflags.push(["-Cllvm-args=", &llvm_args].concat());
-    }
-
-    target_features.extend(builder.capabilities.iter().map(|cap| format!("+{cap:?}")));
-    target_features.extend(builder.extensions.iter().map(|ext| format!("+ext:{ext}")));
-    let target_features = join_checking_for_separators(target_features, ",");
-    if !target_features.is_empty() {
-        rustflags.push(["-Ctarget-feature=", &target_features].concat());
-    }
-
-    if builder.deny_warnings {
-        rustflags.push("-Dwarnings".to_string());
-    }
-
-    if let Ok(extra_rustflags) = tracked_env_var_get("RUSTGPU_RUSTFLAGS") {
-        rustflags.extend(extra_rustflags.split_whitespace().map(|s| s.to_string()));
-    }
-
-    let target_dir_path = builder
-        .target_dir_path
-        .clone()
-        .unwrap_or_else(|| PathBuf::from("spirv-builder"));
-    let target_dir = if target_dir_path.is_absolute() {
-        target_dir_path
-    } else {
-        let metadata = cargo_metadata::MetadataCommand::new()
-            .current_dir(path_to_crate)
-            .exec()?;
-        metadata
-            .target_directory
-            .into_std_path_buf()
-            .join(target_dir_path)
-    };
-
-    let mut cargo = cargo_cmd::CargoCmd::new();
-    if let Some(toolchain) = &builder.toolchain_overwrite {
-        cargo.arg(format!("+{toolchain}"));
-    }
-
-    let cargo_cmd = builder.cargo_cmd.as_ref().map_or("rustc", |s| s.as_str());
-    let cargo_cmd_like_rustc = builder.cargo_cmd_like_rustc.unwrap_or(cargo_cmd == "rustc");
-    let profile = if builder.release { "release" } else { "dev" };
-    cargo.args([
-        cargo_cmd,
-        "--lib",
-        "--message-format=json-render-diagnostics",
-        "-Zbuild-std=core",
-        "-Zbuild-std-features=compiler-builtins-mem",
-        "--profile",
-        profile,
-    ]);
-    if cargo_cmd_like_rustc {
-        // About `crate-type`: We use it to determine whether the crate needs to be linked into shaders. For `rlib`,
-        // we're emitting regular rust libraries as is expected. For `dylib` or `cdylib`, we're linking all `rlib`s
-        // together, legalize them in many passes and emit a final `*.spv` file. Quirk: If you depend on a crate
-        // that has crate-type `dylib`, we also link it, and it will fail if it has no shaders, which may not be
-        // desired. (Gathered from reading source code and experimenting, @firestar99)
-        cargo.args(["--crate-type", "dylib"]);
-    }
-
-    if let Ok(extra_cargoflags) = tracked_env_var_get("RUSTGPU_CARGOFLAGS") {
-        cargo.args(extra_cargoflags.split_whitespace());
-    }
-
-    let target_spec_dir = target_dir.join("target-specs");
-    let target = TargetSpecVersion::target_arg(toolchain_rustc_version, &target, &target_spec_dir)?;
-    cargo.arg("--target").arg(target);
-
-    if !builder.shader_crate_features.default_features {
-        cargo.arg("--no-default-features");
-    }
-
-    if !builder.shader_crate_features.features.is_empty() {
-        cargo
-            .arg("--features")
-            .arg(builder.shader_crate_features.features.join(","));
-    }
-
-    cargo.arg("--target-dir").arg(target_dir);
-
-    // Args for warning and error forwarding
-    if builder.build_script.get_forward_rustc_warnings() {
-        // Quiet to remove all the status messages and only emit errors and warnings
-        cargo.args(["--quiet"]);
-    }
-    if builder.build_script.get_cargo_color_always() {
-        // Always emit color, since the outer cargo will remove ascii escape sequences if color is turned off
-        cargo.args(["--color", "always"]);
-    }
-
-    // NOTE(eddyb) this used to be just `RUSTFLAGS` but at some point Cargo
-    // added a separate environment variable using `\x1f` instead of spaces,
-    // which allows us to have spaces within individual `rustc` flags.
-    cargo.env(
-        "CARGO_ENCODED_RUSTFLAGS",
-        join_checking_for_separators(rustflags, "\x1f"),
-    );
-
-    // NOTE(eddyb) there's no parallelism to take advantage of multiple CGUs,
-    // and inter-CGU duplication can be wasteful, so this forces 1 CGU for now.
-    let profile_in_env_var = profile.replace('-', "_").to_ascii_uppercase();
-    let num_cgus = 1;
-    cargo.env(
-        format!("CARGO_PROFILE_{profile_in_env_var}_CODEGEN_UNITS"),
-        num_cgus.to_string(),
-    );
-
-    if !builder.build_script.get_forward_rustc_warnings() {
-        cargo.stderr(Stdio::inherit());
-    }
-    cargo.current_dir(path_to_crate);
-    log::debug!("building shaders with `{cargo:?}`");
-    let build = cargo.output().expect("failed to execute cargo build");
-
-    if builder.build_script.get_forward_rustc_warnings() {
-        let stderr = String::from_utf8_lossy(&build.stderr);
-        for line in stderr.lines() {
-            println!("cargo::warning={line}");
+        if self.validator.relax_block_layout.unwrap_or(false) {
+            llvm_args.push("--relax-block-layout".to_string());
         }
-    }
+        if self.validator.uniform_buffer_standard_layout {
+            llvm_args.push("--uniform-buffer-standard-layout".to_string());
+        }
+        if self.validator.scalar_block_layout {
+            llvm_args.push("--scalar-block-layout".to_string());
+        }
+        if self.validator.skip_block_layout {
+            llvm_args.push("--skip-block-layout".to_string());
+        }
+        if self.optimizer.preserve_bindings {
+            llvm_args.push("--preserve-bindings".to_string());
+        }
+        let mut target_features = vec![];
+        let abort_strategy = match self.shader_panic_strategy {
+            ShaderPanicStrategy::SilentExit => None,
+            ShaderPanicStrategy::DebugPrintfThenExit {
+                print_inputs,
+                print_backtrace,
+            } => {
+                target_features.push("+ext:SPV_KHR_non_semantic_info".into());
+                Some(format!(
+                    "debug-printf{}{}",
+                    if print_inputs { "+inputs" } else { "" },
+                    if print_backtrace { "+backtrace" } else { "" }
+                ))
+            }
+            ShaderPanicStrategy::UNSOUND_DO_NOT_USE_UndefinedBehaviorViaUnreachable => {
+                Some("unreachable".into())
+            }
+        };
+        llvm_args.extend(abort_strategy.map(|strategy| format!("--abort-strategy={strategy}")));
 
-    // `get_last_artifact` has the side-effect of printing invalid lines, so
-    // we do that even in case of an error, to let through any useful messages
-    // that ended up on stdout instead of stderr.
-    let stdout = String::from_utf8(build.stdout).unwrap();
-    if build.status.success() {
-        let metadata_file =
-            get_sole_artifact(&stdout).ok_or(SpirvBuilderError::NoArtifactProduced { stdout })?;
-        let compile_result = builder.parse_metadata_file(&metadata_file)?;
-        let mut deps = Vec::new();
-        leaf_deps(&metadata_file, |artifact| {
-            deps.push(RawString::from(artifact));
-        })
-        .map_err(SpirvBuilderError::MetadataFileMissing)?;
-        Ok(RustcOutput {
-            compile_result,
-            deps,
-        })
-    } else {
-        Err(SpirvBuilderError::BuildFailed)
+        if let Ok(extra_codegen_args) = tracked_env_var_get("RUSTGPU_CODEGEN_ARGS") {
+            llvm_args.extend(extra_codegen_args.split_whitespace().map(|s| s.to_string()));
+        } else {
+            llvm_args.extend(self.extra_args.iter().cloned());
+        }
+
+        let llvm_args = join_checking_for_separators(llvm_args, " ");
+        if !llvm_args.is_empty() {
+            rustflags.push(["-Cllvm-args=", &llvm_args].concat());
+        }
+
+        target_features.extend(self.capabilities.iter().map(|cap| format!("+{cap:?}")));
+        target_features.extend(self.extensions.iter().map(|ext| format!("+ext:{ext}")));
+        let target_features = join_checking_for_separators(target_features, ",");
+        if !target_features.is_empty() {
+            rustflags.push(["-Ctarget-feature=", &target_features].concat());
+        }
+
+        if self.deny_warnings {
+            rustflags.push("-Dwarnings".to_string());
+        }
+
+        if let Ok(extra_rustflags) = tracked_env_var_get("RUSTGPU_RUSTFLAGS") {
+            rustflags.extend(extra_rustflags.split_whitespace().map(|s| s.to_string()));
+        }
+
+        let target_dir_path = self
+            .target_dir_path
+            .clone()
+            .unwrap_or_else(|| PathBuf::from("spirv-self"));
+        let target_dir = if target_dir_path.is_absolute() {
+            target_dir_path
+        } else {
+            let metadata = cargo_metadata::MetadataCommand::new()
+                .current_dir(path_to_crate)
+                .exec()?;
+            metadata
+                .target_directory
+                .into_std_path_buf()
+                .join(target_dir_path)
+        };
+
+        let mut cargo = cargo_cmd::CargoCmd::new();
+        if let Some(toolchain) = &self.toolchain_overwrite {
+            cargo.arg(format!("+{toolchain}"));
+        }
+
+        let cargo_cmd = self.cargo_cmd.as_ref().map_or("rustc", |s| s.as_str());
+        let cargo_cmd_like_rustc = self.cargo_cmd_like_rustc.unwrap_or(cargo_cmd == "rustc");
+        let profile = if self.release { "release" } else { "dev" };
+        cargo.args([
+            cargo_cmd,
+            "--lib",
+            "--message-format=json-render-diagnostics",
+            "-Zbuild-std=core",
+            "-Zbuild-std-features=compiler-builtins-mem",
+            "--profile",
+            profile,
+        ]);
+        if cargo_cmd_like_rustc {
+            // About `crate-type`: We use it to determine whether the crate needs to be linked into shaders. For `rlib`,
+            // we're emitting regular rust libraries as is expected. For `dylib` or `cdylib`, we're linking all `rlib`s
+            // together, legalize them in many passes and emit a final `*.spv` file. Quirk: If you depend on a crate
+            // that has crate-type `dylib`, we also link it, and it will fail if it has no shaders, which may not be
+            // desired. (Gathered from reading source code and experimenting, @firestar99)
+            cargo.args(["--crate-type", "dylib"]);
+        }
+
+        if let Ok(extra_cargoflags) = tracked_env_var_get("RUSTGPU_CARGOFLAGS") {
+            cargo.args(extra_cargoflags.split_whitespace());
+        }
+
+        let target_spec_dir = target_dir.join("target-specs");
+        let target =
+            TargetSpecVersion::target_arg(toolchain_rustc_version, &target, &target_spec_dir)?;
+        cargo.arg("--target").arg(target);
+
+        if !self.shader_crate_features.default_features {
+            cargo.arg("--no-default-features");
+        }
+
+        if !self.shader_crate_features.features.is_empty() {
+            cargo
+                .arg("--features")
+                .arg(self.shader_crate_features.features.join(","));
+        }
+
+        cargo.arg("--target-dir").arg(target_dir);
+
+        // Args for warning and error forwarding
+        if self.build_script.get_forward_rustc_warnings() {
+            // Quiet to remove all the status messages and only emit errors and warnings
+            cargo.args(["--quiet"]);
+        }
+        if self.build_script.get_cargo_color_always() {
+            // Always emit color, since the outer cargo will remove ascii escape sequences if color is turned off
+            cargo.args(["--color", "always"]);
+        }
+
+        // NOTE(eddyb) this used to be just `RUSTFLAGS` but at some point Cargo
+        // added a separate environment variable using `\x1f` instead of spaces,
+        // which allows us to have spaces within individual `rustc` flags.
+        cargo.env(
+            "CARGO_ENCODED_RUSTFLAGS",
+            join_checking_for_separators(rustflags, "\x1f"),
+        );
+
+        // NOTE(eddyb) there's no parallelism to take advantage of multiple CGUs,
+        // and inter-CGU duplication can be wasteful, so this forces 1 CGU for now.
+        let profile_in_env_var = profile.replace('-', "_").to_ascii_uppercase();
+        let num_cgus = 1;
+        cargo.env(
+            format!("CARGO_PROFILE_{profile_in_env_var}_CODEGEN_UNITS"),
+            num_cgus.to_string(),
+        );
+
+        if !self.build_script.get_forward_rustc_warnings() {
+            cargo.stderr(Stdio::inherit());
+        }
+        cargo.current_dir(path_to_crate);
+        log::debug!("building shaders with `{cargo:?}`");
+        let build = cargo.output().expect("failed to execute cargo build");
+
+        if self.build_script.get_forward_rustc_warnings() {
+            let stderr = String::from_utf8_lossy(&build.stderr);
+            for line in stderr.lines() {
+                println!("cargo::warning={line}");
+            }
+        }
+
+        // `get_last_artifact` has the side-effect of printing invalid lines, so
+        // we do that even in case of an error, to let through any useful messages
+        // that ended up on stdout instead of stderr.
+        let stdout = String::from_utf8(build.stdout).unwrap();
+        if build.status.success() {
+            let metadata_file = get_sole_artifact(&stdout)
+                .ok_or(SpirvBuilderError::NoArtifactProduced { stdout })?;
+            let compile_result = self.parse_metadata_file(&metadata_file)?;
+            let mut deps = Vec::new();
+            leaf_deps(&metadata_file, |artifact| {
+                deps.push(RawString::from(artifact));
+            })
+            .map_err(SpirvBuilderError::MetadataFileMissing)?;
+            Ok(RustcOutput {
+                compile_result,
+                deps,
+            })
+        } else {
+            Err(SpirvBuilderError::BuildFailed)
+        }
     }
 }
 
