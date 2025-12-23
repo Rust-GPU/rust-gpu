@@ -293,11 +293,19 @@ impl SpirvType<'_> {
                 }
                 locations
             }
-            Self::Matrix { element, count } => cx.lookup_type(element).location_size(cx)? * count,
+            Self::Matrix { element, count } => cx
+                .lookup_type(element)
+                .location_size(cx)?
+                .checked_mul(count)
+                .expect("overflow"),
             Self::Array { element, count } => {
-                let count = cx.builder.lookup_const_scalar(count).unwrap();
-                let count: u32 = count.try_into().unwrap();
-                cx.lookup_type(element).location_size(cx)? * count
+                let element = cx.lookup_type(element).location_size(cx)?;
+                let count = cx
+                    .builder
+                    .lookup_const_scalar(count)
+                    .and_then(|c| u32::try_from(c).ok())
+                    .expect("SpirvType::Array.count to be a u32 constant");
+                element.checked_mul(count).expect("overflow")
             }
             _ => return None,
         };
@@ -313,11 +321,19 @@ impl SpirvType<'_> {
             Self::Integer(width, _) | Self::Float(width) => Size::from_bits(width),
             Self::Adt { size, .. } => size?,
             Self::Vector { size, .. } => size,
-            Self::Matrix { element, count } => cx.lookup_type(element).sizeof(cx)? * count as u64,
+            Self::Matrix { element, count } => cx
+                .lookup_type(element)
+                .sizeof(cx)?
+                .checked_mul(count as u64, cx)
+                .expect("overflow"),
             Self::Array { element, count } => {
-                let count = cx.builder.lookup_const_scalar(count).unwrap();
-                let count = count.try_into().unwrap();
-                cx.lookup_type(element).sizeof(cx)? * count
+                let element = cx.lookup_type(element).sizeof(cx)?;
+                let count = cx
+                    .builder
+                    .lookup_const_scalar(count)
+                    .and_then(|c| u64::try_from(c).ok())
+                    .expect("SpirvType::Array.count to be a u32 constant");
+                element.checked_mul(count, cx).expect("overflow")
             }
             Self::Pointer { .. } => cx.tcx.data_layout.pointer_size,
             Self::Image { .. }
