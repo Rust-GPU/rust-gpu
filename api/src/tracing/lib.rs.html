@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tracing-0.1.41/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tracing" data-themes="" data-resource-suffix="" data-rustdoc-version="1.90.0-nightly (35f603652 2025-06-29)" data-channel="nightly" data-search-js="search-179e01a3.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-4e99c027.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-340f468f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">tracing/</div>lib.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! A scoped, structured logging and diagnostics system.
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tracing-0.1.44/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tracing" data-themes="" data-resource-suffix="" data-rustdoc-version="1.90.0-nightly (35f603652 2025-06-29)" data-channel="nightly" data-search-js="search-179e01a3.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-4e99c027.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-340f468f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="icon" href="https://raw.githubusercontent.com/tokio-rs/tracing/main/assets/favicon.ico"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">tracing/</div>lib.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! A scoped, structured logging and diagnostics system.
 <a href=#2 id=2 data-nosnippet>2</a>//!
 <a href=#3 id=3 data-nosnippet>3</a>//! # Overview
 <a href=#4 id=4 data-nosnippet>4</a>//!
@@ -19,7 +19,7 @@
 <a href=#19 id=19 data-nosnippet>19</a>//! The `tracing` crate provides the APIs necessary for instrumenting libraries
 <a href=#20 id=20 data-nosnippet>20</a>//! and applications to emit trace data.
 <a href=#21 id=21 data-nosnippet>21</a>//!
-<a href=#22 id=22 data-nosnippet>22</a>//! *Compiler support: [requires `rustc` 1.63+][msrv]*
+<a href=#22 id=22 data-nosnippet>22</a>//! *Compiler support: [requires `rustc` 1.65+][msrv]*
 <a href=#23 id=23 data-nosnippet>23</a>//!
 <a href=#24 id=24 data-nosnippet>24</a>//! [msrv]: #supported-rust-versions
 <a href=#25 id=25 data-nosnippet>25</a>//! # Core Concepts
@@ -193,7 +193,7 @@
 <a href=#193 id=193 data-nosnippet>193</a>//! You can find more examples showing how to use this crate [here][examples].
 <a href=#194 id=194 data-nosnippet>194</a>//!
 <a href=#195 id=195 data-nosnippet>195</a>//! [RAII]: https://github.com/rust-unofficial/patterns/blob/main/src/patterns/behavioural/RAII.md
-<a href=#196 id=196 data-nosnippet>196</a>//! [examples]: https://github.com/tokio-rs/tracing/tree/master/examples
+<a href=#196 id=196 data-nosnippet>196</a>//! [examples]: https://github.com/tokio-rs/tracing/tree/main/examples
 <a href=#197 id=197 data-nosnippet>197</a>//!
 <a href=#198 id=198 data-nosnippet>198</a>//! ### Events
 <a href=#199 id=199 data-nosnippet>199</a>//!
@@ -670,7 +670,7 @@
 <a href=#670 id=670 data-nosnippet>670</a>//! entered, exited, and closed. Since these additional span lifecycle logs have
 <a href=#671 id=671 data-nosnippet>671</a>//! the potential to be very verbose, and don't include additional fields, they
 <a href=#672 id=672 data-nosnippet>672</a>//! will always be emitted at the `Trace` level, rather than inheriting the
-<a href=#673 id=673 data-nosnippet>673</a>//! level of the span that generated them. Furthermore, they are are categorized
+<a href=#673 id=673 data-nosnippet>673</a>//! level of the span that generated them. Furthermore, they are categorized
 <a href=#674 id=674 data-nosnippet>674</a>//! under a separate `log` target, "tracing::span" (and its sub-target,
 <a href=#675 id=675 data-nosnippet>675</a>//! "tracing::span::active", for the logs on entering and exiting a span), which
 <a href=#676 id=676 data-nosnippet>676</a>//! may be enabled or disabled separately from other `log` records emitted by
@@ -710,7 +710,7 @@
 <a href=#710 id=710 data-nosnippet>710</a>//!    `tracing-subscriber`'s `FmtSubscriber`, you don't need to depend on
 <a href=#711 id=711 data-nosnippet>711</a>//!    `tracing-log` directly.
 <a href=#712 id=712 data-nosnippet>712</a>//!  - [`tracing-appender`] provides utilities for outputting tracing data,
-<a href=#713 id=713 data-nosnippet>713</a>//!     including a file appender and non blocking writer.
+<a href=#713 id=713 data-nosnippet>713</a>//!    including a file appender and non blocking writer.
 <a href=#714 id=714 data-nosnippet>714</a>//!
 <a href=#715 id=715 data-nosnippet>715</a>//! Additionally, there are also several third-party crates which are not
 <a href=#716 id=716 data-nosnippet>716</a>//! maintained by the `tokio` project. These include:
@@ -873,7 +873,7 @@
 <a href=#873 id=873 data-nosnippet>873</a>//! ## Supported Rust Versions
 <a href=#874 id=874 data-nosnippet>874</a>//!
 <a href=#875 id=875 data-nosnippet>875</a>//! Tracing is built against the latest stable release. The minimum supported
-<a href=#876 id=876 data-nosnippet>876</a>//! version is 1.63. The current Tracing version is not guaranteed to build on
+<a href=#876 id=876 data-nosnippet>876</a>//! version is 1.65. The current Tracing version is not guaranteed to build on
 <a href=#877 id=877 data-nosnippet>877</a>//! Rust versions earlier than the minimum supported version.
 <a href=#878 id=878 data-nosnippet>878</a>//!
 <a href=#879 id=879 data-nosnippet>879</a>//! Tracing follows the same compiler support policies as the rest of the Tokio
@@ -912,220 +912,294 @@
 <a href=#912 id=912 data-nosnippet>912</a>//! [static verbosity level]: level_filters#compile-time-filters
 <a href=#913 id=913 data-nosnippet>913</a>//! [instrument]: https://docs.rs/tracing-attributes/latest/tracing_attributes/attr.instrument.html
 <a href=#914 id=914 data-nosnippet>914</a>//! [flags]: #crate-feature-flags
-<a href=#915 id=915 data-nosnippet>915</a></span><span class="attr">#![cfg_attr(not(feature = <span class="string">"std"</span>), no_std)]
-<a href=#916 id=916 data-nosnippet>916</a>#![cfg_attr(docsrs, feature(doc_cfg), deny(rustdoc::broken_intra_doc_links))]
-<a href=#917 id=917 data-nosnippet>917</a>#![doc(
-<a href=#918 id=918 data-nosnippet>918</a>    html_logo_url = <span class="string">"https://raw.githubusercontent.com/tokio-rs/tracing/master/assets/logo-type.png"</span>,
-<a href=#919 id=919 data-nosnippet>919</a>    issue_tracker_base_url = <span class="string">"https://github.com/tokio-rs/tracing/issues/"
-<a href=#920 id=920 data-nosnippet>920</a></span>)]
-<a href=#921 id=921 data-nosnippet>921</a>#![warn(
-<a href=#922 id=922 data-nosnippet>922</a>    missing_debug_implementations,
-<a href=#923 id=923 data-nosnippet>923</a>    missing_docs,
-<a href=#924 id=924 data-nosnippet>924</a>    rust_2018_idioms,
-<a href=#925 id=925 data-nosnippet>925</a>    unreachable_pub,
-<a href=#926 id=926 data-nosnippet>926</a>    bad_style,
-<a href=#927 id=927 data-nosnippet>927</a>    dead_code,
-<a href=#928 id=928 data-nosnippet>928</a>    improper_ctypes,
-<a href=#929 id=929 data-nosnippet>929</a>    non_shorthand_field_patterns,
-<a href=#930 id=930 data-nosnippet>930</a>    no_mangle_generic_items,
-<a href=#931 id=931 data-nosnippet>931</a>    overflowing_literals,
-<a href=#932 id=932 data-nosnippet>932</a>    path_statements,
-<a href=#933 id=933 data-nosnippet>933</a>    patterns_in_fns_without_body,
-<a href=#934 id=934 data-nosnippet>934</a>    private_interfaces,
-<a href=#935 id=935 data-nosnippet>935</a>    private_bounds,
-<a href=#936 id=936 data-nosnippet>936</a>    unconditional_recursion,
-<a href=#937 id=937 data-nosnippet>937</a>    unused,
-<a href=#938 id=938 data-nosnippet>938</a>    unused_allocation,
-<a href=#939 id=939 data-nosnippet>939</a>    unused_comparisons,
-<a href=#940 id=940 data-nosnippet>940</a>    unused_parens,
-<a href=#941 id=941 data-nosnippet>941</a>    while_true
-<a href=#942 id=942 data-nosnippet>942</a>)]
-<a href=#943 id=943 data-nosnippet>943</a>
-<a href=#944 id=944 data-nosnippet>944</a>#[cfg(not(feature = <span class="string">"std"</span>))]
-<a href=#945 id=945 data-nosnippet>945</a></span><span class="kw">extern crate </span>alloc;
-<a href=#946 id=946 data-nosnippet>946</a>
-<a href=#947 id=947 data-nosnippet>947</a><span class="comment">// Somehow this `use` statement is necessary for us to re-export the `core`
-<a href=#948 id=948 data-nosnippet>948</a>// macros on Rust 1.26.0. I'm not sure how this makes it work, but it does.
-<a href=#949 id=949 data-nosnippet>949</a></span><span class="attr">#[allow(unused_imports)]
-<a href=#950 id=950 data-nosnippet>950</a>#[doc(hidden)]
-<a href=#951 id=951 data-nosnippet>951</a></span><span class="kw">use </span>tracing_core::<span class="kw-2">*</span>;
-<a href=#952 id=952 data-nosnippet>952</a>
-<a href=#953 id=953 data-nosnippet>953</a><span class="attr">#[doc(inline)]
-<a href=#954 id=954 data-nosnippet>954</a></span><span class="kw">pub use </span><span class="self">self</span>::instrument::Instrument;
-<a href=#955 id=955 data-nosnippet>955</a><span class="kw">pub use </span><span class="self">self</span>::{dispatcher::Dispatch, event::Event, field::Value, subscriber::Subscriber};
-<a href=#956 id=956 data-nosnippet>956</a>
-<a href=#957 id=957 data-nosnippet>957</a><span class="attr">#[doc(hidden)]
-<a href=#958 id=958 data-nosnippet>958</a></span><span class="kw">pub use </span><span class="self">self</span>::span::Id;
-<a href=#959 id=959 data-nosnippet>959</a>
-<a href=#960 id=960 data-nosnippet>960</a><span class="attr">#[doc(hidden)]
-<a href=#961 id=961 data-nosnippet>961</a></span><span class="kw">pub use </span>tracing_core::{
-<a href=#962 id=962 data-nosnippet>962</a>    callsite::{<span class="self">self</span>, Callsite},
-<a href=#963 id=963 data-nosnippet>963</a>    metadata,
-<a href=#964 id=964 data-nosnippet>964</a>};
-<a href=#965 id=965 data-nosnippet>965</a><span class="kw">pub use </span>tracing_core::{event, Level, Metadata};
-<a href=#966 id=966 data-nosnippet>966</a>
-<a href=#967 id=967 data-nosnippet>967</a><span class="attr">#[doc(inline)]
-<a href=#968 id=968 data-nosnippet>968</a></span><span class="kw">pub use </span><span class="self">self</span>::span::Span;
-<a href=#969 id=969 data-nosnippet>969</a><span class="attr">#[cfg(feature = <span class="string">"attributes"</span>)]
-<a href=#970 id=970 data-nosnippet>970</a>#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">"attributes"</span>)))]
-<a href=#971 id=971 data-nosnippet>971</a>#[doc(inline)]
-<a href=#972 id=972 data-nosnippet>972</a></span><span class="kw">pub use </span>tracing_attributes::instrument;
-<a href=#973 id=973 data-nosnippet>973</a>
-<a href=#974 id=974 data-nosnippet>974</a><span class="attr">#[macro_use]
-<a href=#975 id=975 data-nosnippet>975</a></span><span class="kw">mod </span>macros;
-<a href=#976 id=976 data-nosnippet>976</a>
-<a href=#977 id=977 data-nosnippet>977</a><span class="kw">pub mod </span>dispatcher;
-<a href=#978 id=978 data-nosnippet>978</a><span class="kw">pub mod </span>field;
-<a href=#979 id=979 data-nosnippet>979</a><span class="doccomment">/// Attach a span to a `std::future::Future`.
-<a href=#980 id=980 data-nosnippet>980</a></span><span class="kw">pub mod </span>instrument;
-<a href=#981 id=981 data-nosnippet>981</a><span class="kw">pub mod </span>level_filters;
-<a href=#982 id=982 data-nosnippet>982</a><span class="kw">pub mod </span>span;
-<a href=#983 id=983 data-nosnippet>983</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>stdlib;
-<a href=#984 id=984 data-nosnippet>984</a><span class="kw">pub mod </span>subscriber;
-<a href=#985 id=985 data-nosnippet>985</a>
-<a href=#986 id=986 data-nosnippet>986</a><span class="attr">#[doc(hidden)]
-<a href=#987 id=987 data-nosnippet>987</a></span><span class="kw">pub mod </span>__macro_support {
-<a href=#988 id=988 data-nosnippet>988</a>    <span class="kw">pub use </span><span class="kw">crate</span>::callsite::Callsite;
-<a href=#989 id=989 data-nosnippet>989</a>    <span class="kw">use crate</span>::{subscriber::Interest, Metadata};
-<a href=#990 id=990 data-nosnippet>990</a>    <span class="comment">// Re-export the `core` functions that are used in macros. This allows
-<a href=#991 id=991 data-nosnippet>991</a>    // a crate to be named `core` and avoid name clashes.
-<a href=#992 id=992 data-nosnippet>992</a>    // See here: https://github.com/tokio-rs/tracing/issues/2761
-<a href=#993 id=993 data-nosnippet>993</a>    </span><span class="kw">pub use </span>core::{concat, file, format_args, iter::Iterator, line, option::Option};
-<a href=#994 id=994 data-nosnippet>994</a>
-<a href=#995 id=995 data-nosnippet>995</a>    <span class="doccomment">/// Callsite implementation used by macro-generated code.
-<a href=#996 id=996 data-nosnippet>996</a>    ///
-<a href=#997 id=997 data-nosnippet>997</a>    /// /!\ WARNING: This is *not* a stable API! /!\
-<a href=#998 id=998 data-nosnippet>998</a>    /// This type, and all code contained in the `__macro_support` module, is
-<a href=#999 id=999 data-nosnippet>999</a>    /// a *private* API of `tracing`. It is exposed publicly because it is used
-<a href=#1000 id=1000 data-nosnippet>1000</a>    /// by the `tracing` macros, but it is not part of the stable versioned API.
-<a href=#1001 id=1001 data-nosnippet>1001</a>    /// Breaking changes to this module may occur in small-numbered versions
-<a href=#1002 id=1002 data-nosnippet>1002</a>    /// without warning.
-<a href=#1003 id=1003 data-nosnippet>1003</a>    </span><span class="kw">pub use </span>tracing_core::callsite::DefaultCallsite <span class="kw">as </span>MacroCallsite;
-<a href=#1004 id=1004 data-nosnippet>1004</a>
-<a href=#1005 id=1005 data-nosnippet>1005</a>    <span class="doccomment">/// /!\ WARNING: This is *not* a stable API! /!\
-<a href=#1006 id=1006 data-nosnippet>1006</a>    /// This function, and all code contained in the `__macro_support` module, is
-<a href=#1007 id=1007 data-nosnippet>1007</a>    /// a *private* API of `tracing`. It is exposed publicly because it is used
-<a href=#1008 id=1008 data-nosnippet>1008</a>    /// by the `tracing` macros, but it is not part of the stable versioned API.
-<a href=#1009 id=1009 data-nosnippet>1009</a>    /// Breaking changes to this module may occur in small-numbered versions
-<a href=#1010 id=1010 data-nosnippet>1010</a>    /// without warning.
-<a href=#1011 id=1011 data-nosnippet>1011</a>    </span><span class="kw">pub fn </span>__is_enabled(meta: <span class="kw-2">&amp;</span>Metadata&lt;<span class="lifetime">'static</span>&gt;, interest: Interest) -&gt; bool {
-<a href=#1012 id=1012 data-nosnippet>1012</a>        interest.is_always() || <span class="kw">crate</span>::dispatcher::get_default(|default| default.enabled(meta))
-<a href=#1013 id=1013 data-nosnippet>1013</a>    }
-<a href=#1014 id=1014 data-nosnippet>1014</a>
-<a href=#1015 id=1015 data-nosnippet>1015</a>    <span class="doccomment">/// /!\ WARNING: This is *not* a stable API! /!\
-<a href=#1016 id=1016 data-nosnippet>1016</a>    /// This function, and all code contained in the `__macro_support` module, is
-<a href=#1017 id=1017 data-nosnippet>1017</a>    /// a *private* API of `tracing`. It is exposed publicly because it is used
-<a href=#1018 id=1018 data-nosnippet>1018</a>    /// by the `tracing` macros, but it is not part of the stable versioned API.
-<a href=#1019 id=1019 data-nosnippet>1019</a>    /// Breaking changes to this module may occur in small-numbered versions
-<a href=#1020 id=1020 data-nosnippet>1020</a>    /// without warning.
-<a href=#1021 id=1021 data-nosnippet>1021</a>    </span><span class="attr">#[inline]
-<a href=#1022 id=1022 data-nosnippet>1022</a>    #[cfg(feature = <span class="string">"log"</span>)]
-<a href=#1023 id=1023 data-nosnippet>1023</a>    </span><span class="kw">pub fn </span>__disabled_span(meta: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Metadata&lt;<span class="lifetime">'static</span>&gt;) -&gt; <span class="kw">crate</span>::Span {
-<a href=#1024 id=1024 data-nosnippet>1024</a>        <span class="kw">crate</span>::Span::new_disabled(meta)
-<a href=#1025 id=1025 data-nosnippet>1025</a>    }
-<a href=#1026 id=1026 data-nosnippet>1026</a>
-<a href=#1027 id=1027 data-nosnippet>1027</a>    <span class="doccomment">/// /!\ WARNING: This is *not* a stable API! /!\
-<a href=#1028 id=1028 data-nosnippet>1028</a>    /// This function, and all code contained in the `__macro_support` module, is
-<a href=#1029 id=1029 data-nosnippet>1029</a>    /// a *private* API of `tracing`. It is exposed publicly because it is used
-<a href=#1030 id=1030 data-nosnippet>1030</a>    /// by the `tracing` macros, but it is not part of the stable versioned API.
-<a href=#1031 id=1031 data-nosnippet>1031</a>    /// Breaking changes to this module may occur in small-numbered versions
-<a href=#1032 id=1032 data-nosnippet>1032</a>    /// without warning.
-<a href=#1033 id=1033 data-nosnippet>1033</a>    </span><span class="attr">#[inline]
-<a href=#1034 id=1034 data-nosnippet>1034</a>    #[cfg(not(feature = <span class="string">"log"</span>))]
-<a href=#1035 id=1035 data-nosnippet>1035</a>    </span><span class="kw">pub fn </span>__disabled_span(<span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Metadata&lt;<span class="lifetime">'static</span>&gt;) -&gt; <span class="kw">crate</span>::Span {
-<a href=#1036 id=1036 data-nosnippet>1036</a>        <span class="kw">crate</span>::Span::none()
-<a href=#1037 id=1037 data-nosnippet>1037</a>    }
-<a href=#1038 id=1038 data-nosnippet>1038</a>
-<a href=#1039 id=1039 data-nosnippet>1039</a>    <span class="doccomment">/// /!\ WARNING: This is *not* a stable API! /!\
-<a href=#1040 id=1040 data-nosnippet>1040</a>    /// This function, and all code contained in the `__macro_support` module, is
-<a href=#1041 id=1041 data-nosnippet>1041</a>    /// a *private* API of `tracing`. It is exposed publicly because it is used
-<a href=#1042 id=1042 data-nosnippet>1042</a>    /// by the `tracing` macros, but it is not part of the stable versioned API.
-<a href=#1043 id=1043 data-nosnippet>1043</a>    /// Breaking changes to this module may occur in small-numbered versions
-<a href=#1044 id=1044 data-nosnippet>1044</a>    /// without warning.
-<a href=#1045 id=1045 data-nosnippet>1045</a>    </span><span class="attr">#[cfg(feature = <span class="string">"log"</span>)]
-<a href=#1046 id=1046 data-nosnippet>1046</a>    </span><span class="kw">pub fn </span>__tracing_log(
-<a href=#1047 id=1047 data-nosnippet>1047</a>        meta: <span class="kw-2">&amp;</span>Metadata&lt;<span class="lifetime">'static</span>&gt;,
-<a href=#1048 id=1048 data-nosnippet>1048</a>        logger: <span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="kw">dyn </span>log::Log,
-<a href=#1049 id=1049 data-nosnippet>1049</a>        log_meta: log::Metadata&lt;<span class="lifetime">'_</span>&gt;,
-<a href=#1050 id=1050 data-nosnippet>1050</a>        values: <span class="kw-2">&amp;</span>tracing_core::field::ValueSet&lt;<span class="lifetime">'_</span>&gt;,
-<a href=#1051 id=1051 data-nosnippet>1051</a>    ) {
-<a href=#1052 id=1052 data-nosnippet>1052</a>        logger.log(
-<a href=#1053 id=1053 data-nosnippet>1053</a>            <span class="kw-2">&amp;</span><span class="kw">crate</span>::log::Record::builder()
-<a href=#1054 id=1054 data-nosnippet>1054</a>                .file(meta.file())
-<a href=#1055 id=1055 data-nosnippet>1055</a>                .module_path(meta.module_path())
-<a href=#1056 id=1056 data-nosnippet>1056</a>                .line(meta.line())
-<a href=#1057 id=1057 data-nosnippet>1057</a>                .metadata(log_meta)
-<a href=#1058 id=1058 data-nosnippet>1058</a>                .args(<span class="macro">format_args!</span>(
-<a href=#1059 id=1059 data-nosnippet>1059</a>                    <span class="string">"{}"</span>,
-<a href=#1060 id=1060 data-nosnippet>1060</a>                    <span class="kw">crate</span>::log::LogValueSet {
-<a href=#1061 id=1061 data-nosnippet>1061</a>                        values,
-<a href=#1062 id=1062 data-nosnippet>1062</a>                        is_first: <span class="bool-val">true
-<a href=#1063 id=1063 data-nosnippet>1063</a>                    </span>}
-<a href=#1064 id=1064 data-nosnippet>1064</a>                ))
-<a href=#1065 id=1065 data-nosnippet>1065</a>                .build(),
-<a href=#1066 id=1066 data-nosnippet>1066</a>        );
-<a href=#1067 id=1067 data-nosnippet>1067</a>    }
-<a href=#1068 id=1068 data-nosnippet>1068</a>}
-<a href=#1069 id=1069 data-nosnippet>1069</a>
-<a href=#1070 id=1070 data-nosnippet>1070</a><span class="attr">#[cfg(feature = <span class="string">"log"</span>)]
-<a href=#1071 id=1071 data-nosnippet>1071</a>#[doc(hidden)]
-<a href=#1072 id=1072 data-nosnippet>1072</a></span><span class="kw">pub mod </span>log {
-<a href=#1073 id=1073 data-nosnippet>1073</a>    <span class="kw">use </span>core::fmt;
-<a href=#1074 id=1074 data-nosnippet>1074</a>    <span class="kw">pub use </span>log::<span class="kw-2">*</span>;
-<a href=#1075 id=1075 data-nosnippet>1075</a>    <span class="kw">use </span>tracing_core::field::{Field, ValueSet, Visit};
-<a href=#1076 id=1076 data-nosnippet>1076</a>
-<a href=#1077 id=1077 data-nosnippet>1077</a>    <span class="doccomment">/// Utility to format [`ValueSet`]s for logging.
-<a href=#1078 id=1078 data-nosnippet>1078</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>LogValueSet&lt;<span class="lifetime">'a</span>&gt; {
-<a href=#1079 id=1079 data-nosnippet>1079</a>        <span class="kw">pub</span>(<span class="kw">crate</span>) values: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>ValueSet&lt;<span class="lifetime">'a</span>&gt;,
-<a href=#1080 id=1080 data-nosnippet>1080</a>        <span class="kw">pub</span>(<span class="kw">crate</span>) is_first: bool,
-<a href=#1081 id=1081 data-nosnippet>1081</a>    }
-<a href=#1082 id=1082 data-nosnippet>1082</a>
-<a href=#1083 id=1083 data-nosnippet>1083</a>    <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; fmt::Display <span class="kw">for </span>LogValueSet&lt;<span class="lifetime">'a</span>&gt; {
-<a href=#1084 id=1084 data-nosnippet>1084</a>        <span class="attr">#[inline]
-<a href=#1085 id=1085 data-nosnippet>1085</a>        </span><span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
-<a href=#1086 id=1086 data-nosnippet>1086</a>            <span class="kw">struct </span>LogVisitor&lt;<span class="lifetime">'a</span>, <span class="lifetime">'b</span>&gt; {
-<a href=#1087 id=1087 data-nosnippet>1087</a>                f: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>fmt::Formatter&lt;<span class="lifetime">'b</span>&gt;,
-<a href=#1088 id=1088 data-nosnippet>1088</a>                is_first: bool,
-<a href=#1089 id=1089 data-nosnippet>1089</a>                result: fmt::Result,
+<a href=#915 id=915 data-nosnippet>915</a>
+<a href=#916 id=916 data-nosnippet>916</a></span><span class="attr">#![no_std]
+<a href=#917 id=917 data-nosnippet>917</a>#![cfg_attr(docsrs, feature(doc_cfg), deny(rustdoc::broken_intra_doc_links))]
+<a href=#918 id=918 data-nosnippet>918</a>#![doc(
+<a href=#919 id=919 data-nosnippet>919</a>    html_logo_url = <span class="string">"https://raw.githubusercontent.com/tokio-rs/tracing/main/assets/logo-type.png"</span>,
+<a href=#920 id=920 data-nosnippet>920</a>    html_favicon_url = <span class="string">"https://raw.githubusercontent.com/tokio-rs/tracing/main/assets/favicon.ico"</span>,
+<a href=#921 id=921 data-nosnippet>921</a>    issue_tracker_base_url = <span class="string">"https://github.com/tokio-rs/tracing/issues/"
+<a href=#922 id=922 data-nosnippet>922</a></span>)]
+<a href=#923 id=923 data-nosnippet>923</a>#![warn(
+<a href=#924 id=924 data-nosnippet>924</a>    missing_debug_implementations,
+<a href=#925 id=925 data-nosnippet>925</a>    missing_docs,
+<a href=#926 id=926 data-nosnippet>926</a>    rust_2018_idioms,
+<a href=#927 id=927 data-nosnippet>927</a>    unreachable_pub,
+<a href=#928 id=928 data-nosnippet>928</a>    bad_style,
+<a href=#929 id=929 data-nosnippet>929</a>    dead_code,
+<a href=#930 id=930 data-nosnippet>930</a>    improper_ctypes,
+<a href=#931 id=931 data-nosnippet>931</a>    non_shorthand_field_patterns,
+<a href=#932 id=932 data-nosnippet>932</a>    no_mangle_generic_items,
+<a href=#933 id=933 data-nosnippet>933</a>    overflowing_literals,
+<a href=#934 id=934 data-nosnippet>934</a>    path_statements,
+<a href=#935 id=935 data-nosnippet>935</a>    patterns_in_fns_without_body,
+<a href=#936 id=936 data-nosnippet>936</a>    private_interfaces,
+<a href=#937 id=937 data-nosnippet>937</a>    private_bounds,
+<a href=#938 id=938 data-nosnippet>938</a>    unconditional_recursion,
+<a href=#939 id=939 data-nosnippet>939</a>    unused,
+<a href=#940 id=940 data-nosnippet>940</a>    unused_allocation,
+<a href=#941 id=941 data-nosnippet>941</a>    unused_comparisons,
+<a href=#942 id=942 data-nosnippet>942</a>    unused_parens,
+<a href=#943 id=943 data-nosnippet>943</a>    while_true
+<a href=#944 id=944 data-nosnippet>944</a>)]
+<a href=#945 id=945 data-nosnippet>945</a>
+<a href=#946 id=946 data-nosnippet>946</a>#[cfg(feature = <span class="string">"std"</span>)]
+<a href=#947 id=947 data-nosnippet>947</a></span><span class="kw">extern crate </span>std;
+<a href=#948 id=948 data-nosnippet>948</a>
+<a href=#949 id=949 data-nosnippet>949</a><span class="comment">// Somehow this `use` statement is necessary for us to re-export the `core`
+<a href=#950 id=950 data-nosnippet>950</a>// macros on Rust 1.26.0. I'm not sure how this makes it work, but it does.
+<a href=#951 id=951 data-nosnippet>951</a></span><span class="attr">#[allow(unused_imports)]
+<a href=#952 id=952 data-nosnippet>952</a>#[doc(hidden)]
+<a href=#953 id=953 data-nosnippet>953</a></span><span class="kw">use </span>tracing_core::<span class="kw-2">*</span>;
+<a href=#954 id=954 data-nosnippet>954</a>
+<a href=#955 id=955 data-nosnippet>955</a><span class="attr">#[doc(inline)]
+<a href=#956 id=956 data-nosnippet>956</a></span><span class="kw">pub use </span><span class="self">self</span>::instrument::Instrument;
+<a href=#957 id=957 data-nosnippet>957</a><span class="kw">pub use </span><span class="self">self</span>::{dispatcher::Dispatch, event::Event, field::Value, subscriber::Subscriber};
+<a href=#958 id=958 data-nosnippet>958</a>
+<a href=#959 id=959 data-nosnippet>959</a><span class="attr">#[doc(hidden)]
+<a href=#960 id=960 data-nosnippet>960</a></span><span class="kw">pub use </span><span class="self">self</span>::span::Id;
+<a href=#961 id=961 data-nosnippet>961</a>
+<a href=#962 id=962 data-nosnippet>962</a><span class="attr">#[doc(hidden)]
+<a href=#963 id=963 data-nosnippet>963</a></span><span class="kw">pub use </span>tracing_core::{
+<a href=#964 id=964 data-nosnippet>964</a>    callsite::{<span class="self">self</span>, Callsite},
+<a href=#965 id=965 data-nosnippet>965</a>    metadata,
+<a href=#966 id=966 data-nosnippet>966</a>};
+<a href=#967 id=967 data-nosnippet>967</a><span class="kw">pub use </span>tracing_core::{event, Level, Metadata};
+<a href=#968 id=968 data-nosnippet>968</a>
+<a href=#969 id=969 data-nosnippet>969</a><span class="attr">#[doc(inline)]
+<a href=#970 id=970 data-nosnippet>970</a></span><span class="kw">pub use </span><span class="self">self</span>::span::Span;
+<a href=#971 id=971 data-nosnippet>971</a><span class="attr">#[cfg(feature = <span class="string">"attributes"</span>)]
+<a href=#972 id=972 data-nosnippet>972</a>#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">"attributes"</span>)))]
+<a href=#973 id=973 data-nosnippet>973</a>#[doc(inline)]
+<a href=#974 id=974 data-nosnippet>974</a></span><span class="kw">pub use </span>tracing_attributes::instrument;
+<a href=#975 id=975 data-nosnippet>975</a>
+<a href=#976 id=976 data-nosnippet>976</a><span class="attr">#[macro_use]
+<a href=#977 id=977 data-nosnippet>977</a></span><span class="kw">mod </span>macros;
+<a href=#978 id=978 data-nosnippet>978</a>
+<a href=#979 id=979 data-nosnippet>979</a><span class="kw">pub mod </span>dispatcher;
+<a href=#980 id=980 data-nosnippet>980</a><span class="kw">pub mod </span>field;
+<a href=#981 id=981 data-nosnippet>981</a><span class="doccomment">/// Attach a span to a `std::future::Future`.
+<a href=#982 id=982 data-nosnippet>982</a></span><span class="kw">pub mod </span>instrument;
+<a href=#983 id=983 data-nosnippet>983</a><span class="kw">pub mod </span>level_filters;
+<a href=#984 id=984 data-nosnippet>984</a><span class="kw">pub mod </span>span;
+<a href=#985 id=985 data-nosnippet>985</a><span class="kw">pub mod </span>subscriber;
+<a href=#986 id=986 data-nosnippet>986</a>
+<a href=#987 id=987 data-nosnippet>987</a><span class="attr">#[doc(hidden)]
+<a href=#988 id=988 data-nosnippet>988</a></span><span class="kw">pub mod </span>__macro_support {
+<a href=#989 id=989 data-nosnippet>989</a>    <span class="kw">pub use </span><span class="kw">crate</span>::callsite::Callsite;
+<a href=#990 id=990 data-nosnippet>990</a>    <span class="kw">use crate</span>::{subscriber::Interest, Metadata};
+<a href=#991 id=991 data-nosnippet>991</a>    <span class="kw">use </span>core::{fmt, str};
+<a href=#992 id=992 data-nosnippet>992</a>    <span class="comment">// Re-export the `core` functions that are used in macros. This allows
+<a href=#993 id=993 data-nosnippet>993</a>    // a crate to be named `core` and avoid name clashes.
+<a href=#994 id=994 data-nosnippet>994</a>    // See here: https://github.com/tokio-rs/tracing/issues/2761
+<a href=#995 id=995 data-nosnippet>995</a>    </span><span class="kw">pub use </span>core::{concat, file, format_args, iter::Iterator, line, option::Option, stringify};
+<a href=#996 id=996 data-nosnippet>996</a>
+<a href=#997 id=997 data-nosnippet>997</a>    <span class="doccomment">/// Callsite implementation used by macro-generated code.
+<a href=#998 id=998 data-nosnippet>998</a>    ///
+<a href=#999 id=999 data-nosnippet>999</a>    /// /!\ WARNING: This is *not* a stable API! /!\
+<a href=#1000 id=1000 data-nosnippet>1000</a>    /// This type, and all code contained in the `__macro_support` module, is
+<a href=#1001 id=1001 data-nosnippet>1001</a>    /// a *private* API of `tracing`. It is exposed publicly because it is used
+<a href=#1002 id=1002 data-nosnippet>1002</a>    /// by the `tracing` macros, but it is not part of the stable versioned API.
+<a href=#1003 id=1003 data-nosnippet>1003</a>    /// Breaking changes to this module may occur in small-numbered versions
+<a href=#1004 id=1004 data-nosnippet>1004</a>    /// without warning.
+<a href=#1005 id=1005 data-nosnippet>1005</a>    </span><span class="kw">pub use </span>tracing_core::callsite::DefaultCallsite <span class="kw">as </span>MacroCallsite;
+<a href=#1006 id=1006 data-nosnippet>1006</a>
+<a href=#1007 id=1007 data-nosnippet>1007</a>    <span class="doccomment">/// /!\ WARNING: This is *not* a stable API! /!\
+<a href=#1008 id=1008 data-nosnippet>1008</a>    /// This function, and all code contained in the `__macro_support` module, is
+<a href=#1009 id=1009 data-nosnippet>1009</a>    /// a *private* API of `tracing`. It is exposed publicly because it is used
+<a href=#1010 id=1010 data-nosnippet>1010</a>    /// by the `tracing` macros, but it is not part of the stable versioned API.
+<a href=#1011 id=1011 data-nosnippet>1011</a>    /// Breaking changes to this module may occur in small-numbered versions
+<a href=#1012 id=1012 data-nosnippet>1012</a>    /// without warning.
+<a href=#1013 id=1013 data-nosnippet>1013</a>    </span><span class="kw">pub fn </span>__is_enabled(meta: <span class="kw-2">&amp;</span>Metadata&lt;<span class="lifetime">'static</span>&gt;, interest: Interest) -&gt; bool {
+<a href=#1014 id=1014 data-nosnippet>1014</a>        interest.is_always() || <span class="kw">crate</span>::dispatcher::get_default(|default| default.enabled(meta))
+<a href=#1015 id=1015 data-nosnippet>1015</a>    }
+<a href=#1016 id=1016 data-nosnippet>1016</a>
+<a href=#1017 id=1017 data-nosnippet>1017</a>    <span class="doccomment">/// /!\ WARNING: This is *not* a stable API! /!\
+<a href=#1018 id=1018 data-nosnippet>1018</a>    /// This function, and all code contained in the `__macro_support` module, is
+<a href=#1019 id=1019 data-nosnippet>1019</a>    /// a *private* API of `tracing`. It is exposed publicly because it is used
+<a href=#1020 id=1020 data-nosnippet>1020</a>    /// by the `tracing` macros, but it is not part of the stable versioned API.
+<a href=#1021 id=1021 data-nosnippet>1021</a>    /// Breaking changes to this module may occur in small-numbered versions
+<a href=#1022 id=1022 data-nosnippet>1022</a>    /// without warning.
+<a href=#1023 id=1023 data-nosnippet>1023</a>    </span><span class="attr">#[inline]
+<a href=#1024 id=1024 data-nosnippet>1024</a>    #[cfg(feature = <span class="string">"log"</span>)]
+<a href=#1025 id=1025 data-nosnippet>1025</a>    </span><span class="kw">pub fn </span>__disabled_span(meta: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Metadata&lt;<span class="lifetime">'static</span>&gt;) -&gt; <span class="kw">crate</span>::Span {
+<a href=#1026 id=1026 data-nosnippet>1026</a>        <span class="kw">crate</span>::Span::new_disabled(meta)
+<a href=#1027 id=1027 data-nosnippet>1027</a>    }
+<a href=#1028 id=1028 data-nosnippet>1028</a>
+<a href=#1029 id=1029 data-nosnippet>1029</a>    <span class="doccomment">/// /!\ WARNING: This is *not* a stable API! /!\
+<a href=#1030 id=1030 data-nosnippet>1030</a>    /// This function, and all code contained in the `__macro_support` module, is
+<a href=#1031 id=1031 data-nosnippet>1031</a>    /// a *private* API of `tracing`. It is exposed publicly because it is used
+<a href=#1032 id=1032 data-nosnippet>1032</a>    /// by the `tracing` macros, but it is not part of the stable versioned API.
+<a href=#1033 id=1033 data-nosnippet>1033</a>    /// Breaking changes to this module may occur in small-numbered versions
+<a href=#1034 id=1034 data-nosnippet>1034</a>    /// without warning.
+<a href=#1035 id=1035 data-nosnippet>1035</a>    </span><span class="attr">#[inline]
+<a href=#1036 id=1036 data-nosnippet>1036</a>    #[cfg(not(feature = <span class="string">"log"</span>))]
+<a href=#1037 id=1037 data-nosnippet>1037</a>    </span><span class="kw">pub fn </span>__disabled_span(<span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Metadata&lt;<span class="lifetime">'static</span>&gt;) -&gt; <span class="kw">crate</span>::Span {
+<a href=#1038 id=1038 data-nosnippet>1038</a>        <span class="kw">crate</span>::Span::none()
+<a href=#1039 id=1039 data-nosnippet>1039</a>    }
+<a href=#1040 id=1040 data-nosnippet>1040</a>
+<a href=#1041 id=1041 data-nosnippet>1041</a>    <span class="doccomment">/// /!\ WARNING: This is *not* a stable API! /!\
+<a href=#1042 id=1042 data-nosnippet>1042</a>    /// This function, and all code contained in the `__macro_support` module, is
+<a href=#1043 id=1043 data-nosnippet>1043</a>    /// a *private* API of `tracing`. It is exposed publicly because it is used
+<a href=#1044 id=1044 data-nosnippet>1044</a>    /// by the `tracing` macros, but it is not part of the stable versioned API.
+<a href=#1045 id=1045 data-nosnippet>1045</a>    /// Breaking changes to this module may occur in small-numbered versions
+<a href=#1046 id=1046 data-nosnippet>1046</a>    /// without warning.
+<a href=#1047 id=1047 data-nosnippet>1047</a>    </span><span class="attr">#[cfg(feature = <span class="string">"log"</span>)]
+<a href=#1048 id=1048 data-nosnippet>1048</a>    </span><span class="kw">pub fn </span>__tracing_log(
+<a href=#1049 id=1049 data-nosnippet>1049</a>        meta: <span class="kw-2">&amp;</span>Metadata&lt;<span class="lifetime">'static</span>&gt;,
+<a href=#1050 id=1050 data-nosnippet>1050</a>        logger: <span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="kw">dyn </span>log::Log,
+<a href=#1051 id=1051 data-nosnippet>1051</a>        log_meta: log::Metadata&lt;<span class="lifetime">'_</span>&gt;,
+<a href=#1052 id=1052 data-nosnippet>1052</a>        values: <span class="kw-2">&amp;</span>tracing_core::field::ValueSet&lt;<span class="lifetime">'_</span>&gt;,
+<a href=#1053 id=1053 data-nosnippet>1053</a>    ) {
+<a href=#1054 id=1054 data-nosnippet>1054</a>        logger.log(
+<a href=#1055 id=1055 data-nosnippet>1055</a>            <span class="kw-2">&amp;</span><span class="kw">crate</span>::log::Record::builder()
+<a href=#1056 id=1056 data-nosnippet>1056</a>                .file(meta.file())
+<a href=#1057 id=1057 data-nosnippet>1057</a>                .module_path(meta.module_path())
+<a href=#1058 id=1058 data-nosnippet>1058</a>                .line(meta.line())
+<a href=#1059 id=1059 data-nosnippet>1059</a>                .metadata(log_meta)
+<a href=#1060 id=1060 data-nosnippet>1060</a>                .args(<span class="macro">format_args!</span>(
+<a href=#1061 id=1061 data-nosnippet>1061</a>                    <span class="string">"{}"</span>,
+<a href=#1062 id=1062 data-nosnippet>1062</a>                    <span class="kw">crate</span>::log::LogValueSet {
+<a href=#1063 id=1063 data-nosnippet>1063</a>                        values,
+<a href=#1064 id=1064 data-nosnippet>1064</a>                        is_first: <span class="bool-val">true
+<a href=#1065 id=1065 data-nosnippet>1065</a>                    </span>}
+<a href=#1066 id=1066 data-nosnippet>1066</a>                ))
+<a href=#1067 id=1067 data-nosnippet>1067</a>                .build(),
+<a href=#1068 id=1068 data-nosnippet>1068</a>        );
+<a href=#1069 id=1069 data-nosnippet>1069</a>    }
+<a href=#1070 id=1070 data-nosnippet>1070</a>
+<a href=#1071 id=1071 data-nosnippet>1071</a>    <span class="doccomment">/// Implementation detail used for constructing FieldSet names from raw
+<a href=#1072 id=1072 data-nosnippet>1072</a>    /// identifiers. In `info!(..., r#type = "...")` the macro would end up
+<a href=#1073 id=1073 data-nosnippet>1073</a>    /// constructing a name equivalent to `FieldName(*b"type")`.
+<a href=#1074 id=1074 data-nosnippet>1074</a>    </span><span class="kw">pub struct </span>FieldName&lt;<span class="kw">const </span>N: usize&gt;([u8; N]);
+<a href=#1075 id=1075 data-nosnippet>1075</a>
+<a href=#1076 id=1076 data-nosnippet>1076</a>    <span class="kw">impl</span>&lt;<span class="kw">const </span>N: usize&gt; FieldName&lt;N&gt; {
+<a href=#1077 id=1077 data-nosnippet>1077</a>        <span class="doccomment">/// Convert `"prefix.r#keyword.suffix"` to `b"prefix.keyword.suffix"`.
+<a href=#1078 id=1078 data-nosnippet>1078</a>        </span><span class="kw">pub const fn </span>new(input: <span class="kw-2">&amp;</span>str) -&gt; <span class="self">Self </span>{
+<a href=#1079 id=1079 data-nosnippet>1079</a>            <span class="kw">let </span>input = input.as_bytes();
+<a href=#1080 id=1080 data-nosnippet>1080</a>            <span class="kw">let </span><span class="kw-2">mut </span>output = [<span class="number">0u8</span>; N];
+<a href=#1081 id=1081 data-nosnippet>1081</a>            <span class="kw">let </span><span class="kw-2">mut </span>read = <span class="number">0</span>;
+<a href=#1082 id=1082 data-nosnippet>1082</a>            <span class="kw">let </span><span class="kw-2">mut </span>write = <span class="number">0</span>;
+<a href=#1083 id=1083 data-nosnippet>1083</a>            <span class="kw">while </span>read &lt; input.len() {
+<a href=#1084 id=1084 data-nosnippet>1084</a>                <span class="kw">if </span>read + <span class="number">1 </span>&lt; input.len() &amp;&amp; input[read] == <span class="string">b'r' </span>&amp;&amp; input[read + <span class="number">1</span>] == <span class="string">b'#' </span>{
+<a href=#1085 id=1085 data-nosnippet>1085</a>                    read += <span class="number">2</span>;
+<a href=#1086 id=1086 data-nosnippet>1086</a>                }
+<a href=#1087 id=1087 data-nosnippet>1087</a>                output[write] = input[read];
+<a href=#1088 id=1088 data-nosnippet>1088</a>                read += <span class="number">1</span>;
+<a href=#1089 id=1089 data-nosnippet>1089</a>                write += <span class="number">1</span>;
 <a href=#1090 id=1090 data-nosnippet>1090</a>            }
-<a href=#1091 id=1091 data-nosnippet>1091</a>
-<a href=#1092 id=1092 data-nosnippet>1092</a>            <span class="kw">impl </span>Visit <span class="kw">for </span>LogVisitor&lt;<span class="lifetime">'_</span>, <span class="lifetime">'_</span>&gt; {
-<a href=#1093 id=1093 data-nosnippet>1093</a>                <span class="kw">fn </span>record_debug(<span class="kw-2">&amp;mut </span><span class="self">self</span>, field: <span class="kw-2">&amp;</span>Field, value: <span class="kw-2">&amp;</span><span class="kw">dyn </span>fmt::Debug) {
-<a href=#1094 id=1094 data-nosnippet>1094</a>                    <span class="kw">let </span>res = <span class="kw">if </span><span class="self">self</span>.is_first {
-<a href=#1095 id=1095 data-nosnippet>1095</a>                        <span class="self">self</span>.is_first = <span class="bool-val">false</span>;
-<a href=#1096 id=1096 data-nosnippet>1096</a>                        <span class="kw">if </span>field.name() == <span class="string">"message" </span>{
-<a href=#1097 id=1097 data-nosnippet>1097</a>                            <span class="macro">write!</span>(<span class="self">self</span>.f, <span class="string">"{:?}"</span>, value)
-<a href=#1098 id=1098 data-nosnippet>1098</a>                        } <span class="kw">else </span>{
-<a href=#1099 id=1099 data-nosnippet>1099</a>                            <span class="macro">write!</span>(<span class="self">self</span>.f, <span class="string">"{}={:?}"</span>, field.name(), value)
-<a href=#1100 id=1100 data-nosnippet>1100</a>                        }
-<a href=#1101 id=1101 data-nosnippet>1101</a>                    } <span class="kw">else </span>{
-<a href=#1102 id=1102 data-nosnippet>1102</a>                        <span class="macro">write!</span>(<span class="self">self</span>.f, <span class="string">" {}={:?}"</span>, field.name(), value)
-<a href=#1103 id=1103 data-nosnippet>1103</a>                    };
-<a href=#1104 id=1104 data-nosnippet>1104</a>                    <span class="kw">if let </span><span class="prelude-val">Err</span>(err) = res {
-<a href=#1105 id=1105 data-nosnippet>1105</a>                        <span class="self">self</span>.result = <span class="self">self</span>.result.and(<span class="prelude-val">Err</span>(err));
-<a href=#1106 id=1106 data-nosnippet>1106</a>                    }
-<a href=#1107 id=1107 data-nosnippet>1107</a>                }
-<a href=#1108 id=1108 data-nosnippet>1108</a>
-<a href=#1109 id=1109 data-nosnippet>1109</a>                <span class="kw">fn </span>record_str(<span class="kw-2">&amp;mut </span><span class="self">self</span>, field: <span class="kw-2">&amp;</span>Field, value: <span class="kw-2">&amp;</span>str) {
-<a href=#1110 id=1110 data-nosnippet>1110</a>                    <span class="kw">if </span>field.name() == <span class="string">"message" </span>{
-<a href=#1111 id=1111 data-nosnippet>1111</a>                        <span class="self">self</span>.record_debug(field, <span class="kw-2">&amp;</span><span class="macro">format_args!</span>(<span class="string">"{}"</span>, value))
-<a href=#1112 id=1112 data-nosnippet>1112</a>                    } <span class="kw">else </span>{
-<a href=#1113 id=1113 data-nosnippet>1113</a>                        <span class="self">self</span>.record_debug(field, <span class="kw-2">&amp;</span>value)
-<a href=#1114 id=1114 data-nosnippet>1114</a>                    }
-<a href=#1115 id=1115 data-nosnippet>1115</a>                }
+<a href=#1091 id=1091 data-nosnippet>1091</a>            <span class="macro">assert!</span>(write == N);
+<a href=#1092 id=1092 data-nosnippet>1092</a>            <span class="self">Self</span>(output)
+<a href=#1093 id=1093 data-nosnippet>1093</a>        }
+<a href=#1094 id=1094 data-nosnippet>1094</a>
+<a href=#1095 id=1095 data-nosnippet>1095</a>        <span class="kw">pub const fn </span>as_str(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
+<a href=#1096 id=1096 data-nosnippet>1096</a>            <span class="comment">// SAFETY: Because of the private visibility of self.0, it must have
+<a href=#1097 id=1097 data-nosnippet>1097</a>            // been computed by Self::new. So these bytes are all of the bytes
+<a href=#1098 id=1098 data-nosnippet>1098</a>            // of some original valid UTF-8 string, but with "r#" substrings
+<a href=#1099 id=1099 data-nosnippet>1099</a>            // removed, which cannot have produced invalid UTF-8.
+<a href=#1100 id=1100 data-nosnippet>1100</a>            </span><span class="kw">unsafe </span>{ str::from_utf8_unchecked(<span class="self">self</span>.<span class="number">0</span>.as_slice()) }
+<a href=#1101 id=1101 data-nosnippet>1101</a>        }
+<a href=#1102 id=1102 data-nosnippet>1102</a>    }
+<a href=#1103 id=1103 data-nosnippet>1103</a>
+<a href=#1104 id=1104 data-nosnippet>1104</a>    <span class="kw">impl </span>FieldName&lt;<span class="number">0</span>&gt; {
+<a href=#1105 id=1105 data-nosnippet>1105</a>        <span class="doccomment">/// For `"prefix.r#keyword.suffix"` compute `"prefix.keyword.suffix".len()`.
+<a href=#1106 id=1106 data-nosnippet>1106</a>        </span><span class="kw">pub const fn </span>len(input: <span class="kw-2">&amp;</span>str) -&gt; usize {
+<a href=#1107 id=1107 data-nosnippet>1107</a>            <span class="comment">// Count occurrences of "r#"
+<a href=#1108 id=1108 data-nosnippet>1108</a>            </span><span class="kw">let </span><span class="kw-2">mut </span>raw = <span class="number">0</span>;
+<a href=#1109 id=1109 data-nosnippet>1109</a>
+<a href=#1110 id=1110 data-nosnippet>1110</a>            <span class="kw">let </span><span class="kw-2">mut </span>i = <span class="number">0</span>;
+<a href=#1111 id=1111 data-nosnippet>1111</a>            <span class="kw">while </span>i &lt; input.len() {
+<a href=#1112 id=1112 data-nosnippet>1112</a>                <span class="kw">if </span>input.as_bytes()[i] == <span class="string">b'#' </span>{
+<a href=#1113 id=1113 data-nosnippet>1113</a>                    raw += <span class="number">1</span>;
+<a href=#1114 id=1114 data-nosnippet>1114</a>                }
+<a href=#1115 id=1115 data-nosnippet>1115</a>                i += <span class="number">1</span>;
 <a href=#1116 id=1116 data-nosnippet>1116</a>            }
 <a href=#1117 id=1117 data-nosnippet>1117</a>
-<a href=#1118 id=1118 data-nosnippet>1118</a>            <span class="kw">let </span><span class="kw-2">mut </span>visit = LogVisitor {
-<a href=#1119 id=1119 data-nosnippet>1119</a>                f,
-<a href=#1120 id=1120 data-nosnippet>1120</a>                is_first: <span class="self">self</span>.is_first,
-<a href=#1121 id=1121 data-nosnippet>1121</a>                result: <span class="prelude-val">Ok</span>(()),
-<a href=#1122 id=1122 data-nosnippet>1122</a>            };
-<a href=#1123 id=1123 data-nosnippet>1123</a>            <span class="self">self</span>.values.record(<span class="kw-2">&amp;mut </span>visit);
-<a href=#1124 id=1124 data-nosnippet>1124</a>            visit.result
-<a href=#1125 id=1125 data-nosnippet>1125</a>        }
-<a href=#1126 id=1126 data-nosnippet>1126</a>    }
-<a href=#1127 id=1127 data-nosnippet>1127</a>}
-<a href=#1128 id=1128 data-nosnippet>1128</a>
-<a href=#1129 id=1129 data-nosnippet>1129</a><span class="kw">mod </span>sealed {
-<a href=#1130 id=1130 data-nosnippet>1130</a>    <span class="kw">pub trait </span>Sealed {}
-<a href=#1131 id=1131 data-nosnippet>1131</a>}</code></pre></div></section></main></body></html>
+<a href=#1118 id=1118 data-nosnippet>1118</a>            input.len() - <span class="number">2 </span>* raw
+<a href=#1119 id=1119 data-nosnippet>1119</a>        }
+<a href=#1120 id=1120 data-nosnippet>1120</a>    }
+<a href=#1121 id=1121 data-nosnippet>1121</a>
+<a href=#1122 id=1122 data-nosnippet>1122</a>    <span class="kw">impl</span>&lt;<span class="kw">const </span>N: usize&gt; fmt::Debug <span class="kw">for </span>FieldName&lt;N&gt; {
+<a href=#1123 id=1123 data-nosnippet>1123</a>        <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, formatter: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+<a href=#1124 id=1124 data-nosnippet>1124</a>            formatter
+<a href=#1125 id=1125 data-nosnippet>1125</a>                .debug_tuple(<span class="string">"FieldName"</span>)
+<a href=#1126 id=1126 data-nosnippet>1126</a>                .field(<span class="kw-2">&amp;</span><span class="self">self</span>.as_str())
+<a href=#1127 id=1127 data-nosnippet>1127</a>                .finish()
+<a href=#1128 id=1128 data-nosnippet>1128</a>        }
+<a href=#1129 id=1129 data-nosnippet>1129</a>    }
+<a href=#1130 id=1130 data-nosnippet>1130</a>
+<a href=#1131 id=1131 data-nosnippet>1131</a>    <span class="kw">static </span>CALLSITE: <span class="kw">crate</span>::callsite::DefaultCallsite =
+<a href=#1132 id=1132 data-nosnippet>1132</a>        <span class="kw">crate</span>::callsite::DefaultCallsite::new(<span class="kw-2">&amp;</span>META);
+<a href=#1133 id=1133 data-nosnippet>1133</a>    <span class="kw">static </span>META: <span class="kw">crate</span>::Metadata&lt;<span class="lifetime">'static</span>&gt; = <span class="macro">crate::metadata!</span> {
+<a href=#1134 id=1134 data-nosnippet>1134</a>        name: <span class="string">"__fake_tracing_callsite"</span>,
+<a href=#1135 id=1135 data-nosnippet>1135</a>        target: <span class="macro">module_path!</span>(),
+<a href=#1136 id=1136 data-nosnippet>1136</a>        level: <span class="kw">crate</span>::Level::TRACE,
+<a href=#1137 id=1137 data-nosnippet>1137</a>        fields: <span class="macro">crate::fieldset!</span>(),
+<a href=#1138 id=1138 data-nosnippet>1138</a>        callsite: <span class="kw-2">&amp;</span>CALLSITE,
+<a href=#1139 id=1139 data-nosnippet>1139</a>        kind: <span class="kw">crate</span>::metadata::Kind::SPAN,
+<a href=#1140 id=1140 data-nosnippet>1140</a>    };
+<a href=#1141 id=1141 data-nosnippet>1141</a>    <span class="kw">pub static </span>FAKE_FIELD: <span class="kw">crate</span>::field::Field = META.private_fake_field();
+<a href=#1142 id=1142 data-nosnippet>1142</a>}
+<a href=#1143 id=1143 data-nosnippet>1143</a>
+<a href=#1144 id=1144 data-nosnippet>1144</a><span class="attr">#[cfg(feature = <span class="string">"log"</span>)]
+<a href=#1145 id=1145 data-nosnippet>1145</a>#[doc(hidden)]
+<a href=#1146 id=1146 data-nosnippet>1146</a></span><span class="kw">pub mod </span>log {
+<a href=#1147 id=1147 data-nosnippet>1147</a>    <span class="kw">use </span>core::fmt;
+<a href=#1148 id=1148 data-nosnippet>1148</a>    <span class="kw">pub use </span>log::<span class="kw-2">*</span>;
+<a href=#1149 id=1149 data-nosnippet>1149</a>    <span class="kw">use </span>tracing_core::field::{Field, ValueSet, Visit};
+<a href=#1150 id=1150 data-nosnippet>1150</a>
+<a href=#1151 id=1151 data-nosnippet>1151</a>    <span class="doccomment">/// Utility to format [`ValueSet`]s for logging.
+<a href=#1152 id=1152 data-nosnippet>1152</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>LogValueSet&lt;<span class="lifetime">'a</span>&gt; {
+<a href=#1153 id=1153 data-nosnippet>1153</a>        <span class="kw">pub</span>(<span class="kw">crate</span>) values: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>ValueSet&lt;<span class="lifetime">'a</span>&gt;,
+<a href=#1154 id=1154 data-nosnippet>1154</a>        <span class="kw">pub</span>(<span class="kw">crate</span>) is_first: bool,
+<a href=#1155 id=1155 data-nosnippet>1155</a>    }
+<a href=#1156 id=1156 data-nosnippet>1156</a>
+<a href=#1157 id=1157 data-nosnippet>1157</a>    <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; fmt::Display <span class="kw">for </span>LogValueSet&lt;<span class="lifetime">'a</span>&gt; {
+<a href=#1158 id=1158 data-nosnippet>1158</a>        <span class="attr">#[inline]
+<a href=#1159 id=1159 data-nosnippet>1159</a>        </span><span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+<a href=#1160 id=1160 data-nosnippet>1160</a>            <span class="kw">struct </span>LogVisitor&lt;<span class="lifetime">'a</span>, <span class="lifetime">'b</span>&gt; {
+<a href=#1161 id=1161 data-nosnippet>1161</a>                f: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>fmt::Formatter&lt;<span class="lifetime">'b</span>&gt;,
+<a href=#1162 id=1162 data-nosnippet>1162</a>                is_first: bool,
+<a href=#1163 id=1163 data-nosnippet>1163</a>                result: fmt::Result,
+<a href=#1164 id=1164 data-nosnippet>1164</a>            }
+<a href=#1165 id=1165 data-nosnippet>1165</a>
+<a href=#1166 id=1166 data-nosnippet>1166</a>            <span class="kw">impl </span>Visit <span class="kw">for </span>LogVisitor&lt;<span class="lifetime">'_</span>, <span class="lifetime">'_</span>&gt; {
+<a href=#1167 id=1167 data-nosnippet>1167</a>                <span class="kw">fn </span>record_debug(<span class="kw-2">&amp;mut </span><span class="self">self</span>, field: <span class="kw-2">&amp;</span>Field, value: <span class="kw-2">&amp;</span><span class="kw">dyn </span>fmt::Debug) {
+<a href=#1168 id=1168 data-nosnippet>1168</a>                    <span class="kw">let </span>res = <span class="kw">if </span><span class="self">self</span>.is_first {
+<a href=#1169 id=1169 data-nosnippet>1169</a>                        <span class="self">self</span>.is_first = <span class="bool-val">false</span>;
+<a href=#1170 id=1170 data-nosnippet>1170</a>                        <span class="kw">if </span>field.name() == <span class="string">"message" </span>{
+<a href=#1171 id=1171 data-nosnippet>1171</a>                            <span class="macro">write!</span>(<span class="self">self</span>.f, <span class="string">"{:?}"</span>, value)
+<a href=#1172 id=1172 data-nosnippet>1172</a>                        } <span class="kw">else </span>{
+<a href=#1173 id=1173 data-nosnippet>1173</a>                            <span class="macro">write!</span>(<span class="self">self</span>.f, <span class="string">"{}={:?}"</span>, field.name(), value)
+<a href=#1174 id=1174 data-nosnippet>1174</a>                        }
+<a href=#1175 id=1175 data-nosnippet>1175</a>                    } <span class="kw">else </span>{
+<a href=#1176 id=1176 data-nosnippet>1176</a>                        <span class="macro">write!</span>(<span class="self">self</span>.f, <span class="string">" {}={:?}"</span>, field.name(), value)
+<a href=#1177 id=1177 data-nosnippet>1177</a>                    };
+<a href=#1178 id=1178 data-nosnippet>1178</a>                    <span class="kw">if let </span><span class="prelude-val">Err</span>(err) = res {
+<a href=#1179 id=1179 data-nosnippet>1179</a>                        <span class="self">self</span>.result = <span class="self">self</span>.result.and(<span class="prelude-val">Err</span>(err));
+<a href=#1180 id=1180 data-nosnippet>1180</a>                    }
+<a href=#1181 id=1181 data-nosnippet>1181</a>                }
+<a href=#1182 id=1182 data-nosnippet>1182</a>
+<a href=#1183 id=1183 data-nosnippet>1183</a>                <span class="kw">fn </span>record_str(<span class="kw-2">&amp;mut </span><span class="self">self</span>, field: <span class="kw-2">&amp;</span>Field, value: <span class="kw-2">&amp;</span>str) {
+<a href=#1184 id=1184 data-nosnippet>1184</a>                    <span class="kw">if </span>field.name() == <span class="string">"message" </span>{
+<a href=#1185 id=1185 data-nosnippet>1185</a>                        <span class="self">self</span>.record_debug(field, <span class="kw-2">&amp;</span><span class="macro">format_args!</span>(<span class="string">"{}"</span>, value))
+<a href=#1186 id=1186 data-nosnippet>1186</a>                    } <span class="kw">else </span>{
+<a href=#1187 id=1187 data-nosnippet>1187</a>                        <span class="self">self</span>.record_debug(field, <span class="kw-2">&amp;</span>value)
+<a href=#1188 id=1188 data-nosnippet>1188</a>                    }
+<a href=#1189 id=1189 data-nosnippet>1189</a>                }
+<a href=#1190 id=1190 data-nosnippet>1190</a>            }
+<a href=#1191 id=1191 data-nosnippet>1191</a>
+<a href=#1192 id=1192 data-nosnippet>1192</a>            <span class="kw">let </span><span class="kw-2">mut </span>visit = LogVisitor {
+<a href=#1193 id=1193 data-nosnippet>1193</a>                f,
+<a href=#1194 id=1194 data-nosnippet>1194</a>                is_first: <span class="self">self</span>.is_first,
+<a href=#1195 id=1195 data-nosnippet>1195</a>                result: <span class="prelude-val">Ok</span>(()),
+<a href=#1196 id=1196 data-nosnippet>1196</a>            };
+<a href=#1197 id=1197 data-nosnippet>1197</a>            <span class="self">self</span>.values.record(<span class="kw-2">&amp;mut </span>visit);
+<a href=#1198 id=1198 data-nosnippet>1198</a>            visit.result
+<a href=#1199 id=1199 data-nosnippet>1199</a>        }
+<a href=#1200 id=1200 data-nosnippet>1200</a>    }
+<a href=#1201 id=1201 data-nosnippet>1201</a>}
+<a href=#1202 id=1202 data-nosnippet>1202</a>
+<a href=#1203 id=1203 data-nosnippet>1203</a><span class="kw">mod </span>sealed {
+<a href=#1204 id=1204 data-nosnippet>1204</a>    <span class="kw">pub trait </span>Sealed {}
+<a href=#1205 id=1205 data-nosnippet>1205</a>}</code></pre></div></section></main></body></html>

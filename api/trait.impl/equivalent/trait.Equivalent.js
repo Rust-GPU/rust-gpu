@@ -1,9 +1,9 @@
 (function() {
-    var implementors = Object.fromEntries([["elsa",[]],["equivalent",[]],["hashbrown",[]],["indexmap",[]]]);
+    var implementors = Object.fromEntries([["elsa",[]],["equivalent",[]],["indexmap",[]]]);
     if (window.register_implementors) {
         window.register_implementors(implementors);
     } else {
         window.pending_implementors = implementors;
     }
 })()
-//{"start":57,"fragment_lengths":[11,18,17,16]}
+//{"start":57,"fragment_lengths":[11,18,16]}

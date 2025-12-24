@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerovec-0.11.4/src/varzerovec/vec.rs`."><title>vec.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="zerovec" data-themes="" data-resource-suffix="" data-rustdoc-version="1.90.0-nightly (35f603652 2025-06-29)" data-channel="nightly" data-search-js="search-179e01a3.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-4e99c027.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-340f468f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">zerovec/varzerovec/</div>vec.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// This file is part of ICU4X. For terms of use, please see the file
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerovec-0.11.5/src/varzerovec/vec.rs`."><title>vec.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="zerovec" data-themes="" data-resource-suffix="" data-rustdoc-version="1.90.0-nightly (35f603652 2025-06-29)" data-channel="nightly" data-search-js="search-179e01a3.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-4e99c027.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-340f468f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">zerovec/varzerovec/</div>vec.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// This file is part of ICU4X. For terms of use, please see the file
 <a href=#2 id=2 data-nosnippet>2</a>// called LICENSE at the top level of the ICU4X source tree
 <a href=#3 id=3 data-nosnippet>3</a>// (online at: https://github.com/unicode-org/icu4x/blob/main/LICENSE ).
 <a href=#4 id=4 data-nosnippet>4</a>
@@ -259,255 +259,259 @@
 <a href=#259 id=259 data-nosnippet>259</a>
 <a href=#260 id=260 data-nosnippet>260</a>    <span class="doccomment">/// Convert this into a mutable vector of the owned `T` type, cloning if necessary.
 <a href=#261 id=261 data-nosnippet>261</a>    ///
-<a href=#262 id=262 data-nosnippet>262</a>    ///
-<a href=#263 id=263 data-nosnippet>263</a>    /// # Example
-<a href=#264 id=264 data-nosnippet>264</a>    ///
-<a href=#265 id=265 data-nosnippet>265</a>    /// ```rust,ignore
-<a href=#266 id=266 data-nosnippet>266</a>    /// # use zerovec::VarZeroVec;
-<a href=#267 id=267 data-nosnippet>267</a>    /// let strings = vec!["foo", "bar", "baz", "quux"];
-<a href=#268 id=268 data-nosnippet>268</a>    /// let mut vec = VarZeroVec::&lt;str&gt;::from(&amp;strings);
-<a href=#269 id=269 data-nosnippet>269</a>    ///
-<a href=#270 id=270 data-nosnippet>270</a>    /// assert_eq!(vec.len(), 4);
-<a href=#271 id=271 data-nosnippet>271</a>    /// let mutvec = vec.make_mut();
-<a href=#272 id=272 data-nosnippet>272</a>    /// mutvec.push("lorem ipsum".into());
-<a href=#273 id=273 data-nosnippet>273</a>    /// mutvec[2] = "dolor sit".into();
-<a href=#274 id=274 data-nosnippet>274</a>    /// assert_eq!(&amp;vec[0], "foo");
-<a href=#275 id=275 data-nosnippet>275</a>    /// assert_eq!(&amp;vec[1], "bar");
-<a href=#276 id=276 data-nosnippet>276</a>    /// assert_eq!(&amp;vec[2], "dolor sit");
-<a href=#277 id=277 data-nosnippet>277</a>    /// assert_eq!(&amp;vec[3], "quux");
-<a href=#278 id=278 data-nosnippet>278</a>    /// assert_eq!(&amp;vec[4], "lorem ipsum");
-<a href=#279 id=279 data-nosnippet>279</a>    /// ```
-<a href=#280 id=280 data-nosnippet>280</a>    </span><span class="comment">//
-<a href=#281 id=281 data-nosnippet>281</a>    // This function is crate-public for now since we don't yet want to stabilize
-<a href=#282 id=282 data-nosnippet>282</a>    // the internal implementation details
-<a href=#283 id=283 data-nosnippet>283</a>    </span><span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
-<a href=#284 id=284 data-nosnippet>284</a>    </span><span class="kw">pub fn </span>make_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>VarZeroVecOwned&lt;T, F&gt; {
-<a href=#285 id=285 data-nosnippet>285</a>        <span class="kw">match </span><span class="self">self</span>.<span class="number">0 </span>{
-<a href=#286 id=286 data-nosnippet>286</a>            VarZeroVecInner::Owned(<span class="kw-2">ref mut </span>vec) =&gt; vec,
-<a href=#287 id=287 data-nosnippet>287</a>            VarZeroVecInner::Borrowed(slice) =&gt; {
-<a href=#288 id=288 data-nosnippet>288</a>                <span class="kw">let </span>new_self = VarZeroVecOwned::from_slice(slice);
-<a href=#289 id=289 data-nosnippet>289</a>                <span class="kw-2">*</span><span class="self">self </span>= new_self.into();
-<a href=#290 id=290 data-nosnippet>290</a>                <span class="comment">// recursion is limited since we are guaranteed to hit the Owned branch
-<a href=#291 id=291 data-nosnippet>291</a>                </span><span class="self">self</span>.make_mut()
-<a href=#292 id=292 data-nosnippet>292</a>            }
-<a href=#293 id=293 data-nosnippet>293</a>        }
-<a href=#294 id=294 data-nosnippet>294</a>    }
-<a href=#295 id=295 data-nosnippet>295</a>
-<a href=#296 id=296 data-nosnippet>296</a>    <span class="doccomment">/// Converts a borrowed ZeroVec to an owned ZeroVec. No-op if already owned.
-<a href=#297 id=297 data-nosnippet>297</a>    ///
-<a href=#298 id=298 data-nosnippet>298</a>    /// # Example
-<a href=#299 id=299 data-nosnippet>299</a>    ///
-<a href=#300 id=300 data-nosnippet>300</a>    /// ```
-<a href=#301 id=301 data-nosnippet>301</a>    /// # use zerovec::VarZeroVec;
+<a href=#262 id=262 data-nosnippet>262</a>    /// ✨ *Enabled with the `alloc` Cargo feature.*
+<a href=#263 id=263 data-nosnippet>263</a>    ///
+<a href=#264 id=264 data-nosnippet>264</a>    /// # Example
+<a href=#265 id=265 data-nosnippet>265</a>    ///
+<a href=#266 id=266 data-nosnippet>266</a>    /// ```rust,ignore
+<a href=#267 id=267 data-nosnippet>267</a>    /// # use zerovec::VarZeroVec;
+<a href=#268 id=268 data-nosnippet>268</a>    /// let strings = vec!["foo", "bar", "baz", "quux"];
+<a href=#269 id=269 data-nosnippet>269</a>    /// let mut vec = VarZeroVec::&lt;str&gt;::from(&amp;strings);
+<a href=#270 id=270 data-nosnippet>270</a>    ///
+<a href=#271 id=271 data-nosnippet>271</a>    /// assert_eq!(vec.len(), 4);
+<a href=#272 id=272 data-nosnippet>272</a>    /// let mutvec = vec.make_mut();
+<a href=#273 id=273 data-nosnippet>273</a>    /// mutvec.push("lorem ipsum".into());
+<a href=#274 id=274 data-nosnippet>274</a>    /// mutvec[2] = "dolor sit".into();
+<a href=#275 id=275 data-nosnippet>275</a>    /// assert_eq!(&amp;vec[0], "foo");
+<a href=#276 id=276 data-nosnippet>276</a>    /// assert_eq!(&amp;vec[1], "bar");
+<a href=#277 id=277 data-nosnippet>277</a>    /// assert_eq!(&amp;vec[2], "dolor sit");
+<a href=#278 id=278 data-nosnippet>278</a>    /// assert_eq!(&amp;vec[3], "quux");
+<a href=#279 id=279 data-nosnippet>279</a>    /// assert_eq!(&amp;vec[4], "lorem ipsum");
+<a href=#280 id=280 data-nosnippet>280</a>    /// ```
+<a href=#281 id=281 data-nosnippet>281</a>    </span><span class="comment">//
+<a href=#282 id=282 data-nosnippet>282</a>    // This function is crate-public for now since we don't yet want to stabilize
+<a href=#283 id=283 data-nosnippet>283</a>    // the internal implementation details
+<a href=#284 id=284 data-nosnippet>284</a>    </span><span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
+<a href=#285 id=285 data-nosnippet>285</a>    </span><span class="kw">pub fn </span>make_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>VarZeroVecOwned&lt;T, F&gt; {
+<a href=#286 id=286 data-nosnippet>286</a>        <span class="kw">match </span><span class="self">self</span>.<span class="number">0 </span>{
+<a href=#287 id=287 data-nosnippet>287</a>            VarZeroVecInner::Owned(<span class="kw-2">ref mut </span>vec) =&gt; vec,
+<a href=#288 id=288 data-nosnippet>288</a>            VarZeroVecInner::Borrowed(slice) =&gt; {
+<a href=#289 id=289 data-nosnippet>289</a>                <span class="kw">let </span>new_self = VarZeroVecOwned::from_slice(slice);
+<a href=#290 id=290 data-nosnippet>290</a>                <span class="kw-2">*</span><span class="self">self </span>= new_self.into();
+<a href=#291 id=291 data-nosnippet>291</a>                <span class="comment">// recursion is limited since we are guaranteed to hit the Owned branch
+<a href=#292 id=292 data-nosnippet>292</a>                </span><span class="self">self</span>.make_mut()
+<a href=#293 id=293 data-nosnippet>293</a>            }
+<a href=#294 id=294 data-nosnippet>294</a>        }
+<a href=#295 id=295 data-nosnippet>295</a>    }
+<a href=#296 id=296 data-nosnippet>296</a>
+<a href=#297 id=297 data-nosnippet>297</a>    <span class="doccomment">/// Converts a borrowed ZeroVec to an owned ZeroVec. No-op if already owned.
+<a href=#298 id=298 data-nosnippet>298</a>    ///
+<a href=#299 id=299 data-nosnippet>299</a>    /// ✨ *Enabled with the `alloc` Cargo feature.*
+<a href=#300 id=300 data-nosnippet>300</a>    ///
+<a href=#301 id=301 data-nosnippet>301</a>    /// # Example
 <a href=#302 id=302 data-nosnippet>302</a>    ///
-<a href=#303 id=303 data-nosnippet>303</a>    /// let strings = vec!["foo", "bar", "baz", "quux"];
-<a href=#304 id=304 data-nosnippet>304</a>    /// let vec = VarZeroVec::&lt;str&gt;::from(&amp;strings);
+<a href=#303 id=303 data-nosnippet>303</a>    /// ```
+<a href=#304 id=304 data-nosnippet>304</a>    /// # use zerovec::VarZeroVec;
 <a href=#305 id=305 data-nosnippet>305</a>    ///
-<a href=#306 id=306 data-nosnippet>306</a>    /// assert_eq!(vec.len(), 4);
-<a href=#307 id=307 data-nosnippet>307</a>    /// // has 'static lifetime
-<a href=#308 id=308 data-nosnippet>308</a>    /// let owned = vec.into_owned();
-<a href=#309 id=309 data-nosnippet>309</a>    /// ```
-<a href=#310 id=310 data-nosnippet>310</a>    </span><span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
-<a href=#311 id=311 data-nosnippet>311</a>    </span><span class="kw">pub fn </span>into_owned(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; VarZeroVec&lt;<span class="lifetime">'static</span>, T, F&gt; {
-<a href=#312 id=312 data-nosnippet>312</a>        <span class="self">self</span>.make_mut();
-<a href=#313 id=313 data-nosnippet>313</a>        <span class="kw">match </span><span class="self">self</span>.<span class="number">0 </span>{
-<a href=#314 id=314 data-nosnippet>314</a>            VarZeroVecInner::Owned(vec) =&gt; vec.into(),
-<a href=#315 id=315 data-nosnippet>315</a>            <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
-<a href=#316 id=316 data-nosnippet>316</a>        }
-<a href=#317 id=317 data-nosnippet>317</a>    }
-<a href=#318 id=318 data-nosnippet>318</a>
-<a href=#319 id=319 data-nosnippet>319</a>    <span class="doccomment">/// Obtain this `VarZeroVec` as a [`VarZeroSlice`]
-<a href=#320 id=320 data-nosnippet>320</a>    </span><span class="kw">pub fn </span>as_slice(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>VarZeroSlice&lt;T, F&gt; {
-<a href=#321 id=321 data-nosnippet>321</a>        <span class="kw">match </span><span class="self">self</span>.<span class="number">0 </span>{
-<a href=#322 id=322 data-nosnippet>322</a>            <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
-<a href=#323 id=323 data-nosnippet>323</a>            </span>VarZeroVecInner::Owned(<span class="kw-2">ref </span>owned) =&gt; owned,
-<a href=#324 id=324 data-nosnippet>324</a>            VarZeroVecInner::Borrowed(b) =&gt; b,
-<a href=#325 id=325 data-nosnippet>325</a>        }
-<a href=#326 id=326 data-nosnippet>326</a>    }
-<a href=#327 id=327 data-nosnippet>327</a>
-<a href=#328 id=328 data-nosnippet>328</a>    <span class="doccomment">/// Takes the byte vector representing the encoded data of this VarZeroVec. If borrowed,
-<a href=#329 id=329 data-nosnippet>329</a>    /// this function allocates a byte vector and copies the borrowed bytes into it.
-<a href=#330 id=330 data-nosnippet>330</a>    ///
-<a href=#331 id=331 data-nosnippet>331</a>    /// The bytes can be passed back to [`Self::parse_bytes()`].
-<a href=#332 id=332 data-nosnippet>332</a>    ///
-<a href=#333 id=333 data-nosnippet>333</a>    /// To get a reference to the bytes without moving, see [`VarZeroSlice::as_bytes()`].
-<a href=#334 id=334 data-nosnippet>334</a>    ///
-<a href=#335 id=335 data-nosnippet>335</a>    /// # Example
-<a href=#336 id=336 data-nosnippet>336</a>    ///
-<a href=#337 id=337 data-nosnippet>337</a>    /// ```rust
-<a href=#338 id=338 data-nosnippet>338</a>    /// # use zerovec::VarZeroVec;
+<a href=#306 id=306 data-nosnippet>306</a>    /// let strings = vec!["foo", "bar", "baz", "quux"];
+<a href=#307 id=307 data-nosnippet>307</a>    /// let vec = VarZeroVec::&lt;str&gt;::from(&amp;strings);
+<a href=#308 id=308 data-nosnippet>308</a>    ///
+<a href=#309 id=309 data-nosnippet>309</a>    /// assert_eq!(vec.len(), 4);
+<a href=#310 id=310 data-nosnippet>310</a>    /// // has 'static lifetime
+<a href=#311 id=311 data-nosnippet>311</a>    /// let owned = vec.into_owned();
+<a href=#312 id=312 data-nosnippet>312</a>    /// ```
+<a href=#313 id=313 data-nosnippet>313</a>    </span><span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
+<a href=#314 id=314 data-nosnippet>314</a>    </span><span class="kw">pub fn </span>into_owned(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; VarZeroVec&lt;<span class="lifetime">'static</span>, T, F&gt; {
+<a href=#315 id=315 data-nosnippet>315</a>        <span class="self">self</span>.make_mut();
+<a href=#316 id=316 data-nosnippet>316</a>        <span class="kw">match </span><span class="self">self</span>.<span class="number">0 </span>{
+<a href=#317 id=317 data-nosnippet>317</a>            VarZeroVecInner::Owned(vec) =&gt; vec.into(),
+<a href=#318 id=318 data-nosnippet>318</a>            <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
+<a href=#319 id=319 data-nosnippet>319</a>        }
+<a href=#320 id=320 data-nosnippet>320</a>    }
+<a href=#321 id=321 data-nosnippet>321</a>
+<a href=#322 id=322 data-nosnippet>322</a>    <span class="doccomment">/// Obtain this `VarZeroVec` as a [`VarZeroSlice`]
+<a href=#323 id=323 data-nosnippet>323</a>    </span><span class="kw">pub fn </span>as_slice(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>VarZeroSlice&lt;T, F&gt; {
+<a href=#324 id=324 data-nosnippet>324</a>        <span class="kw">match </span><span class="self">self</span>.<span class="number">0 </span>{
+<a href=#325 id=325 data-nosnippet>325</a>            <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
+<a href=#326 id=326 data-nosnippet>326</a>            </span>VarZeroVecInner::Owned(<span class="kw-2">ref </span>owned) =&gt; owned,
+<a href=#327 id=327 data-nosnippet>327</a>            VarZeroVecInner::Borrowed(b) =&gt; b,
+<a href=#328 id=328 data-nosnippet>328</a>        }
+<a href=#329 id=329 data-nosnippet>329</a>    }
+<a href=#330 id=330 data-nosnippet>330</a>
+<a href=#331 id=331 data-nosnippet>331</a>    <span class="doccomment">/// Takes the byte vector representing the encoded data of this VarZeroVec. If borrowed,
+<a href=#332 id=332 data-nosnippet>332</a>    /// this function allocates a byte vector and copies the borrowed bytes into it.
+<a href=#333 id=333 data-nosnippet>333</a>    ///
+<a href=#334 id=334 data-nosnippet>334</a>    /// The bytes can be passed back to [`Self::parse_bytes()`].
+<a href=#335 id=335 data-nosnippet>335</a>    ///
+<a href=#336 id=336 data-nosnippet>336</a>    /// To get a reference to the bytes without moving, see [`VarZeroSlice::as_bytes()`].
+<a href=#337 id=337 data-nosnippet>337</a>    ///
+<a href=#338 id=338 data-nosnippet>338</a>    /// ✨ *Enabled with the `alloc` Cargo feature.*
 <a href=#339 id=339 data-nosnippet>339</a>    ///
-<a href=#340 id=340 data-nosnippet>340</a>    /// let strings = vec!["foo", "bar", "baz"];
-<a href=#341 id=341 data-nosnippet>341</a>    /// let bytes = VarZeroVec::&lt;str&gt;::from(&amp;strings).into_bytes();
-<a href=#342 id=342 data-nosnippet>342</a>    ///
-<a href=#343 id=343 data-nosnippet>343</a>    /// let mut borrowed: VarZeroVec&lt;str&gt; =
-<a href=#344 id=344 data-nosnippet>344</a>    ///     VarZeroVec::parse_bytes(&amp;bytes).unwrap();
-<a href=#345 id=345 data-nosnippet>345</a>    /// assert_eq!(borrowed, &amp;*strings);
-<a href=#346 id=346 data-nosnippet>346</a>    /// ```
-<a href=#347 id=347 data-nosnippet>347</a>    </span><span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
-<a href=#348 id=348 data-nosnippet>348</a>    </span><span class="kw">pub fn </span>into_bytes(<span class="self">self</span>) -&gt; alloc::vec::Vec&lt;u8&gt; {
-<a href=#349 id=349 data-nosnippet>349</a>        <span class="kw">match </span><span class="self">self</span>.<span class="number">0 </span>{
-<a href=#350 id=350 data-nosnippet>350</a>            <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
-<a href=#351 id=351 data-nosnippet>351</a>            </span>VarZeroVecInner::Owned(vec) =&gt; vec.into_bytes(),
-<a href=#352 id=352 data-nosnippet>352</a>            VarZeroVecInner::Borrowed(vec) =&gt; vec.as_bytes().to_vec(),
-<a href=#353 id=353 data-nosnippet>353</a>        }
-<a href=#354 id=354 data-nosnippet>354</a>    }
-<a href=#355 id=355 data-nosnippet>355</a>
-<a href=#356 id=356 data-nosnippet>356</a>    <span class="doccomment">/// Return whether the [`VarZeroVec`] is operating on owned or borrowed
-<a href=#357 id=357 data-nosnippet>357</a>    /// data. [`VarZeroVec::into_owned()`] and [`VarZeroVec::make_mut()`] can
-<a href=#358 id=358 data-nosnippet>358</a>    /// be used to force it into an owned type
-<a href=#359 id=359 data-nosnippet>359</a>    </span><span class="kw">pub fn </span>is_owned(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-<a href=#360 id=360 data-nosnippet>360</a>        <span class="kw">match </span><span class="self">self</span>.<span class="number">0 </span>{
-<a href=#361 id=361 data-nosnippet>361</a>            <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
-<a href=#362 id=362 data-nosnippet>362</a>            </span>VarZeroVecInner::Owned(..) =&gt; <span class="bool-val">true</span>,
-<a href=#363 id=363 data-nosnippet>363</a>            VarZeroVecInner::Borrowed(..) =&gt; <span class="bool-val">false</span>,
-<a href=#364 id=364 data-nosnippet>364</a>        }
-<a href=#365 id=365 data-nosnippet>365</a>    }
-<a href=#366 id=366 data-nosnippet>366</a>
-<a href=#367 id=367 data-nosnippet>367</a>    <span class="attr">#[doc(hidden)]
-<a href=#368 id=368 data-nosnippet>368</a>    </span><span class="kw">pub fn </span>as_components&lt;<span class="lifetime">'b</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'b </span><span class="self">self</span>) -&gt; VarZeroVecComponents&lt;<span class="lifetime">'b</span>, T, F&gt; {
-<a href=#369 id=369 data-nosnippet>369</a>        <span class="self">self</span>.as_slice().as_components()
-<a href=#370 id=370 data-nosnippet>370</a>    }
-<a href=#371 id=371 data-nosnippet>371</a>}
-<a href=#372 id=372 data-nosnippet>372</a>
-<a href=#373 id=373 data-nosnippet>373</a><span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
-<a href=#374 id=374 data-nosnippet>374</a></span><span class="kw">impl</span>&lt;A, T, F&gt; From&lt;<span class="kw-2">&amp;</span>alloc::vec::Vec&lt;A&gt;&gt; <span class="kw">for </span>VarZeroVec&lt;<span class="lifetime">'static</span>, T, F&gt;
-<a href=#375 id=375 data-nosnippet>375</a><span class="kw">where
-<a href=#376 id=376 data-nosnippet>376</a>    </span>T: VarULE + <span class="question-mark">?</span>Sized,
-<a href=#377 id=377 data-nosnippet>377</a>    A: EncodeAsVarULE&lt;T&gt;,
-<a href=#378 id=378 data-nosnippet>378</a>    F: VarZeroVecFormat,
-<a href=#379 id=379 data-nosnippet>379</a>{
-<a href=#380 id=380 data-nosnippet>380</a>    <span class="attr">#[inline]
-<a href=#381 id=381 data-nosnippet>381</a>    </span><span class="kw">fn </span>from(elements: <span class="kw-2">&amp;</span>alloc::vec::Vec&lt;A&gt;) -&gt; <span class="self">Self </span>{
-<a href=#382 id=382 data-nosnippet>382</a>        <span class="self">Self</span>::from(elements.as_slice())
-<a href=#383 id=383 data-nosnippet>383</a>    }
-<a href=#384 id=384 data-nosnippet>384</a>}
-<a href=#385 id=385 data-nosnippet>385</a>
-<a href=#386 id=386 data-nosnippet>386</a><span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
-<a href=#387 id=387 data-nosnippet>387</a></span><span class="kw">impl</span>&lt;A, T, F&gt; From&lt;<span class="kw-2">&amp;</span>[A]&gt; <span class="kw">for </span>VarZeroVec&lt;<span class="lifetime">'static</span>, T, F&gt;
-<a href=#388 id=388 data-nosnippet>388</a><span class="kw">where
-<a href=#389 id=389 data-nosnippet>389</a>    </span>T: VarULE + <span class="question-mark">?</span>Sized,
-<a href=#390 id=390 data-nosnippet>390</a>    A: EncodeAsVarULE&lt;T&gt;,
-<a href=#391 id=391 data-nosnippet>391</a>    F: VarZeroVecFormat,
-<a href=#392 id=392 data-nosnippet>392</a>{
-<a href=#393 id=393 data-nosnippet>393</a>    <span class="attr">#[inline]
-<a href=#394 id=394 data-nosnippet>394</a>    </span><span class="kw">fn </span>from(elements: <span class="kw-2">&amp;</span>[A]) -&gt; <span class="self">Self </span>{
-<a href=#395 id=395 data-nosnippet>395</a>        <span class="kw">if </span>elements.is_empty() {
-<a href=#396 id=396 data-nosnippet>396</a>            VarZeroSlice::new_empty().into()
-<a href=#397 id=397 data-nosnippet>397</a>        } <span class="kw">else </span>{
-<a href=#398 id=398 data-nosnippet>398</a>            <span class="attr">#[expect(clippy::unwrap_used)] </span><span class="comment">// TODO(#1410) Better story for fallibility
-<a href=#399 id=399 data-nosnippet>399</a>            </span>VarZeroVecOwned::try_from_elements(elements).unwrap().into()
-<a href=#400 id=400 data-nosnippet>400</a>        }
-<a href=#401 id=401 data-nosnippet>401</a>    }
-<a href=#402 id=402 data-nosnippet>402</a>}
-<a href=#403 id=403 data-nosnippet>403</a>
-<a href=#404 id=404 data-nosnippet>404</a><span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
-<a href=#405 id=405 data-nosnippet>405</a></span><span class="kw">impl</span>&lt;A, T, F, <span class="kw">const </span>N: usize&gt; From&lt;<span class="kw-2">&amp;</span>[A; N]&gt; <span class="kw">for </span>VarZeroVec&lt;<span class="lifetime">'static</span>, T, F&gt;
-<a href=#406 id=406 data-nosnippet>406</a><span class="kw">where
-<a href=#407 id=407 data-nosnippet>407</a>    </span>T: VarULE + <span class="question-mark">?</span>Sized,
-<a href=#408 id=408 data-nosnippet>408</a>    A: EncodeAsVarULE&lt;T&gt;,
-<a href=#409 id=409 data-nosnippet>409</a>    F: VarZeroVecFormat,
-<a href=#410 id=410 data-nosnippet>410</a>{
-<a href=#411 id=411 data-nosnippet>411</a>    <span class="attr">#[inline]
-<a href=#412 id=412 data-nosnippet>412</a>    </span><span class="kw">fn </span>from(elements: <span class="kw-2">&amp;</span>[A; N]) -&gt; <span class="self">Self </span>{
-<a href=#413 id=413 data-nosnippet>413</a>        <span class="self">Self</span>::from(elements.as_slice())
-<a href=#414 id=414 data-nosnippet>414</a>    }
-<a href=#415 id=415 data-nosnippet>415</a>}
-<a href=#416 id=416 data-nosnippet>416</a>
-<a href=#417 id=417 data-nosnippet>417</a><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, <span class="lifetime">'b</span>, T, F&gt; PartialEq&lt;VarZeroVec&lt;<span class="lifetime">'b</span>, T, F&gt;&gt; <span class="kw">for </span>VarZeroVec&lt;<span class="lifetime">'a</span>, T, F&gt;
-<a href=#418 id=418 data-nosnippet>418</a><span class="kw">where
-<a href=#419 id=419 data-nosnippet>419</a>    </span>T: VarULE,
-<a href=#420 id=420 data-nosnippet>420</a>    T: <span class="question-mark">?</span>Sized,
-<a href=#421 id=421 data-nosnippet>421</a>    T: PartialEq,
-<a href=#422 id=422 data-nosnippet>422</a>    F: VarZeroVecFormat,
-<a href=#423 id=423 data-nosnippet>423</a>{
-<a href=#424 id=424 data-nosnippet>424</a>    <span class="attr">#[inline]
-<a href=#425 id=425 data-nosnippet>425</a>    </span><span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>VarZeroVec&lt;<span class="lifetime">'b</span>, T, F&gt;) -&gt; bool {
-<a href=#426 id=426 data-nosnippet>426</a>        <span class="comment">// VZV::from_elements used to produce a non-canonical representation of the
-<a href=#427 id=427 data-nosnippet>427</a>        // empty VZV, so we cannot use byte equality for empty vecs.
-<a href=#428 id=428 data-nosnippet>428</a>        </span><span class="kw">if </span><span class="self">self</span>.is_empty() || other.is_empty() {
-<a href=#429 id=429 data-nosnippet>429</a>            <span class="kw">return </span><span class="self">self</span>.is_empty() &amp;&amp; other.is_empty();
-<a href=#430 id=430 data-nosnippet>430</a>        }
-<a href=#431 id=431 data-nosnippet>431</a>        <span class="comment">// VarULE has an API guarantee that byte equality is semantic equality.
-<a href=#432 id=432 data-nosnippet>432</a>        // For non-empty VZVs, there's only a single metadata representation,
-<a href=#433 id=433 data-nosnippet>433</a>        // so this guarantee extends to the whole VZV representation.
-<a href=#434 id=434 data-nosnippet>434</a>        </span><span class="self">self</span>.as_bytes().eq(other.as_bytes())
-<a href=#435 id=435 data-nosnippet>435</a>    }
-<a href=#436 id=436 data-nosnippet>436</a>}
-<a href=#437 id=437 data-nosnippet>437</a>
-<a href=#438 id=438 data-nosnippet>438</a><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T, F&gt; Eq <span class="kw">for </span>VarZeroVec&lt;<span class="lifetime">'a</span>, T, F&gt;
-<a href=#439 id=439 data-nosnippet>439</a><span class="kw">where
-<a href=#440 id=440 data-nosnippet>440</a>    </span>T: VarULE,
-<a href=#441 id=441 data-nosnippet>441</a>    T: <span class="question-mark">?</span>Sized,
-<a href=#442 id=442 data-nosnippet>442</a>    T: Eq,
-<a href=#443 id=443 data-nosnippet>443</a>    F: VarZeroVecFormat,
-<a href=#444 id=444 data-nosnippet>444</a>{
-<a href=#445 id=445 data-nosnippet>445</a>}
-<a href=#446 id=446 data-nosnippet>446</a>
-<a href=#447 id=447 data-nosnippet>447</a><span class="kw">impl</span>&lt;T, A, F&gt; PartialEq&lt;<span class="kw-2">&amp;</span><span class="lifetime">'_ </span>[A]&gt; <span class="kw">for </span>VarZeroVec&lt;<span class="lifetime">'_</span>, T, F&gt;
-<a href=#448 id=448 data-nosnippet>448</a><span class="kw">where
-<a href=#449 id=449 data-nosnippet>449</a>    </span>T: VarULE + <span class="question-mark">?</span>Sized,
-<a href=#450 id=450 data-nosnippet>450</a>    T: PartialEq,
-<a href=#451 id=451 data-nosnippet>451</a>    A: AsRef&lt;T&gt;,
-<a href=#452 id=452 data-nosnippet>452</a>    F: VarZeroVecFormat,
-<a href=#453 id=453 data-nosnippet>453</a>{
-<a href=#454 id=454 data-nosnippet>454</a>    <span class="attr">#[inline]
-<a href=#455 id=455 data-nosnippet>455</a>    </span><span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: &amp;&amp;[A]) -&gt; bool {
-<a href=#456 id=456 data-nosnippet>456</a>        <span class="self">self</span>.iter().eq(other.iter().map(|t| t.as_ref()))
-<a href=#457 id=457 data-nosnippet>457</a>    }
-<a href=#458 id=458 data-nosnippet>458</a>}
-<a href=#459 id=459 data-nosnippet>459</a>
-<a href=#460 id=460 data-nosnippet>460</a><span class="kw">impl</span>&lt;T, A, F, <span class="kw">const </span>N: usize&gt; PartialEq&lt;[A; N]&gt; <span class="kw">for </span>VarZeroVec&lt;<span class="lifetime">'_</span>, T, F&gt;
-<a href=#461 id=461 data-nosnippet>461</a><span class="kw">where
-<a href=#462 id=462 data-nosnippet>462</a>    </span>T: VarULE + <span class="question-mark">?</span>Sized,
-<a href=#463 id=463 data-nosnippet>463</a>    T: PartialEq,
-<a href=#464 id=464 data-nosnippet>464</a>    A: AsRef&lt;T&gt;,
-<a href=#465 id=465 data-nosnippet>465</a>    F: VarZeroVecFormat,
-<a href=#466 id=466 data-nosnippet>466</a>{
-<a href=#467 id=467 data-nosnippet>467</a>    <span class="attr">#[inline]
-<a href=#468 id=468 data-nosnippet>468</a>    </span><span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>[A; N]) -&gt; bool {
-<a href=#469 id=469 data-nosnippet>469</a>        <span class="self">self</span>.iter().eq(other.iter().map(|t| t.as_ref()))
-<a href=#470 id=470 data-nosnippet>470</a>    }
-<a href=#471 id=471 data-nosnippet>471</a>}
-<a href=#472 id=472 data-nosnippet>472</a>
-<a href=#473 id=473 data-nosnippet>473</a><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T: VarULE + <span class="question-mark">?</span>Sized + PartialOrd, F: VarZeroVecFormat&gt; PartialOrd <span class="kw">for </span>VarZeroVec&lt;<span class="lifetime">'a</span>, T, F&gt; {
-<a href=#474 id=474 data-nosnippet>474</a>    <span class="kw">fn </span>partial_cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Ordering&gt; {
-<a href=#475 id=475 data-nosnippet>475</a>        <span class="self">self</span>.iter().partial_cmp(other.iter())
-<a href=#476 id=476 data-nosnippet>476</a>    }
-<a href=#477 id=477 data-nosnippet>477</a>}
-<a href=#478 id=478 data-nosnippet>478</a>
-<a href=#479 id=479 data-nosnippet>479</a><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T: VarULE + <span class="question-mark">?</span>Sized + Ord, F: VarZeroVecFormat&gt; Ord <span class="kw">for </span>VarZeroVec&lt;<span class="lifetime">'a</span>, T, F&gt; {
-<a href=#480 id=480 data-nosnippet>480</a>    <span class="kw">fn </span>cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; Ordering {
-<a href=#481 id=481 data-nosnippet>481</a>        <span class="self">self</span>.iter().cmp(other.iter())
-<a href=#482 id=482 data-nosnippet>482</a>    }
-<a href=#483 id=483 data-nosnippet>483</a>}
-<a href=#484 id=484 data-nosnippet>484</a>
-<a href=#485 id=485 data-nosnippet>485</a><span class="attr">#[test]
-<a href=#486 id=486 data-nosnippet>486</a></span><span class="kw">fn </span>assert_single_empty_representation() {
-<a href=#487 id=487 data-nosnippet>487</a>    <span class="macro">assert_eq!</span>(
-<a href=#488 id=488 data-nosnippet>488</a>        VarZeroVec::&lt;str&gt;::new().as_bytes(),
-<a href=#489 id=489 data-nosnippet>489</a>        VarZeroVec::&lt;str&gt;::from(<span class="kw-2">&amp;</span>[] <span class="kw">as </span><span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]).as_bytes()
-<a href=#490 id=490 data-nosnippet>490</a>    );
-<a href=#491 id=491 data-nosnippet>491</a>
-<a href=#492 id=492 data-nosnippet>492</a>    <span class="kw">use </span><span class="kw">crate</span>::map::MutableZeroVecLike;
-<a href=#493 id=493 data-nosnippet>493</a>    <span class="kw">let </span><span class="kw-2">mut </span>vzv = VarZeroVec::&lt;str&gt;::from(<span class="kw-2">&amp;</span>[<span class="string">"hello"</span>, <span class="string">"world"</span>][..]);
-<a href=#494 id=494 data-nosnippet>494</a>    <span class="macro">assert_eq!</span>(vzv.len(), <span class="number">2</span>);
-<a href=#495 id=495 data-nosnippet>495</a>    <span class="macro">assert!</span>(!vzv.as_bytes().is_empty());
-<a href=#496 id=496 data-nosnippet>496</a>    vzv.zvl_remove(<span class="number">0</span>);
-<a href=#497 id=497 data-nosnippet>497</a>    <span class="macro">assert_eq!</span>(vzv.len(), <span class="number">1</span>);
-<a href=#498 id=498 data-nosnippet>498</a>    <span class="macro">assert!</span>(!vzv.as_bytes().is_empty());
-<a href=#499 id=499 data-nosnippet>499</a>    vzv.zvl_remove(<span class="number">0</span>);
-<a href=#500 id=500 data-nosnippet>500</a>    <span class="macro">assert_eq!</span>(vzv.len(), <span class="number">0</span>);
-<a href=#501 id=501 data-nosnippet>501</a>    <span class="macro">assert!</span>(vzv.as_bytes().is_empty());
-<a href=#502 id=502 data-nosnippet>502</a>    vzv.zvl_insert(<span class="number">0</span>, <span class="string">"something"</span>);
-<a href=#503 id=503 data-nosnippet>503</a>    <span class="macro">assert_eq!</span>(vzv.len(), <span class="number">1</span>);
-<a href=#504 id=504 data-nosnippet>504</a>    <span class="macro">assert!</span>(!vzv.as_bytes().is_empty());
-<a href=#505 id=505 data-nosnippet>505</a>}
-<a href=#506 id=506 data-nosnippet>506</a>
-<a href=#507 id=507 data-nosnippet>507</a><span class="attr">#[test]
-<a href=#508 id=508 data-nosnippet>508</a></span><span class="kw">fn </span>weird_empty_representation_equality() {
-<a href=#509 id=509 data-nosnippet>509</a>    <span class="macro">assert_eq!</span>(
-<a href=#510 id=510 data-nosnippet>510</a>        VarZeroVec::&lt;str&gt;::parse_bytes(<span class="kw-2">&amp;</span>[<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>]).unwrap(),
-<a href=#511 id=511 data-nosnippet>511</a>        VarZeroVec::&lt;str&gt;::parse_bytes(<span class="kw-2">&amp;</span>[]).unwrap()
-<a href=#512 id=512 data-nosnippet>512</a>    );
-<a href=#513 id=513 data-nosnippet>513</a>}</code></pre></div></section></main></body></html>
+<a href=#340 id=340 data-nosnippet>340</a>    /// # Example
+<a href=#341 id=341 data-nosnippet>341</a>    ///
+<a href=#342 id=342 data-nosnippet>342</a>    /// ```rust
+<a href=#343 id=343 data-nosnippet>343</a>    /// # use zerovec::VarZeroVec;
+<a href=#344 id=344 data-nosnippet>344</a>    ///
+<a href=#345 id=345 data-nosnippet>345</a>    /// let strings = vec!["foo", "bar", "baz"];
+<a href=#346 id=346 data-nosnippet>346</a>    /// let bytes = VarZeroVec::&lt;str&gt;::from(&amp;strings).into_bytes();
+<a href=#347 id=347 data-nosnippet>347</a>    ///
+<a href=#348 id=348 data-nosnippet>348</a>    /// let mut borrowed: VarZeroVec&lt;str&gt; =
+<a href=#349 id=349 data-nosnippet>349</a>    ///     VarZeroVec::parse_bytes(&amp;bytes).unwrap();
+<a href=#350 id=350 data-nosnippet>350</a>    /// assert_eq!(borrowed, &amp;*strings);
+<a href=#351 id=351 data-nosnippet>351</a>    /// ```
+<a href=#352 id=352 data-nosnippet>352</a>    </span><span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
+<a href=#353 id=353 data-nosnippet>353</a>    </span><span class="kw">pub fn </span>into_bytes(<span class="self">self</span>) -&gt; alloc::vec::Vec&lt;u8&gt; {
+<a href=#354 id=354 data-nosnippet>354</a>        <span class="kw">match </span><span class="self">self</span>.<span class="number">0 </span>{
+<a href=#355 id=355 data-nosnippet>355</a>            VarZeroVecInner::Owned(vec) =&gt; vec.into_bytes(),
+<a href=#356 id=356 data-nosnippet>356</a>            VarZeroVecInner::Borrowed(vec) =&gt; vec.as_bytes().to_vec(),
+<a href=#357 id=357 data-nosnippet>357</a>        }
+<a href=#358 id=358 data-nosnippet>358</a>    }
+<a href=#359 id=359 data-nosnippet>359</a>
+<a href=#360 id=360 data-nosnippet>360</a>    <span class="doccomment">/// Return whether the [`VarZeroVec`] is operating on owned or borrowed
+<a href=#361 id=361 data-nosnippet>361</a>    /// data. [`VarZeroVec::into_owned()`] and [`VarZeroVec::make_mut()`] can
+<a href=#362 id=362 data-nosnippet>362</a>    /// be used to force it into an owned type
+<a href=#363 id=363 data-nosnippet>363</a>    </span><span class="kw">pub fn </span>is_owned(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+<a href=#364 id=364 data-nosnippet>364</a>        <span class="kw">match </span><span class="self">self</span>.<span class="number">0 </span>{
+<a href=#365 id=365 data-nosnippet>365</a>            <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
+<a href=#366 id=366 data-nosnippet>366</a>            </span>VarZeroVecInner::Owned(..) =&gt; <span class="bool-val">true</span>,
+<a href=#367 id=367 data-nosnippet>367</a>            VarZeroVecInner::Borrowed(..) =&gt; <span class="bool-val">false</span>,
+<a href=#368 id=368 data-nosnippet>368</a>        }
+<a href=#369 id=369 data-nosnippet>369</a>    }
+<a href=#370 id=370 data-nosnippet>370</a>
+<a href=#371 id=371 data-nosnippet>371</a>    <span class="attr">#[doc(hidden)]
+<a href=#372 id=372 data-nosnippet>372</a>    </span><span class="kw">pub fn </span>as_components&lt;<span class="lifetime">'b</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'b </span><span class="self">self</span>) -&gt; VarZeroVecComponents&lt;<span class="lifetime">'b</span>, T, F&gt; {
+<a href=#373 id=373 data-nosnippet>373</a>        <span class="self">self</span>.as_slice().as_components()
+<a href=#374 id=374 data-nosnippet>374</a>    }
+<a href=#375 id=375 data-nosnippet>375</a>}
+<a href=#376 id=376 data-nosnippet>376</a>
+<a href=#377 id=377 data-nosnippet>377</a><span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
+<a href=#378 id=378 data-nosnippet>378</a></span><span class="kw">impl</span>&lt;A, T, F&gt; From&lt;<span class="kw-2">&amp;</span>alloc::vec::Vec&lt;A&gt;&gt; <span class="kw">for </span>VarZeroVec&lt;<span class="lifetime">'static</span>, T, F&gt;
+<a href=#379 id=379 data-nosnippet>379</a><span class="kw">where
+<a href=#380 id=380 data-nosnippet>380</a>    </span>T: VarULE + <span class="question-mark">?</span>Sized,
+<a href=#381 id=381 data-nosnippet>381</a>    A: EncodeAsVarULE&lt;T&gt;,
+<a href=#382 id=382 data-nosnippet>382</a>    F: VarZeroVecFormat,
+<a href=#383 id=383 data-nosnippet>383</a>{
+<a href=#384 id=384 data-nosnippet>384</a>    <span class="attr">#[inline]
+<a href=#385 id=385 data-nosnippet>385</a>    </span><span class="kw">fn </span>from(elements: <span class="kw-2">&amp;</span>alloc::vec::Vec&lt;A&gt;) -&gt; <span class="self">Self </span>{
+<a href=#386 id=386 data-nosnippet>386</a>        <span class="self">Self</span>::from(elements.as_slice())
+<a href=#387 id=387 data-nosnippet>387</a>    }
+<a href=#388 id=388 data-nosnippet>388</a>}
+<a href=#389 id=389 data-nosnippet>389</a>
+<a href=#390 id=390 data-nosnippet>390</a><span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
+<a href=#391 id=391 data-nosnippet>391</a></span><span class="kw">impl</span>&lt;A, T, F&gt; From&lt;<span class="kw-2">&amp;</span>[A]&gt; <span class="kw">for </span>VarZeroVec&lt;<span class="lifetime">'static</span>, T, F&gt;
+<a href=#392 id=392 data-nosnippet>392</a><span class="kw">where
+<a href=#393 id=393 data-nosnippet>393</a>    </span>T: VarULE + <span class="question-mark">?</span>Sized,
+<a href=#394 id=394 data-nosnippet>394</a>    A: EncodeAsVarULE&lt;T&gt;,
+<a href=#395 id=395 data-nosnippet>395</a>    F: VarZeroVecFormat,
+<a href=#396 id=396 data-nosnippet>396</a>{
+<a href=#397 id=397 data-nosnippet>397</a>    <span class="attr">#[inline]
+<a href=#398 id=398 data-nosnippet>398</a>    </span><span class="kw">fn </span>from(elements: <span class="kw-2">&amp;</span>[A]) -&gt; <span class="self">Self </span>{
+<a href=#399 id=399 data-nosnippet>399</a>        <span class="kw">if </span>elements.is_empty() {
+<a href=#400 id=400 data-nosnippet>400</a>            VarZeroSlice::new_empty().into()
+<a href=#401 id=401 data-nosnippet>401</a>        } <span class="kw">else </span>{
+<a href=#402 id=402 data-nosnippet>402</a>            <span class="attr">#[expect(clippy::unwrap_used)] </span><span class="comment">// TODO(#1410) Better story for fallibility
+<a href=#403 id=403 data-nosnippet>403</a>            </span>VarZeroVecOwned::try_from_elements(elements).unwrap().into()
+<a href=#404 id=404 data-nosnippet>404</a>        }
+<a href=#405 id=405 data-nosnippet>405</a>    }
+<a href=#406 id=406 data-nosnippet>406</a>}
+<a href=#407 id=407 data-nosnippet>407</a>
+<a href=#408 id=408 data-nosnippet>408</a><span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
+<a href=#409 id=409 data-nosnippet>409</a></span><span class="kw">impl</span>&lt;A, T, F, <span class="kw">const </span>N: usize&gt; From&lt;<span class="kw-2">&amp;</span>[A; N]&gt; <span class="kw">for </span>VarZeroVec&lt;<span class="lifetime">'static</span>, T, F&gt;
+<a href=#410 id=410 data-nosnippet>410</a><span class="kw">where
+<a href=#411 id=411 data-nosnippet>411</a>    </span>T: VarULE + <span class="question-mark">?</span>Sized,
+<a href=#412 id=412 data-nosnippet>412</a>    A: EncodeAsVarULE&lt;T&gt;,
+<a href=#413 id=413 data-nosnippet>413</a>    F: VarZeroVecFormat,
+<a href=#414 id=414 data-nosnippet>414</a>{
+<a href=#415 id=415 data-nosnippet>415</a>    <span class="attr">#[inline]
+<a href=#416 id=416 data-nosnippet>416</a>    </span><span class="kw">fn </span>from(elements: <span class="kw-2">&amp;</span>[A; N]) -&gt; <span class="self">Self </span>{
+<a href=#417 id=417 data-nosnippet>417</a>        <span class="self">Self</span>::from(elements.as_slice())
+<a href=#418 id=418 data-nosnippet>418</a>    }
+<a href=#419 id=419 data-nosnippet>419</a>}
+<a href=#420 id=420 data-nosnippet>420</a>
+<a href=#421 id=421 data-nosnippet>421</a><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, <span class="lifetime">'b</span>, T, F&gt; PartialEq&lt;VarZeroVec&lt;<span class="lifetime">'b</span>, T, F&gt;&gt; <span class="kw">for </span>VarZeroVec&lt;<span class="lifetime">'a</span>, T, F&gt;
+<a href=#422 id=422 data-nosnippet>422</a><span class="kw">where
+<a href=#423 id=423 data-nosnippet>423</a>    </span>T: VarULE,
+<a href=#424 id=424 data-nosnippet>424</a>    T: <span class="question-mark">?</span>Sized,
+<a href=#425 id=425 data-nosnippet>425</a>    T: PartialEq,
+<a href=#426 id=426 data-nosnippet>426</a>    F: VarZeroVecFormat,
+<a href=#427 id=427 data-nosnippet>427</a>{
+<a href=#428 id=428 data-nosnippet>428</a>    <span class="attr">#[inline]
+<a href=#429 id=429 data-nosnippet>429</a>    </span><span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>VarZeroVec&lt;<span class="lifetime">'b</span>, T, F&gt;) -&gt; bool {
+<a href=#430 id=430 data-nosnippet>430</a>        <span class="comment">// VZV::from_elements used to produce a non-canonical representation of the
+<a href=#431 id=431 data-nosnippet>431</a>        // empty VZV, so we cannot use byte equality for empty vecs.
+<a href=#432 id=432 data-nosnippet>432</a>        </span><span class="kw">if </span><span class="self">self</span>.is_empty() || other.is_empty() {
+<a href=#433 id=433 data-nosnippet>433</a>            <span class="kw">return </span><span class="self">self</span>.is_empty() &amp;&amp; other.is_empty();
+<a href=#434 id=434 data-nosnippet>434</a>        }
+<a href=#435 id=435 data-nosnippet>435</a>        <span class="comment">// VarULE has an API guarantee that byte equality is semantic equality.
+<a href=#436 id=436 data-nosnippet>436</a>        // For non-empty VZVs, there's only a single metadata representation,
+<a href=#437 id=437 data-nosnippet>437</a>        // so this guarantee extends to the whole VZV representation.
+<a href=#438 id=438 data-nosnippet>438</a>        </span><span class="self">self</span>.as_bytes().eq(other.as_bytes())
+<a href=#439 id=439 data-nosnippet>439</a>    }
+<a href=#440 id=440 data-nosnippet>440</a>}
+<a href=#441 id=441 data-nosnippet>441</a>
+<a href=#442 id=442 data-nosnippet>442</a><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T, F&gt; Eq <span class="kw">for </span>VarZeroVec&lt;<span class="lifetime">'a</span>, T, F&gt;
+<a href=#443 id=443 data-nosnippet>443</a><span class="kw">where
+<a href=#444 id=444 data-nosnippet>444</a>    </span>T: VarULE,
+<a href=#445 id=445 data-nosnippet>445</a>    T: <span class="question-mark">?</span>Sized,
+<a href=#446 id=446 data-nosnippet>446</a>    T: Eq,
+<a href=#447 id=447 data-nosnippet>447</a>    F: VarZeroVecFormat,
+<a href=#448 id=448 data-nosnippet>448</a>{
+<a href=#449 id=449 data-nosnippet>449</a>}
+<a href=#450 id=450 data-nosnippet>450</a>
+<a href=#451 id=451 data-nosnippet>451</a><span class="kw">impl</span>&lt;T, A, F&gt; PartialEq&lt;<span class="kw-2">&amp;</span><span class="lifetime">'_ </span>[A]&gt; <span class="kw">for </span>VarZeroVec&lt;<span class="lifetime">'_</span>, T, F&gt;
+<a href=#452 id=452 data-nosnippet>452</a><span class="kw">where
+<a href=#453 id=453 data-nosnippet>453</a>    </span>T: VarULE + <span class="question-mark">?</span>Sized,
+<a href=#454 id=454 data-nosnippet>454</a>    T: PartialEq,
+<a href=#455 id=455 data-nosnippet>455</a>    A: AsRef&lt;T&gt;,
+<a href=#456 id=456 data-nosnippet>456</a>    F: VarZeroVecFormat,
+<a href=#457 id=457 data-nosnippet>457</a>{
+<a href=#458 id=458 data-nosnippet>458</a>    <span class="attr">#[inline]
+<a href=#459 id=459 data-nosnippet>459</a>    </span><span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: &amp;&amp;[A]) -&gt; bool {
+<a href=#460 id=460 data-nosnippet>460</a>        <span class="self">self</span>.iter().eq(other.iter().map(|t| t.as_ref()))
+<a href=#461 id=461 data-nosnippet>461</a>    }
+<a href=#462 id=462 data-nosnippet>462</a>}
+<a href=#463 id=463 data-nosnippet>463</a>
+<a href=#464 id=464 data-nosnippet>464</a><span class="kw">impl</span>&lt;T, A, F, <span class="kw">const </span>N: usize&gt; PartialEq&lt;[A; N]&gt; <span class="kw">for </span>VarZeroVec&lt;<span class="lifetime">'_</span>, T, F&gt;
+<a href=#465 id=465 data-nosnippet>465</a><span class="kw">where
+<a href=#466 id=466 data-nosnippet>466</a>    </span>T: VarULE + <span class="question-mark">?</span>Sized,
+<a href=#467 id=467 data-nosnippet>467</a>    T: PartialEq,
+<a href=#468 id=468 data-nosnippet>468</a>    A: AsRef&lt;T&gt;,
+<a href=#469 id=469 data-nosnippet>469</a>    F: VarZeroVecFormat,
+<a href=#470 id=470 data-nosnippet>470</a>{
+<a href=#471 id=471 data-nosnippet>471</a>    <span class="attr">#[inline]
+<a href=#472 id=472 data-nosnippet>472</a>    </span><span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>[A; N]) -&gt; bool {
+<a href=#473 id=473 data-nosnippet>473</a>        <span class="self">self</span>.iter().eq(other.iter().map(|t| t.as_ref()))
+<a href=#474 id=474 data-nosnippet>474</a>    }
+<a href=#475 id=475 data-nosnippet>475</a>}
+<a href=#476 id=476 data-nosnippet>476</a>
+<a href=#477 id=477 data-nosnippet>477</a><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T: VarULE + <span class="question-mark">?</span>Sized + PartialOrd, F: VarZeroVecFormat&gt; PartialOrd <span class="kw">for </span>VarZeroVec&lt;<span class="lifetime">'a</span>, T, F&gt; {
+<a href=#478 id=478 data-nosnippet>478</a>    <span class="kw">fn </span>partial_cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Ordering&gt; {
+<a href=#479 id=479 data-nosnippet>479</a>        <span class="self">self</span>.iter().partial_cmp(other.iter())
+<a href=#480 id=480 data-nosnippet>480</a>    }
+<a href=#481 id=481 data-nosnippet>481</a>}
+<a href=#482 id=482 data-nosnippet>482</a>
+<a href=#483 id=483 data-nosnippet>483</a><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T: VarULE + <span class="question-mark">?</span>Sized + Ord, F: VarZeroVecFormat&gt; Ord <span class="kw">for </span>VarZeroVec&lt;<span class="lifetime">'a</span>, T, F&gt; {
+<a href=#484 id=484 data-nosnippet>484</a>    <span class="kw">fn </span>cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; Ordering {
+<a href=#485 id=485 data-nosnippet>485</a>        <span class="self">self</span>.iter().cmp(other.iter())
+<a href=#486 id=486 data-nosnippet>486</a>    }
+<a href=#487 id=487 data-nosnippet>487</a>}
+<a href=#488 id=488 data-nosnippet>488</a>
+<a href=#489 id=489 data-nosnippet>489</a><span class="attr">#[test]
+<a href=#490 id=490 data-nosnippet>490</a></span><span class="kw">fn </span>assert_single_empty_representation() {
+<a href=#491 id=491 data-nosnippet>491</a>    <span class="macro">assert_eq!</span>(
+<a href=#492 id=492 data-nosnippet>492</a>        VarZeroVec::&lt;str&gt;::new().as_bytes(),
+<a href=#493 id=493 data-nosnippet>493</a>        VarZeroVec::&lt;str&gt;::from(<span class="kw-2">&amp;</span>[] <span class="kw">as </span><span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]).as_bytes()
+<a href=#494 id=494 data-nosnippet>494</a>    );
+<a href=#495 id=495 data-nosnippet>495</a>
+<a href=#496 id=496 data-nosnippet>496</a>    <span class="kw">use </span><span class="kw">crate</span>::map::MutableZeroVecLike;
+<a href=#497 id=497 data-nosnippet>497</a>    <span class="kw">let </span><span class="kw-2">mut </span>vzv = VarZeroVec::&lt;str&gt;::from(<span class="kw-2">&amp;</span>[<span class="string">"hello"</span>, <span class="string">"world"</span>][..]);
+<a href=#498 id=498 data-nosnippet>498</a>    <span class="macro">assert_eq!</span>(vzv.len(), <span class="number">2</span>);
+<a href=#499 id=499 data-nosnippet>499</a>    <span class="macro">assert!</span>(!vzv.as_bytes().is_empty());
+<a href=#500 id=500 data-nosnippet>500</a>    vzv.zvl_remove(<span class="number">0</span>);
+<a href=#501 id=501 data-nosnippet>501</a>    <span class="macro">assert_eq!</span>(vzv.len(), <span class="number">1</span>);
+<a href=#502 id=502 data-nosnippet>502</a>    <span class="macro">assert!</span>(!vzv.as_bytes().is_empty());
+<a href=#503 id=503 data-nosnippet>503</a>    vzv.zvl_remove(<span class="number">0</span>);
+<a href=#504 id=504 data-nosnippet>504</a>    <span class="macro">assert_eq!</span>(vzv.len(), <span class="number">0</span>);
+<a href=#505 id=505 data-nosnippet>505</a>    <span class="macro">assert!</span>(vzv.as_bytes().is_empty());
+<a href=#506 id=506 data-nosnippet>506</a>    vzv.zvl_insert(<span class="number">0</span>, <span class="string">"something"</span>);
+<a href=#507 id=507 data-nosnippet>507</a>    <span class="macro">assert_eq!</span>(vzv.len(), <span class="number">1</span>);
+<a href=#508 id=508 data-nosnippet>508</a>    <span class="macro">assert!</span>(!vzv.as_bytes().is_empty());
+<a href=#509 id=509 data-nosnippet>509</a>}
+<a href=#510 id=510 data-nosnippet>510</a>
+<a href=#511 id=511 data-nosnippet>511</a><span class="attr">#[test]
+<a href=#512 id=512 data-nosnippet>512</a></span><span class="kw">fn </span>weird_empty_representation_equality() {
+<a href=#513 id=513 data-nosnippet>513</a>    <span class="macro">assert_eq!</span>(
+<a href=#514 id=514 data-nosnippet>514</a>        VarZeroVec::&lt;str&gt;::parse_bytes(<span class="kw-2">&amp;</span>[<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>]).unwrap(),
+<a href=#515 id=515 data-nosnippet>515</a>        VarZeroVec::&lt;str&gt;::parse_bytes(<span class="kw-2">&amp;</span>[]).unwrap()
+<a href=#516 id=516 data-nosnippet>516</a>    );
+<a href=#517 id=517 data-nosnippet>517</a>}</code></pre></div></section></main></body></html>

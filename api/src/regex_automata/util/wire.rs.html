@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-automata-0.4.10/src/util/wire.rs`."><title>wire.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.90.0-nightly (35f603652 2025-06-29)" data-channel="nightly" data-search-js="search-179e01a3.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-4e99c027.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-340f468f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">regex_automata/util/</div>wire.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/*!
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-automata-0.4.13/src/util/wire.rs`."><title>wire.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.90.0-nightly (35f603652 2025-06-29)" data-channel="nightly" data-search-js="search-179e01a3.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-4e99c027.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-340f468f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">regex_automata/util/</div>wire.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/*!
 <a href=#2 id=2 data-nosnippet>2</a>Types and routines that support the wire format of finite automata.
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a>Currently, this module just exports a few error types and some small helpers
@@ -219,736 +219,729 @@
 <a href=#219 id=219 data-nosnippet>219</a>        <span class="kw">use </span><span class="self">self</span>::DeserializeErrorKind::<span class="kw-2">*</span>;
 <a href=#220 id=220 data-nosnippet>220</a>
 <a href=#221 id=221 data-nosnippet>221</a>        <span class="kw">match </span><span class="self">self</span>.<span class="number">0 </span>{
-<a href=#222 id=222 data-nosnippet>222</a>            Generic { msg } =&gt; <span class="macro">write!</span>(f, <span class="string">"{}"</span>, msg),
+<a href=#222 id=222 data-nosnippet>222</a>            Generic { msg } =&gt; <span class="macro">write!</span>(f, <span class="string">"{msg}"</span>),
 <a href=#223 id=223 data-nosnippet>223</a>            BufferTooSmall { what } =&gt; {
-<a href=#224 id=224 data-nosnippet>224</a>                <span class="macro">write!</span>(f, <span class="string">"buffer is too small to read {}"</span>, what)
+<a href=#224 id=224 data-nosnippet>224</a>                <span class="macro">write!</span>(f, <span class="string">"buffer is too small to read {what}"</span>)
 <a href=#225 id=225 data-nosnippet>225</a>            }
 <a href=#226 id=226 data-nosnippet>226</a>            InvalidUsize { what } =&gt; {
-<a href=#227 id=227 data-nosnippet>227</a>                <span class="macro">write!</span>(f, <span class="string">"{} is too big to fit in a usize"</span>, what)
+<a href=#227 id=227 data-nosnippet>227</a>                <span class="macro">write!</span>(f, <span class="string">"{what} is too big to fit in a usize"</span>)
 <a href=#228 id=228 data-nosnippet>228</a>            }
 <a href=#229 id=229 data-nosnippet>229</a>            VersionMismatch { expected, found } =&gt; <span class="macro">write!</span>(
 <a href=#230 id=230 data-nosnippet>230</a>                f,
 <a href=#231 id=231 data-nosnippet>231</a>                <span class="string">"unsupported version: \
-<a href=#232 id=232 data-nosnippet>232</a>                 expected version {} but found version {}"</span>,
-<a href=#233 id=233 data-nosnippet>233</a>                expected, found,
-<a href=#234 id=234 data-nosnippet>234</a>            ),
-<a href=#235 id=235 data-nosnippet>235</a>            EndianMismatch { expected, found } =&gt; <span class="macro">write!</span>(
-<a href=#236 id=236 data-nosnippet>236</a>                f,
-<a href=#237 id=237 data-nosnippet>237</a>                <span class="string">"endianness mismatch: expected 0x{:X} but got 0x{:X}. \
-<a href=#238 id=238 data-nosnippet>238</a>                 (Are you trying to load an object serialized with a \
-<a href=#239 id=239 data-nosnippet>239</a>                 different endianness?)"</span>,
-<a href=#240 id=240 data-nosnippet>240</a>                expected, found,
-<a href=#241 id=241 data-nosnippet>241</a>            ),
-<a href=#242 id=242 data-nosnippet>242</a>            AlignmentMismatch { alignment, address } =&gt; <span class="macro">write!</span>(
-<a href=#243 id=243 data-nosnippet>243</a>                f,
-<a href=#244 id=244 data-nosnippet>244</a>                <span class="string">"alignment mismatch: slice starts at address \
-<a href=#245 id=245 data-nosnippet>245</a>                 0x{:X}, which is not aligned to a {} byte boundary"</span>,
-<a href=#246 id=246 data-nosnippet>246</a>                address, alignment,
-<a href=#247 id=247 data-nosnippet>247</a>            ),
-<a href=#248 id=248 data-nosnippet>248</a>            LabelMismatch { expected } =&gt; <span class="macro">write!</span>(
-<a href=#249 id=249 data-nosnippet>249</a>                f,
-<a href=#250 id=250 data-nosnippet>250</a>                <span class="string">"label mismatch: start of serialized object should \
-<a href=#251 id=251 data-nosnippet>251</a>                 contain a NUL terminated {:?} label, but a different \
-<a href=#252 id=252 data-nosnippet>252</a>                 label was found"</span>,
-<a href=#253 id=253 data-nosnippet>253</a>                expected,
-<a href=#254 id=254 data-nosnippet>254</a>            ),
-<a href=#255 id=255 data-nosnippet>255</a>            ArithmeticOverflow { what } =&gt; {
-<a href=#256 id=256 data-nosnippet>256</a>                <span class="macro">write!</span>(f, <span class="string">"arithmetic overflow for {}"</span>, what)
-<a href=#257 id=257 data-nosnippet>257</a>            }
-<a href=#258 id=258 data-nosnippet>258</a>            PatternID { <span class="kw-2">ref </span>err, what } =&gt; {
-<a href=#259 id=259 data-nosnippet>259</a>                <span class="macro">write!</span>(f, <span class="string">"failed to read pattern ID for {}: {}"</span>, what, err)
-<a href=#260 id=260 data-nosnippet>260</a>            }
-<a href=#261 id=261 data-nosnippet>261</a>            StateID { <span class="kw-2">ref </span>err, what } =&gt; {
-<a href=#262 id=262 data-nosnippet>262</a>                <span class="macro">write!</span>(f, <span class="string">"failed to read state ID for {}: {}"</span>, what, err)
-<a href=#263 id=263 data-nosnippet>263</a>            }
-<a href=#264 id=264 data-nosnippet>264</a>        }
-<a href=#265 id=265 data-nosnippet>265</a>    }
-<a href=#266 id=266 data-nosnippet>266</a>}
-<a href=#267 id=267 data-nosnippet>267</a>
-<a href=#268 id=268 data-nosnippet>268</a><span class="doccomment">/// Safely converts a `&amp;[u32]` to `&amp;[StateID]` with zero cost.
-<a href=#269 id=269 data-nosnippet>269</a></span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
-<a href=#270 id=270 data-nosnippet>270</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>u32s_to_state_ids(slice: <span class="kw-2">&amp;</span>[u32]) -&gt; <span class="kw-2">&amp;</span>[StateID] {
-<a href=#271 id=271 data-nosnippet>271</a>    <span class="comment">// SAFETY: This is safe because StateID is defined to have the same memory
-<a href=#272 id=272 data-nosnippet>272</a>    // representation as a u32 (it is repr(transparent)). While not every u32
-<a href=#273 id=273 data-nosnippet>273</a>    // is a "valid" StateID, callers are not permitted to rely on the validity
-<a href=#274 id=274 data-nosnippet>274</a>    // of StateIDs for memory safety. It can only lead to logical errors. (This
-<a href=#275 id=275 data-nosnippet>275</a>    // is why StateID::new_unchecked is safe.)
-<a href=#276 id=276 data-nosnippet>276</a>    </span><span class="kw">unsafe </span>{
-<a href=#277 id=277 data-nosnippet>277</a>        core::slice::from_raw_parts(
-<a href=#278 id=278 data-nosnippet>278</a>            slice.as_ptr().cast::&lt;StateID&gt;(),
-<a href=#279 id=279 data-nosnippet>279</a>            slice.len(),
-<a href=#280 id=280 data-nosnippet>280</a>        )
-<a href=#281 id=281 data-nosnippet>281</a>    }
-<a href=#282 id=282 data-nosnippet>282</a>}
-<a href=#283 id=283 data-nosnippet>283</a>
-<a href=#284 id=284 data-nosnippet>284</a><span class="doccomment">/// Safely converts a `&amp;mut [u32]` to `&amp;mut [StateID]` with zero cost.
-<a href=#285 id=285 data-nosnippet>285</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>u32s_to_state_ids_mut(slice: <span class="kw-2">&amp;mut </span>[u32]) -&gt; <span class="kw-2">&amp;mut </span>[StateID] {
-<a href=#286 id=286 data-nosnippet>286</a>    <span class="comment">// SAFETY: This is safe because StateID is defined to have the same memory
-<a href=#287 id=287 data-nosnippet>287</a>    // representation as a u32 (it is repr(transparent)). While not every u32
-<a href=#288 id=288 data-nosnippet>288</a>    // is a "valid" StateID, callers are not permitted to rely on the validity
-<a href=#289 id=289 data-nosnippet>289</a>    // of StateIDs for memory safety. It can only lead to logical errors. (This
-<a href=#290 id=290 data-nosnippet>290</a>    // is why StateID::new_unchecked is safe.)
-<a href=#291 id=291 data-nosnippet>291</a>    </span><span class="kw">unsafe </span>{
-<a href=#292 id=292 data-nosnippet>292</a>        core::slice::from_raw_parts_mut(
-<a href=#293 id=293 data-nosnippet>293</a>            slice.as_mut_ptr().cast::&lt;StateID&gt;(),
-<a href=#294 id=294 data-nosnippet>294</a>            slice.len(),
-<a href=#295 id=295 data-nosnippet>295</a>        )
-<a href=#296 id=296 data-nosnippet>296</a>    }
-<a href=#297 id=297 data-nosnippet>297</a>}
-<a href=#298 id=298 data-nosnippet>298</a>
-<a href=#299 id=299 data-nosnippet>299</a><span class="doccomment">/// Safely converts a `&amp;[u32]` to `&amp;[PatternID]` with zero cost.
-<a href=#300 id=300 data-nosnippet>300</a></span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
-<a href=#301 id=301 data-nosnippet>301</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>u32s_to_pattern_ids(slice: <span class="kw-2">&amp;</span>[u32]) -&gt; <span class="kw-2">&amp;</span>[PatternID] {
-<a href=#302 id=302 data-nosnippet>302</a>    <span class="comment">// SAFETY: This is safe because PatternID is defined to have the same
-<a href=#303 id=303 data-nosnippet>303</a>    // memory representation as a u32 (it is repr(transparent)). While not
-<a href=#304 id=304 data-nosnippet>304</a>    // every u32 is a "valid" PatternID, callers are not permitted to rely
-<a href=#305 id=305 data-nosnippet>305</a>    // on the validity of PatternIDs for memory safety. It can only lead to
-<a href=#306 id=306 data-nosnippet>306</a>    // logical errors. (This is why PatternID::new_unchecked is safe.)
-<a href=#307 id=307 data-nosnippet>307</a>    </span><span class="kw">unsafe </span>{
-<a href=#308 id=308 data-nosnippet>308</a>        core::slice::from_raw_parts(
-<a href=#309 id=309 data-nosnippet>309</a>            slice.as_ptr().cast::&lt;PatternID&gt;(),
-<a href=#310 id=310 data-nosnippet>310</a>            slice.len(),
-<a href=#311 id=311 data-nosnippet>311</a>        )
-<a href=#312 id=312 data-nosnippet>312</a>    }
-<a href=#313 id=313 data-nosnippet>313</a>}
-<a href=#314 id=314 data-nosnippet>314</a>
-<a href=#315 id=315 data-nosnippet>315</a><span class="doccomment">/// Checks that the given slice has an alignment that matches `T`.
-<a href=#316 id=316 data-nosnippet>316</a>///
-<a href=#317 id=317 data-nosnippet>317</a>/// This is useful for checking that a slice has an appropriate alignment
-<a href=#318 id=318 data-nosnippet>318</a>/// before casting it to a &amp;[T]. Note though that alignment is not itself
-<a href=#319 id=319 data-nosnippet>319</a>/// sufficient to perform the cast for any `T`.
-<a href=#320 id=320 data-nosnippet>320</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>check_alignment&lt;T&gt;(
-<a href=#321 id=321 data-nosnippet>321</a>    slice: <span class="kw-2">&amp;</span>[u8],
-<a href=#322 id=322 data-nosnippet>322</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(), DeserializeError&gt; {
-<a href=#323 id=323 data-nosnippet>323</a>    <span class="kw">let </span>alignment = core::mem::align_of::&lt;T&gt;();
-<a href=#324 id=324 data-nosnippet>324</a>    <span class="kw">let </span>address = slice.as_ptr().as_usize();
-<a href=#325 id=325 data-nosnippet>325</a>    <span class="kw">if </span>address % alignment == <span class="number">0 </span>{
-<a href=#326 id=326 data-nosnippet>326</a>        <span class="kw">return </span><span class="prelude-val">Ok</span>(());
-<a href=#327 id=327 data-nosnippet>327</a>    }
-<a href=#328 id=328 data-nosnippet>328</a>    <span class="prelude-val">Err</span>(DeserializeError::alignment_mismatch(alignment, address))
-<a href=#329 id=329 data-nosnippet>329</a>}
-<a href=#330 id=330 data-nosnippet>330</a>
-<a href=#331 id=331 data-nosnippet>331</a><span class="doccomment">/// Reads a possibly empty amount of padding, up to 7 bytes, from the beginning
-<a href=#332 id=332 data-nosnippet>332</a>/// of the given slice. All padding bytes must be NUL bytes.
-<a href=#333 id=333 data-nosnippet>333</a>///
-<a href=#334 id=334 data-nosnippet>334</a>/// This is useful because it can be theoretically necessary to pad the
-<a href=#335 id=335 data-nosnippet>335</a>/// beginning of a serialized object with NUL bytes to ensure that it starts
-<a href=#336 id=336 data-nosnippet>336</a>/// at a correctly aligned address. These padding bytes should come immediately
-<a href=#337 id=337 data-nosnippet>337</a>/// before the label.
-<a href=#338 id=338 data-nosnippet>338</a>///
-<a href=#339 id=339 data-nosnippet>339</a>/// This returns the number of bytes read from the given slice.
-<a href=#340 id=340 data-nosnippet>340</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>skip_initial_padding(slice: <span class="kw-2">&amp;</span>[u8]) -&gt; usize {
-<a href=#341 id=341 data-nosnippet>341</a>    <span class="kw">let </span><span class="kw-2">mut </span>nread = <span class="number">0</span>;
-<a href=#342 id=342 data-nosnippet>342</a>    <span class="kw">while </span>nread &lt; <span class="number">7 </span>&amp;&amp; nread &lt; slice.len() &amp;&amp; slice[nread] == <span class="number">0 </span>{
-<a href=#343 id=343 data-nosnippet>343</a>        nread += <span class="number">1</span>;
-<a href=#344 id=344 data-nosnippet>344</a>    }
-<a href=#345 id=345 data-nosnippet>345</a>    nread
-<a href=#346 id=346 data-nosnippet>346</a>}
-<a href=#347 id=347 data-nosnippet>347</a>
-<a href=#348 id=348 data-nosnippet>348</a><span class="doccomment">/// Allocate a byte buffer of the given size, along with some initial padding
-<a href=#349 id=349 data-nosnippet>349</a>/// such that `buf[padding..]` has the same alignment as `T`, where the
-<a href=#350 id=350 data-nosnippet>350</a>/// alignment of `T` must be at most `8`. In particular, callers should treat
-<a href=#351 id=351 data-nosnippet>351</a>/// the first N bytes (second return value) as padding bytes that must not be
-<a href=#352 id=352 data-nosnippet>352</a>/// overwritten. In all cases, the following identity holds:
-<a href=#353 id=353 data-nosnippet>353</a>///
-<a href=#354 id=354 data-nosnippet>354</a>/// ```ignore
-<a href=#355 id=355 data-nosnippet>355</a>/// let (buf, padding) = alloc_aligned_buffer::&lt;StateID&gt;(SIZE);
-<a href=#356 id=356 data-nosnippet>356</a>/// assert_eq!(SIZE, buf[padding..].len());
-<a href=#357 id=357 data-nosnippet>357</a>/// ```
-<a href=#358 id=358 data-nosnippet>358</a>///
-<a href=#359 id=359 data-nosnippet>359</a>/// In practice, padding is often zero.
-<a href=#360 id=360 data-nosnippet>360</a>///
-<a href=#361 id=361 data-nosnippet>361</a>/// The requirement for `8` as a maximum here is somewhat arbitrary. In
-<a href=#362 id=362 data-nosnippet>362</a>/// practice, we never need anything bigger in this crate, and so this function
-<a href=#363 id=363 data-nosnippet>363</a>/// does some sanity asserts under the assumption of a max alignment of `8`.
-<a href=#364 id=364 data-nosnippet>364</a></span><span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
-<a href=#365 id=365 data-nosnippet>365</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>alloc_aligned_buffer&lt;T&gt;(size: usize) -&gt; (Vec&lt;u8&gt;, usize) {
-<a href=#366 id=366 data-nosnippet>366</a>    <span class="comment">// NOTE: This is a kludge because there's no easy way to allocate a Vec&lt;u8&gt;
-<a href=#367 id=367 data-nosnippet>367</a>    // with an alignment guaranteed to be greater than 1. We could create a
-<a href=#368 id=368 data-nosnippet>368</a>    // Vec&lt;u32&gt;, but this cannot be safely transmuted to a Vec&lt;u8&gt; without
-<a href=#369 id=369 data-nosnippet>369</a>    // concern, since reallocing or dropping the Vec&lt;u8&gt; is UB (different
-<a href=#370 id=370 data-nosnippet>370</a>    // alignment than the initial allocation). We could define a wrapper type
-<a href=#371 id=371 data-nosnippet>371</a>    // to manage this for us, but it seems like more machinery than it's worth.
-<a href=#372 id=372 data-nosnippet>372</a>    </span><span class="kw">let </span>buf = <span class="macro">vec!</span>[<span class="number">0</span>; size];
-<a href=#373 id=373 data-nosnippet>373</a>    <span class="kw">let </span>align = core::mem::align_of::&lt;T&gt;();
-<a href=#374 id=374 data-nosnippet>374</a>    <span class="kw">let </span>address = buf.as_ptr().as_usize();
-<a href=#375 id=375 data-nosnippet>375</a>    <span class="kw">if </span>address % align == <span class="number">0 </span>{
-<a href=#376 id=376 data-nosnippet>376</a>        <span class="kw">return </span>(buf, <span class="number">0</span>);
-<a href=#377 id=377 data-nosnippet>377</a>    }
-<a href=#378 id=378 data-nosnippet>378</a>    <span class="comment">// Let's try this again. We have to create a totally new alloc with
-<a href=#379 id=379 data-nosnippet>379</a>    // the maximum amount of bytes we might need. We can't just extend our
-<a href=#380 id=380 data-nosnippet>380</a>    // pre-existing 'buf' because that might create a new alloc with a
-<a href=#381 id=381 data-nosnippet>381</a>    // different alignment.
-<a href=#382 id=382 data-nosnippet>382</a>    </span><span class="kw">let </span>extra = align - <span class="number">1</span>;
-<a href=#383 id=383 data-nosnippet>383</a>    <span class="kw">let </span><span class="kw-2">mut </span>buf = <span class="macro">vec!</span>[<span class="number">0</span>; size + extra];
-<a href=#384 id=384 data-nosnippet>384</a>    <span class="kw">let </span>address = buf.as_ptr().as_usize();
-<a href=#385 id=385 data-nosnippet>385</a>    <span class="comment">// The code below handles the case where 'address' is aligned to T, so if
-<a href=#386 id=386 data-nosnippet>386</a>    // we got lucky and 'address' is now aligned to T (when it previously
-<a href=#387 id=387 data-nosnippet>387</a>    // wasn't), then we're done.
-<a href=#388 id=388 data-nosnippet>388</a>    </span><span class="kw">if </span>address % align == <span class="number">0 </span>{
-<a href=#389 id=389 data-nosnippet>389</a>        buf.truncate(size);
-<a href=#390 id=390 data-nosnippet>390</a>        <span class="kw">return </span>(buf, <span class="number">0</span>);
-<a href=#391 id=391 data-nosnippet>391</a>    }
-<a href=#392 id=392 data-nosnippet>392</a>    <span class="kw">let </span>padding = ((address &amp; !(align - <span class="number">1</span>)).checked_add(align).unwrap())
-<a href=#393 id=393 data-nosnippet>393</a>        .checked_sub(address)
-<a href=#394 id=394 data-nosnippet>394</a>        .unwrap();
-<a href=#395 id=395 data-nosnippet>395</a>    <span class="macro">assert!</span>(padding &lt;= <span class="number">7</span>, <span class="string">"padding of {} is bigger than 7"</span>, padding);
-<a href=#396 id=396 data-nosnippet>396</a>    <span class="macro">assert!</span>(
-<a href=#397 id=397 data-nosnippet>397</a>        padding &lt;= extra,
-<a href=#398 id=398 data-nosnippet>398</a>        <span class="string">"padding of {} is bigger than extra {} bytes"</span>,
-<a href=#399 id=399 data-nosnippet>399</a>        padding,
-<a href=#400 id=400 data-nosnippet>400</a>        extra
-<a href=#401 id=401 data-nosnippet>401</a>    );
-<a href=#402 id=402 data-nosnippet>402</a>    buf.truncate(size + padding);
-<a href=#403 id=403 data-nosnippet>403</a>    <span class="macro">assert_eq!</span>(size + padding, buf.len());
-<a href=#404 id=404 data-nosnippet>404</a>    <span class="macro">assert_eq!</span>(
-<a href=#405 id=405 data-nosnippet>405</a>        <span class="number">0</span>,
-<a href=#406 id=406 data-nosnippet>406</a>        buf[padding..].as_ptr().as_usize() % align,
-<a href=#407 id=407 data-nosnippet>407</a>        <span class="string">"expected end of initial padding to be aligned to {}"</span>,
-<a href=#408 id=408 data-nosnippet>408</a>        align,
-<a href=#409 id=409 data-nosnippet>409</a>    );
-<a href=#410 id=410 data-nosnippet>410</a>    (buf, padding)
-<a href=#411 id=411 data-nosnippet>411</a>}
-<a href=#412 id=412 data-nosnippet>412</a>
-<a href=#413 id=413 data-nosnippet>413</a><span class="doccomment">/// Reads a NUL terminated label starting at the beginning of the given slice.
-<a href=#414 id=414 data-nosnippet>414</a>///
-<a href=#415 id=415 data-nosnippet>415</a>/// If a NUL terminated label could not be found, then an error is returned.
-<a href=#416 id=416 data-nosnippet>416</a>/// Similarly, if a label is found but doesn't match the expected label, then
-<a href=#417 id=417 data-nosnippet>417</a>/// an error is returned.
-<a href=#418 id=418 data-nosnippet>418</a>///
-<a href=#419 id=419 data-nosnippet>419</a>/// Upon success, the total number of bytes read (including padding bytes) is
-<a href=#420 id=420 data-nosnippet>420</a>/// returned.
-<a href=#421 id=421 data-nosnippet>421</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>read_label(
-<a href=#422 id=422 data-nosnippet>422</a>    slice: <span class="kw-2">&amp;</span>[u8],
-<a href=#423 id=423 data-nosnippet>423</a>    expected_label: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
-<a href=#424 id=424 data-nosnippet>424</a>) -&gt; <span class="prelude-ty">Result</span>&lt;usize, DeserializeError&gt; {
-<a href=#425 id=425 data-nosnippet>425</a>    <span class="comment">// Set an upper bound on how many bytes we scan for a NUL. Since no label
-<a href=#426 id=426 data-nosnippet>426</a>    // in this crate is longer than 256 bytes, if we can't find one within that
-<a href=#427 id=427 data-nosnippet>427</a>    // range, then we have corrupted data.
-<a href=#428 id=428 data-nosnippet>428</a>    </span><span class="kw">let </span>first_nul =
-<a href=#429 id=429 data-nosnippet>429</a>        slice[..cmp::min(slice.len(), <span class="number">256</span>)].iter().position(|<span class="kw-2">&amp;</span>b| b == <span class="number">0</span>);
-<a href=#430 id=430 data-nosnippet>430</a>    <span class="kw">let </span>first_nul = <span class="kw">match </span>first_nul {
-<a href=#431 id=431 data-nosnippet>431</a>        <span class="prelude-val">Some</span>(first_nul) =&gt; first_nul,
-<a href=#432 id=432 data-nosnippet>432</a>        <span class="prelude-val">None </span>=&gt; {
-<a href=#433 id=433 data-nosnippet>433</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeError::generic(
-<a href=#434 id=434 data-nosnippet>434</a>                <span class="string">"could not find NUL terminated label \
-<a href=#435 id=435 data-nosnippet>435</a>                 at start of serialized object"</span>,
-<a href=#436 id=436 data-nosnippet>436</a>            ));
-<a href=#437 id=437 data-nosnippet>437</a>        }
-<a href=#438 id=438 data-nosnippet>438</a>    };
-<a href=#439 id=439 data-nosnippet>439</a>    <span class="kw">let </span>len = first_nul + padding_len(first_nul);
-<a href=#440 id=440 data-nosnippet>440</a>    <span class="kw">if </span>slice.len() &lt; len {
-<a href=#441 id=441 data-nosnippet>441</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeError::generic(
-<a href=#442 id=442 data-nosnippet>442</a>            <span class="string">"could not find properly sized label at start of serialized object"
-<a href=#443 id=443 data-nosnippet>443</a>        </span>));
-<a href=#444 id=444 data-nosnippet>444</a>    }
-<a href=#445 id=445 data-nosnippet>445</a>    <span class="kw">if </span>expected_label.as_bytes() != <span class="kw-2">&amp;</span>slice[..first_nul] {
-<a href=#446 id=446 data-nosnippet>446</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeError::label_mismatch(expected_label));
-<a href=#447 id=447 data-nosnippet>447</a>    }
-<a href=#448 id=448 data-nosnippet>448</a>    <span class="prelude-val">Ok</span>(len)
-<a href=#449 id=449 data-nosnippet>449</a>}
-<a href=#450 id=450 data-nosnippet>450</a>
-<a href=#451 id=451 data-nosnippet>451</a><span class="doccomment">/// Writes the given label to the buffer as a NUL terminated string. The label
-<a href=#452 id=452 data-nosnippet>452</a>/// given must not contain NUL, otherwise this will panic. Similarly, the label
-<a href=#453 id=453 data-nosnippet>453</a>/// must not be longer than 255 bytes, otherwise this will panic.
-<a href=#454 id=454 data-nosnippet>454</a>///
-<a href=#455 id=455 data-nosnippet>455</a>/// Additional NUL bytes are written as necessary to ensure that the number of
-<a href=#456 id=456 data-nosnippet>456</a>/// bytes written is always a multiple of 4.
-<a href=#457 id=457 data-nosnippet>457</a>///
-<a href=#458 id=458 data-nosnippet>458</a>/// Upon success, the total number of bytes written (including padding) is
-<a href=#459 id=459 data-nosnippet>459</a>/// returned.
-<a href=#460 id=460 data-nosnippet>460</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>write_label(
-<a href=#461 id=461 data-nosnippet>461</a>    label: <span class="kw-2">&amp;</span>str,
-<a href=#462 id=462 data-nosnippet>462</a>    dst: <span class="kw-2">&amp;mut </span>[u8],
-<a href=#463 id=463 data-nosnippet>463</a>) -&gt; <span class="prelude-ty">Result</span>&lt;usize, SerializeError&gt; {
-<a href=#464 id=464 data-nosnippet>464</a>    <span class="kw">let </span>nwrite = write_label_len(label);
-<a href=#465 id=465 data-nosnippet>465</a>    <span class="kw">if </span>dst.len() &lt; nwrite {
-<a href=#466 id=466 data-nosnippet>466</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(SerializeError::buffer_too_small(<span class="string">"label"</span>));
-<a href=#467 id=467 data-nosnippet>467</a>    }
-<a href=#468 id=468 data-nosnippet>468</a>    dst[..label.len()].copy_from_slice(label.as_bytes());
-<a href=#469 id=469 data-nosnippet>469</a>    <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..(nwrite - label.len()) {
-<a href=#470 id=470 data-nosnippet>470</a>        dst[label.len() + i] = <span class="number">0</span>;
-<a href=#471 id=471 data-nosnippet>471</a>    }
-<a href=#472 id=472 data-nosnippet>472</a>    <span class="macro">assert_eq!</span>(nwrite % <span class="number">4</span>, <span class="number">0</span>);
-<a href=#473 id=473 data-nosnippet>473</a>    <span class="prelude-val">Ok</span>(nwrite)
-<a href=#474 id=474 data-nosnippet>474</a>}
-<a href=#475 id=475 data-nosnippet>475</a>
-<a href=#476 id=476 data-nosnippet>476</a><span class="doccomment">/// Returns the total number of bytes (including padding) that would be written
-<a href=#477 id=477 data-nosnippet>477</a>/// for the given label. This panics if the given label contains a NUL byte or
-<a href=#478 id=478 data-nosnippet>478</a>/// is longer than 255 bytes. (The size restriction exists so that searching
-<a href=#479 id=479 data-nosnippet>479</a>/// for a label during deserialization can be done in small bounded space.)
-<a href=#480 id=480 data-nosnippet>480</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>write_label_len(label: <span class="kw-2">&amp;</span>str) -&gt; usize {
-<a href=#481 id=481 data-nosnippet>481</a>    <span class="macro">assert!</span>(label.len() &lt;= <span class="number">255</span>, <span class="string">"label must not be longer than 255 bytes"</span>);
-<a href=#482 id=482 data-nosnippet>482</a>    <span class="macro">assert!</span>(label.bytes().all(|b| b != <span class="number">0</span>), <span class="string">"label must not contain NUL bytes"</span>);
-<a href=#483 id=483 data-nosnippet>483</a>    <span class="kw">let </span>label_len = label.len() + <span class="number">1</span>; <span class="comment">// +1 for the NUL terminator
-<a href=#484 id=484 data-nosnippet>484</a>    </span>label_len + padding_len(label_len)
-<a href=#485 id=485 data-nosnippet>485</a>}
-<a href=#486 id=486 data-nosnippet>486</a>
-<a href=#487 id=487 data-nosnippet>487</a><span class="doccomment">/// Reads the endianness check from the beginning of the given slice and
-<a href=#488 id=488 data-nosnippet>488</a>/// confirms that the endianness of the serialized object matches the expected
-<a href=#489 id=489 data-nosnippet>489</a>/// endianness. If the slice is too small or if the endianness check fails,
-<a href=#490 id=490 data-nosnippet>490</a>/// this returns an error.
-<a href=#491 id=491 data-nosnippet>491</a>///
-<a href=#492 id=492 data-nosnippet>492</a>/// Upon success, the total number of bytes read is returned.
-<a href=#493 id=493 data-nosnippet>493</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>read_endianness_check(
-<a href=#494 id=494 data-nosnippet>494</a>    slice: <span class="kw-2">&amp;</span>[u8],
-<a href=#495 id=495 data-nosnippet>495</a>) -&gt; <span class="prelude-ty">Result</span>&lt;usize, DeserializeError&gt; {
-<a href=#496 id=496 data-nosnippet>496</a>    <span class="kw">let </span>(n, nr) = try_read_u32(slice, <span class="string">"endianness check"</span>)<span class="question-mark">?</span>;
-<a href=#497 id=497 data-nosnippet>497</a>    <span class="macro">assert_eq!</span>(nr, write_endianness_check_len());
-<a href=#498 id=498 data-nosnippet>498</a>    <span class="kw">if </span>n != <span class="number">0xFEFF </span>{
-<a href=#499 id=499 data-nosnippet>499</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeError::endian_mismatch(<span class="number">0xFEFF</span>, n));
-<a href=#500 id=500 data-nosnippet>500</a>    }
-<a href=#501 id=501 data-nosnippet>501</a>    <span class="prelude-val">Ok</span>(nr)
-<a href=#502 id=502 data-nosnippet>502</a>}
-<a href=#503 id=503 data-nosnippet>503</a>
-<a href=#504 id=504 data-nosnippet>504</a><span class="doccomment">/// Writes 0xFEFF as an integer using the given endianness.
-<a href=#505 id=505 data-nosnippet>505</a>///
-<a href=#506 id=506 data-nosnippet>506</a>/// This is useful for writing into the header of a serialized object. It can
-<a href=#507 id=507 data-nosnippet>507</a>/// be read during deserialization as a sanity check to ensure the proper
-<a href=#508 id=508 data-nosnippet>508</a>/// endianness is used.
-<a href=#509 id=509 data-nosnippet>509</a>///
-<a href=#510 id=510 data-nosnippet>510</a>/// Upon success, the total number of bytes written is returned.
-<a href=#511 id=511 data-nosnippet>511</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>write_endianness_check&lt;E: Endian&gt;(
-<a href=#512 id=512 data-nosnippet>512</a>    dst: <span class="kw-2">&amp;mut </span>[u8],
-<a href=#513 id=513 data-nosnippet>513</a>) -&gt; <span class="prelude-ty">Result</span>&lt;usize, SerializeError&gt; {
-<a href=#514 id=514 data-nosnippet>514</a>    <span class="kw">let </span>nwrite = write_endianness_check_len();
-<a href=#515 id=515 data-nosnippet>515</a>    <span class="kw">if </span>dst.len() &lt; nwrite {
-<a href=#516 id=516 data-nosnippet>516</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(SerializeError::buffer_too_small(<span class="string">"endianness check"</span>));
-<a href=#517 id=517 data-nosnippet>517</a>    }
-<a href=#518 id=518 data-nosnippet>518</a>    E::write_u32(<span class="number">0xFEFF</span>, dst);
-<a href=#519 id=519 data-nosnippet>519</a>    <span class="prelude-val">Ok</span>(nwrite)
-<a href=#520 id=520 data-nosnippet>520</a>}
-<a href=#521 id=521 data-nosnippet>521</a>
-<a href=#522 id=522 data-nosnippet>522</a><span class="doccomment">/// Returns the number of bytes written by the endianness check.
-<a href=#523 id=523 data-nosnippet>523</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>write_endianness_check_len() -&gt; usize {
-<a href=#524 id=524 data-nosnippet>524</a>    size_of::&lt;u32&gt;()
-<a href=#525 id=525 data-nosnippet>525</a>}
-<a href=#526 id=526 data-nosnippet>526</a>
-<a href=#527 id=527 data-nosnippet>527</a><span class="doccomment">/// Reads a version number from the beginning of the given slice and confirms
-<a href=#528 id=528 data-nosnippet>528</a>/// that is matches the expected version number given. If the slice is too
-<a href=#529 id=529 data-nosnippet>529</a>/// small or if the version numbers aren't equivalent, this returns an error.
-<a href=#530 id=530 data-nosnippet>530</a>///
-<a href=#531 id=531 data-nosnippet>531</a>/// Upon success, the total number of bytes read is returned.
-<a href=#532 id=532 data-nosnippet>532</a>///
-<a href=#533 id=533 data-nosnippet>533</a>/// N.B. Currently, we require that the version number is exactly equivalent.
-<a href=#534 id=534 data-nosnippet>534</a>/// In the future, if we bump the version number without a semver bump, then
-<a href=#535 id=535 data-nosnippet>535</a>/// we'll need to relax this a bit and support older versions.
-<a href=#536 id=536 data-nosnippet>536</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>read_version(
-<a href=#537 id=537 data-nosnippet>537</a>    slice: <span class="kw-2">&amp;</span>[u8],
-<a href=#538 id=538 data-nosnippet>538</a>    expected_version: u32,
-<a href=#539 id=539 data-nosnippet>539</a>) -&gt; <span class="prelude-ty">Result</span>&lt;usize, DeserializeError&gt; {
-<a href=#540 id=540 data-nosnippet>540</a>    <span class="kw">let </span>(n, nr) = try_read_u32(slice, <span class="string">"version"</span>)<span class="question-mark">?</span>;
-<a href=#541 id=541 data-nosnippet>541</a>    <span class="macro">assert_eq!</span>(nr, write_version_len());
-<a href=#542 id=542 data-nosnippet>542</a>    <span class="kw">if </span>n != expected_version {
-<a href=#543 id=543 data-nosnippet>543</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeError::version_mismatch(expected_version, n));
-<a href=#544 id=544 data-nosnippet>544</a>    }
-<a href=#545 id=545 data-nosnippet>545</a>    <span class="prelude-val">Ok</span>(nr)
-<a href=#546 id=546 data-nosnippet>546</a>}
-<a href=#547 id=547 data-nosnippet>547</a>
-<a href=#548 id=548 data-nosnippet>548</a><span class="doccomment">/// Writes the given version number to the beginning of the given slice.
-<a href=#549 id=549 data-nosnippet>549</a>///
-<a href=#550 id=550 data-nosnippet>550</a>/// This is useful for writing into the header of a serialized object. It can
-<a href=#551 id=551 data-nosnippet>551</a>/// be read during deserialization as a sanity check to ensure that the library
-<a href=#552 id=552 data-nosnippet>552</a>/// code supports the format of the serialized object.
-<a href=#553 id=553 data-nosnippet>553</a>///
-<a href=#554 id=554 data-nosnippet>554</a>/// Upon success, the total number of bytes written is returned.
-<a href=#555 id=555 data-nosnippet>555</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>write_version&lt;E: Endian&gt;(
-<a href=#556 id=556 data-nosnippet>556</a>    version: u32,
-<a href=#557 id=557 data-nosnippet>557</a>    dst: <span class="kw-2">&amp;mut </span>[u8],
-<a href=#558 id=558 data-nosnippet>558</a>) -&gt; <span class="prelude-ty">Result</span>&lt;usize, SerializeError&gt; {
-<a href=#559 id=559 data-nosnippet>559</a>    <span class="kw">let </span>nwrite = write_version_len();
-<a href=#560 id=560 data-nosnippet>560</a>    <span class="kw">if </span>dst.len() &lt; nwrite {
-<a href=#561 id=561 data-nosnippet>561</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(SerializeError::buffer_too_small(<span class="string">"version number"</span>));
-<a href=#562 id=562 data-nosnippet>562</a>    }
-<a href=#563 id=563 data-nosnippet>563</a>    E::write_u32(version, dst);
-<a href=#564 id=564 data-nosnippet>564</a>    <span class="prelude-val">Ok</span>(nwrite)
-<a href=#565 id=565 data-nosnippet>565</a>}
-<a href=#566 id=566 data-nosnippet>566</a>
-<a href=#567 id=567 data-nosnippet>567</a><span class="doccomment">/// Returns the number of bytes written by writing the version number.
-<a href=#568 id=568 data-nosnippet>568</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>write_version_len() -&gt; usize {
-<a href=#569 id=569 data-nosnippet>569</a>    size_of::&lt;u32&gt;()
-<a href=#570 id=570 data-nosnippet>570</a>}
-<a href=#571 id=571 data-nosnippet>571</a>
-<a href=#572 id=572 data-nosnippet>572</a><span class="doccomment">/// Reads a pattern ID from the given slice. If the slice has insufficient
-<a href=#573 id=573 data-nosnippet>573</a>/// length, then this panics. If the deserialized integer exceeds the pattern
-<a href=#574 id=574 data-nosnippet>574</a>/// ID limit for the current target, then this returns an error.
-<a href=#575 id=575 data-nosnippet>575</a>///
-<a href=#576 id=576 data-nosnippet>576</a>/// Upon success, this also returns the number of bytes read.
-<a href=#577 id=577 data-nosnippet>577</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>read_pattern_id(
-<a href=#578 id=578 data-nosnippet>578</a>    slice: <span class="kw-2">&amp;</span>[u8],
-<a href=#579 id=579 data-nosnippet>579</a>    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
-<a href=#580 id=580 data-nosnippet>580</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(PatternID, usize), DeserializeError&gt; {
-<a href=#581 id=581 data-nosnippet>581</a>    <span class="kw">let </span>bytes: [u8; PatternID::SIZE] =
-<a href=#582 id=582 data-nosnippet>582</a>        slice[..PatternID::SIZE].try_into().unwrap();
-<a href=#583 id=583 data-nosnippet>583</a>    <span class="kw">let </span>pid = PatternID::from_ne_bytes(bytes)
-<a href=#584 id=584 data-nosnippet>584</a>        .map_err(|err| DeserializeError::pattern_id_error(err, what))<span class="question-mark">?</span>;
-<a href=#585 id=585 data-nosnippet>585</a>    <span class="prelude-val">Ok</span>((pid, PatternID::SIZE))
-<a href=#586 id=586 data-nosnippet>586</a>}
-<a href=#587 id=587 data-nosnippet>587</a>
-<a href=#588 id=588 data-nosnippet>588</a><span class="doccomment">/// Reads a pattern ID from the given slice. If the slice has insufficient
-<a href=#589 id=589 data-nosnippet>589</a>/// length, then this panics. Otherwise, the deserialized integer is assumed
-<a href=#590 id=590 data-nosnippet>590</a>/// to be a valid pattern ID.
-<a href=#591 id=591 data-nosnippet>591</a>///
-<a href=#592 id=592 data-nosnippet>592</a>/// This also returns the number of bytes read.
-<a href=#593 id=593 data-nosnippet>593</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>read_pattern_id_unchecked(slice: <span class="kw-2">&amp;</span>[u8]) -&gt; (PatternID, usize) {
-<a href=#594 id=594 data-nosnippet>594</a>    <span class="kw">let </span>pid = PatternID::from_ne_bytes_unchecked(
-<a href=#595 id=595 data-nosnippet>595</a>        slice[..PatternID::SIZE].try_into().unwrap(),
-<a href=#596 id=596 data-nosnippet>596</a>    );
-<a href=#597 id=597 data-nosnippet>597</a>    (pid, PatternID::SIZE)
-<a href=#598 id=598 data-nosnippet>598</a>}
-<a href=#599 id=599 data-nosnippet>599</a>
-<a href=#600 id=600 data-nosnippet>600</a><span class="doccomment">/// Write the given pattern ID to the beginning of the given slice of bytes
-<a href=#601 id=601 data-nosnippet>601</a>/// using the specified endianness. The given slice must have length at least
-<a href=#602 id=602 data-nosnippet>602</a>/// `PatternID::SIZE`, or else this panics. Upon success, the total number of
-<a href=#603 id=603 data-nosnippet>603</a>/// bytes written is returned.
-<a href=#604 id=604 data-nosnippet>604</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>write_pattern_id&lt;E: Endian&gt;(
-<a href=#605 id=605 data-nosnippet>605</a>    pid: PatternID,
-<a href=#606 id=606 data-nosnippet>606</a>    dst: <span class="kw-2">&amp;mut </span>[u8],
-<a href=#607 id=607 data-nosnippet>607</a>) -&gt; usize {
-<a href=#608 id=608 data-nosnippet>608</a>    E::write_u32(pid.as_u32(), dst);
-<a href=#609 id=609 data-nosnippet>609</a>    PatternID::SIZE
-<a href=#610 id=610 data-nosnippet>610</a>}
-<a href=#611 id=611 data-nosnippet>611</a>
-<a href=#612 id=612 data-nosnippet>612</a><span class="doccomment">/// Attempts to read a state ID from the given slice. If the slice has an
-<a href=#613 id=613 data-nosnippet>613</a>/// insufficient number of bytes or if the state ID exceeds the limit for
-<a href=#614 id=614 data-nosnippet>614</a>/// the current target, then this returns an error.
-<a href=#615 id=615 data-nosnippet>615</a>///
-<a href=#616 id=616 data-nosnippet>616</a>/// Upon success, this also returns the number of bytes read.
-<a href=#617 id=617 data-nosnippet>617</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>try_read_state_id(
-<a href=#618 id=618 data-nosnippet>618</a>    slice: <span class="kw-2">&amp;</span>[u8],
-<a href=#619 id=619 data-nosnippet>619</a>    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
-<a href=#620 id=620 data-nosnippet>620</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(StateID, usize), DeserializeError&gt; {
-<a href=#621 id=621 data-nosnippet>621</a>    <span class="kw">if </span>slice.len() &lt; StateID::SIZE {
-<a href=#622 id=622 data-nosnippet>622</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeError::buffer_too_small(what));
-<a href=#623 id=623 data-nosnippet>623</a>    }
-<a href=#624 id=624 data-nosnippet>624</a>    read_state_id(slice, what)
-<a href=#625 id=625 data-nosnippet>625</a>}
-<a href=#626 id=626 data-nosnippet>626</a>
-<a href=#627 id=627 data-nosnippet>627</a><span class="doccomment">/// Reads a state ID from the given slice. If the slice has insufficient
-<a href=#628 id=628 data-nosnippet>628</a>/// length, then this panics. If the deserialized integer exceeds the state ID
-<a href=#629 id=629 data-nosnippet>629</a>/// limit for the current target, then this returns an error.
-<a href=#630 id=630 data-nosnippet>630</a>///
-<a href=#631 id=631 data-nosnippet>631</a>/// Upon success, this also returns the number of bytes read.
-<a href=#632 id=632 data-nosnippet>632</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>read_state_id(
-<a href=#633 id=633 data-nosnippet>633</a>    slice: <span class="kw-2">&amp;</span>[u8],
-<a href=#634 id=634 data-nosnippet>634</a>    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
-<a href=#635 id=635 data-nosnippet>635</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(StateID, usize), DeserializeError&gt; {
-<a href=#636 id=636 data-nosnippet>636</a>    <span class="kw">let </span>bytes: [u8; StateID::SIZE] =
-<a href=#637 id=637 data-nosnippet>637</a>        slice[..StateID::SIZE].try_into().unwrap();
-<a href=#638 id=638 data-nosnippet>638</a>    <span class="kw">let </span>sid = StateID::from_ne_bytes(bytes)
-<a href=#639 id=639 data-nosnippet>639</a>        .map_err(|err| DeserializeError::state_id_error(err, what))<span class="question-mark">?</span>;
-<a href=#640 id=640 data-nosnippet>640</a>    <span class="prelude-val">Ok</span>((sid, StateID::SIZE))
-<a href=#641 id=641 data-nosnippet>641</a>}
-<a href=#642 id=642 data-nosnippet>642</a>
-<a href=#643 id=643 data-nosnippet>643</a><span class="doccomment">/// Reads a state ID from the given slice. If the slice has insufficient
-<a href=#644 id=644 data-nosnippet>644</a>/// length, then this panics. Otherwise, the deserialized integer is assumed
-<a href=#645 id=645 data-nosnippet>645</a>/// to be a valid state ID.
-<a href=#646 id=646 data-nosnippet>646</a>///
-<a href=#647 id=647 data-nosnippet>647</a>/// This also returns the number of bytes read.
-<a href=#648 id=648 data-nosnippet>648</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>read_state_id_unchecked(slice: <span class="kw-2">&amp;</span>[u8]) -&gt; (StateID, usize) {
-<a href=#649 id=649 data-nosnippet>649</a>    <span class="kw">let </span>sid = StateID::from_ne_bytes_unchecked(
-<a href=#650 id=650 data-nosnippet>650</a>        slice[..StateID::SIZE].try_into().unwrap(),
-<a href=#651 id=651 data-nosnippet>651</a>    );
-<a href=#652 id=652 data-nosnippet>652</a>    (sid, StateID::SIZE)
-<a href=#653 id=653 data-nosnippet>653</a>}
-<a href=#654 id=654 data-nosnippet>654</a>
-<a href=#655 id=655 data-nosnippet>655</a><span class="doccomment">/// Write the given state ID to the beginning of the given slice of bytes
-<a href=#656 id=656 data-nosnippet>656</a>/// using the specified endianness. The given slice must have length at least
-<a href=#657 id=657 data-nosnippet>657</a>/// `StateID::SIZE`, or else this panics. Upon success, the total number of
-<a href=#658 id=658 data-nosnippet>658</a>/// bytes written is returned.
-<a href=#659 id=659 data-nosnippet>659</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>write_state_id&lt;E: Endian&gt;(
-<a href=#660 id=660 data-nosnippet>660</a>    sid: StateID,
-<a href=#661 id=661 data-nosnippet>661</a>    dst: <span class="kw-2">&amp;mut </span>[u8],
-<a href=#662 id=662 data-nosnippet>662</a>) -&gt; usize {
-<a href=#663 id=663 data-nosnippet>663</a>    E::write_u32(sid.as_u32(), dst);
-<a href=#664 id=664 data-nosnippet>664</a>    StateID::SIZE
-<a href=#665 id=665 data-nosnippet>665</a>}
-<a href=#666 id=666 data-nosnippet>666</a>
-<a href=#667 id=667 data-nosnippet>667</a><span class="doccomment">/// Try to read a u16 as a usize from the beginning of the given slice in
-<a href=#668 id=668 data-nosnippet>668</a>/// native endian format. If the slice has fewer than 2 bytes or if the
-<a href=#669 id=669 data-nosnippet>669</a>/// deserialized number cannot be represented by usize, then this returns an
-<a href=#670 id=670 data-nosnippet>670</a>/// error. The error message will include the `what` description of what is
-<a href=#671 id=671 data-nosnippet>671</a>/// being deserialized, for better error messages. `what` should be a noun in
-<a href=#672 id=672 data-nosnippet>672</a>/// singular form.
-<a href=#673 id=673 data-nosnippet>673</a>///
-<a href=#674 id=674 data-nosnippet>674</a>/// Upon success, this also returns the number of bytes read.
-<a href=#675 id=675 data-nosnippet>675</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>try_read_u16_as_usize(
-<a href=#676 id=676 data-nosnippet>676</a>    slice: <span class="kw-2">&amp;</span>[u8],
-<a href=#677 id=677 data-nosnippet>677</a>    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
-<a href=#678 id=678 data-nosnippet>678</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(usize, usize), DeserializeError&gt; {
-<a href=#679 id=679 data-nosnippet>679</a>    try_read_u16(slice, what).and_then(|(n, nr)| {
-<a href=#680 id=680 data-nosnippet>680</a>        usize::try_from(n)
-<a href=#681 id=681 data-nosnippet>681</a>            .map(|n| (n, nr))
-<a href=#682 id=682 data-nosnippet>682</a>            .map_err(|<span class="kw">_</span>| DeserializeError::invalid_usize(what))
-<a href=#683 id=683 data-nosnippet>683</a>    })
-<a href=#684 id=684 data-nosnippet>684</a>}
-<a href=#685 id=685 data-nosnippet>685</a>
-<a href=#686 id=686 data-nosnippet>686</a><span class="doccomment">/// Try to read a u32 as a usize from the beginning of the given slice in
-<a href=#687 id=687 data-nosnippet>687</a>/// native endian format. If the slice has fewer than 4 bytes or if the
-<a href=#688 id=688 data-nosnippet>688</a>/// deserialized number cannot be represented by usize, then this returns an
-<a href=#689 id=689 data-nosnippet>689</a>/// error. The error message will include the `what` description of what is
-<a href=#690 id=690 data-nosnippet>690</a>/// being deserialized, for better error messages. `what` should be a noun in
-<a href=#691 id=691 data-nosnippet>691</a>/// singular form.
-<a href=#692 id=692 data-nosnippet>692</a>///
-<a href=#693 id=693 data-nosnippet>693</a>/// Upon success, this also returns the number of bytes read.
-<a href=#694 id=694 data-nosnippet>694</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>try_read_u32_as_usize(
-<a href=#695 id=695 data-nosnippet>695</a>    slice: <span class="kw-2">&amp;</span>[u8],
-<a href=#696 id=696 data-nosnippet>696</a>    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
-<a href=#697 id=697 data-nosnippet>697</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(usize, usize), DeserializeError&gt; {
-<a href=#698 id=698 data-nosnippet>698</a>    try_read_u32(slice, what).and_then(|(n, nr)| {
-<a href=#699 id=699 data-nosnippet>699</a>        usize::try_from(n)
-<a href=#700 id=700 data-nosnippet>700</a>            .map(|n| (n, nr))
-<a href=#701 id=701 data-nosnippet>701</a>            .map_err(|<span class="kw">_</span>| DeserializeError::invalid_usize(what))
-<a href=#702 id=702 data-nosnippet>702</a>    })
-<a href=#703 id=703 data-nosnippet>703</a>}
-<a href=#704 id=704 data-nosnippet>704</a>
-<a href=#705 id=705 data-nosnippet>705</a><span class="doccomment">/// Try to read a u16 from the beginning of the given slice in native endian
-<a href=#706 id=706 data-nosnippet>706</a>/// format. If the slice has fewer than 2 bytes, then this returns an error.
-<a href=#707 id=707 data-nosnippet>707</a>/// The error message will include the `what` description of what is being
-<a href=#708 id=708 data-nosnippet>708</a>/// deserialized, for better error messages. `what` should be a noun in
-<a href=#709 id=709 data-nosnippet>709</a>/// singular form.
-<a href=#710 id=710 data-nosnippet>710</a>///
-<a href=#711 id=711 data-nosnippet>711</a>/// Upon success, this also returns the number of bytes read.
-<a href=#712 id=712 data-nosnippet>712</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>try_read_u16(
-<a href=#713 id=713 data-nosnippet>713</a>    slice: <span class="kw-2">&amp;</span>[u8],
-<a href=#714 id=714 data-nosnippet>714</a>    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
-<a href=#715 id=715 data-nosnippet>715</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(u16, usize), DeserializeError&gt; {
-<a href=#716 id=716 data-nosnippet>716</a>    check_slice_len(slice, size_of::&lt;u16&gt;(), what)<span class="question-mark">?</span>;
-<a href=#717 id=717 data-nosnippet>717</a>    <span class="prelude-val">Ok</span>((read_u16(slice), size_of::&lt;u16&gt;()))
-<a href=#718 id=718 data-nosnippet>718</a>}
-<a href=#719 id=719 data-nosnippet>719</a>
-<a href=#720 id=720 data-nosnippet>720</a><span class="doccomment">/// Try to read a u32 from the beginning of the given slice in native endian
-<a href=#721 id=721 data-nosnippet>721</a>/// format. If the slice has fewer than 4 bytes, then this returns an error.
-<a href=#722 id=722 data-nosnippet>722</a>/// The error message will include the `what` description of what is being
-<a href=#723 id=723 data-nosnippet>723</a>/// deserialized, for better error messages. `what` should be a noun in
-<a href=#724 id=724 data-nosnippet>724</a>/// singular form.
-<a href=#725 id=725 data-nosnippet>725</a>///
-<a href=#726 id=726 data-nosnippet>726</a>/// Upon success, this also returns the number of bytes read.
-<a href=#727 id=727 data-nosnippet>727</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>try_read_u32(
-<a href=#728 id=728 data-nosnippet>728</a>    slice: <span class="kw-2">&amp;</span>[u8],
-<a href=#729 id=729 data-nosnippet>729</a>    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
-<a href=#730 id=730 data-nosnippet>730</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(u32, usize), DeserializeError&gt; {
-<a href=#731 id=731 data-nosnippet>731</a>    check_slice_len(slice, size_of::&lt;u32&gt;(), what)<span class="question-mark">?</span>;
-<a href=#732 id=732 data-nosnippet>732</a>    <span class="prelude-val">Ok</span>((read_u32(slice), size_of::&lt;u32&gt;()))
-<a href=#733 id=733 data-nosnippet>733</a>}
-<a href=#734 id=734 data-nosnippet>734</a>
-<a href=#735 id=735 data-nosnippet>735</a><span class="doccomment">/// Try to read a u128 from the beginning of the given slice in native endian
-<a href=#736 id=736 data-nosnippet>736</a>/// format. If the slice has fewer than 16 bytes, then this returns an error.
-<a href=#737 id=737 data-nosnippet>737</a>/// The error message will include the `what` description of what is being
-<a href=#738 id=738 data-nosnippet>738</a>/// deserialized, for better error messages. `what` should be a noun in
-<a href=#739 id=739 data-nosnippet>739</a>/// singular form.
-<a href=#740 id=740 data-nosnippet>740</a>///
-<a href=#741 id=741 data-nosnippet>741</a>/// Upon success, this also returns the number of bytes read.
-<a href=#742 id=742 data-nosnippet>742</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>try_read_u128(
-<a href=#743 id=743 data-nosnippet>743</a>    slice: <span class="kw-2">&amp;</span>[u8],
-<a href=#744 id=744 data-nosnippet>744</a>    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
-<a href=#745 id=745 data-nosnippet>745</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(u128, usize), DeserializeError&gt; {
-<a href=#746 id=746 data-nosnippet>746</a>    check_slice_len(slice, size_of::&lt;u128&gt;(), what)<span class="question-mark">?</span>;
-<a href=#747 id=747 data-nosnippet>747</a>    <span class="prelude-val">Ok</span>((read_u128(slice), size_of::&lt;u128&gt;()))
-<a href=#748 id=748 data-nosnippet>748</a>}
-<a href=#749 id=749 data-nosnippet>749</a>
-<a href=#750 id=750 data-nosnippet>750</a><span class="doccomment">/// Read a u16 from the beginning of the given slice in native endian format.
-<a href=#751 id=751 data-nosnippet>751</a>/// If the slice has fewer than 2 bytes, then this panics.
-<a href=#752 id=752 data-nosnippet>752</a>///
-<a href=#753 id=753 data-nosnippet>753</a>/// Marked as inline to speed up sparse searching which decodes integers from
-<a href=#754 id=754 data-nosnippet>754</a>/// its automaton at search time.
-<a href=#755 id=755 data-nosnippet>755</a></span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
-<a href=#756 id=756 data-nosnippet>756</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>read_u16(slice: <span class="kw-2">&amp;</span>[u8]) -&gt; u16 {
-<a href=#757 id=757 data-nosnippet>757</a>    <span class="kw">let </span>bytes: [u8; <span class="number">2</span>] = slice[..size_of::&lt;u16&gt;()].try_into().unwrap();
-<a href=#758 id=758 data-nosnippet>758</a>    u16::from_ne_bytes(bytes)
-<a href=#759 id=759 data-nosnippet>759</a>}
-<a href=#760 id=760 data-nosnippet>760</a>
-<a href=#761 id=761 data-nosnippet>761</a><span class="doccomment">/// Read a u32 from the beginning of the given slice in native endian format.
-<a href=#762 id=762 data-nosnippet>762</a>/// If the slice has fewer than 4 bytes, then this panics.
-<a href=#763 id=763 data-nosnippet>763</a>///
-<a href=#764 id=764 data-nosnippet>764</a>/// Marked as inline to speed up sparse searching which decodes integers from
-<a href=#765 id=765 data-nosnippet>765</a>/// its automaton at search time.
-<a href=#766 id=766 data-nosnippet>766</a></span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
-<a href=#767 id=767 data-nosnippet>767</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>read_u32(slice: <span class="kw-2">&amp;</span>[u8]) -&gt; u32 {
-<a href=#768 id=768 data-nosnippet>768</a>    <span class="kw">let </span>bytes: [u8; <span class="number">4</span>] = slice[..size_of::&lt;u32&gt;()].try_into().unwrap();
-<a href=#769 id=769 data-nosnippet>769</a>    u32::from_ne_bytes(bytes)
+<a href=#232 id=232 data-nosnippet>232</a>                 expected version {expected} but found version {found}"</span>,
+<a href=#233 id=233 data-nosnippet>233</a>            ),
+<a href=#234 id=234 data-nosnippet>234</a>            EndianMismatch { expected, found } =&gt; <span class="macro">write!</span>(
+<a href=#235 id=235 data-nosnippet>235</a>                f,
+<a href=#236 id=236 data-nosnippet>236</a>                <span class="string">"endianness mismatch: expected 0x{expected:X} but \
+<a href=#237 id=237 data-nosnippet>237</a>                 got 0x{found:X}. (Are you trying to load an object \
+<a href=#238 id=238 data-nosnippet>238</a>                 serialized with a different endianness?)"</span>,
+<a href=#239 id=239 data-nosnippet>239</a>            ),
+<a href=#240 id=240 data-nosnippet>240</a>            AlignmentMismatch { alignment, address } =&gt; <span class="macro">write!</span>(
+<a href=#241 id=241 data-nosnippet>241</a>                f,
+<a href=#242 id=242 data-nosnippet>242</a>                <span class="string">"alignment mismatch: slice starts at address 0x{address:X}, \
+<a href=#243 id=243 data-nosnippet>243</a>                 which is not aligned to a {alignment} byte boundary"</span>,
+<a href=#244 id=244 data-nosnippet>244</a>            ),
+<a href=#245 id=245 data-nosnippet>245</a>            LabelMismatch { expected } =&gt; <span class="macro">write!</span>(
+<a href=#246 id=246 data-nosnippet>246</a>                f,
+<a href=#247 id=247 data-nosnippet>247</a>                <span class="string">"label mismatch: start of serialized object should \
+<a href=#248 id=248 data-nosnippet>248</a>                 contain a NUL terminated {expected:?} label, but a different \
+<a href=#249 id=249 data-nosnippet>249</a>                 label was found"</span>,
+<a href=#250 id=250 data-nosnippet>250</a>            ),
+<a href=#251 id=251 data-nosnippet>251</a>            ArithmeticOverflow { what } =&gt; {
+<a href=#252 id=252 data-nosnippet>252</a>                <span class="macro">write!</span>(f, <span class="string">"arithmetic overflow for {what}"</span>)
+<a href=#253 id=253 data-nosnippet>253</a>            }
+<a href=#254 id=254 data-nosnippet>254</a>            PatternID { <span class="kw-2">ref </span>err, what } =&gt; {
+<a href=#255 id=255 data-nosnippet>255</a>                <span class="macro">write!</span>(f, <span class="string">"failed to read pattern ID for {what}: {err}"</span>)
+<a href=#256 id=256 data-nosnippet>256</a>            }
+<a href=#257 id=257 data-nosnippet>257</a>            StateID { <span class="kw-2">ref </span>err, what } =&gt; {
+<a href=#258 id=258 data-nosnippet>258</a>                <span class="macro">write!</span>(f, <span class="string">"failed to read state ID for {what}: {err}"</span>)
+<a href=#259 id=259 data-nosnippet>259</a>            }
+<a href=#260 id=260 data-nosnippet>260</a>        }
+<a href=#261 id=261 data-nosnippet>261</a>    }
+<a href=#262 id=262 data-nosnippet>262</a>}
+<a href=#263 id=263 data-nosnippet>263</a>
+<a href=#264 id=264 data-nosnippet>264</a><span class="doccomment">/// Safely converts a `&amp;[u32]` to `&amp;[StateID]` with zero cost.
+<a href=#265 id=265 data-nosnippet>265</a></span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
+<a href=#266 id=266 data-nosnippet>266</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>u32s_to_state_ids(slice: <span class="kw-2">&amp;</span>[u32]) -&gt; <span class="kw-2">&amp;</span>[StateID] {
+<a href=#267 id=267 data-nosnippet>267</a>    <span class="comment">// SAFETY: This is safe because StateID is defined to have the same memory
+<a href=#268 id=268 data-nosnippet>268</a>    // representation as a u32 (it is repr(transparent)). While not every u32
+<a href=#269 id=269 data-nosnippet>269</a>    // is a "valid" StateID, callers are not permitted to rely on the validity
+<a href=#270 id=270 data-nosnippet>270</a>    // of StateIDs for memory safety. It can only lead to logical errors. (This
+<a href=#271 id=271 data-nosnippet>271</a>    // is why StateID::new_unchecked is safe.)
+<a href=#272 id=272 data-nosnippet>272</a>    </span><span class="kw">unsafe </span>{
+<a href=#273 id=273 data-nosnippet>273</a>        core::slice::from_raw_parts(
+<a href=#274 id=274 data-nosnippet>274</a>            slice.as_ptr().cast::&lt;StateID&gt;(),
+<a href=#275 id=275 data-nosnippet>275</a>            slice.len(),
+<a href=#276 id=276 data-nosnippet>276</a>        )
+<a href=#277 id=277 data-nosnippet>277</a>    }
+<a href=#278 id=278 data-nosnippet>278</a>}
+<a href=#279 id=279 data-nosnippet>279</a>
+<a href=#280 id=280 data-nosnippet>280</a><span class="doccomment">/// Safely converts a `&amp;mut [u32]` to `&amp;mut [StateID]` with zero cost.
+<a href=#281 id=281 data-nosnippet>281</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>u32s_to_state_ids_mut(slice: <span class="kw-2">&amp;mut </span>[u32]) -&gt; <span class="kw-2">&amp;mut </span>[StateID] {
+<a href=#282 id=282 data-nosnippet>282</a>    <span class="comment">// SAFETY: This is safe because StateID is defined to have the same memory
+<a href=#283 id=283 data-nosnippet>283</a>    // representation as a u32 (it is repr(transparent)). While not every u32
+<a href=#284 id=284 data-nosnippet>284</a>    // is a "valid" StateID, callers are not permitted to rely on the validity
+<a href=#285 id=285 data-nosnippet>285</a>    // of StateIDs for memory safety. It can only lead to logical errors. (This
+<a href=#286 id=286 data-nosnippet>286</a>    // is why StateID::new_unchecked is safe.)
+<a href=#287 id=287 data-nosnippet>287</a>    </span><span class="kw">unsafe </span>{
+<a href=#288 id=288 data-nosnippet>288</a>        core::slice::from_raw_parts_mut(
+<a href=#289 id=289 data-nosnippet>289</a>            slice.as_mut_ptr().cast::&lt;StateID&gt;(),
+<a href=#290 id=290 data-nosnippet>290</a>            slice.len(),
+<a href=#291 id=291 data-nosnippet>291</a>        )
+<a href=#292 id=292 data-nosnippet>292</a>    }
+<a href=#293 id=293 data-nosnippet>293</a>}
+<a href=#294 id=294 data-nosnippet>294</a>
+<a href=#295 id=295 data-nosnippet>295</a><span class="doccomment">/// Safely converts a `&amp;[u32]` to `&amp;[PatternID]` with zero cost.
+<a href=#296 id=296 data-nosnippet>296</a></span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
+<a href=#297 id=297 data-nosnippet>297</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>u32s_to_pattern_ids(slice: <span class="kw-2">&amp;</span>[u32]) -&gt; <span class="kw-2">&amp;</span>[PatternID] {
+<a href=#298 id=298 data-nosnippet>298</a>    <span class="comment">// SAFETY: This is safe because PatternID is defined to have the same
+<a href=#299 id=299 data-nosnippet>299</a>    // memory representation as a u32 (it is repr(transparent)). While not
+<a href=#300 id=300 data-nosnippet>300</a>    // every u32 is a "valid" PatternID, callers are not permitted to rely
+<a href=#301 id=301 data-nosnippet>301</a>    // on the validity of PatternIDs for memory safety. It can only lead to
+<a href=#302 id=302 data-nosnippet>302</a>    // logical errors. (This is why PatternID::new_unchecked is safe.)
+<a href=#303 id=303 data-nosnippet>303</a>    </span><span class="kw">unsafe </span>{
+<a href=#304 id=304 data-nosnippet>304</a>        core::slice::from_raw_parts(
+<a href=#305 id=305 data-nosnippet>305</a>            slice.as_ptr().cast::&lt;PatternID&gt;(),
+<a href=#306 id=306 data-nosnippet>306</a>            slice.len(),
+<a href=#307 id=307 data-nosnippet>307</a>        )
+<a href=#308 id=308 data-nosnippet>308</a>    }
+<a href=#309 id=309 data-nosnippet>309</a>}
+<a href=#310 id=310 data-nosnippet>310</a>
+<a href=#311 id=311 data-nosnippet>311</a><span class="doccomment">/// Checks that the given slice has an alignment that matches `T`.
+<a href=#312 id=312 data-nosnippet>312</a>///
+<a href=#313 id=313 data-nosnippet>313</a>/// This is useful for checking that a slice has an appropriate alignment
+<a href=#314 id=314 data-nosnippet>314</a>/// before casting it to a &amp;[T]. Note though that alignment is not itself
+<a href=#315 id=315 data-nosnippet>315</a>/// sufficient to perform the cast for any `T`.
+<a href=#316 id=316 data-nosnippet>316</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>check_alignment&lt;T&gt;(
+<a href=#317 id=317 data-nosnippet>317</a>    slice: <span class="kw-2">&amp;</span>[u8],
+<a href=#318 id=318 data-nosnippet>318</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(), DeserializeError&gt; {
+<a href=#319 id=319 data-nosnippet>319</a>    <span class="kw">let </span>alignment = core::mem::align_of::&lt;T&gt;();
+<a href=#320 id=320 data-nosnippet>320</a>    <span class="kw">let </span>address = slice.as_ptr().as_usize();
+<a href=#321 id=321 data-nosnippet>321</a>    <span class="kw">if </span>address % alignment == <span class="number">0 </span>{
+<a href=#322 id=322 data-nosnippet>322</a>        <span class="kw">return </span><span class="prelude-val">Ok</span>(());
+<a href=#323 id=323 data-nosnippet>323</a>    }
+<a href=#324 id=324 data-nosnippet>324</a>    <span class="prelude-val">Err</span>(DeserializeError::alignment_mismatch(alignment, address))
+<a href=#325 id=325 data-nosnippet>325</a>}
+<a href=#326 id=326 data-nosnippet>326</a>
+<a href=#327 id=327 data-nosnippet>327</a><span class="doccomment">/// Reads a possibly empty amount of padding, up to 7 bytes, from the beginning
+<a href=#328 id=328 data-nosnippet>328</a>/// of the given slice. All padding bytes must be NUL bytes.
+<a href=#329 id=329 data-nosnippet>329</a>///
+<a href=#330 id=330 data-nosnippet>330</a>/// This is useful because it can be theoretically necessary to pad the
+<a href=#331 id=331 data-nosnippet>331</a>/// beginning of a serialized object with NUL bytes to ensure that it starts
+<a href=#332 id=332 data-nosnippet>332</a>/// at a correctly aligned address. These padding bytes should come immediately
+<a href=#333 id=333 data-nosnippet>333</a>/// before the label.
+<a href=#334 id=334 data-nosnippet>334</a>///
+<a href=#335 id=335 data-nosnippet>335</a>/// This returns the number of bytes read from the given slice.
+<a href=#336 id=336 data-nosnippet>336</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>skip_initial_padding(slice: <span class="kw-2">&amp;</span>[u8]) -&gt; usize {
+<a href=#337 id=337 data-nosnippet>337</a>    <span class="kw">let </span><span class="kw-2">mut </span>nread = <span class="number">0</span>;
+<a href=#338 id=338 data-nosnippet>338</a>    <span class="kw">while </span>nread &lt; <span class="number">7 </span>&amp;&amp; nread &lt; slice.len() &amp;&amp; slice[nread] == <span class="number">0 </span>{
+<a href=#339 id=339 data-nosnippet>339</a>        nread += <span class="number">1</span>;
+<a href=#340 id=340 data-nosnippet>340</a>    }
+<a href=#341 id=341 data-nosnippet>341</a>    nread
+<a href=#342 id=342 data-nosnippet>342</a>}
+<a href=#343 id=343 data-nosnippet>343</a>
+<a href=#344 id=344 data-nosnippet>344</a><span class="doccomment">/// Allocate a byte buffer of the given size, along with some initial padding
+<a href=#345 id=345 data-nosnippet>345</a>/// such that `buf[padding..]` has the same alignment as `T`, where the
+<a href=#346 id=346 data-nosnippet>346</a>/// alignment of `T` must be at most `8`. In particular, callers should treat
+<a href=#347 id=347 data-nosnippet>347</a>/// the first N bytes (second return value) as padding bytes that must not be
+<a href=#348 id=348 data-nosnippet>348</a>/// overwritten. In all cases, the following identity holds:
+<a href=#349 id=349 data-nosnippet>349</a>///
+<a href=#350 id=350 data-nosnippet>350</a>/// ```ignore
+<a href=#351 id=351 data-nosnippet>351</a>/// let (buf, padding) = alloc_aligned_buffer::&lt;StateID&gt;(SIZE);
+<a href=#352 id=352 data-nosnippet>352</a>/// assert_eq!(SIZE, buf[padding..].len());
+<a href=#353 id=353 data-nosnippet>353</a>/// ```
+<a href=#354 id=354 data-nosnippet>354</a>///
+<a href=#355 id=355 data-nosnippet>355</a>/// In practice, padding is often zero.
+<a href=#356 id=356 data-nosnippet>356</a>///
+<a href=#357 id=357 data-nosnippet>357</a>/// The requirement for `8` as a maximum here is somewhat arbitrary. In
+<a href=#358 id=358 data-nosnippet>358</a>/// practice, we never need anything bigger in this crate, and so this function
+<a href=#359 id=359 data-nosnippet>359</a>/// does some sanity asserts under the assumption of a max alignment of `8`.
+<a href=#360 id=360 data-nosnippet>360</a></span><span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
+<a href=#361 id=361 data-nosnippet>361</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>alloc_aligned_buffer&lt;T&gt;(size: usize) -&gt; (Vec&lt;u8&gt;, usize) {
+<a href=#362 id=362 data-nosnippet>362</a>    <span class="comment">// NOTE: This is a kludge because there's no easy way to allocate a Vec&lt;u8&gt;
+<a href=#363 id=363 data-nosnippet>363</a>    // with an alignment guaranteed to be greater than 1. We could create a
+<a href=#364 id=364 data-nosnippet>364</a>    // Vec&lt;u32&gt;, but this cannot be safely transmuted to a Vec&lt;u8&gt; without
+<a href=#365 id=365 data-nosnippet>365</a>    // concern, since reallocing or dropping the Vec&lt;u8&gt; is UB (different
+<a href=#366 id=366 data-nosnippet>366</a>    // alignment than the initial allocation). We could define a wrapper type
+<a href=#367 id=367 data-nosnippet>367</a>    // to manage this for us, but it seems like more machinery than it's worth.
+<a href=#368 id=368 data-nosnippet>368</a>    </span><span class="kw">let </span>buf = <span class="macro">vec!</span>[<span class="number">0</span>; size];
+<a href=#369 id=369 data-nosnippet>369</a>    <span class="kw">let </span>align = core::mem::align_of::&lt;T&gt;();
+<a href=#370 id=370 data-nosnippet>370</a>    <span class="kw">let </span>address = buf.as_ptr().as_usize();
+<a href=#371 id=371 data-nosnippet>371</a>    <span class="kw">if </span>address % align == <span class="number">0 </span>{
+<a href=#372 id=372 data-nosnippet>372</a>        <span class="kw">return </span>(buf, <span class="number">0</span>);
+<a href=#373 id=373 data-nosnippet>373</a>    }
+<a href=#374 id=374 data-nosnippet>374</a>    <span class="comment">// Let's try this again. We have to create a totally new alloc with
+<a href=#375 id=375 data-nosnippet>375</a>    // the maximum amount of bytes we might need. We can't just extend our
+<a href=#376 id=376 data-nosnippet>376</a>    // pre-existing 'buf' because that might create a new alloc with a
+<a href=#377 id=377 data-nosnippet>377</a>    // different alignment.
+<a href=#378 id=378 data-nosnippet>378</a>    </span><span class="kw">let </span>extra = align - <span class="number">1</span>;
+<a href=#379 id=379 data-nosnippet>379</a>    <span class="kw">let </span><span class="kw-2">mut </span>buf = <span class="macro">vec!</span>[<span class="number">0</span>; size + extra];
+<a href=#380 id=380 data-nosnippet>380</a>    <span class="kw">let </span>address = buf.as_ptr().as_usize();
+<a href=#381 id=381 data-nosnippet>381</a>    <span class="comment">// The code below handles the case where 'address' is aligned to T, so if
+<a href=#382 id=382 data-nosnippet>382</a>    // we got lucky and 'address' is now aligned to T (when it previously
+<a href=#383 id=383 data-nosnippet>383</a>    // wasn't), then we're done.
+<a href=#384 id=384 data-nosnippet>384</a>    </span><span class="kw">if </span>address % align == <span class="number">0 </span>{
+<a href=#385 id=385 data-nosnippet>385</a>        buf.truncate(size);
+<a href=#386 id=386 data-nosnippet>386</a>        <span class="kw">return </span>(buf, <span class="number">0</span>);
+<a href=#387 id=387 data-nosnippet>387</a>    }
+<a href=#388 id=388 data-nosnippet>388</a>    <span class="kw">let </span>padding = ((address &amp; !(align - <span class="number">1</span>)).checked_add(align).unwrap())
+<a href=#389 id=389 data-nosnippet>389</a>        .checked_sub(address)
+<a href=#390 id=390 data-nosnippet>390</a>        .unwrap();
+<a href=#391 id=391 data-nosnippet>391</a>    <span class="macro">assert!</span>(padding &lt;= <span class="number">7</span>, <span class="string">"padding of {padding} is bigger than 7"</span>);
+<a href=#392 id=392 data-nosnippet>392</a>    <span class="macro">assert!</span>(
+<a href=#393 id=393 data-nosnippet>393</a>        padding &lt;= extra,
+<a href=#394 id=394 data-nosnippet>394</a>        <span class="string">"padding of {padding} is bigger than extra {extra} bytes"</span>,
+<a href=#395 id=395 data-nosnippet>395</a>    );
+<a href=#396 id=396 data-nosnippet>396</a>    buf.truncate(size + padding);
+<a href=#397 id=397 data-nosnippet>397</a>    <span class="macro">assert_eq!</span>(size + padding, buf.len());
+<a href=#398 id=398 data-nosnippet>398</a>    <span class="macro">assert_eq!</span>(
+<a href=#399 id=399 data-nosnippet>399</a>        <span class="number">0</span>,
+<a href=#400 id=400 data-nosnippet>400</a>        buf[padding..].as_ptr().as_usize() % align,
+<a href=#401 id=401 data-nosnippet>401</a>        <span class="string">"expected end of initial padding to be aligned to {align}"</span>,
+<a href=#402 id=402 data-nosnippet>402</a>    );
+<a href=#403 id=403 data-nosnippet>403</a>    (buf, padding)
+<a href=#404 id=404 data-nosnippet>404</a>}
+<a href=#405 id=405 data-nosnippet>405</a>
+<a href=#406 id=406 data-nosnippet>406</a><span class="doccomment">/// Reads a NUL terminated label starting at the beginning of the given slice.
+<a href=#407 id=407 data-nosnippet>407</a>///
+<a href=#408 id=408 data-nosnippet>408</a>/// If a NUL terminated label could not be found, then an error is returned.
+<a href=#409 id=409 data-nosnippet>409</a>/// Similarly, if a label is found but doesn't match the expected label, then
+<a href=#410 id=410 data-nosnippet>410</a>/// an error is returned.
+<a href=#411 id=411 data-nosnippet>411</a>///
+<a href=#412 id=412 data-nosnippet>412</a>/// Upon success, the total number of bytes read (including padding bytes) is
+<a href=#413 id=413 data-nosnippet>413</a>/// returned.
+<a href=#414 id=414 data-nosnippet>414</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>read_label(
+<a href=#415 id=415 data-nosnippet>415</a>    slice: <span class="kw-2">&amp;</span>[u8],
+<a href=#416 id=416 data-nosnippet>416</a>    expected_label: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+<a href=#417 id=417 data-nosnippet>417</a>) -&gt; <span class="prelude-ty">Result</span>&lt;usize, DeserializeError&gt; {
+<a href=#418 id=418 data-nosnippet>418</a>    <span class="comment">// Set an upper bound on how many bytes we scan for a NUL. Since no label
+<a href=#419 id=419 data-nosnippet>419</a>    // in this crate is longer than 256 bytes, if we can't find one within that
+<a href=#420 id=420 data-nosnippet>420</a>    // range, then we have corrupted data.
+<a href=#421 id=421 data-nosnippet>421</a>    </span><span class="kw">let </span>first_nul =
+<a href=#422 id=422 data-nosnippet>422</a>        slice[..cmp::min(slice.len(), <span class="number">256</span>)].iter().position(|<span class="kw-2">&amp;</span>b| b == <span class="number">0</span>);
+<a href=#423 id=423 data-nosnippet>423</a>    <span class="kw">let </span>first_nul = <span class="kw">match </span>first_nul {
+<a href=#424 id=424 data-nosnippet>424</a>        <span class="prelude-val">Some</span>(first_nul) =&gt; first_nul,
+<a href=#425 id=425 data-nosnippet>425</a>        <span class="prelude-val">None </span>=&gt; {
+<a href=#426 id=426 data-nosnippet>426</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeError::generic(
+<a href=#427 id=427 data-nosnippet>427</a>                <span class="string">"could not find NUL terminated label \
+<a href=#428 id=428 data-nosnippet>428</a>                 at start of serialized object"</span>,
+<a href=#429 id=429 data-nosnippet>429</a>            ));
+<a href=#430 id=430 data-nosnippet>430</a>        }
+<a href=#431 id=431 data-nosnippet>431</a>    };
+<a href=#432 id=432 data-nosnippet>432</a>    <span class="kw">let </span>len = first_nul + padding_len(first_nul);
+<a href=#433 id=433 data-nosnippet>433</a>    <span class="kw">if </span>slice.len() &lt; len {
+<a href=#434 id=434 data-nosnippet>434</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeError::generic(
+<a href=#435 id=435 data-nosnippet>435</a>            <span class="string">"could not find properly sized label at start of serialized object"
+<a href=#436 id=436 data-nosnippet>436</a>        </span>));
+<a href=#437 id=437 data-nosnippet>437</a>    }
+<a href=#438 id=438 data-nosnippet>438</a>    <span class="kw">if </span>expected_label.as_bytes() != <span class="kw-2">&amp;</span>slice[..first_nul] {
+<a href=#439 id=439 data-nosnippet>439</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeError::label_mismatch(expected_label));
+<a href=#440 id=440 data-nosnippet>440</a>    }
+<a href=#441 id=441 data-nosnippet>441</a>    <span class="prelude-val">Ok</span>(len)
+<a href=#442 id=442 data-nosnippet>442</a>}
+<a href=#443 id=443 data-nosnippet>443</a>
+<a href=#444 id=444 data-nosnippet>444</a><span class="doccomment">/// Writes the given label to the buffer as a NUL terminated string. The label
+<a href=#445 id=445 data-nosnippet>445</a>/// given must not contain NUL, otherwise this will panic. Similarly, the label
+<a href=#446 id=446 data-nosnippet>446</a>/// must not be longer than 255 bytes, otherwise this will panic.
+<a href=#447 id=447 data-nosnippet>447</a>///
+<a href=#448 id=448 data-nosnippet>448</a>/// Additional NUL bytes are written as necessary to ensure that the number of
+<a href=#449 id=449 data-nosnippet>449</a>/// bytes written is always a multiple of 4.
+<a href=#450 id=450 data-nosnippet>450</a>///
+<a href=#451 id=451 data-nosnippet>451</a>/// Upon success, the total number of bytes written (including padding) is
+<a href=#452 id=452 data-nosnippet>452</a>/// returned.
+<a href=#453 id=453 data-nosnippet>453</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>write_label(
+<a href=#454 id=454 data-nosnippet>454</a>    label: <span class="kw-2">&amp;</span>str,
+<a href=#455 id=455 data-nosnippet>455</a>    dst: <span class="kw-2">&amp;mut </span>[u8],
+<a href=#456 id=456 data-nosnippet>456</a>) -&gt; <span class="prelude-ty">Result</span>&lt;usize, SerializeError&gt; {
+<a href=#457 id=457 data-nosnippet>457</a>    <span class="kw">let </span>nwrite = write_label_len(label);
+<a href=#458 id=458 data-nosnippet>458</a>    <span class="kw">if </span>dst.len() &lt; nwrite {
+<a href=#459 id=459 data-nosnippet>459</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(SerializeError::buffer_too_small(<span class="string">"label"</span>));
+<a href=#460 id=460 data-nosnippet>460</a>    }
+<a href=#461 id=461 data-nosnippet>461</a>    dst[..label.len()].copy_from_slice(label.as_bytes());
+<a href=#462 id=462 data-nosnippet>462</a>    <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..(nwrite - label.len()) {
+<a href=#463 id=463 data-nosnippet>463</a>        dst[label.len() + i] = <span class="number">0</span>;
+<a href=#464 id=464 data-nosnippet>464</a>    }
+<a href=#465 id=465 data-nosnippet>465</a>    <span class="macro">assert_eq!</span>(nwrite % <span class="number">4</span>, <span class="number">0</span>);
+<a href=#466 id=466 data-nosnippet>466</a>    <span class="prelude-val">Ok</span>(nwrite)
+<a href=#467 id=467 data-nosnippet>467</a>}
+<a href=#468 id=468 data-nosnippet>468</a>
+<a href=#469 id=469 data-nosnippet>469</a><span class="doccomment">/// Returns the total number of bytes (including padding) that would be written
+<a href=#470 id=470 data-nosnippet>470</a>/// for the given label. This panics if the given label contains a NUL byte or
+<a href=#471 id=471 data-nosnippet>471</a>/// is longer than 255 bytes. (The size restriction exists so that searching
+<a href=#472 id=472 data-nosnippet>472</a>/// for a label during deserialization can be done in small bounded space.)
+<a href=#473 id=473 data-nosnippet>473</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>write_label_len(label: <span class="kw-2">&amp;</span>str) -&gt; usize {
+<a href=#474 id=474 data-nosnippet>474</a>    <span class="macro">assert!</span>(label.len() &lt;= <span class="number">255</span>, <span class="string">"label must not be longer than 255 bytes"</span>);
+<a href=#475 id=475 data-nosnippet>475</a>    <span class="macro">assert!</span>(label.bytes().all(|b| b != <span class="number">0</span>), <span class="string">"label must not contain NUL bytes"</span>);
+<a href=#476 id=476 data-nosnippet>476</a>    <span class="kw">let </span>label_len = label.len() + <span class="number">1</span>; <span class="comment">// +1 for the NUL terminator
+<a href=#477 id=477 data-nosnippet>477</a>    </span>label_len + padding_len(label_len)
+<a href=#478 id=478 data-nosnippet>478</a>}
+<a href=#479 id=479 data-nosnippet>479</a>
+<a href=#480 id=480 data-nosnippet>480</a><span class="doccomment">/// Reads the endianness check from the beginning of the given slice and
+<a href=#481 id=481 data-nosnippet>481</a>/// confirms that the endianness of the serialized object matches the expected
+<a href=#482 id=482 data-nosnippet>482</a>/// endianness. If the slice is too small or if the endianness check fails,
+<a href=#483 id=483 data-nosnippet>483</a>/// this returns an error.
+<a href=#484 id=484 data-nosnippet>484</a>///
+<a href=#485 id=485 data-nosnippet>485</a>/// Upon success, the total number of bytes read is returned.
+<a href=#486 id=486 data-nosnippet>486</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>read_endianness_check(
+<a href=#487 id=487 data-nosnippet>487</a>    slice: <span class="kw-2">&amp;</span>[u8],
+<a href=#488 id=488 data-nosnippet>488</a>) -&gt; <span class="prelude-ty">Result</span>&lt;usize, DeserializeError&gt; {
+<a href=#489 id=489 data-nosnippet>489</a>    <span class="kw">let </span>(n, nr) = try_read_u32(slice, <span class="string">"endianness check"</span>)<span class="question-mark">?</span>;
+<a href=#490 id=490 data-nosnippet>490</a>    <span class="macro">assert_eq!</span>(nr, write_endianness_check_len());
+<a href=#491 id=491 data-nosnippet>491</a>    <span class="kw">if </span>n != <span class="number">0xFEFF </span>{
+<a href=#492 id=492 data-nosnippet>492</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeError::endian_mismatch(<span class="number">0xFEFF</span>, n));
+<a href=#493 id=493 data-nosnippet>493</a>    }
+<a href=#494 id=494 data-nosnippet>494</a>    <span class="prelude-val">Ok</span>(nr)
+<a href=#495 id=495 data-nosnippet>495</a>}
+<a href=#496 id=496 data-nosnippet>496</a>
+<a href=#497 id=497 data-nosnippet>497</a><span class="doccomment">/// Writes 0xFEFF as an integer using the given endianness.
+<a href=#498 id=498 data-nosnippet>498</a>///
+<a href=#499 id=499 data-nosnippet>499</a>/// This is useful for writing into the header of a serialized object. It can
+<a href=#500 id=500 data-nosnippet>500</a>/// be read during deserialization as a sanity check to ensure the proper
+<a href=#501 id=501 data-nosnippet>501</a>/// endianness is used.
+<a href=#502 id=502 data-nosnippet>502</a>///
+<a href=#503 id=503 data-nosnippet>503</a>/// Upon success, the total number of bytes written is returned.
+<a href=#504 id=504 data-nosnippet>504</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>write_endianness_check&lt;E: Endian&gt;(
+<a href=#505 id=505 data-nosnippet>505</a>    dst: <span class="kw-2">&amp;mut </span>[u8],
+<a href=#506 id=506 data-nosnippet>506</a>) -&gt; <span class="prelude-ty">Result</span>&lt;usize, SerializeError&gt; {
+<a href=#507 id=507 data-nosnippet>507</a>    <span class="kw">let </span>nwrite = write_endianness_check_len();
+<a href=#508 id=508 data-nosnippet>508</a>    <span class="kw">if </span>dst.len() &lt; nwrite {
+<a href=#509 id=509 data-nosnippet>509</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(SerializeError::buffer_too_small(<span class="string">"endianness check"</span>));
+<a href=#510 id=510 data-nosnippet>510</a>    }
+<a href=#511 id=511 data-nosnippet>511</a>    E::write_u32(<span class="number">0xFEFF</span>, dst);
+<a href=#512 id=512 data-nosnippet>512</a>    <span class="prelude-val">Ok</span>(nwrite)
+<a href=#513 id=513 data-nosnippet>513</a>}
+<a href=#514 id=514 data-nosnippet>514</a>
+<a href=#515 id=515 data-nosnippet>515</a><span class="doccomment">/// Returns the number of bytes written by the endianness check.
+<a href=#516 id=516 data-nosnippet>516</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>write_endianness_check_len() -&gt; usize {
+<a href=#517 id=517 data-nosnippet>517</a>    size_of::&lt;u32&gt;()
+<a href=#518 id=518 data-nosnippet>518</a>}
+<a href=#519 id=519 data-nosnippet>519</a>
+<a href=#520 id=520 data-nosnippet>520</a><span class="doccomment">/// Reads a version number from the beginning of the given slice and confirms
+<a href=#521 id=521 data-nosnippet>521</a>/// that is matches the expected version number given. If the slice is too
+<a href=#522 id=522 data-nosnippet>522</a>/// small or if the version numbers aren't equivalent, this returns an error.
+<a href=#523 id=523 data-nosnippet>523</a>///
+<a href=#524 id=524 data-nosnippet>524</a>/// Upon success, the total number of bytes read is returned.
+<a href=#525 id=525 data-nosnippet>525</a>///
+<a href=#526 id=526 data-nosnippet>526</a>/// N.B. Currently, we require that the version number is exactly equivalent.
+<a href=#527 id=527 data-nosnippet>527</a>/// In the future, if we bump the version number without a semver bump, then
+<a href=#528 id=528 data-nosnippet>528</a>/// we'll need to relax this a bit and support older versions.
+<a href=#529 id=529 data-nosnippet>529</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>read_version(
+<a href=#530 id=530 data-nosnippet>530</a>    slice: <span class="kw-2">&amp;</span>[u8],
+<a href=#531 id=531 data-nosnippet>531</a>    expected_version: u32,
+<a href=#532 id=532 data-nosnippet>532</a>) -&gt; <span class="prelude-ty">Result</span>&lt;usize, DeserializeError&gt; {
+<a href=#533 id=533 data-nosnippet>533</a>    <span class="kw">let </span>(n, nr) = try_read_u32(slice, <span class="string">"version"</span>)<span class="question-mark">?</span>;
+<a href=#534 id=534 data-nosnippet>534</a>    <span class="macro">assert_eq!</span>(nr, write_version_len());
+<a href=#535 id=535 data-nosnippet>535</a>    <span class="kw">if </span>n != expected_version {
+<a href=#536 id=536 data-nosnippet>536</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeError::version_mismatch(expected_version, n));
+<a href=#537 id=537 data-nosnippet>537</a>    }
+<a href=#538 id=538 data-nosnippet>538</a>    <span class="prelude-val">Ok</span>(nr)
+<a href=#539 id=539 data-nosnippet>539</a>}
+<a href=#540 id=540 data-nosnippet>540</a>
+<a href=#541 id=541 data-nosnippet>541</a><span class="doccomment">/// Writes the given version number to the beginning of the given slice.
+<a href=#542 id=542 data-nosnippet>542</a>///
+<a href=#543 id=543 data-nosnippet>543</a>/// This is useful for writing into the header of a serialized object. It can
+<a href=#544 id=544 data-nosnippet>544</a>/// be read during deserialization as a sanity check to ensure that the library
+<a href=#545 id=545 data-nosnippet>545</a>/// code supports the format of the serialized object.
+<a href=#546 id=546 data-nosnippet>546</a>///
+<a href=#547 id=547 data-nosnippet>547</a>/// Upon success, the total number of bytes written is returned.
+<a href=#548 id=548 data-nosnippet>548</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>write_version&lt;E: Endian&gt;(
+<a href=#549 id=549 data-nosnippet>549</a>    version: u32,
+<a href=#550 id=550 data-nosnippet>550</a>    dst: <span class="kw-2">&amp;mut </span>[u8],
+<a href=#551 id=551 data-nosnippet>551</a>) -&gt; <span class="prelude-ty">Result</span>&lt;usize, SerializeError&gt; {
+<a href=#552 id=552 data-nosnippet>552</a>    <span class="kw">let </span>nwrite = write_version_len();
+<a href=#553 id=553 data-nosnippet>553</a>    <span class="kw">if </span>dst.len() &lt; nwrite {
+<a href=#554 id=554 data-nosnippet>554</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(SerializeError::buffer_too_small(<span class="string">"version number"</span>));
+<a href=#555 id=555 data-nosnippet>555</a>    }
+<a href=#556 id=556 data-nosnippet>556</a>    E::write_u32(version, dst);
+<a href=#557 id=557 data-nosnippet>557</a>    <span class="prelude-val">Ok</span>(nwrite)
+<a href=#558 id=558 data-nosnippet>558</a>}
+<a href=#559 id=559 data-nosnippet>559</a>
+<a href=#560 id=560 data-nosnippet>560</a><span class="doccomment">/// Returns the number of bytes written by writing the version number.
+<a href=#561 id=561 data-nosnippet>561</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>write_version_len() -&gt; usize {
+<a href=#562 id=562 data-nosnippet>562</a>    size_of::&lt;u32&gt;()
+<a href=#563 id=563 data-nosnippet>563</a>}
+<a href=#564 id=564 data-nosnippet>564</a>
+<a href=#565 id=565 data-nosnippet>565</a><span class="doccomment">/// Reads a pattern ID from the given slice. If the slice has insufficient
+<a href=#566 id=566 data-nosnippet>566</a>/// length, then this panics. If the deserialized integer exceeds the pattern
+<a href=#567 id=567 data-nosnippet>567</a>/// ID limit for the current target, then this returns an error.
+<a href=#568 id=568 data-nosnippet>568</a>///
+<a href=#569 id=569 data-nosnippet>569</a>/// Upon success, this also returns the number of bytes read.
+<a href=#570 id=570 data-nosnippet>570</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>read_pattern_id(
+<a href=#571 id=571 data-nosnippet>571</a>    slice: <span class="kw-2">&amp;</span>[u8],
+<a href=#572 id=572 data-nosnippet>572</a>    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+<a href=#573 id=573 data-nosnippet>573</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(PatternID, usize), DeserializeError&gt; {
+<a href=#574 id=574 data-nosnippet>574</a>    <span class="kw">let </span>bytes: [u8; PatternID::SIZE] =
+<a href=#575 id=575 data-nosnippet>575</a>        slice[..PatternID::SIZE].try_into().unwrap();
+<a href=#576 id=576 data-nosnippet>576</a>    <span class="kw">let </span>pid = PatternID::from_ne_bytes(bytes)
+<a href=#577 id=577 data-nosnippet>577</a>        .map_err(|err| DeserializeError::pattern_id_error(err, what))<span class="question-mark">?</span>;
+<a href=#578 id=578 data-nosnippet>578</a>    <span class="prelude-val">Ok</span>((pid, PatternID::SIZE))
+<a href=#579 id=579 data-nosnippet>579</a>}
+<a href=#580 id=580 data-nosnippet>580</a>
+<a href=#581 id=581 data-nosnippet>581</a><span class="doccomment">/// Reads a pattern ID from the given slice. If the slice has insufficient
+<a href=#582 id=582 data-nosnippet>582</a>/// length, then this panics. Otherwise, the deserialized integer is assumed
+<a href=#583 id=583 data-nosnippet>583</a>/// to be a valid pattern ID.
+<a href=#584 id=584 data-nosnippet>584</a>///
+<a href=#585 id=585 data-nosnippet>585</a>/// This also returns the number of bytes read.
+<a href=#586 id=586 data-nosnippet>586</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>read_pattern_id_unchecked(slice: <span class="kw-2">&amp;</span>[u8]) -&gt; (PatternID, usize) {
+<a href=#587 id=587 data-nosnippet>587</a>    <span class="kw">let </span>pid = PatternID::from_ne_bytes_unchecked(
+<a href=#588 id=588 data-nosnippet>588</a>        slice[..PatternID::SIZE].try_into().unwrap(),
+<a href=#589 id=589 data-nosnippet>589</a>    );
+<a href=#590 id=590 data-nosnippet>590</a>    (pid, PatternID::SIZE)
+<a href=#591 id=591 data-nosnippet>591</a>}
+<a href=#592 id=592 data-nosnippet>592</a>
+<a href=#593 id=593 data-nosnippet>593</a><span class="doccomment">/// Write the given pattern ID to the beginning of the given slice of bytes
+<a href=#594 id=594 data-nosnippet>594</a>/// using the specified endianness. The given slice must have length at least
+<a href=#595 id=595 data-nosnippet>595</a>/// `PatternID::SIZE`, or else this panics. Upon success, the total number of
+<a href=#596 id=596 data-nosnippet>596</a>/// bytes written is returned.
+<a href=#597 id=597 data-nosnippet>597</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>write_pattern_id&lt;E: Endian&gt;(
+<a href=#598 id=598 data-nosnippet>598</a>    pid: PatternID,
+<a href=#599 id=599 data-nosnippet>599</a>    dst: <span class="kw-2">&amp;mut </span>[u8],
+<a href=#600 id=600 data-nosnippet>600</a>) -&gt; usize {
+<a href=#601 id=601 data-nosnippet>601</a>    E::write_u32(pid.as_u32(), dst);
+<a href=#602 id=602 data-nosnippet>602</a>    PatternID::SIZE
+<a href=#603 id=603 data-nosnippet>603</a>}
+<a href=#604 id=604 data-nosnippet>604</a>
+<a href=#605 id=605 data-nosnippet>605</a><span class="doccomment">/// Attempts to read a state ID from the given slice. If the slice has an
+<a href=#606 id=606 data-nosnippet>606</a>/// insufficient number of bytes or if the state ID exceeds the limit for
+<a href=#607 id=607 data-nosnippet>607</a>/// the current target, then this returns an error.
+<a href=#608 id=608 data-nosnippet>608</a>///
+<a href=#609 id=609 data-nosnippet>609</a>/// Upon success, this also returns the number of bytes read.
+<a href=#610 id=610 data-nosnippet>610</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>try_read_state_id(
+<a href=#611 id=611 data-nosnippet>611</a>    slice: <span class="kw-2">&amp;</span>[u8],
+<a href=#612 id=612 data-nosnippet>612</a>    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+<a href=#613 id=613 data-nosnippet>613</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(StateID, usize), DeserializeError&gt; {
+<a href=#614 id=614 data-nosnippet>614</a>    <span class="kw">if </span>slice.len() &lt; StateID::SIZE {
+<a href=#615 id=615 data-nosnippet>615</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeError::buffer_too_small(what));
+<a href=#616 id=616 data-nosnippet>616</a>    }
+<a href=#617 id=617 data-nosnippet>617</a>    read_state_id(slice, what)
+<a href=#618 id=618 data-nosnippet>618</a>}
+<a href=#619 id=619 data-nosnippet>619</a>
+<a href=#620 id=620 data-nosnippet>620</a><span class="doccomment">/// Reads a state ID from the given slice. If the slice has insufficient
+<a href=#621 id=621 data-nosnippet>621</a>/// length, then this panics. If the deserialized integer exceeds the state ID
+<a href=#622 id=622 data-nosnippet>622</a>/// limit for the current target, then this returns an error.
+<a href=#623 id=623 data-nosnippet>623</a>///
+<a href=#624 id=624 data-nosnippet>624</a>/// Upon success, this also returns the number of bytes read.
+<a href=#625 id=625 data-nosnippet>625</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>read_state_id(
+<a href=#626 id=626 data-nosnippet>626</a>    slice: <span class="kw-2">&amp;</span>[u8],
+<a href=#627 id=627 data-nosnippet>627</a>    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+<a href=#628 id=628 data-nosnippet>628</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(StateID, usize), DeserializeError&gt; {
+<a href=#629 id=629 data-nosnippet>629</a>    <span class="kw">let </span>bytes: [u8; StateID::SIZE] =
+<a href=#630 id=630 data-nosnippet>630</a>        slice[..StateID::SIZE].try_into().unwrap();
+<a href=#631 id=631 data-nosnippet>631</a>    <span class="kw">let </span>sid = StateID::from_ne_bytes(bytes)
+<a href=#632 id=632 data-nosnippet>632</a>        .map_err(|err| DeserializeError::state_id_error(err, what))<span class="question-mark">?</span>;
+<a href=#633 id=633 data-nosnippet>633</a>    <span class="prelude-val">Ok</span>((sid, StateID::SIZE))
+<a href=#634 id=634 data-nosnippet>634</a>}
+<a href=#635 id=635 data-nosnippet>635</a>
+<a href=#636 id=636 data-nosnippet>636</a><span class="doccomment">/// Reads a state ID from the given slice. If the slice has insufficient
+<a href=#637 id=637 data-nosnippet>637</a>/// length, then this panics. Otherwise, the deserialized integer is assumed
+<a href=#638 id=638 data-nosnippet>638</a>/// to be a valid state ID.
+<a href=#639 id=639 data-nosnippet>639</a>///
+<a href=#640 id=640 data-nosnippet>640</a>/// This also returns the number of bytes read.
+<a href=#641 id=641 data-nosnippet>641</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>read_state_id_unchecked(slice: <span class="kw-2">&amp;</span>[u8]) -&gt; (StateID, usize) {
+<a href=#642 id=642 data-nosnippet>642</a>    <span class="kw">let </span>sid = StateID::from_ne_bytes_unchecked(
+<a href=#643 id=643 data-nosnippet>643</a>        slice[..StateID::SIZE].try_into().unwrap(),
+<a href=#644 id=644 data-nosnippet>644</a>    );
+<a href=#645 id=645 data-nosnippet>645</a>    (sid, StateID::SIZE)
+<a href=#646 id=646 data-nosnippet>646</a>}
+<a href=#647 id=647 data-nosnippet>647</a>
+<a href=#648 id=648 data-nosnippet>648</a><span class="doccomment">/// Write the given state ID to the beginning of the given slice of bytes
+<a href=#649 id=649 data-nosnippet>649</a>/// using the specified endianness. The given slice must have length at least
+<a href=#650 id=650 data-nosnippet>650</a>/// `StateID::SIZE`, or else this panics. Upon success, the total number of
+<a href=#651 id=651 data-nosnippet>651</a>/// bytes written is returned.
+<a href=#652 id=652 data-nosnippet>652</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>write_state_id&lt;E: Endian&gt;(
+<a href=#653 id=653 data-nosnippet>653</a>    sid: StateID,
+<a href=#654 id=654 data-nosnippet>654</a>    dst: <span class="kw-2">&amp;mut </span>[u8],
+<a href=#655 id=655 data-nosnippet>655</a>) -&gt; usize {
+<a href=#656 id=656 data-nosnippet>656</a>    E::write_u32(sid.as_u32(), dst);
+<a href=#657 id=657 data-nosnippet>657</a>    StateID::SIZE
+<a href=#658 id=658 data-nosnippet>658</a>}
+<a href=#659 id=659 data-nosnippet>659</a>
+<a href=#660 id=660 data-nosnippet>660</a><span class="doccomment">/// Try to read a u16 as a usize from the beginning of the given slice in
+<a href=#661 id=661 data-nosnippet>661</a>/// native endian format. If the slice has fewer than 2 bytes or if the
+<a href=#662 id=662 data-nosnippet>662</a>/// deserialized number cannot be represented by usize, then this returns an
+<a href=#663 id=663 data-nosnippet>663</a>/// error. The error message will include the `what` description of what is
+<a href=#664 id=664 data-nosnippet>664</a>/// being deserialized, for better error messages. `what` should be a noun in
+<a href=#665 id=665 data-nosnippet>665</a>/// singular form.
+<a href=#666 id=666 data-nosnippet>666</a>///
+<a href=#667 id=667 data-nosnippet>667</a>/// Upon success, this also returns the number of bytes read.
+<a href=#668 id=668 data-nosnippet>668</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>try_read_u16_as_usize(
+<a href=#669 id=669 data-nosnippet>669</a>    slice: <span class="kw-2">&amp;</span>[u8],
+<a href=#670 id=670 data-nosnippet>670</a>    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+<a href=#671 id=671 data-nosnippet>671</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(usize, usize), DeserializeError&gt; {
+<a href=#672 id=672 data-nosnippet>672</a>    try_read_u16(slice, what).and_then(|(n, nr)| {
+<a href=#673 id=673 data-nosnippet>673</a>        usize::try_from(n)
+<a href=#674 id=674 data-nosnippet>674</a>            .map(|n| (n, nr))
+<a href=#675 id=675 data-nosnippet>675</a>            .map_err(|<span class="kw">_</span>| DeserializeError::invalid_usize(what))
+<a href=#676 id=676 data-nosnippet>676</a>    })
+<a href=#677 id=677 data-nosnippet>677</a>}
+<a href=#678 id=678 data-nosnippet>678</a>
+<a href=#679 id=679 data-nosnippet>679</a><span class="doccomment">/// Try to read a u32 as a usize from the beginning of the given slice in
+<a href=#680 id=680 data-nosnippet>680</a>/// native endian format. If the slice has fewer than 4 bytes or if the
+<a href=#681 id=681 data-nosnippet>681</a>/// deserialized number cannot be represented by usize, then this returns an
+<a href=#682 id=682 data-nosnippet>682</a>/// error. The error message will include the `what` description of what is
+<a href=#683 id=683 data-nosnippet>683</a>/// being deserialized, for better error messages. `what` should be a noun in
+<a href=#684 id=684 data-nosnippet>684</a>/// singular form.
+<a href=#685 id=685 data-nosnippet>685</a>///
+<a href=#686 id=686 data-nosnippet>686</a>/// Upon success, this also returns the number of bytes read.
+<a href=#687 id=687 data-nosnippet>687</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>try_read_u32_as_usize(
+<a href=#688 id=688 data-nosnippet>688</a>    slice: <span class="kw-2">&amp;</span>[u8],
+<a href=#689 id=689 data-nosnippet>689</a>    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+<a href=#690 id=690 data-nosnippet>690</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(usize, usize), DeserializeError&gt; {
+<a href=#691 id=691 data-nosnippet>691</a>    try_read_u32(slice, what).and_then(|(n, nr)| {
+<a href=#692 id=692 data-nosnippet>692</a>        usize::try_from(n)
+<a href=#693 id=693 data-nosnippet>693</a>            .map(|n| (n, nr))
+<a href=#694 id=694 data-nosnippet>694</a>            .map_err(|<span class="kw">_</span>| DeserializeError::invalid_usize(what))
+<a href=#695 id=695 data-nosnippet>695</a>    })
+<a href=#696 id=696 data-nosnippet>696</a>}
+<a href=#697 id=697 data-nosnippet>697</a>
+<a href=#698 id=698 data-nosnippet>698</a><span class="doccomment">/// Try to read a u16 from the beginning of the given slice in native endian
+<a href=#699 id=699 data-nosnippet>699</a>/// format. If the slice has fewer than 2 bytes, then this returns an error.
+<a href=#700 id=700 data-nosnippet>700</a>/// The error message will include the `what` description of what is being
+<a href=#701 id=701 data-nosnippet>701</a>/// deserialized, for better error messages. `what` should be a noun in
+<a href=#702 id=702 data-nosnippet>702</a>/// singular form.
+<a href=#703 id=703 data-nosnippet>703</a>///
+<a href=#704 id=704 data-nosnippet>704</a>/// Upon success, this also returns the number of bytes read.
+<a href=#705 id=705 data-nosnippet>705</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>try_read_u16(
+<a href=#706 id=706 data-nosnippet>706</a>    slice: <span class="kw-2">&amp;</span>[u8],
+<a href=#707 id=707 data-nosnippet>707</a>    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+<a href=#708 id=708 data-nosnippet>708</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(u16, usize), DeserializeError&gt; {
+<a href=#709 id=709 data-nosnippet>709</a>    check_slice_len(slice, size_of::&lt;u16&gt;(), what)<span class="question-mark">?</span>;
+<a href=#710 id=710 data-nosnippet>710</a>    <span class="prelude-val">Ok</span>((read_u16(slice), size_of::&lt;u16&gt;()))
+<a href=#711 id=711 data-nosnippet>711</a>}
+<a href=#712 id=712 data-nosnippet>712</a>
+<a href=#713 id=713 data-nosnippet>713</a><span class="doccomment">/// Try to read a u32 from the beginning of the given slice in native endian
+<a href=#714 id=714 data-nosnippet>714</a>/// format. If the slice has fewer than 4 bytes, then this returns an error.
+<a href=#715 id=715 data-nosnippet>715</a>/// The error message will include the `what` description of what is being
+<a href=#716 id=716 data-nosnippet>716</a>/// deserialized, for better error messages. `what` should be a noun in
+<a href=#717 id=717 data-nosnippet>717</a>/// singular form.
+<a href=#718 id=718 data-nosnippet>718</a>///
+<a href=#719 id=719 data-nosnippet>719</a>/// Upon success, this also returns the number of bytes read.
+<a href=#720 id=720 data-nosnippet>720</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>try_read_u32(
+<a href=#721 id=721 data-nosnippet>721</a>    slice: <span class="kw-2">&amp;</span>[u8],
+<a href=#722 id=722 data-nosnippet>722</a>    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+<a href=#723 id=723 data-nosnippet>723</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(u32, usize), DeserializeError&gt; {
+<a href=#724 id=724 data-nosnippet>724</a>    check_slice_len(slice, size_of::&lt;u32&gt;(), what)<span class="question-mark">?</span>;
+<a href=#725 id=725 data-nosnippet>725</a>    <span class="prelude-val">Ok</span>((read_u32(slice), size_of::&lt;u32&gt;()))
+<a href=#726 id=726 data-nosnippet>726</a>}
+<a href=#727 id=727 data-nosnippet>727</a>
+<a href=#728 id=728 data-nosnippet>728</a><span class="doccomment">/// Try to read a u128 from the beginning of the given slice in native endian
+<a href=#729 id=729 data-nosnippet>729</a>/// format. If the slice has fewer than 16 bytes, then this returns an error.
+<a href=#730 id=730 data-nosnippet>730</a>/// The error message will include the `what` description of what is being
+<a href=#731 id=731 data-nosnippet>731</a>/// deserialized, for better error messages. `what` should be a noun in
+<a href=#732 id=732 data-nosnippet>732</a>/// singular form.
+<a href=#733 id=733 data-nosnippet>733</a>///
+<a href=#734 id=734 data-nosnippet>734</a>/// Upon success, this also returns the number of bytes read.
+<a href=#735 id=735 data-nosnippet>735</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>try_read_u128(
+<a href=#736 id=736 data-nosnippet>736</a>    slice: <span class="kw-2">&amp;</span>[u8],
+<a href=#737 id=737 data-nosnippet>737</a>    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+<a href=#738 id=738 data-nosnippet>738</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(u128, usize), DeserializeError&gt; {
+<a href=#739 id=739 data-nosnippet>739</a>    check_slice_len(slice, size_of::&lt;u128&gt;(), what)<span class="question-mark">?</span>;
+<a href=#740 id=740 data-nosnippet>740</a>    <span class="prelude-val">Ok</span>((read_u128(slice), size_of::&lt;u128&gt;()))
+<a href=#741 id=741 data-nosnippet>741</a>}
+<a href=#742 id=742 data-nosnippet>742</a>
+<a href=#743 id=743 data-nosnippet>743</a><span class="doccomment">/// Read a u16 from the beginning of the given slice in native endian format.
+<a href=#744 id=744 data-nosnippet>744</a>/// If the slice has fewer than 2 bytes, then this panics.
+<a href=#745 id=745 data-nosnippet>745</a>///
+<a href=#746 id=746 data-nosnippet>746</a>/// Marked as inline to speed up sparse searching which decodes integers from
+<a href=#747 id=747 data-nosnippet>747</a>/// its automaton at search time.
+<a href=#748 id=748 data-nosnippet>748</a></span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
+<a href=#749 id=749 data-nosnippet>749</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>read_u16(slice: <span class="kw-2">&amp;</span>[u8]) -&gt; u16 {
+<a href=#750 id=750 data-nosnippet>750</a>    <span class="kw">let </span>bytes: [u8; <span class="number">2</span>] = slice[..size_of::&lt;u16&gt;()].try_into().unwrap();
+<a href=#751 id=751 data-nosnippet>751</a>    u16::from_ne_bytes(bytes)
+<a href=#752 id=752 data-nosnippet>752</a>}
+<a href=#753 id=753 data-nosnippet>753</a>
+<a href=#754 id=754 data-nosnippet>754</a><span class="doccomment">/// Read a u32 from the beginning of the given slice in native endian format.
+<a href=#755 id=755 data-nosnippet>755</a>/// If the slice has fewer than 4 bytes, then this panics.
+<a href=#756 id=756 data-nosnippet>756</a>///
+<a href=#757 id=757 data-nosnippet>757</a>/// Marked as inline to speed up sparse searching which decodes integers from
+<a href=#758 id=758 data-nosnippet>758</a>/// its automaton at search time.
+<a href=#759 id=759 data-nosnippet>759</a></span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
+<a href=#760 id=760 data-nosnippet>760</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>read_u32(slice: <span class="kw-2">&amp;</span>[u8]) -&gt; u32 {
+<a href=#761 id=761 data-nosnippet>761</a>    <span class="kw">let </span>bytes: [u8; <span class="number">4</span>] = slice[..size_of::&lt;u32&gt;()].try_into().unwrap();
+<a href=#762 id=762 data-nosnippet>762</a>    u32::from_ne_bytes(bytes)
+<a href=#763 id=763 data-nosnippet>763</a>}
+<a href=#764 id=764 data-nosnippet>764</a>
+<a href=#765 id=765 data-nosnippet>765</a><span class="doccomment">/// Read a u128 from the beginning of the given slice in native endian format.
+<a href=#766 id=766 data-nosnippet>766</a>/// If the slice has fewer than 16 bytes, then this panics.
+<a href=#767 id=767 data-nosnippet>767</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>read_u128(slice: <span class="kw-2">&amp;</span>[u8]) -&gt; u128 {
+<a href=#768 id=768 data-nosnippet>768</a>    <span class="kw">let </span>bytes: [u8; <span class="number">16</span>] = slice[..size_of::&lt;u128&gt;()].try_into().unwrap();
+<a href=#769 id=769 data-nosnippet>769</a>    u128::from_ne_bytes(bytes)
 <a href=#770 id=770 data-nosnippet>770</a>}
 <a href=#771 id=771 data-nosnippet>771</a>
-<a href=#772 id=772 data-nosnippet>772</a><span class="doccomment">/// Read a u128 from the beginning of the given slice in native endian format.
-<a href=#773 id=773 data-nosnippet>773</a>/// If the slice has fewer than 16 bytes, then this panics.
-<a href=#774 id=774 data-nosnippet>774</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>read_u128(slice: <span class="kw-2">&amp;</span>[u8]) -&gt; u128 {
-<a href=#775 id=775 data-nosnippet>775</a>    <span class="kw">let </span>bytes: [u8; <span class="number">16</span>] = slice[..size_of::&lt;u128&gt;()].try_into().unwrap();
-<a href=#776 id=776 data-nosnippet>776</a>    u128::from_ne_bytes(bytes)
-<a href=#777 id=777 data-nosnippet>777</a>}
-<a href=#778 id=778 data-nosnippet>778</a>
-<a href=#779 id=779 data-nosnippet>779</a><span class="doccomment">/// Checks that the given slice has some minimal length. If it's smaller than
-<a href=#780 id=780 data-nosnippet>780</a>/// the bound given, then a "buffer too small" error is returned with `what`
-<a href=#781 id=781 data-nosnippet>781</a>/// describing what the buffer represents.
-<a href=#782 id=782 data-nosnippet>782</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>check_slice_len&lt;T&gt;(
-<a href=#783 id=783 data-nosnippet>783</a>    slice: <span class="kw-2">&amp;</span>[T],
-<a href=#784 id=784 data-nosnippet>784</a>    at_least_len: usize,
-<a href=#785 id=785 data-nosnippet>785</a>    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
-<a href=#786 id=786 data-nosnippet>786</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(), DeserializeError&gt; {
-<a href=#787 id=787 data-nosnippet>787</a>    <span class="kw">if </span>slice.len() &lt; at_least_len {
-<a href=#788 id=788 data-nosnippet>788</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeError::buffer_too_small(what));
-<a href=#789 id=789 data-nosnippet>789</a>    }
-<a href=#790 id=790 data-nosnippet>790</a>    <span class="prelude-val">Ok</span>(())
-<a href=#791 id=791 data-nosnippet>791</a>}
-<a href=#792 id=792 data-nosnippet>792</a>
-<a href=#793 id=793 data-nosnippet>793</a><span class="doccomment">/// Multiply the given numbers, and on overflow, return an error that includes
-<a href=#794 id=794 data-nosnippet>794</a>/// 'what' in the error message.
-<a href=#795 id=795 data-nosnippet>795</a>///
-<a href=#796 id=796 data-nosnippet>796</a>/// This is useful when doing arithmetic with untrusted data.
-<a href=#797 id=797 data-nosnippet>797</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>mul(
-<a href=#798 id=798 data-nosnippet>798</a>    a: usize,
-<a href=#799 id=799 data-nosnippet>799</a>    b: usize,
-<a href=#800 id=800 data-nosnippet>800</a>    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
-<a href=#801 id=801 data-nosnippet>801</a>) -&gt; <span class="prelude-ty">Result</span>&lt;usize, DeserializeError&gt; {
-<a href=#802 id=802 data-nosnippet>802</a>    <span class="kw">match </span>a.checked_mul(b) {
-<a href=#803 id=803 data-nosnippet>803</a>        <span class="prelude-val">Some</span>(c) =&gt; <span class="prelude-val">Ok</span>(c),
-<a href=#804 id=804 data-nosnippet>804</a>        <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(DeserializeError::arithmetic_overflow(what)),
-<a href=#805 id=805 data-nosnippet>805</a>    }
-<a href=#806 id=806 data-nosnippet>806</a>}
-<a href=#807 id=807 data-nosnippet>807</a>
-<a href=#808 id=808 data-nosnippet>808</a><span class="doccomment">/// Add the given numbers, and on overflow, return an error that includes
-<a href=#809 id=809 data-nosnippet>809</a>/// 'what' in the error message.
-<a href=#810 id=810 data-nosnippet>810</a>///
-<a href=#811 id=811 data-nosnippet>811</a>/// This is useful when doing arithmetic with untrusted data.
-<a href=#812 id=812 data-nosnippet>812</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>add(
-<a href=#813 id=813 data-nosnippet>813</a>    a: usize,
-<a href=#814 id=814 data-nosnippet>814</a>    b: usize,
-<a href=#815 id=815 data-nosnippet>815</a>    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
-<a href=#816 id=816 data-nosnippet>816</a>) -&gt; <span class="prelude-ty">Result</span>&lt;usize, DeserializeError&gt; {
-<a href=#817 id=817 data-nosnippet>817</a>    <span class="kw">match </span>a.checked_add(b) {
-<a href=#818 id=818 data-nosnippet>818</a>        <span class="prelude-val">Some</span>(c) =&gt; <span class="prelude-val">Ok</span>(c),
-<a href=#819 id=819 data-nosnippet>819</a>        <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(DeserializeError::arithmetic_overflow(what)),
-<a href=#820 id=820 data-nosnippet>820</a>    }
-<a href=#821 id=821 data-nosnippet>821</a>}
-<a href=#822 id=822 data-nosnippet>822</a>
-<a href=#823 id=823 data-nosnippet>823</a><span class="doccomment">/// Shift `a` left by `b`, and on overflow, return an error that includes
-<a href=#824 id=824 data-nosnippet>824</a>/// 'what' in the error message.
-<a href=#825 id=825 data-nosnippet>825</a>///
-<a href=#826 id=826 data-nosnippet>826</a>/// This is useful when doing arithmetic with untrusted data.
-<a href=#827 id=827 data-nosnippet>827</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>shl(
-<a href=#828 id=828 data-nosnippet>828</a>    a: usize,
-<a href=#829 id=829 data-nosnippet>829</a>    b: usize,
-<a href=#830 id=830 data-nosnippet>830</a>    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
-<a href=#831 id=831 data-nosnippet>831</a>) -&gt; <span class="prelude-ty">Result</span>&lt;usize, DeserializeError&gt; {
-<a href=#832 id=832 data-nosnippet>832</a>    <span class="kw">let </span>amount = u32::try_from(b)
-<a href=#833 id=833 data-nosnippet>833</a>        .map_err(|<span class="kw">_</span>| DeserializeError::arithmetic_overflow(what))<span class="question-mark">?</span>;
-<a href=#834 id=834 data-nosnippet>834</a>    <span class="kw">match </span>a.checked_shl(amount) {
-<a href=#835 id=835 data-nosnippet>835</a>        <span class="prelude-val">Some</span>(c) =&gt; <span class="prelude-val">Ok</span>(c),
-<a href=#836 id=836 data-nosnippet>836</a>        <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(DeserializeError::arithmetic_overflow(what)),
-<a href=#837 id=837 data-nosnippet>837</a>    }
-<a href=#838 id=838 data-nosnippet>838</a>}
+<a href=#772 id=772 data-nosnippet>772</a><span class="doccomment">/// Checks that the given slice has some minimal length. If it's smaller than
+<a href=#773 id=773 data-nosnippet>773</a>/// the bound given, then a "buffer too small" error is returned with `what`
+<a href=#774 id=774 data-nosnippet>774</a>/// describing what the buffer represents.
+<a href=#775 id=775 data-nosnippet>775</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>check_slice_len&lt;T&gt;(
+<a href=#776 id=776 data-nosnippet>776</a>    slice: <span class="kw-2">&amp;</span>[T],
+<a href=#777 id=777 data-nosnippet>777</a>    at_least_len: usize,
+<a href=#778 id=778 data-nosnippet>778</a>    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+<a href=#779 id=779 data-nosnippet>779</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(), DeserializeError&gt; {
+<a href=#780 id=780 data-nosnippet>780</a>    <span class="kw">if </span>slice.len() &lt; at_least_len {
+<a href=#781 id=781 data-nosnippet>781</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeError::buffer_too_small(what));
+<a href=#782 id=782 data-nosnippet>782</a>    }
+<a href=#783 id=783 data-nosnippet>783</a>    <span class="prelude-val">Ok</span>(())
+<a href=#784 id=784 data-nosnippet>784</a>}
+<a href=#785 id=785 data-nosnippet>785</a>
+<a href=#786 id=786 data-nosnippet>786</a><span class="doccomment">/// Multiply the given numbers, and on overflow, return an error that includes
+<a href=#787 id=787 data-nosnippet>787</a>/// 'what' in the error message.
+<a href=#788 id=788 data-nosnippet>788</a>///
+<a href=#789 id=789 data-nosnippet>789</a>/// This is useful when doing arithmetic with untrusted data.
+<a href=#790 id=790 data-nosnippet>790</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>mul(
+<a href=#791 id=791 data-nosnippet>791</a>    a: usize,
+<a href=#792 id=792 data-nosnippet>792</a>    b: usize,
+<a href=#793 id=793 data-nosnippet>793</a>    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+<a href=#794 id=794 data-nosnippet>794</a>) -&gt; <span class="prelude-ty">Result</span>&lt;usize, DeserializeError&gt; {
+<a href=#795 id=795 data-nosnippet>795</a>    <span class="kw">match </span>a.checked_mul(b) {
+<a href=#796 id=796 data-nosnippet>796</a>        <span class="prelude-val">Some</span>(c) =&gt; <span class="prelude-val">Ok</span>(c),
+<a href=#797 id=797 data-nosnippet>797</a>        <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(DeserializeError::arithmetic_overflow(what)),
+<a href=#798 id=798 data-nosnippet>798</a>    }
+<a href=#799 id=799 data-nosnippet>799</a>}
+<a href=#800 id=800 data-nosnippet>800</a>
+<a href=#801 id=801 data-nosnippet>801</a><span class="doccomment">/// Add the given numbers, and on overflow, return an error that includes
+<a href=#802 id=802 data-nosnippet>802</a>/// 'what' in the error message.
+<a href=#803 id=803 data-nosnippet>803</a>///
+<a href=#804 id=804 data-nosnippet>804</a>/// This is useful when doing arithmetic with untrusted data.
+<a href=#805 id=805 data-nosnippet>805</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>add(
+<a href=#806 id=806 data-nosnippet>806</a>    a: usize,
+<a href=#807 id=807 data-nosnippet>807</a>    b: usize,
+<a href=#808 id=808 data-nosnippet>808</a>    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+<a href=#809 id=809 data-nosnippet>809</a>) -&gt; <span class="prelude-ty">Result</span>&lt;usize, DeserializeError&gt; {
+<a href=#810 id=810 data-nosnippet>810</a>    <span class="kw">match </span>a.checked_add(b) {
+<a href=#811 id=811 data-nosnippet>811</a>        <span class="prelude-val">Some</span>(c) =&gt; <span class="prelude-val">Ok</span>(c),
+<a href=#812 id=812 data-nosnippet>812</a>        <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(DeserializeError::arithmetic_overflow(what)),
+<a href=#813 id=813 data-nosnippet>813</a>    }
+<a href=#814 id=814 data-nosnippet>814</a>}
+<a href=#815 id=815 data-nosnippet>815</a>
+<a href=#816 id=816 data-nosnippet>816</a><span class="doccomment">/// Shift `a` left by `b`, and on overflow, return an error that includes
+<a href=#817 id=817 data-nosnippet>817</a>/// 'what' in the error message.
+<a href=#818 id=818 data-nosnippet>818</a>///
+<a href=#819 id=819 data-nosnippet>819</a>/// This is useful when doing arithmetic with untrusted data.
+<a href=#820 id=820 data-nosnippet>820</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>shl(
+<a href=#821 id=821 data-nosnippet>821</a>    a: usize,
+<a href=#822 id=822 data-nosnippet>822</a>    b: usize,
+<a href=#823 id=823 data-nosnippet>823</a>    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+<a href=#824 id=824 data-nosnippet>824</a>) -&gt; <span class="prelude-ty">Result</span>&lt;usize, DeserializeError&gt; {
+<a href=#825 id=825 data-nosnippet>825</a>    <span class="kw">let </span>amount = u32::try_from(b)
+<a href=#826 id=826 data-nosnippet>826</a>        .map_err(|<span class="kw">_</span>| DeserializeError::arithmetic_overflow(what))<span class="question-mark">?</span>;
+<a href=#827 id=827 data-nosnippet>827</a>    <span class="kw">match </span>a.checked_shl(amount) {
+<a href=#828 id=828 data-nosnippet>828</a>        <span class="prelude-val">Some</span>(c) =&gt; <span class="prelude-val">Ok</span>(c),
+<a href=#829 id=829 data-nosnippet>829</a>        <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(DeserializeError::arithmetic_overflow(what)),
+<a href=#830 id=830 data-nosnippet>830</a>    }
+<a href=#831 id=831 data-nosnippet>831</a>}
+<a href=#832 id=832 data-nosnippet>832</a>
+<a href=#833 id=833 data-nosnippet>833</a><span class="doccomment">/// Returns the number of additional bytes required to add to the given length
+<a href=#834 id=834 data-nosnippet>834</a>/// in order to make the total length a multiple of 4. The return value is
+<a href=#835 id=835 data-nosnippet>835</a>/// always less than 4.
+<a href=#836 id=836 data-nosnippet>836</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>padding_len(non_padding_len: usize) -&gt; usize {
+<a href=#837 id=837 data-nosnippet>837</a>    (<span class="number">4 </span>- (non_padding_len &amp; <span class="number">0b11</span>)) &amp; <span class="number">0b11
+<a href=#838 id=838 data-nosnippet>838</a></span>}
 <a href=#839 id=839 data-nosnippet>839</a>
-<a href=#840 id=840 data-nosnippet>840</a><span class="doccomment">/// Returns the number of additional bytes required to add to the given length
-<a href=#841 id=841 data-nosnippet>841</a>/// in order to make the total length a multiple of 4. The return value is
-<a href=#842 id=842 data-nosnippet>842</a>/// always less than 4.
-<a href=#843 id=843 data-nosnippet>843</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>padding_len(non_padding_len: usize) -&gt; usize {
-<a href=#844 id=844 data-nosnippet>844</a>    (<span class="number">4 </span>- (non_padding_len &amp; <span class="number">0b11</span>)) &amp; <span class="number">0b11
-<a href=#845 id=845 data-nosnippet>845</a></span>}
-<a href=#846 id=846 data-nosnippet>846</a>
-<a href=#847 id=847 data-nosnippet>847</a><span class="doccomment">/// A simple trait for writing code generic over endianness.
-<a href=#848 id=848 data-nosnippet>848</a>///
-<a href=#849 id=849 data-nosnippet>849</a>/// This is similar to what byteorder provides, but we only need a very small
-<a href=#850 id=850 data-nosnippet>850</a>/// subset.
-<a href=#851 id=851 data-nosnippet>851</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait </span>Endian {
-<a href=#852 id=852 data-nosnippet>852</a>    <span class="doccomment">/// Writes a u16 to the given destination buffer in a particular
-<a href=#853 id=853 data-nosnippet>853</a>    /// endianness. If the destination buffer has a length smaller than 2, then
-<a href=#854 id=854 data-nosnippet>854</a>    /// this panics.
-<a href=#855 id=855 data-nosnippet>855</a>    </span><span class="kw">fn </span>write_u16(n: u16, dst: <span class="kw-2">&amp;mut </span>[u8]);
-<a href=#856 id=856 data-nosnippet>856</a>
-<a href=#857 id=857 data-nosnippet>857</a>    <span class="doccomment">/// Writes a u32 to the given destination buffer in a particular
-<a href=#858 id=858 data-nosnippet>858</a>    /// endianness. If the destination buffer has a length smaller than 4, then
-<a href=#859 id=859 data-nosnippet>859</a>    /// this panics.
-<a href=#860 id=860 data-nosnippet>860</a>    </span><span class="kw">fn </span>write_u32(n: u32, dst: <span class="kw-2">&amp;mut </span>[u8]);
-<a href=#861 id=861 data-nosnippet>861</a>
-<a href=#862 id=862 data-nosnippet>862</a>    <span class="doccomment">/// Writes a u128 to the given destination buffer in a particular
-<a href=#863 id=863 data-nosnippet>863</a>    /// endianness. If the destination buffer has a length smaller than 16,
-<a href=#864 id=864 data-nosnippet>864</a>    /// then this panics.
-<a href=#865 id=865 data-nosnippet>865</a>    </span><span class="kw">fn </span>write_u128(n: u128, dst: <span class="kw-2">&amp;mut </span>[u8]);
-<a href=#866 id=866 data-nosnippet>866</a>}
-<a href=#867 id=867 data-nosnippet>867</a>
-<a href=#868 id=868 data-nosnippet>868</a><span class="doccomment">/// Little endian writing.
-<a href=#869 id=869 data-nosnippet>869</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>LE {}
-<a href=#870 id=870 data-nosnippet>870</a><span class="doccomment">/// Big endian writing.
-<a href=#871 id=871 data-nosnippet>871</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>BE {}
-<a href=#872 id=872 data-nosnippet>872</a>
-<a href=#873 id=873 data-nosnippet>873</a><span class="attr">#[cfg(target_endian = <span class="string">"little"</span>)]
-<a href=#874 id=874 data-nosnippet>874</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>NE = LE;
-<a href=#875 id=875 data-nosnippet>875</a><span class="attr">#[cfg(target_endian = <span class="string">"big"</span>)]
-<a href=#876 id=876 data-nosnippet>876</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>NE = BE;
-<a href=#877 id=877 data-nosnippet>877</a>
-<a href=#878 id=878 data-nosnippet>878</a><span class="kw">impl </span>Endian <span class="kw">for </span>LE {
-<a href=#879 id=879 data-nosnippet>879</a>    <span class="kw">fn </span>write_u16(n: u16, dst: <span class="kw-2">&amp;mut </span>[u8]) {
-<a href=#880 id=880 data-nosnippet>880</a>        dst[..<span class="number">2</span>].copy_from_slice(<span class="kw-2">&amp;</span>n.to_le_bytes());
-<a href=#881 id=881 data-nosnippet>881</a>    }
-<a href=#882 id=882 data-nosnippet>882</a>
-<a href=#883 id=883 data-nosnippet>883</a>    <span class="kw">fn </span>write_u32(n: u32, dst: <span class="kw-2">&amp;mut </span>[u8]) {
-<a href=#884 id=884 data-nosnippet>884</a>        dst[..<span class="number">4</span>].copy_from_slice(<span class="kw-2">&amp;</span>n.to_le_bytes());
-<a href=#885 id=885 data-nosnippet>885</a>    }
-<a href=#886 id=886 data-nosnippet>886</a>
-<a href=#887 id=887 data-nosnippet>887</a>    <span class="kw">fn </span>write_u128(n: u128, dst: <span class="kw-2">&amp;mut </span>[u8]) {
-<a href=#888 id=888 data-nosnippet>888</a>        dst[..<span class="number">16</span>].copy_from_slice(<span class="kw-2">&amp;</span>n.to_le_bytes());
-<a href=#889 id=889 data-nosnippet>889</a>    }
-<a href=#890 id=890 data-nosnippet>890</a>}
-<a href=#891 id=891 data-nosnippet>891</a>
-<a href=#892 id=892 data-nosnippet>892</a><span class="kw">impl </span>Endian <span class="kw">for </span>BE {
-<a href=#893 id=893 data-nosnippet>893</a>    <span class="kw">fn </span>write_u16(n: u16, dst: <span class="kw-2">&amp;mut </span>[u8]) {
-<a href=#894 id=894 data-nosnippet>894</a>        dst[..<span class="number">2</span>].copy_from_slice(<span class="kw-2">&amp;</span>n.to_be_bytes());
-<a href=#895 id=895 data-nosnippet>895</a>    }
-<a href=#896 id=896 data-nosnippet>896</a>
-<a href=#897 id=897 data-nosnippet>897</a>    <span class="kw">fn </span>write_u32(n: u32, dst: <span class="kw-2">&amp;mut </span>[u8]) {
-<a href=#898 id=898 data-nosnippet>898</a>        dst[..<span class="number">4</span>].copy_from_slice(<span class="kw-2">&amp;</span>n.to_be_bytes());
-<a href=#899 id=899 data-nosnippet>899</a>    }
-<a href=#900 id=900 data-nosnippet>900</a>
-<a href=#901 id=901 data-nosnippet>901</a>    <span class="kw">fn </span>write_u128(n: u128, dst: <span class="kw-2">&amp;mut </span>[u8]) {
-<a href=#902 id=902 data-nosnippet>902</a>        dst[..<span class="number">16</span>].copy_from_slice(<span class="kw-2">&amp;</span>n.to_be_bytes());
-<a href=#903 id=903 data-nosnippet>903</a>    }
-<a href=#904 id=904 data-nosnippet>904</a>}
-<a href=#905 id=905 data-nosnippet>905</a>
-<a href=#906 id=906 data-nosnippet>906</a><span class="attr">#[cfg(all(test, feature = <span class="string">"alloc"</span>))]
-<a href=#907 id=907 data-nosnippet>907</a></span><span class="kw">mod </span>tests {
-<a href=#908 id=908 data-nosnippet>908</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#909 id=909 data-nosnippet>909</a>
-<a href=#910 id=910 data-nosnippet>910</a>    <span class="attr">#[test]
-<a href=#911 id=911 data-nosnippet>911</a>    </span><span class="kw">fn </span>labels() {
-<a href=#912 id=912 data-nosnippet>912</a>        <span class="kw">let </span><span class="kw-2">mut </span>buf = [<span class="number">0</span>; <span class="number">1024</span>];
-<a href=#913 id=913 data-nosnippet>913</a>
-<a href=#914 id=914 data-nosnippet>914</a>        <span class="kw">let </span>nwrite = write_label(<span class="string">"fooba"</span>, <span class="kw-2">&amp;mut </span>buf).unwrap();
-<a href=#915 id=915 data-nosnippet>915</a>        <span class="macro">assert_eq!</span>(nwrite, <span class="number">8</span>);
-<a href=#916 id=916 data-nosnippet>916</a>        <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>buf[..nwrite], <span class="string">b"fooba\x00\x00\x00"</span>);
-<a href=#917 id=917 data-nosnippet>917</a>
-<a href=#918 id=918 data-nosnippet>918</a>        <span class="kw">let </span>nread = read_label(<span class="kw-2">&amp;</span>buf, <span class="string">"fooba"</span>).unwrap();
-<a href=#919 id=919 data-nosnippet>919</a>        <span class="macro">assert_eq!</span>(nread, <span class="number">8</span>);
+<a href=#840 id=840 data-nosnippet>840</a><span class="doccomment">/// A simple trait for writing code generic over endianness.
+<a href=#841 id=841 data-nosnippet>841</a>///
+<a href=#842 id=842 data-nosnippet>842</a>/// This is similar to what byteorder provides, but we only need a very small
+<a href=#843 id=843 data-nosnippet>843</a>/// subset.
+<a href=#844 id=844 data-nosnippet>844</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait </span>Endian {
+<a href=#845 id=845 data-nosnippet>845</a>    <span class="doccomment">/// Writes a u16 to the given destination buffer in a particular
+<a href=#846 id=846 data-nosnippet>846</a>    /// endianness. If the destination buffer has a length smaller than 2, then
+<a href=#847 id=847 data-nosnippet>847</a>    /// this panics.
+<a href=#848 id=848 data-nosnippet>848</a>    </span><span class="kw">fn </span>write_u16(n: u16, dst: <span class="kw-2">&amp;mut </span>[u8]);
+<a href=#849 id=849 data-nosnippet>849</a>
+<a href=#850 id=850 data-nosnippet>850</a>    <span class="doccomment">/// Writes a u32 to the given destination buffer in a particular
+<a href=#851 id=851 data-nosnippet>851</a>    /// endianness. If the destination buffer has a length smaller than 4, then
+<a href=#852 id=852 data-nosnippet>852</a>    /// this panics.
+<a href=#853 id=853 data-nosnippet>853</a>    </span><span class="kw">fn </span>write_u32(n: u32, dst: <span class="kw-2">&amp;mut </span>[u8]);
+<a href=#854 id=854 data-nosnippet>854</a>
+<a href=#855 id=855 data-nosnippet>855</a>    <span class="doccomment">/// Writes a u128 to the given destination buffer in a particular
+<a href=#856 id=856 data-nosnippet>856</a>    /// endianness. If the destination buffer has a length smaller than 16,
+<a href=#857 id=857 data-nosnippet>857</a>    /// then this panics.
+<a href=#858 id=858 data-nosnippet>858</a>    </span><span class="kw">fn </span>write_u128(n: u128, dst: <span class="kw-2">&amp;mut </span>[u8]);
+<a href=#859 id=859 data-nosnippet>859</a>}
+<a href=#860 id=860 data-nosnippet>860</a>
+<a href=#861 id=861 data-nosnippet>861</a><span class="doccomment">/// Little endian writing.
+<a href=#862 id=862 data-nosnippet>862</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>LE {}
+<a href=#863 id=863 data-nosnippet>863</a><span class="doccomment">/// Big endian writing.
+<a href=#864 id=864 data-nosnippet>864</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>BE {}
+<a href=#865 id=865 data-nosnippet>865</a>
+<a href=#866 id=866 data-nosnippet>866</a><span class="attr">#[cfg(target_endian = <span class="string">"little"</span>)]
+<a href=#867 id=867 data-nosnippet>867</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>NE = LE;
+<a href=#868 id=868 data-nosnippet>868</a><span class="attr">#[cfg(target_endian = <span class="string">"big"</span>)]
+<a href=#869 id=869 data-nosnippet>869</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>NE = BE;
+<a href=#870 id=870 data-nosnippet>870</a>
+<a href=#871 id=871 data-nosnippet>871</a><span class="kw">impl </span>Endian <span class="kw">for </span>LE {
+<a href=#872 id=872 data-nosnippet>872</a>    <span class="kw">fn </span>write_u16(n: u16, dst: <span class="kw-2">&amp;mut </span>[u8]) {
+<a href=#873 id=873 data-nosnippet>873</a>        dst[..<span class="number">2</span>].copy_from_slice(<span class="kw-2">&amp;</span>n.to_le_bytes());
+<a href=#874 id=874 data-nosnippet>874</a>    }
+<a href=#875 id=875 data-nosnippet>875</a>
+<a href=#876 id=876 data-nosnippet>876</a>    <span class="kw">fn </span>write_u32(n: u32, dst: <span class="kw-2">&amp;mut </span>[u8]) {
+<a href=#877 id=877 data-nosnippet>877</a>        dst[..<span class="number">4</span>].copy_from_slice(<span class="kw-2">&amp;</span>n.to_le_bytes());
+<a href=#878 id=878 data-nosnippet>878</a>    }
+<a href=#879 id=879 data-nosnippet>879</a>
+<a href=#880 id=880 data-nosnippet>880</a>    <span class="kw">fn </span>write_u128(n: u128, dst: <span class="kw-2">&amp;mut </span>[u8]) {
+<a href=#881 id=881 data-nosnippet>881</a>        dst[..<span class="number">16</span>].copy_from_slice(<span class="kw-2">&amp;</span>n.to_le_bytes());
+<a href=#882 id=882 data-nosnippet>882</a>    }
+<a href=#883 id=883 data-nosnippet>883</a>}
+<a href=#884 id=884 data-nosnippet>884</a>
+<a href=#885 id=885 data-nosnippet>885</a><span class="kw">impl </span>Endian <span class="kw">for </span>BE {
+<a href=#886 id=886 data-nosnippet>886</a>    <span class="kw">fn </span>write_u16(n: u16, dst: <span class="kw-2">&amp;mut </span>[u8]) {
+<a href=#887 id=887 data-nosnippet>887</a>        dst[..<span class="number">2</span>].copy_from_slice(<span class="kw-2">&amp;</span>n.to_be_bytes());
+<a href=#888 id=888 data-nosnippet>888</a>    }
+<a href=#889 id=889 data-nosnippet>889</a>
+<a href=#890 id=890 data-nosnippet>890</a>    <span class="kw">fn </span>write_u32(n: u32, dst: <span class="kw-2">&amp;mut </span>[u8]) {
+<a href=#891 id=891 data-nosnippet>891</a>        dst[..<span class="number">4</span>].copy_from_slice(<span class="kw-2">&amp;</span>n.to_be_bytes());
+<a href=#892 id=892 data-nosnippet>892</a>    }
+<a href=#893 id=893 data-nosnippet>893</a>
+<a href=#894 id=894 data-nosnippet>894</a>    <span class="kw">fn </span>write_u128(n: u128, dst: <span class="kw-2">&amp;mut </span>[u8]) {
+<a href=#895 id=895 data-nosnippet>895</a>        dst[..<span class="number">16</span>].copy_from_slice(<span class="kw-2">&amp;</span>n.to_be_bytes());
+<a href=#896 id=896 data-nosnippet>896</a>    }
+<a href=#897 id=897 data-nosnippet>897</a>}
+<a href=#898 id=898 data-nosnippet>898</a>
+<a href=#899 id=899 data-nosnippet>899</a><span class="attr">#[cfg(all(test, feature = <span class="string">"alloc"</span>))]
+<a href=#900 id=900 data-nosnippet>900</a></span><span class="kw">mod </span>tests {
+<a href=#901 id=901 data-nosnippet>901</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#902 id=902 data-nosnippet>902</a>
+<a href=#903 id=903 data-nosnippet>903</a>    <span class="attr">#[test]
+<a href=#904 id=904 data-nosnippet>904</a>    </span><span class="kw">fn </span>labels() {
+<a href=#905 id=905 data-nosnippet>905</a>        <span class="kw">let </span><span class="kw-2">mut </span>buf = [<span class="number">0</span>; <span class="number">1024</span>];
+<a href=#906 id=906 data-nosnippet>906</a>
+<a href=#907 id=907 data-nosnippet>907</a>        <span class="kw">let </span>nwrite = write_label(<span class="string">"fooba"</span>, <span class="kw-2">&amp;mut </span>buf).unwrap();
+<a href=#908 id=908 data-nosnippet>908</a>        <span class="macro">assert_eq!</span>(nwrite, <span class="number">8</span>);
+<a href=#909 id=909 data-nosnippet>909</a>        <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>buf[..nwrite], <span class="string">b"fooba\x00\x00\x00"</span>);
+<a href=#910 id=910 data-nosnippet>910</a>
+<a href=#911 id=911 data-nosnippet>911</a>        <span class="kw">let </span>nread = read_label(<span class="kw-2">&amp;</span>buf, <span class="string">"fooba"</span>).unwrap();
+<a href=#912 id=912 data-nosnippet>912</a>        <span class="macro">assert_eq!</span>(nread, <span class="number">8</span>);
+<a href=#913 id=913 data-nosnippet>913</a>    }
+<a href=#914 id=914 data-nosnippet>914</a>
+<a href=#915 id=915 data-nosnippet>915</a>    <span class="attr">#[test]
+<a href=#916 id=916 data-nosnippet>916</a>    #[should_panic]
+<a href=#917 id=917 data-nosnippet>917</a>    </span><span class="kw">fn </span>bad_label_interior_nul() {
+<a href=#918 id=918 data-nosnippet>918</a>        <span class="comment">// interior NULs are not allowed
+<a href=#919 id=919 data-nosnippet>919</a>        </span>write_label(<span class="string">"foo\x00bar"</span>, <span class="kw-2">&amp;mut </span>[<span class="number">0</span>; <span class="number">1024</span>]).unwrap();
 <a href=#920 id=920 data-nosnippet>920</a>    }
 <a href=#921 id=921 data-nosnippet>921</a>
 <a href=#922 id=922 data-nosnippet>922</a>    <span class="attr">#[test]
-<a href=#923 id=923 data-nosnippet>923</a>    #[should_panic]
-<a href=#924 id=924 data-nosnippet>924</a>    </span><span class="kw">fn </span>bad_label_interior_nul() {
-<a href=#925 id=925 data-nosnippet>925</a>        <span class="comment">// interior NULs are not allowed
-<a href=#926 id=926 data-nosnippet>926</a>        </span>write_label(<span class="string">"foo\x00bar"</span>, <span class="kw-2">&amp;mut </span>[<span class="number">0</span>; <span class="number">1024</span>]).unwrap();
-<a href=#927 id=927 data-nosnippet>927</a>    }
-<a href=#928 id=928 data-nosnippet>928</a>
-<a href=#929 id=929 data-nosnippet>929</a>    <span class="attr">#[test]
-<a href=#930 id=930 data-nosnippet>930</a>    </span><span class="kw">fn </span>bad_label_almost_too_long() {
-<a href=#931 id=931 data-nosnippet>931</a>        <span class="comment">// ok
-<a href=#932 id=932 data-nosnippet>932</a>        </span>write_label(<span class="kw-2">&amp;</span><span class="string">"z"</span>.repeat(<span class="number">255</span>), <span class="kw-2">&amp;mut </span>[<span class="number">0</span>; <span class="number">1024</span>]).unwrap();
+<a href=#923 id=923 data-nosnippet>923</a>    </span><span class="kw">fn </span>bad_label_almost_too_long() {
+<a href=#924 id=924 data-nosnippet>924</a>        <span class="comment">// ok
+<a href=#925 id=925 data-nosnippet>925</a>        </span>write_label(<span class="kw-2">&amp;</span><span class="string">"z"</span>.repeat(<span class="number">255</span>), <span class="kw-2">&amp;mut </span>[<span class="number">0</span>; <span class="number">1024</span>]).unwrap();
+<a href=#926 id=926 data-nosnippet>926</a>    }
+<a href=#927 id=927 data-nosnippet>927</a>
+<a href=#928 id=928 data-nosnippet>928</a>    <span class="attr">#[test]
+<a href=#929 id=929 data-nosnippet>929</a>    #[should_panic]
+<a href=#930 id=930 data-nosnippet>930</a>    </span><span class="kw">fn </span>bad_label_too_long() {
+<a href=#931 id=931 data-nosnippet>931</a>        <span class="comment">// labels longer than 255 bytes are banned
+<a href=#932 id=932 data-nosnippet>932</a>        </span>write_label(<span class="kw-2">&amp;</span><span class="string">"z"</span>.repeat(<span class="number">256</span>), <span class="kw-2">&amp;mut </span>[<span class="number">0</span>; <span class="number">1024</span>]).unwrap();
 <a href=#933 id=933 data-nosnippet>933</a>    }
 <a href=#934 id=934 data-nosnippet>934</a>
 <a href=#935 id=935 data-nosnippet>935</a>    <span class="attr">#[test]
-<a href=#936 id=936 data-nosnippet>936</a>    #[should_panic]
-<a href=#937 id=937 data-nosnippet>937</a>    </span><span class="kw">fn </span>bad_label_too_long() {
-<a href=#938 id=938 data-nosnippet>938</a>        <span class="comment">// labels longer than 255 bytes are banned
-<a href=#939 id=939 data-nosnippet>939</a>        </span>write_label(<span class="kw-2">&amp;</span><span class="string">"z"</span>.repeat(<span class="number">256</span>), <span class="kw-2">&amp;mut </span>[<span class="number">0</span>; <span class="number">1024</span>]).unwrap();
-<a href=#940 id=940 data-nosnippet>940</a>    }
-<a href=#941 id=941 data-nosnippet>941</a>
-<a href=#942 id=942 data-nosnippet>942</a>    <span class="attr">#[test]
-<a href=#943 id=943 data-nosnippet>943</a>    </span><span class="kw">fn </span>padding() {
-<a href=#944 id=944 data-nosnippet>944</a>        <span class="macro">assert_eq!</span>(<span class="number">0</span>, padding_len(<span class="number">8</span>));
-<a href=#945 id=945 data-nosnippet>945</a>        <span class="macro">assert_eq!</span>(<span class="number">3</span>, padding_len(<span class="number">9</span>));
-<a href=#946 id=946 data-nosnippet>946</a>        <span class="macro">assert_eq!</span>(<span class="number">2</span>, padding_len(<span class="number">10</span>));
-<a href=#947 id=947 data-nosnippet>947</a>        <span class="macro">assert_eq!</span>(<span class="number">1</span>, padding_len(<span class="number">11</span>));
-<a href=#948 id=948 data-nosnippet>948</a>        <span class="macro">assert_eq!</span>(<span class="number">0</span>, padding_len(<span class="number">12</span>));
-<a href=#949 id=949 data-nosnippet>949</a>        <span class="macro">assert_eq!</span>(<span class="number">3</span>, padding_len(<span class="number">13</span>));
-<a href=#950 id=950 data-nosnippet>950</a>        <span class="macro">assert_eq!</span>(<span class="number">2</span>, padding_len(<span class="number">14</span>));
-<a href=#951 id=951 data-nosnippet>951</a>        <span class="macro">assert_eq!</span>(<span class="number">1</span>, padding_len(<span class="number">15</span>));
-<a href=#952 id=952 data-nosnippet>952</a>        <span class="macro">assert_eq!</span>(<span class="number">0</span>, padding_len(<span class="number">16</span>));
-<a href=#953 id=953 data-nosnippet>953</a>    }
-<a href=#954 id=954 data-nosnippet>954</a>}</code></pre></div></section></main></body></html>
+<a href=#936 id=936 data-nosnippet>936</a>    </span><span class="kw">fn </span>padding() {
+<a href=#937 id=937 data-nosnippet>937</a>        <span class="macro">assert_eq!</span>(<span class="number">0</span>, padding_len(<span class="number">8</span>));
+<a href=#938 id=938 data-nosnippet>938</a>        <span class="macro">assert_eq!</span>(<span class="number">3</span>, padding_len(<span class="number">9</span>));
+<a href=#939 id=939 data-nosnippet>939</a>        <span class="macro">assert_eq!</span>(<span class="number">2</span>, padding_len(<span class="number">10</span>));
+<a href=#940 id=940 data-nosnippet>940</a>        <span class="macro">assert_eq!</span>(<span class="number">1</span>, padding_len(<span class="number">11</span>));
+<a href=#941 id=941 data-nosnippet>941</a>        <span class="macro">assert_eq!</span>(<span class="number">0</span>, padding_len(<span class="number">12</span>));
+<a href=#942 id=942 data-nosnippet>942</a>        <span class="macro">assert_eq!</span>(<span class="number">3</span>, padding_len(<span class="number">13</span>));
+<a href=#943 id=943 data-nosnippet>943</a>        <span class="macro">assert_eq!</span>(<span class="number">2</span>, padding_len(<span class="number">14</span>));
+<a href=#944 id=944 data-nosnippet>944</a>        <span class="macro">assert_eq!</span>(<span class="number">1</span>, padding_len(<span class="number">15</span>));
+<a href=#945 id=945 data-nosnippet>945</a>        <span class="macro">assert_eq!</span>(<span class="number">0</span>, padding_len(<span class="number">16</span>));
+<a href=#946 id=946 data-nosnippet>946</a>    }
+<a href=#947 id=947 data-nosnippet>947</a>}</code></pre></div></section></main></body></html>

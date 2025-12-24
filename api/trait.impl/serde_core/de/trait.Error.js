@@ -1,0 +1,9 @@
+(function() {
+    var implementors = Object.fromEntries([["erased_serde",[["impl <a class=\"trait\" href=\"serde_core/de/trait.Error.html\" title=\"trait serde_core::de::Error\">Error</a> for <a class=\"struct\" href=\"erased_serde/struct.Error.html\" title=\"struct erased_serde::Error\">Error</a>"]]],["serde",[]],["serde_core",[]],["serde_json",[["impl <a class=\"trait\" href=\"serde_core/de/trait.Error.html\" title=\"trait serde_core::de::Error\">Error</a> for <a class=\"struct\" href=\"serde_json/struct.Error.html\" title=\"struct serde_json::Error\">Error</a>"]]],["serde_untagged",[["impl <a class=\"trait\" href=\"serde_core/de/trait.Error.html\" title=\"trait serde_core::de::Error\">Error</a> for <a class=\"struct\" href=\"serde_untagged/de/struct.Error.html\" title=\"struct serde_untagged::de::Error\">Error</a>"]]],["serde_value",[["impl <a class=\"trait\" href=\"serde_core/de/trait.Error.html\" title=\"trait serde_core::de::Error\">Error</a> for <a class=\"enum\" href=\"serde_value/enum.DeserializerError.html\" title=\"enum serde_value::DeserializerError\">DeserializerError</a>"]]],["toml",[["impl <a class=\"trait\" href=\"serde_core/de/trait.Error.html\" title=\"trait serde_core::de::Error\">Error</a> for <a class=\"struct\" href=\"toml/de/struct.Error.html\" title=\"struct toml::de::Error\">Error</a>"]]],["toml_edit",[["impl <a class=\"trait\" href=\"serde_core/de/trait.Error.html\" title=\"trait serde_core::de::Error\">Error</a> for <a class=\"struct\" href=\"toml_edit/de/struct.Error.html\" title=\"struct toml_edit::de::Error\">Error</a>"]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":57,"fragment_lengths":[245,13,18,240,259,273,229,244]}

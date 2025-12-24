@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["CurrencyType","NumberingSystem","RegionOverride","RegionalSubdivision","TimeZoneShortId"]};
+window.SIDEBAR_ITEMS = {"enum":["CalendarAlgorithm","CollationCaseFirst","CollationNumericOrdering","CollationType","CommonVariantType","CurrencyFormatStyle","EmojiPresentationStyle","FirstDay","HijriCalendarAlgorithm","HourCycle","LineBreakStyle","LineBreakWordHandling","MeasurementSystem","MeasurementUnitOverride","SentenceBreakSupressions"],"struct":["CurrencyType","NumberingSystem","RegionOverride","RegionalSubdivision","TimeZoneShortId"]};

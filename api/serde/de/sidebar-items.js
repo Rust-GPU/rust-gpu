@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Unexpected"],"mod":["value"],"struct":["IgnoredAny"],"trait":["Deserialize","DeserializeOwned","DeserializeSeed","Deserializer","EnumAccess","Error","Expected","IntoDeserializer","MapAccess","SeqAccess","VariantAccess","Visitor"]};
+window.SIDEBAR_ITEMS = {"enum":["Unexpected"],"mod":["value"],"struct":["IgnoredAny"],"trait":["Deserialize","DeserializeOwned","DeserializeSeed","Deserializer","EnumAccess","Error","Expected","IntoDeserializer","MapAccess","SeqAccess","StdError","VariantAccess","Visitor"]};

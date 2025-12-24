@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["ZeroMap2dBorrowed","ZeroMap2dCursor","ZeroMapBorrowed"],"trait":["MutableZeroVecLike","ZeroMapKV","ZeroVecLike"]};

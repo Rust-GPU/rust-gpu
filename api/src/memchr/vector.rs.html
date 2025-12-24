@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/memchr-2.7.5/src/vector.rs`."><title>vector.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="memchr" data-themes="" data-resource-suffix="" data-rustdoc-version="1.90.0-nightly (35f603652 2025-06-29)" data-channel="nightly" data-search-js="search-179e01a3.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-4e99c027.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-340f468f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">memchr/</div>vector.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/// A trait for describing vector operations used by vectorized searchers.
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/memchr-2.7.6/src/vector.rs`."><title>vector.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="memchr" data-themes="" data-resource-suffix="" data-rustdoc-version="1.90.0-nightly (35f603652 2025-06-29)" data-channel="nightly" data-search-js="search-179e01a3.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-4e99c027.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-340f468f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">memchr/</div>vector.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/// A trait for describing vector operations used by vectorized searchers.
 <a href=#2 id=2 data-nosnippet>2</a>///
 <a href=#3 id=3 data-nosnippet>3</a>/// The trait is highly constrained to low level vector operations needed.
 <a href=#4 id=4 data-nosnippet>4</a>/// In general, it was invented mostly to be generic over x86's __m128i and
@@ -376,134 +376,126 @@
 <a href=#376 id=376 data-nosnippet>376</a>    <span class="kw">impl </span>NeonMoveMask {
 <a href=#377 id=377 data-nosnippet>377</a>        <span class="doccomment">/// Get the mask in a form suitable for computing offsets.
 <a href=#378 id=378 data-nosnippet>378</a>        ///
-<a href=#379 id=379 data-nosnippet>379</a>        /// Basically, this normalizes to little endian. On big endian, this
-<a href=#380 id=380 data-nosnippet>380</a>        /// swaps the bytes.
-<a href=#381 id=381 data-nosnippet>381</a>        </span><span class="attr">#[inline(always)]
-<a href=#382 id=382 data-nosnippet>382</a>        </span><span class="kw">fn </span>get_for_offset(<span class="self">self</span>) -&gt; u64 {
-<a href=#383 id=383 data-nosnippet>383</a>            <span class="attr">#[cfg(target_endian = <span class="string">"big"</span>)]
-<a href=#384 id=384 data-nosnippet>384</a>            </span>{
-<a href=#385 id=385 data-nosnippet>385</a>                <span class="self">self</span>.<span class="number">0</span>.swap_bytes()
-<a href=#386 id=386 data-nosnippet>386</a>            }
-<a href=#387 id=387 data-nosnippet>387</a>            <span class="attr">#[cfg(target_endian = <span class="string">"little"</span>)]
-<a href=#388 id=388 data-nosnippet>388</a>            </span>{
-<a href=#389 id=389 data-nosnippet>389</a>                <span class="self">self</span>.<span class="number">0
-<a href=#390 id=390 data-nosnippet>390</a>            </span>}
+<a href=#379 id=379 data-nosnippet>379</a>        /// The mask is always already in host-endianness, so this is a no-op.
+<a href=#380 id=380 data-nosnippet>380</a>        </span><span class="attr">#[inline(always)]
+<a href=#381 id=381 data-nosnippet>381</a>        </span><span class="kw">fn </span>get_for_offset(<span class="self">self</span>) -&gt; u64 {
+<a href=#382 id=382 data-nosnippet>382</a>            <span class="self">self</span>.<span class="number">0
+<a href=#383 id=383 data-nosnippet>383</a>        </span>}
+<a href=#384 id=384 data-nosnippet>384</a>    }
+<a href=#385 id=385 data-nosnippet>385</a>
+<a href=#386 id=386 data-nosnippet>386</a>    <span class="kw">impl </span>MoveMask <span class="kw">for </span>NeonMoveMask {
+<a href=#387 id=387 data-nosnippet>387</a>        <span class="attr">#[inline(always)]
+<a href=#388 id=388 data-nosnippet>388</a>        </span><span class="kw">fn </span>all_zeros_except_least_significant(n: usize) -&gt; NeonMoveMask {
+<a href=#389 id=389 data-nosnippet>389</a>            <span class="macro">debug_assert!</span>(n &lt; <span class="number">16</span>);
+<a href=#390 id=390 data-nosnippet>390</a>            NeonMoveMask(!(((<span class="number">1 </span>&lt;&lt; n) &lt;&lt; <span class="number">2</span>) - <span class="number">1</span>))
 <a href=#391 id=391 data-nosnippet>391</a>        }
-<a href=#392 id=392 data-nosnippet>392</a>    }
-<a href=#393 id=393 data-nosnippet>393</a>
-<a href=#394 id=394 data-nosnippet>394</a>    <span class="kw">impl </span>MoveMask <span class="kw">for </span>NeonMoveMask {
-<a href=#395 id=395 data-nosnippet>395</a>        <span class="attr">#[inline(always)]
-<a href=#396 id=396 data-nosnippet>396</a>        </span><span class="kw">fn </span>all_zeros_except_least_significant(n: usize) -&gt; NeonMoveMask {
-<a href=#397 id=397 data-nosnippet>397</a>            <span class="macro">debug_assert!</span>(n &lt; <span class="number">16</span>);
-<a href=#398 id=398 data-nosnippet>398</a>            NeonMoveMask(!(((<span class="number">1 </span>&lt;&lt; n) &lt;&lt; <span class="number">2</span>) - <span class="number">1</span>))
-<a href=#399 id=399 data-nosnippet>399</a>        }
-<a href=#400 id=400 data-nosnippet>400</a>
-<a href=#401 id=401 data-nosnippet>401</a>        <span class="attr">#[inline(always)]
-<a href=#402 id=402 data-nosnippet>402</a>        </span><span class="kw">fn </span>has_non_zero(<span class="self">self</span>) -&gt; bool {
-<a href=#403 id=403 data-nosnippet>403</a>            <span class="self">self</span>.<span class="number">0 </span>!= <span class="number">0
-<a href=#404 id=404 data-nosnippet>404</a>        </span>}
-<a href=#405 id=405 data-nosnippet>405</a>
-<a href=#406 id=406 data-nosnippet>406</a>        <span class="attr">#[inline(always)]
-<a href=#407 id=407 data-nosnippet>407</a>        </span><span class="kw">fn </span>count_ones(<span class="self">self</span>) -&gt; usize {
-<a href=#408 id=408 data-nosnippet>408</a>            <span class="self">self</span>.<span class="number">0</span>.count_ones() <span class="kw">as </span>usize
-<a href=#409 id=409 data-nosnippet>409</a>        }
-<a href=#410 id=410 data-nosnippet>410</a>
-<a href=#411 id=411 data-nosnippet>411</a>        <span class="attr">#[inline(always)]
-<a href=#412 id=412 data-nosnippet>412</a>        </span><span class="kw">fn </span>and(<span class="self">self</span>, other: NeonMoveMask) -&gt; NeonMoveMask {
-<a href=#413 id=413 data-nosnippet>413</a>            NeonMoveMask(<span class="self">self</span>.<span class="number">0 </span>&amp; other.<span class="number">0</span>)
-<a href=#414 id=414 data-nosnippet>414</a>        }
-<a href=#415 id=415 data-nosnippet>415</a>
-<a href=#416 id=416 data-nosnippet>416</a>        <span class="attr">#[inline(always)]
-<a href=#417 id=417 data-nosnippet>417</a>        </span><span class="kw">fn </span>or(<span class="self">self</span>, other: NeonMoveMask) -&gt; NeonMoveMask {
-<a href=#418 id=418 data-nosnippet>418</a>            NeonMoveMask(<span class="self">self</span>.<span class="number">0 </span>| other.<span class="number">0</span>)
-<a href=#419 id=419 data-nosnippet>419</a>        }
-<a href=#420 id=420 data-nosnippet>420</a>
-<a href=#421 id=421 data-nosnippet>421</a>        <span class="attr">#[inline(always)]
-<a href=#422 id=422 data-nosnippet>422</a>        </span><span class="kw">fn </span>clear_least_significant_bit(<span class="self">self</span>) -&gt; NeonMoveMask {
-<a href=#423 id=423 data-nosnippet>423</a>            NeonMoveMask(<span class="self">self</span>.<span class="number">0 </span>&amp; (<span class="self">self</span>.<span class="number">0 </span>- <span class="number">1</span>))
-<a href=#424 id=424 data-nosnippet>424</a>        }
-<a href=#425 id=425 data-nosnippet>425</a>
-<a href=#426 id=426 data-nosnippet>426</a>        <span class="attr">#[inline(always)]
-<a href=#427 id=427 data-nosnippet>427</a>        </span><span class="kw">fn </span>first_offset(<span class="self">self</span>) -&gt; usize {
-<a href=#428 id=428 data-nosnippet>428</a>            <span class="comment">// We are dealing with little endian here (and if we aren't,
-<a href=#429 id=429 data-nosnippet>429</a>            // we swap the bytes so we are in practice), where the most
-<a href=#430 id=430 data-nosnippet>430</a>            // significant byte is at a higher address. That means the least
-<a href=#431 id=431 data-nosnippet>431</a>            // significant bit that is set corresponds to the position of our
-<a href=#432 id=432 data-nosnippet>432</a>            // first matching byte. That position corresponds to the number of
-<a href=#433 id=433 data-nosnippet>433</a>            // zeros after the least significant bit.
+<a href=#392 id=392 data-nosnippet>392</a>
+<a href=#393 id=393 data-nosnippet>393</a>        <span class="attr">#[inline(always)]
+<a href=#394 id=394 data-nosnippet>394</a>        </span><span class="kw">fn </span>has_non_zero(<span class="self">self</span>) -&gt; bool {
+<a href=#395 id=395 data-nosnippet>395</a>            <span class="self">self</span>.<span class="number">0 </span>!= <span class="number">0
+<a href=#396 id=396 data-nosnippet>396</a>        </span>}
+<a href=#397 id=397 data-nosnippet>397</a>
+<a href=#398 id=398 data-nosnippet>398</a>        <span class="attr">#[inline(always)]
+<a href=#399 id=399 data-nosnippet>399</a>        </span><span class="kw">fn </span>count_ones(<span class="self">self</span>) -&gt; usize {
+<a href=#400 id=400 data-nosnippet>400</a>            <span class="self">self</span>.<span class="number">0</span>.count_ones() <span class="kw">as </span>usize
+<a href=#401 id=401 data-nosnippet>401</a>        }
+<a href=#402 id=402 data-nosnippet>402</a>
+<a href=#403 id=403 data-nosnippet>403</a>        <span class="attr">#[inline(always)]
+<a href=#404 id=404 data-nosnippet>404</a>        </span><span class="kw">fn </span>and(<span class="self">self</span>, other: NeonMoveMask) -&gt; NeonMoveMask {
+<a href=#405 id=405 data-nosnippet>405</a>            NeonMoveMask(<span class="self">self</span>.<span class="number">0 </span>&amp; other.<span class="number">0</span>)
+<a href=#406 id=406 data-nosnippet>406</a>        }
+<a href=#407 id=407 data-nosnippet>407</a>
+<a href=#408 id=408 data-nosnippet>408</a>        <span class="attr">#[inline(always)]
+<a href=#409 id=409 data-nosnippet>409</a>        </span><span class="kw">fn </span>or(<span class="self">self</span>, other: NeonMoveMask) -&gt; NeonMoveMask {
+<a href=#410 id=410 data-nosnippet>410</a>            NeonMoveMask(<span class="self">self</span>.<span class="number">0 </span>| other.<span class="number">0</span>)
+<a href=#411 id=411 data-nosnippet>411</a>        }
+<a href=#412 id=412 data-nosnippet>412</a>
+<a href=#413 id=413 data-nosnippet>413</a>        <span class="attr">#[inline(always)]
+<a href=#414 id=414 data-nosnippet>414</a>        </span><span class="kw">fn </span>clear_least_significant_bit(<span class="self">self</span>) -&gt; NeonMoveMask {
+<a href=#415 id=415 data-nosnippet>415</a>            NeonMoveMask(<span class="self">self</span>.<span class="number">0 </span>&amp; (<span class="self">self</span>.<span class="number">0 </span>- <span class="number">1</span>))
+<a href=#416 id=416 data-nosnippet>416</a>        }
+<a href=#417 id=417 data-nosnippet>417</a>
+<a href=#418 id=418 data-nosnippet>418</a>        <span class="attr">#[inline(always)]
+<a href=#419 id=419 data-nosnippet>419</a>        </span><span class="kw">fn </span>first_offset(<span class="self">self</span>) -&gt; usize {
+<a href=#420 id=420 data-nosnippet>420</a>            <span class="comment">// We are dealing with little endian here (and if we aren't,
+<a href=#421 id=421 data-nosnippet>421</a>            // we swap the bytes so we are in practice), where the most
+<a href=#422 id=422 data-nosnippet>422</a>            // significant byte is at a higher address. That means the least
+<a href=#423 id=423 data-nosnippet>423</a>            // significant bit that is set corresponds to the position of our
+<a href=#424 id=424 data-nosnippet>424</a>            // first matching byte. That position corresponds to the number of
+<a href=#425 id=425 data-nosnippet>425</a>            // zeros after the least significant bit.
+<a href=#426 id=426 data-nosnippet>426</a>            //
+<a href=#427 id=427 data-nosnippet>427</a>            // Note that unlike `SensibleMoveMask`, this mask has its bits
+<a href=#428 id=428 data-nosnippet>428</a>            // spread out over 64 bits instead of 16 bits (for a 128 bit
+<a href=#429 id=429 data-nosnippet>429</a>            // vector). Namely, where as x86-64 will turn
+<a href=#430 id=430 data-nosnippet>430</a>            //
+<a href=#431 id=431 data-nosnippet>431</a>            //   0x00 0xFF 0x00 0x00 0xFF
+<a href=#432 id=432 data-nosnippet>432</a>            //
+<a href=#433 id=433 data-nosnippet>433</a>            // into 10010, our neon approach will turn it into
 <a href=#434 id=434 data-nosnippet>434</a>            //
-<a href=#435 id=435 data-nosnippet>435</a>            // Note that unlike `SensibleMoveMask`, this mask has its bits
-<a href=#436 id=436 data-nosnippet>436</a>            // spread out over 64 bits instead of 16 bits (for a 128 bit
-<a href=#437 id=437 data-nosnippet>437</a>            // vector). Namely, where as x86-64 will turn
-<a href=#438 id=438 data-nosnippet>438</a>            //
-<a href=#439 id=439 data-nosnippet>439</a>            //   0x00 0xFF 0x00 0x00 0xFF
+<a href=#435 id=435 data-nosnippet>435</a>            //   10000000000010000000
+<a href=#436 id=436 data-nosnippet>436</a>            //
+<a href=#437 id=437 data-nosnippet>437</a>            // And this happens because neon doesn't have a native `movemask`
+<a href=#438 id=438 data-nosnippet>438</a>            // instruction, so we kind of fake it[1]. Thus, we divide the
+<a href=#439 id=439 data-nosnippet>439</a>            // number of trailing zeros by 4 to get the "real" offset.
 <a href=#440 id=440 data-nosnippet>440</a>            //
-<a href=#441 id=441 data-nosnippet>441</a>            // into 10010, our neon approach will turn it into
-<a href=#442 id=442 data-nosnippet>442</a>            //
-<a href=#443 id=443 data-nosnippet>443</a>            //   10000000000010000000
-<a href=#444 id=444 data-nosnippet>444</a>            //
-<a href=#445 id=445 data-nosnippet>445</a>            // And this happens because neon doesn't have a native `movemask`
-<a href=#446 id=446 data-nosnippet>446</a>            // instruction, so we kind of fake it[1]. Thus, we divide the
-<a href=#447 id=447 data-nosnippet>447</a>            // number of trailing zeros by 4 to get the "real" offset.
-<a href=#448 id=448 data-nosnippet>448</a>            //
-<a href=#449 id=449 data-nosnippet>449</a>            // [1]: https://community.arm.com/arm-community-blogs/b/infrastructure-solutions-blog/posts/porting-x86-vector-bitmask-optimizations-to-arm-neon
-<a href=#450 id=450 data-nosnippet>450</a>            </span>(<span class="self">self</span>.get_for_offset().trailing_zeros() &gt;&gt; <span class="number">2</span>) <span class="kw">as </span>usize
-<a href=#451 id=451 data-nosnippet>451</a>        }
-<a href=#452 id=452 data-nosnippet>452</a>
-<a href=#453 id=453 data-nosnippet>453</a>        <span class="attr">#[inline(always)]
-<a href=#454 id=454 data-nosnippet>454</a>        </span><span class="kw">fn </span>last_offset(<span class="self">self</span>) -&gt; usize {
-<a href=#455 id=455 data-nosnippet>455</a>            <span class="comment">// See comment in `first_offset` above. This is basically the same,
-<a href=#456 id=456 data-nosnippet>456</a>            // but coming from the other direction.
-<a href=#457 id=457 data-nosnippet>457</a>            </span><span class="number">16 </span>- (<span class="self">self</span>.get_for_offset().leading_zeros() &gt;&gt; <span class="number">2</span>) <span class="kw">as </span>usize - <span class="number">1
-<a href=#458 id=458 data-nosnippet>458</a>        </span>}
-<a href=#459 id=459 data-nosnippet>459</a>    }
-<a href=#460 id=460 data-nosnippet>460</a>}
-<a href=#461 id=461 data-nosnippet>461</a>
-<a href=#462 id=462 data-nosnippet>462</a><span class="attr">#[cfg(all(target_arch = <span class="string">"wasm32"</span>, target_feature = <span class="string">"simd128"</span>))]
-<a href=#463 id=463 data-nosnippet>463</a></span><span class="kw">mod </span>wasm_simd128 {
-<a href=#464 id=464 data-nosnippet>464</a>    <span class="kw">use </span>core::arch::wasm32::<span class="kw-2">*</span>;
+<a href=#441 id=441 data-nosnippet>441</a>            // [1]: https://community.arm.com/arm-community-blogs/b/infrastructure-solutions-blog/posts/porting-x86-vector-bitmask-optimizations-to-arm-neon
+<a href=#442 id=442 data-nosnippet>442</a>            </span>(<span class="self">self</span>.get_for_offset().trailing_zeros() &gt;&gt; <span class="number">2</span>) <span class="kw">as </span>usize
+<a href=#443 id=443 data-nosnippet>443</a>        }
+<a href=#444 id=444 data-nosnippet>444</a>
+<a href=#445 id=445 data-nosnippet>445</a>        <span class="attr">#[inline(always)]
+<a href=#446 id=446 data-nosnippet>446</a>        </span><span class="kw">fn </span>last_offset(<span class="self">self</span>) -&gt; usize {
+<a href=#447 id=447 data-nosnippet>447</a>            <span class="comment">// See comment in `first_offset` above. This is basically the same,
+<a href=#448 id=448 data-nosnippet>448</a>            // but coming from the other direction.
+<a href=#449 id=449 data-nosnippet>449</a>            </span><span class="number">16 </span>- (<span class="self">self</span>.get_for_offset().leading_zeros() &gt;&gt; <span class="number">2</span>) <span class="kw">as </span>usize - <span class="number">1
+<a href=#450 id=450 data-nosnippet>450</a>        </span>}
+<a href=#451 id=451 data-nosnippet>451</a>    }
+<a href=#452 id=452 data-nosnippet>452</a>}
+<a href=#453 id=453 data-nosnippet>453</a>
+<a href=#454 id=454 data-nosnippet>454</a><span class="attr">#[cfg(all(target_arch = <span class="string">"wasm32"</span>, target_feature = <span class="string">"simd128"</span>))]
+<a href=#455 id=455 data-nosnippet>455</a></span><span class="kw">mod </span>wasm_simd128 {
+<a href=#456 id=456 data-nosnippet>456</a>    <span class="kw">use </span>core::arch::wasm32::<span class="kw-2">*</span>;
+<a href=#457 id=457 data-nosnippet>457</a>
+<a href=#458 id=458 data-nosnippet>458</a>    <span class="kw">use super</span>::{SensibleMoveMask, Vector};
+<a href=#459 id=459 data-nosnippet>459</a>
+<a href=#460 id=460 data-nosnippet>460</a>    <span class="kw">impl </span>Vector <span class="kw">for </span>v128 {
+<a href=#461 id=461 data-nosnippet>461</a>        <span class="kw">const </span>BYTES: usize = <span class="number">16</span>;
+<a href=#462 id=462 data-nosnippet>462</a>        <span class="kw">const </span>ALIGN: usize = <span class="self">Self</span>::BYTES - <span class="number">1</span>;
+<a href=#463 id=463 data-nosnippet>463</a>
+<a href=#464 id=464 data-nosnippet>464</a>        <span class="kw">type </span>Mask = SensibleMoveMask;
 <a href=#465 id=465 data-nosnippet>465</a>
-<a href=#466 id=466 data-nosnippet>466</a>    <span class="kw">use super</span>::{SensibleMoveMask, Vector};
-<a href=#467 id=467 data-nosnippet>467</a>
-<a href=#468 id=468 data-nosnippet>468</a>    <span class="kw">impl </span>Vector <span class="kw">for </span>v128 {
-<a href=#469 id=469 data-nosnippet>469</a>        <span class="kw">const </span>BYTES: usize = <span class="number">16</span>;
-<a href=#470 id=470 data-nosnippet>470</a>        <span class="kw">const </span>ALIGN: usize = <span class="self">Self</span>::BYTES - <span class="number">1</span>;
-<a href=#471 id=471 data-nosnippet>471</a>
-<a href=#472 id=472 data-nosnippet>472</a>        <span class="kw">type </span>Mask = SensibleMoveMask;
-<a href=#473 id=473 data-nosnippet>473</a>
-<a href=#474 id=474 data-nosnippet>474</a>        <span class="attr">#[inline(always)]
-<a href=#475 id=475 data-nosnippet>475</a>        </span><span class="kw">unsafe fn </span>splat(byte: u8) -&gt; v128 {
-<a href=#476 id=476 data-nosnippet>476</a>            u8x16_splat(byte)
-<a href=#477 id=477 data-nosnippet>477</a>        }
-<a href=#478 id=478 data-nosnippet>478</a>
-<a href=#479 id=479 data-nosnippet>479</a>        <span class="attr">#[inline(always)]
-<a href=#480 id=480 data-nosnippet>480</a>        </span><span class="kw">unsafe fn </span>load_aligned(data: <span class="kw-2">*const </span>u8) -&gt; v128 {
-<a href=#481 id=481 data-nosnippet>481</a>            <span class="kw-2">*</span>data.cast()
-<a href=#482 id=482 data-nosnippet>482</a>        }
-<a href=#483 id=483 data-nosnippet>483</a>
-<a href=#484 id=484 data-nosnippet>484</a>        <span class="attr">#[inline(always)]
-<a href=#485 id=485 data-nosnippet>485</a>        </span><span class="kw">unsafe fn </span>load_unaligned(data: <span class="kw-2">*const </span>u8) -&gt; v128 {
-<a href=#486 id=486 data-nosnippet>486</a>            v128_load(data.cast())
-<a href=#487 id=487 data-nosnippet>487</a>        }
-<a href=#488 id=488 data-nosnippet>488</a>
-<a href=#489 id=489 data-nosnippet>489</a>        <span class="attr">#[inline(always)]
-<a href=#490 id=490 data-nosnippet>490</a>        </span><span class="kw">unsafe fn </span>movemask(<span class="self">self</span>) -&gt; SensibleMoveMask {
-<a href=#491 id=491 data-nosnippet>491</a>            SensibleMoveMask(u8x16_bitmask(<span class="self">self</span>).into())
-<a href=#492 id=492 data-nosnippet>492</a>        }
-<a href=#493 id=493 data-nosnippet>493</a>
-<a href=#494 id=494 data-nosnippet>494</a>        <span class="attr">#[inline(always)]
-<a href=#495 id=495 data-nosnippet>495</a>        </span><span class="kw">unsafe fn </span>cmpeq(<span class="self">self</span>, vector2: <span class="self">Self</span>) -&gt; v128 {
-<a href=#496 id=496 data-nosnippet>496</a>            u8x16_eq(<span class="self">self</span>, vector2)
-<a href=#497 id=497 data-nosnippet>497</a>        }
-<a href=#498 id=498 data-nosnippet>498</a>
-<a href=#499 id=499 data-nosnippet>499</a>        <span class="attr">#[inline(always)]
-<a href=#500 id=500 data-nosnippet>500</a>        </span><span class="kw">unsafe fn </span>and(<span class="self">self</span>, vector2: <span class="self">Self</span>) -&gt; v128 {
-<a href=#501 id=501 data-nosnippet>501</a>            v128_and(<span class="self">self</span>, vector2)
-<a href=#502 id=502 data-nosnippet>502</a>        }
-<a href=#503 id=503 data-nosnippet>503</a>
-<a href=#504 id=504 data-nosnippet>504</a>        <span class="attr">#[inline(always)]
-<a href=#505 id=505 data-nosnippet>505</a>        </span><span class="kw">unsafe fn </span>or(<span class="self">self</span>, vector2: <span class="self">Self</span>) -&gt; v128 {
-<a href=#506 id=506 data-nosnippet>506</a>            v128_or(<span class="self">self</span>, vector2)
-<a href=#507 id=507 data-nosnippet>507</a>        }
-<a href=#508 id=508 data-nosnippet>508</a>    }
-<a href=#509 id=509 data-nosnippet>509</a>}</code></pre></div></section></main></body></html>
+<a href=#466 id=466 data-nosnippet>466</a>        <span class="attr">#[inline(always)]
+<a href=#467 id=467 data-nosnippet>467</a>        </span><span class="kw">unsafe fn </span>splat(byte: u8) -&gt; v128 {
+<a href=#468 id=468 data-nosnippet>468</a>            u8x16_splat(byte)
+<a href=#469 id=469 data-nosnippet>469</a>        }
+<a href=#470 id=470 data-nosnippet>470</a>
+<a href=#471 id=471 data-nosnippet>471</a>        <span class="attr">#[inline(always)]
+<a href=#472 id=472 data-nosnippet>472</a>        </span><span class="kw">unsafe fn </span>load_aligned(data: <span class="kw-2">*const </span>u8) -&gt; v128 {
+<a href=#473 id=473 data-nosnippet>473</a>            <span class="kw-2">*</span>data.cast()
+<a href=#474 id=474 data-nosnippet>474</a>        }
+<a href=#475 id=475 data-nosnippet>475</a>
+<a href=#476 id=476 data-nosnippet>476</a>        <span class="attr">#[inline(always)]
+<a href=#477 id=477 data-nosnippet>477</a>        </span><span class="kw">unsafe fn </span>load_unaligned(data: <span class="kw-2">*const </span>u8) -&gt; v128 {
+<a href=#478 id=478 data-nosnippet>478</a>            v128_load(data.cast())
+<a href=#479 id=479 data-nosnippet>479</a>        }
+<a href=#480 id=480 data-nosnippet>480</a>
+<a href=#481 id=481 data-nosnippet>481</a>        <span class="attr">#[inline(always)]
+<a href=#482 id=482 data-nosnippet>482</a>        </span><span class="kw">unsafe fn </span>movemask(<span class="self">self</span>) -&gt; SensibleMoveMask {
+<a href=#483 id=483 data-nosnippet>483</a>            SensibleMoveMask(u8x16_bitmask(<span class="self">self</span>).into())
+<a href=#484 id=484 data-nosnippet>484</a>        }
+<a href=#485 id=485 data-nosnippet>485</a>
+<a href=#486 id=486 data-nosnippet>486</a>        <span class="attr">#[inline(always)]
+<a href=#487 id=487 data-nosnippet>487</a>        </span><span class="kw">unsafe fn </span>cmpeq(<span class="self">self</span>, vector2: <span class="self">Self</span>) -&gt; v128 {
+<a href=#488 id=488 data-nosnippet>488</a>            u8x16_eq(<span class="self">self</span>, vector2)
+<a href=#489 id=489 data-nosnippet>489</a>        }
+<a href=#490 id=490 data-nosnippet>490</a>
+<a href=#491 id=491 data-nosnippet>491</a>        <span class="attr">#[inline(always)]
+<a href=#492 id=492 data-nosnippet>492</a>        </span><span class="kw">unsafe fn </span>and(<span class="self">self</span>, vector2: <span class="self">Self</span>) -&gt; v128 {
+<a href=#493 id=493 data-nosnippet>493</a>            v128_and(<span class="self">self</span>, vector2)
+<a href=#494 id=494 data-nosnippet>494</a>        }
+<a href=#495 id=495 data-nosnippet>495</a>
+<a href=#496 id=496 data-nosnippet>496</a>        <span class="attr">#[inline(always)]
+<a href=#497 id=497 data-nosnippet>497</a>        </span><span class="kw">unsafe fn </span>or(<span class="self">self</span>, vector2: <span class="self">Self</span>) -&gt; v128 {
+<a href=#498 id=498 data-nosnippet>498</a>            v128_or(<span class="self">self</span>, vector2)
+<a href=#499 id=499 data-nosnippet>499</a>        }
+<a href=#500 id=500 data-nosnippet>500</a>    }
+<a href=#501 id=501 data-nosnippet>501</a>}</code></pre></div></section></main></body></html>
