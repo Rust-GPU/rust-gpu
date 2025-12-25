@@ -1,9 +1,9 @@
 (function() {
-    var implementors = Object.fromEntries([["serde_json",[]]]);
+    var implementors = Object.fromEntries([["serde_json",[]],["spirv_builder",[]]]);
     if (window.register_implementors) {
         window.register_implementors(implementors);
     } else {
         window.pending_implementors = implementors;
     }
 })()
-//{"start":57,"fragment_lengths":[17]}
+//{"start":57,"fragment_lengths":[17,21]}
