@@ -1,5 +1,6 @@
 // build-pass
 // compile-flags: -C target-feature=+RuntimeDescriptorArray,+ext:SPV_EXT_descriptor_indexing
+// ignore-naga
 
 use glam::Vec4;
 use spirv_std::spirv;

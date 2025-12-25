@@ -1,4 +1,5 @@
 // build-fail
+// ignore-naga
 
 use spirv_std::{Image, RuntimeArray, spirv};
 
