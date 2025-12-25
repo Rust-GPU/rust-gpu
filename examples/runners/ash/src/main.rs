@@ -78,7 +78,7 @@ use ash::util::read_spv;
 use clap::{Parser, ValueEnum};
 use raw_window_handle::HasDisplayHandle as _;
 use shared::ShaderConstants;
-use spirv_builder::{MetadataPrintout, SpirvBuilder};
+use spirv_builder::SpirvBuilder;
 use std::{
     fs::File,
     path::PathBuf,
@@ -259,7 +259,6 @@ pub fn compile_shaders(shader: &RustGPUShader) -> anyhow::Result<Vec<u32>> {
         .collect::<PathBuf>();
 
     let compile_result = SpirvBuilder::new(crate_path, "spirv-unknown-vulkan1.3")
-        .print_metadata(MetadataPrintout::None)
         .shader_panic_strategy(spirv_builder::ShaderPanicStrategy::DebugPrintfThenExit {
             print_inputs: true,
             print_backtrace: true,

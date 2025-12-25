@@ -113,8 +113,10 @@ pub enum SpirvBuilderError {
     RustcCodegenSpirvDylibDoesNotExist(PathBuf),
     #[error("build failed")]
     BuildFailed,
-    #[error("multi-module build cannot be used with print_metadata = MetadataPrintout::Full")]
-    MultiModuleWithPrintMetadata,
+    #[error(
+        "`multimodule: true` build cannot be used together with `build_script.env_shader_spv_path: true`"
+    )]
+    MultiModuleWithEnvShaderSpvPath,
     #[error("multi-module metadata file missing")]
     MetadataFileMissing(#[from] std::io::Error),
     #[error("unable to parse multi-module metadata file")]
@@ -128,21 +130,6 @@ pub enum SpirvBuilderError {
     #[cfg(feature = "watch")]
     #[error(transparent)]
     WatchFailed(#[from] SpirvWatcherError),
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Default, serde::Deserialize, serde::Serialize)]
-#[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
-#[non_exhaustive]
-pub enum MetadataPrintout {
-    /// Print no cargo metadata.
-    #[default]
-    None,
-    /// Print only dependency information (eg for multiple modules).
-    DependencyOnly,
-    /// Print all cargo metadata.
-    ///
-    /// Includes dependency information and spirv environment variable.
-    Full,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default, serde::Deserialize, serde::Serialize)]
@@ -388,6 +375,70 @@ impl Default for ShaderCrateFeatures {
     }
 }
 
+/// Configuration for build scripts
+#[derive(Clone, Debug, Default)]
+#[non_exhaustive]
+pub struct BuildScriptConfig {
+    /// Enable this if you are using `spirv-builder` from a build script to apply some recommended default options, such
+    /// as [`Self::dependency_info`].
+    pub defaults: bool,
+
+    /// Print dependency information for cargo build scripts (with `cargo::rerun-if-changed={}` and such).
+    /// Dependency information makes cargo rerun the build script is rerun when shader source files change, thus
+    /// rebuilding the shader.
+    ///
+    /// Default: [`Self::defaults`]
+    pub dependency_info: Option<bool>,
+
+    /// Whether to emit an env var pointing to the shader module file  (via `cargo::rustc-env={}`). The name of the env
+    /// var is the crate name with `.spv` appended, e.g. `sky_shader.spv`.
+    /// Not supported together with `multimodule=true` or `.watch()`.
+    ///
+    /// Some examples on how to include the shader module in the source code:
+    /// * wgpu:
+    /// ```rust,ignore
+    /// let shader: ShaderModuleDescriptorPassthrough = include_spirv_raw!(env!("my_shader.spv"));
+    /// ```
+    /// * ash
+    /// ```rust,ignore
+    /// let bytes: &[u8] = include_bytes!(env!("my_shader.spv"))
+    /// let words = ash::util::read_spv(&mut std::io::Cursor::new(bytes)).unwrap();
+    /// ```
+    ///
+    /// Default: `false`
+    pub env_shader_spv_path: Option<bool>,
+
+    /// Forwards any warnings or errors by rustc as build script warnings (via `cargo::warning=`). Not enabling this
+    /// option may hide warnings if the build succeeds.
+    ///
+    /// Default: [`Self::defaults`]
+    pub forward_rustc_warnings: Option<bool>,
+
+    /// Pass `--color always` to cargo to force enable colorful error messages. Particularly in build scripts, these
+    /// are disabled by default, even though we'll forward them to your console. Should your console not support colors,
+    /// then the outer cargo executing the build script will filter out all ansi escape sequences anyway, so we're free
+    /// to always emit them.
+    ///
+    /// Default: [`Self::defaults`]
+    pub cargo_color_always: Option<bool>,
+}
+
+/// these all have the prefix `get` so the doc items link to the members, not these private fns
+impl BuildScriptConfig {
+    fn get_dependency_info(&self) -> bool {
+        self.dependency_info.unwrap_or(self.defaults)
+    }
+    fn get_env_shader_spv_path(&self) -> bool {
+        self.env_shader_spv_path.unwrap_or(false)
+    }
+    fn get_forward_rustc_warnings(&self) -> bool {
+        self.forward_rustc_warnings.unwrap_or(self.defaults)
+    }
+    fn get_cargo_color_always(&self) -> bool {
+        self.cargo_color_always.unwrap_or(self.defaults)
+    }
+}
+
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
 #[non_exhaustive]
@@ -402,10 +453,10 @@ pub struct SpirvBuilder {
     /// `--crate-type dylib`. Defaults to true if `cargo_cmd` is `None` or `Some("rustc")`.
     #[cfg_attr(feature = "clap", clap(skip))]
     pub cargo_cmd_like_rustc: Option<bool>,
-    /// Whether to print build.rs cargo metadata (e.g. cargo:rustc-env=var=val). Defaults to [`MetadataPrintout::None`].
-    /// Within build scripts, set it to [`MetadataPrintout::DependencyOnly`] or [`MetadataPrintout::Full`] to ensure the build script is rerun on code changes.
+    /// Configuration for build scripts
     #[cfg_attr(feature = "clap", clap(skip))]
-    pub print_metadata: MetadataPrintout,
+    #[serde(skip)]
+    pub build_script: BuildScriptConfig,
     /// Build in release. Defaults to true.
     #[cfg_attr(feature = "clap", clap(long = "debug", default_value = "true", action = clap::ArgAction::SetFalse))]
     pub release: bool,
@@ -493,7 +544,7 @@ impl Default for SpirvBuilder {
             path_to_crate: None,
             cargo_cmd: None,
             cargo_cmd_like_rustc: None,
-            print_metadata: MetadataPrintout::default(),
+            build_script: BuildScriptConfig::default(),
             release: true,
             target: None,
             deny_warnings: false,
@@ -521,13 +572,6 @@ impl SpirvBuilder {
             target: Some(target.into()),
             ..SpirvBuilder::default()
         }
-    }
-
-    /// Whether to print build.rs cargo metadata (e.g. cargo:rustc-env=var=val). Defaults to [`MetadataPrintout::Full`].
-    #[must_use]
-    pub fn print_metadata(mut self, v: MetadataPrintout) -> Self {
-        self.print_metadata = v;
-        self
     }
 
     #[must_use]
@@ -675,19 +719,15 @@ impl SpirvBuilder {
         self
     }
 
-    /// Builds the module. If `print_metadata` is [`MetadataPrintout::Full`], you usually don't have to inspect the path
-    /// in the result, as the environment variable for the path to the module will already be set.
+    /// Builds the module
     pub fn build(&self) -> Result<CompileResult, SpirvBuilderError> {
         let metadata_file = invoke_rustc(self)?;
-        match self.print_metadata {
-            MetadataPrintout::Full | MetadataPrintout::DependencyOnly => {
-                leaf_deps(&metadata_file, |artifact| {
-                    println!("cargo:rerun-if-changed={artifact}");
-                })
-                // Close enough
-                .map_err(SpirvBuilderError::MetadataFileMissing)?;
-            }
-            MetadataPrintout::None => (),
+        if self.build_script.get_dependency_info() {
+            leaf_deps(&metadata_file, |artifact| {
+                println!("cargo:rerun-if-changed={artifact}");
+            })
+            // Close enough
+            .map_err(SpirvBuilderError::MetadataFileMissing)?;
         }
         let metadata = self.parse_metadata_file(&metadata_file)?;
 
@@ -706,17 +746,17 @@ impl SpirvBuilder {
         match &metadata.module {
             ModuleResult::SingleModule(spirv_module) => {
                 assert!(!self.multimodule);
-                let env_var = format!(
-                    "{}.spv",
-                    at.file_name()
-                        .unwrap()
-                        .to_str()
-                        .unwrap()
-                        .strip_suffix(ARTIFACT_SUFFIX)
-                        .unwrap()
-                );
-                if self.print_metadata == MetadataPrintout::Full {
-                    println!("cargo:rustc-env={}={}", env_var, spirv_module.display());
+                if self.build_script.get_env_shader_spv_path() {
+                    let env_var = format!(
+                        "{}.spv",
+                        at.file_name()
+                            .unwrap()
+                            .to_str()
+                            .unwrap()
+                            .strip_suffix(ARTIFACT_SUFFIX)
+                            .unwrap()
+                    );
+                    println!("cargo::rustc-env={}={}", env_var, spirv_module.display());
                 }
             }
             ModuleResult::MultiModule(_) => {
@@ -792,8 +832,8 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
             .ok_or(SpirvBuilderError::MissingTarget)?;
         target = SpirvTarget::parse(target_str)?;
 
-        if (builder.print_metadata == MetadataPrintout::Full) && builder.multimodule {
-            return Err(SpirvBuilderError::MultiModuleWithPrintMetadata);
+        if builder.build_script.get_env_shader_spv_path() && builder.multimodule {
+            return Err(SpirvBuilderError::MultiModuleWithEnvShaderSpvPath);
         }
         if !path_to_crate.is_dir() {
             return Err(SpirvBuilderError::CratePathDoesntExist(
@@ -858,7 +898,7 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
 
     // Wrapper for `env::var` that appropriately informs Cargo of the dependency.
     let tracked_env_var_get = |name| {
-        if let MetadataPrintout::Full | MetadataPrintout::DependencyOnly = builder.print_metadata {
+        if builder.build_script.get_dependency_info() {
             println!("cargo:rerun-if-env-changed={name}");
         }
         env::var(name)
@@ -1004,6 +1044,16 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
 
     cargo.arg("--target-dir").arg(target_dir);
 
+    // Args for warning and error forwarding
+    if builder.build_script.get_forward_rustc_warnings() {
+        // Quiet to remove all the status messages and only emit errors and warnings
+        cargo.args(["--quiet"]);
+    }
+    if builder.build_script.get_cargo_color_always() {
+        // Always emit color, since the outer cargo will remove ascii escape sequences if color is turned off
+        cargo.args(["--color", "always"]);
+    }
+
     // NOTE(eddyb) this used to be just `RUSTFLAGS` but at some point Cargo
     // added a separate environment variable using `\x1f` instead of spaces,
     // which allows us to have spaces within individual `rustc` flags.
@@ -1021,9 +1071,19 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
         num_cgus.to_string(),
     );
 
-    cargo.stderr(Stdio::inherit()).current_dir(path_to_crate);
+    if !builder.build_script.get_forward_rustc_warnings() {
+        cargo.stderr(Stdio::inherit());
+    }
+    cargo.current_dir(path_to_crate);
     log::debug!("building shaders with `{cargo:?}`");
     let build = cargo.output().expect("failed to execute cargo build");
+
+    if builder.build_script.get_forward_rustc_warnings() {
+        let stderr = String::from_utf8(build.stderr).unwrap();
+        for line in stderr.lines() {
+            println!("cargo::warning={line}");
+        }
+    }
 
     // `get_last_artifact` has the side-effect of printing invalid lines, so
     // we do that even in case of an error, to let through any useful messages
