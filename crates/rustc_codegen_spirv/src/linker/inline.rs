@@ -133,12 +133,57 @@ pub fn inline(sess: &Session, module: &mut Module) -> super::Result<()> {
         .map(Ok)
         .collect();
 
-    // Inline functions in post-order (aka inside-out aka bottom-out) - that is,
+    let mut mem2reg_pointer_to_pointee = FxHashMap::default();
+    let mut mem2reg_constants = FxHashMap::default();
+    {
+        let mut u32 = None;
+        for inst in &module.types_global_values {
+            match inst.class.opcode {
+                Op::TypePointer => {
+                    mem2reg_pointer_to_pointee
+                        .insert(inst.result_id.unwrap(), inst.operands[1].unwrap_id_ref());
+                }
+                Op::TypeInt
+                    if inst.operands[0].unwrap_literal_bit32() == 32
+                        && inst.operands[1].unwrap_literal_bit32() == 0 =>
+                {
+                    assert!(u32.is_none());
+                    u32 = Some(inst.result_id.unwrap());
+                }
+                Op::Constant if u32.is_some() && inst.result_type == u32 => {
+                    let value = inst.operands[0].unwrap_literal_bit32();
+                    mem2reg_constants.insert(inst.result_id.unwrap(), value);
+                }
+                _ => {}
+            }
+        }
+    }
+
+    // Inline functions in post-order (aka inside-out aka bottom-up) - that is,
     // callees are processed before their callers, to avoid duplicating work.
     for func_idx in call_graph.post_order() {
         let mut function = mem::replace(&mut functions[func_idx], Err(FuncIsBeingInlined)).unwrap();
         inliner.inline_fn(&mut function, &functions);
         fuse_trivial_branches(&mut function);
+
+        super::duplicates::DebuginfoDeduplicator {
+            custom_ext_inst_set_import,
+        }
+        .remove_duplicate_debuginfo_in_function(&mut function);
+
+        {
+            super::simple_passes::block_ordering_pass(&mut function);
+            // Note: mem2reg requires functions to be in RPO order (i.e. block_ordering_pass)
+            super::mem2reg::mem2reg(
+                inliner.header,
+                &mut module.types_global_values,
+                &mem2reg_pointer_to_pointee,
+                &mem2reg_constants,
+                &mut function,
+            );
+            super::destructure_composites::destructure_composites(&mut function);
+        }
+
         functions[func_idx] = Ok(function);
     }
 
@@ -411,7 +456,7 @@ fn should_inline(
         }
 
         // If the call isn't passing a legal pointer argument (a "memory object",
-        // i.e. an `OpVariable` or one of the caller's `OpFunctionParameters),
+        // i.e. an `OpVariable` or one of the caller's `OpFunctionParameter`s),
         // then inlining is required to have a chance at producing legal SPIR-V.
         //
         // FIXME(eddyb) rewriting away the pointer could be another alternative.
@@ -428,6 +473,7 @@ fn should_inline(
                         .caller
                         .parameters
                         .iter()
+                        .filter(|_| false)
                         .chain(
                             call_site.caller.blocks[0]
                                 .instructions
@@ -528,22 +574,22 @@ impl Inliner<'_, '_> {
     ) {
         let mut block_idx = 0;
         while block_idx < function.blocks.len() {
-            // If we successfully inlined a block, then repeat processing on the same block, in
-            // case the newly inlined block has more inlined calls.
-            // TODO: This is quadratic
-            if !self.inline_block(function, block_idx, functions) {
-                // TODO(eddyb) skip past the inlined callee without rescanning it.
-                block_idx += 1;
+            match self.inline_block(function, block_idx, functions) {
+                Some(post_call_block_idx) => block_idx = post_call_block_idx,
+                None => block_idx += 1,
             }
         }
     }
 
+    // HACK(eddyb) returns `Some(post_call_block_idx)` in case of success, where
+    // `post_call_block_idx` is the index of the first block of the `caller`,
+    // that follows all the inlined callee's blocks.
     fn inline_block(
         &mut self,
         caller: &mut Function,
         block_idx: usize,
         functions: &[Result<Function, FuncIsBeingInlined>],
-    ) -> bool {
+    ) -> Option<usize> {
         // Find the first inlined OpFunctionCall
         let call = caller.blocks[block_idx]
             .instructions
@@ -583,10 +629,7 @@ impl Inliner<'_, '_> {
                     }
                 }
             });
-        let (call_index, call_inst, callee) = match call {
-            None => return false,
-            Some(call) => call,
-        };
+        let (call_index, call_inst, callee) = call?;
 
         // Propagate "may abort" from callee to caller (i.e. as aborts get inlined).
         if self
@@ -738,8 +781,8 @@ impl Inliner<'_, '_> {
         }
 
         // Insert the post-call block, after all the inlined callee blocks.
+        let post_call_block_idx = pre_call_block_idx + num_non_entry_inlined_callee_blocks + 1;
         {
-            let post_call_block_idx = pre_call_block_idx + num_non_entry_inlined_callee_blocks + 1;
             let post_call_block = Block {
                 label: Some(Instruction::new(Op::Label, None, Some(return_jump), vec![])),
                 instructions: post_call_block_insts,
@@ -826,7 +869,7 @@ impl Inliner<'_, '_> {
                 }
 
                 // `vars_and_debuginfo_range.end` indicates where `OpVariable`s
-                // end and other instructions start (module debuginfo), but to
+                // end and other instructions start (modulo debuginfo), but to
                 // split the block in two, both sides of the "cut" need "repair":
                 // - the variables are missing "inlined call frames" pops, that
                 //   may happen later in the block, and have to be synthesized
@@ -882,7 +925,7 @@ impl Inliner<'_, '_> {
             );
         }
 
-        true
+        Some(post_call_block_idx)
     }
 
     fn add_clone_id_rules(&mut self, rewrite_rules: &mut FxHashMap<Word, Word>, blocks: &[Block]) {
