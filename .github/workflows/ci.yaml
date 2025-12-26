@@ -163,14 +163,23 @@ jobs:
           stripdown: true
 
           # FIXME(eddyb) consider using lavapipe instead, or even trying both.
-          install_swiftshader: true
-          # install_lavapipe: true
+          # install_swiftshader: true
+          install_lavapipe: true
       - if: ${{ runner.os == 'Windows' }}
-        name: Windows - Use SwiftShader as Vulkan driver
+        name: Windows - Use Lavapipe as Vulkan driver
         # FIXME(eddyb) ideally `jakoch/install-vulkan-sdk-action` should do this.
         run: |
-          echo "C:/Swiftshader/" >> "$GITHUB_PATH"
-          echo "VK_DRIVER_FILES=C:/Swiftshader/vk_swiftshader_icd.json" >> "$GITHUB_ENV"
+          echo "C:/Lavapipe/bin/" >> "$GITHUB_PATH"
+          echo "VK_DRIVER_FILES=C:/Lavapipe/share/vulkan/icd.d/lvp_icd.x86_64.json" >> "$GITHUB_ENV"
+      - if: ${{ runner.os == 'Windows' }}
+        run: cat C:/Lavapipe/share/vulkan/icd.d/lvp_icd.x86_64.json
+      - if: ${{ runner.os == 'Windows' }}
+        run: ls -la C:/Lavapipe/share/vulkan/icd.d/
+      - if: ${{ runner.os == 'Windows' }}
+        run: ls -la C:/Lavapipe/
+      - if: ${{ runner.os == 'Windows' }}
+        run: ls -la C:/Lavapipe/bin/
+      - run: VK_LOADER_DEBUG=error,warn,info vulkaninfo
       - if: ${{ runner.os == 'Linux' }}
         name: Linux - Install native dependencies
         run: sudo apt install libwayland-cursor0 libxkbcommon-dev libwayland-dev
@@ -191,6 +200,8 @@ jobs:
         run: cargo test -p "difftest*" --release --no-default-features --features "use-installed-tools"
       - name: difftests
         run: cargo run -p difftests --release --no-default-features --features "use-installed-tools"
+    env:
+      VK_LOADER_DEBUG: error,warn,info
 
   # This allows us to have a single job we can branch protect on, rather than needing
   # to update the branch protection rules when the test matrix changes
