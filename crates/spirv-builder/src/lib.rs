@@ -719,6 +719,24 @@ impl SpirvBuilder {
         self
     }
 
+    /// Shortcut for `cargo check`
+    pub fn check(&mut self) -> Result<CompileResult, SpirvBuilderError> {
+        self.run_cargo_cmd("check")
+    }
+
+    /// Shortcut for `cargo clippy`
+    pub fn clippy(&mut self) -> Result<CompileResult, SpirvBuilderError> {
+        self.run_cargo_cmd("clippy")
+    }
+
+    /// Run the supplied cargo cmd, and ensure to reset the state so [`Self::build`] still works as normal
+    fn run_cargo_cmd(&mut self, cmd: &str) -> Result<CompileResult, SpirvBuilderError> {
+        let old = self.cargo_cmd.replace(cmd.into());
+        let result = self.build();
+        self.cargo_cmd = old;
+        result
+    }
+
     /// Builds the module
     pub fn build(&self) -> Result<CompileResult, SpirvBuilderError> {
         let metadata_file = invoke_rustc(self)?;
