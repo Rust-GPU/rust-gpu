@@ -357,6 +357,7 @@ impl RayQuery {
                 result = out(reg) result,
             }
 
+            #[allow(clippy::match_same_arms)]
             match result {
                 0 => CandidateIntersection::Triangle,
                 1 => CandidateIntersection::AABB,
@@ -381,6 +382,7 @@ impl RayQuery {
                 result = out(reg) result,
             }
 
+            #[allow(clippy::match_same_arms)]
             match result {
                 0 => CommittedIntersection::None,
                 1 => CommittedIntersection::Triangle,

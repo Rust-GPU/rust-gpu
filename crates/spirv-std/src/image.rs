@@ -452,7 +452,7 @@ impl<
                 coordinate = in(reg) &coordinate,
                 depth_reference = in(reg) &depth_reference,
                 lod = in(reg) &lod,
-            )
+            );
         }
         result
     }
@@ -698,7 +698,7 @@ impl<
                 coordinate = in(reg) &coordinate,
                 depth_reference = in(reg) &depth_reference,
                 lod = in(reg) &lod,
-            )
+            );
         }
         result
     }
