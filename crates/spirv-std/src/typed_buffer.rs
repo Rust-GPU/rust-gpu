@@ -63,18 +63,17 @@ impl<T> Deref for TypedBuffer<[T]> {
     #[spirv_std_macros::gpu_only]
     fn deref(&self) -> &[T] {
         unsafe {
-            let mut result_slot = core::mem::MaybeUninit::uninit();
+            let mut result_slot: *const [T];
             asm! {
                 "%uint = OpTypeInt 32 0",
                 "%uint_0 = OpConstant %uint 0",
                 "%inner_ptr = OpAccessChain _ {buffer} %uint_0",
                 "%inner_len = OpArrayLength %uint {buffer} 0",
-                "%result = OpCompositeConstruct typeof*{result_slot} %inner_ptr %inner_len",
-                "OpStore {result_slot} %result",
+                "{result_slot} = OpCompositeConstruct typeof*{result_slot} %inner_ptr %inner_len",
                 buffer = in(reg) self,
-                result_slot = in(reg) result_slot.as_mut_ptr(),
+                result_slot = out(reg) result_slot,
             }
-            result_slot.assume_init()
+            &*result_slot
         }
     }
 }
@@ -83,7 +82,7 @@ impl<T> DerefMut for TypedBuffer<[T]> {
     #[spirv_std_macros::gpu_only]
     fn deref_mut(&mut self) -> &mut Self::Target {
         unsafe {
-            let mut result_slot = core::mem::MaybeUninit::uninit();
+            let mut result_slot: *mut [T];
             asm! {
                 "%uint = OpTypeInt 32 0",
                 "%uint_0 = OpConstant %uint 0",
@@ -92,9 +91,9 @@ impl<T> DerefMut for TypedBuffer<[T]> {
                 "%result = OpCompositeConstruct typeof*{result_slot} %inner_ptr %inner_len",
                 "OpStore {result_slot} %result",
                 buffer = in(reg) self,
-                result_slot = in(reg) result_slot.as_mut_ptr(),
+                result_slot = out(reg) result_slot,
             }
-            result_slot.assume_init()
+            &mut *result_slot
         }
     }
 }
