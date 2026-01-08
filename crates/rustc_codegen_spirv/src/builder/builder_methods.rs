@@ -3383,6 +3383,15 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             }
         }
 
+        // HACK(fee1-dead): `MaybeUninit` uses a union which we don't have very good support yet. Replacing all calls to it
+        // with an `Undef` serves the same purpose and fixes compiler errors
+        if instance_def_id.is_some_and(|did| {
+            self.tcx
+                .is_diagnostic_item(rustc_span::sym::maybe_uninit_uninit, did)
+        }) {
+            return self.undef(result_type);
+        }
+
         // Default: emit a regular function call
         let args = args.iter().map(|arg| arg.def(self)).collect::<Vec<_>>();
         self.emit()
