@@ -28,16 +28,15 @@ impl<T> Deref for TypedBuffer<T> {
     #[spirv_std_macros::gpu_only]
     fn deref(&self) -> &T {
         unsafe {
-            let mut result_slot = core::mem::MaybeUninit::uninit();
+            let mut result_slot: *const T;
             asm! {
                 "%uint = OpTypeInt 32 0",
                 "%uint_0 = OpConstant %uint 0",
-                "%result = OpAccessChain _ {buffer} %uint_0",
-                "OpStore {result_slot} %result",
+                "{result_slot} = OpAccessChain _ {buffer} %uint_0",
                 buffer = in(reg) self,
-                result_slot = in(reg) result_slot.as_mut_ptr(),
+                result_slot = out(reg) result_slot,
             }
-            result_slot.assume_init()
+            &*result_slot
         }
     }
 }
@@ -46,16 +45,15 @@ impl<T> DerefMut for TypedBuffer<T> {
     #[spirv_std_macros::gpu_only]
     fn deref_mut(&mut self) -> &mut T {
         unsafe {
-            let mut result_slot = core::mem::MaybeUninit::uninit();
+            let mut result_slot: *mut T;
             asm! {
                 "%uint = OpTypeInt 32 0",
                 "%uint_0 = OpConstant %uint 0",
-                "%result = OpAccessChain _ {buffer} %uint_0",
-                "OpStore {result_slot} %result",
+                "{result_slot} = OpAccessChain _ {buffer} %uint_0",
                 buffer = in(reg) self,
-                result_slot = in(reg) result_slot.as_mut_ptr(),
+                result_slot = out(reg) result_slot,
             }
-            result_slot.assume_init()
+            &mut *result_slot
         }
     }
 }
