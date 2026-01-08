@@ -35,14 +35,15 @@ impl<F: BlockFn> TaskBlock<F> {
     }
 
     pub fn run_gpu_uniform(&self, inv_index: u32, sg_size: u32, input: &[u32], output: &mut [u32]) {
-        let item_cnt = self.range.start - self.range.end;
-        for group in (0..item_cnt).step_by(sg_size as usize) {
-            let i = self.range.start + group + inv_index;
+        let item_cnt = self.range.end - self.range.start;
+        let group_cnt = item_cnt / sg_size;
+        let remainder = item_cnt % sg_size;
+        for group in 0..group_cnt {
+            let i = self.range.start + group * sg_size + inv_index;
             (self.closure)(i, input, output);
         }
-        let remainder = item_cnt % sg_size;
         if inv_index < remainder {
-            let i = (item_cnt / sg_size) + inv_index;
+            let i = self.range.start + group_cnt * sg_size + inv_index;
             (self.closure)(i, input, output);
         }
     }

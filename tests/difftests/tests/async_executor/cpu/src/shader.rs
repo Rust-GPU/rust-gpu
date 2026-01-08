@@ -11,5 +11,8 @@ pub fn main_cs(
     #[spirv(storage_buffer, descriptor_set = 0, binding = 1)] output: &mut [u32],
     #[spirv(local_invocation_index)] inv_index: u32,
 ) {
-    eval(input, output).run_gpu_uniform(inv_index, WG_SIZE, input, output);
+    // calling eval is scalar code
+    let eval = eval(input, output);
+    // evaluating the closure is vectorized
+    eval.run_gpu_uniform(inv_index, WG_SIZE, input, output);
 }
