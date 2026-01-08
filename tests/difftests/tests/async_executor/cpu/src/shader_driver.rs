@@ -1,4 +1,4 @@
-use crate::common::OUT_LEN;
+use crate::common::{OUT_LEN, input_dataset};
 use difftest::config::Config;
 use difftest::scaffold::compute::{BufferConfig, RustComputeShader, WgpuComputeTestMultiBuffer};
 
@@ -7,7 +7,10 @@ pub fn run() {
     let test = WgpuComputeTestMultiBuffer::new(
         RustComputeShader::default(),
         [1, 1, 1],
-        Vec::from(&[BufferConfig::writeback(OUT_LEN * size_of::<u32>())]),
+        Vec::from(&[
+            BufferConfig::read_only(&input_dataset()),
+            BufferConfig::writeback(OUT_LEN * size_of::<u32>()),
+        ]),
     );
     test.run_test(&config).unwrap();
 }
