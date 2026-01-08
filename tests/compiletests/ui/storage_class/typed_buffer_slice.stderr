@@ -1,0 +1,135 @@
+OpCapability Shader
+OpMemoryModel Logical Simple
+OpEntryPoint Fragment %1 "main" %2 %3
+OpExecutionMode %1 OriginUpperLeft
+OpName %9 "core::ops::Range<usize>"
+OpMemberName %9 0 "start"
+OpMemberName %9 1 "end"
+OpName %2 "slice"
+OpName %3 "slice_mut"
+OpDecorate %10 ArrayStride 16
+OpDecorate %11 Block
+OpMemberDecorate %11 0 Offset 0
+OpMemberDecorate %9 0 Offset 0
+OpMemberDecorate %9 1 Offset 4
+OpDecorate %2 NonWritable
+OpDecorate %2 Binding 0
+OpDecorate %2 DescriptorSet 0
+OpDecorate %3 Binding 1
+OpDecorate %3 DescriptorSet 0
+%12 = OpTypeFloat 32
+%13 = OpTypeVector %12 4
+%10 = OpTypeRuntimeArray %13
+%11 = OpTypeStruct %10
+%14 = OpTypePointer StorageBuffer %11
+%15 = OpTypeVoid
+%16 = OpTypeFunction %15
+%17 = OpTypeInt 32 0
+%9 = OpTypeStruct %17 %17
+%18 = OpConstant  %17  0
+%19 = OpUndef  %9
+%20 = OpConstant  %17  5
+%21 = OpTypeBool
+%22 = OpConstantFalse  %21
+%23 = OpConstant  %17  1
+%24 = OpTypeInt 32 1
+%25 = OpConstant  %24  0
+%26 = OpTypePointer StorageBuffer %10
+%2 = OpVariable  %14  StorageBuffer
+%27 = OpTypePointer StorageBuffer %13
+%3 = OpVariable  %14  StorageBuffer
+%1 = OpFunction  %15  None %16
+%28 = OpLabel
+%29 = OpCompositeConstruct  %9  %18 %20
+OpNoLine
+OpBranch %30
+%30 = OpLabel
+%31 = OpPhi  %9  %29 %28 %32 %33
+OpLoopMerge %34 %33 None
+OpBranch %35
+%35 = OpLabel
+%36 = OpCompositeExtract  %17  %31 0
+%37 = OpCompositeExtract  %17  %31 1
+%38 = OpULessThan  %21  %36 %37
+OpNoLine
+OpSelectionMerge %39 None
+OpBranchConditional %38 %40 %41
+%40 = OpLabel
+%42 = OpCompositeExtract  %17  %31 0
+OpNoLine
+OpSelectionMerge %43 None
+OpBranchConditional %22 %44 %45
+%44 = OpLabel
+%46 = OpIAdd  %17  %42 %23
+%47 = OpULessThan  %21  %46 %42
+OpNoLine
+OpSelectionMerge %48 None
+OpBranchConditional %47 %49 %50
+%49 = OpLabel
+OpReturn
+%50 = OpLabel
+OpBranch %48
+%48 = OpLabel
+OpBranch %43
+%45 = OpLabel
+OpBranch %43
+%43 = OpLabel
+%51 = OpIAdd  %17  %42 %23
+%52 = OpCompositeInsert  %9  %51 %31 0
+%53 = OpCompositeConstruct  %9  %23 %42
+OpNoLine
+OpBranch %39
+%41 = OpLabel
+%54 = OpCompositeInsert  %9  %18 %19 0
+OpNoLine
+OpBranch %39
+%39 = OpLabel
+%32 = OpPhi  %9  %52 %43 %31 %41
+%55 = OpPhi  %9  %53 %43 %54 %41
+%56 = OpCompositeExtract  %17  %55 0
+%57 = OpCompositeExtract  %17  %55 1
+%58 = OpBitcast  %24  %56
+%59 = OpINotEqual  %21  %58 %25
+OpNoLine
+OpSelectionMerge %60 None
+OpBranchConditional %59 %61 %62
+%61 = OpLabel
+%63 = OpAccessChain  %26  %2 %18
+%64 = OpArrayLength  %17  %2 0
+%65 = OpULessThan  %21  %57 %64
+OpNoLine
+OpSelectionMerge %66 None
+OpBranchConditional %65 %67 %68
+%67 = OpLabel
+OpBranch %66
+%68 = OpLabel
+OpReturn
+%66 = OpLabel
+%69 = OpIAdd  %17  %18 %57
+%70 = OpInBoundsAccessChain  %27  %63 %69
+%71 = OpLoad  %13  %70
+%72 = OpAccessChain  %26  %3 %18
+%73 = OpArrayLength  %17  %3 0
+%74 = OpULessThan  %21  %57 %73
+OpNoLine
+OpSelectionMerge %75 None
+OpBranchConditional %74 %76 %77
+%76 = OpLabel
+OpBranch %75
+%77 = OpLabel
+OpReturn
+%75 = OpLabel
+%78 = OpIAdd  %17  %18 %57
+%79 = OpInBoundsAccessChain  %27  %72 %78
+OpStore %79 %71
+OpNoLine
+OpBranch %60
+%62 = OpLabel
+OpBranch %60
+%60 = OpLabel
+OpBranch %33
+%33 = OpLabel
+OpBranchConditional %59 %30 %34
+%34 = OpLabel
+OpReturn
+OpFunctionEnd

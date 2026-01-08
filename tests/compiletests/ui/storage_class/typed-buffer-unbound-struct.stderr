@@ -1,0 +1,78 @@
+OpCapability Shader
+OpCapability RuntimeDescriptorArray
+OpExtension "SPV_EXT_descriptor_indexing"
+OpMemoryModel Logical Simple
+OpEntryPoint GLCompute %1 "compute" %2 %3
+OpExecutionMode %1 LocalSize 1 1 1
+OpName %7 "MyData"
+OpMemberName %7 0 "a"
+OpMemberName %7 1 "b"
+OpName %2 "global_invocation_id"
+OpName %3 "my_data"
+OpDecorate %8 ArrayStride 4
+OpMemberDecorate %7 0 Offset 0
+OpMemberDecorate %7 1 Offset 4
+OpDecorate %9 ArrayStride 16
+OpDecorate %10 Block
+OpMemberDecorate %10 0 Offset 0
+OpDecorate %2 BuiltIn GlobalInvocationId
+OpDecorate %3 Binding 0
+OpDecorate %3 DescriptorSet 0
+%11 = OpTypeInt 32 0
+%12 = OpTypeVector %11 3
+%13 = OpTypePointer Input %12
+%14 = OpTypeFloat 32
+%15 = OpConstant  %11  3
+%8 = OpTypeArray %11 %15
+%7 = OpTypeStruct %14 %8
+%9 = OpTypeRuntimeArray %7
+%10 = OpTypeStruct %9
+%16 = OpTypeRuntimeArray %10
+%17 = OpTypePointer StorageBuffer %16
+%18 = OpTypeVoid
+%19 = OpTypeFunction %18
+%2 = OpVariable  %13  Input
+%20 = OpTypePointer StorageBuffer %10
+%3 = OpVariable  %17  StorageBuffer
+%21 = OpTypePointer StorageBuffer %9
+%22 = OpConstant  %11  0
+%23 = OpTypeBool
+%24 = OpTypePointer StorageBuffer %7
+%25 = OpConstant  %11  32
+%1 = OpFunction  %18  None %19
+%26 = OpLabel
+%27 = OpLoad  %12  %2
+%28 = OpCompositeExtract  %11  %27 0
+%29 = OpAccessChain  %20  %3 %28
+%30 = OpAccessChain  %21  %29 %22
+%31 = OpArrayLength  %11  %29 0
+%32 = OpULessThan  %23  %22 %31
+OpNoLine
+OpSelectionMerge %33 None
+OpBranchConditional %32 %34 %35
+%34 = OpLabel
+OpBranch %33
+%35 = OpLabel
+OpReturn
+%33 = OpLabel
+%36 = OpInBoundsAccessChain  %24  %30 %22
+%37 = OpLoad  %7  %36
+%38 = OpCompositeInsert  %7  %25 %37 1 0
+%39 = OpCompositeExtract  %11  %27 1
+%40 = OpAccessChain  %20  %3 %39
+%41 = OpAccessChain  %21  %40 %22
+%42 = OpArrayLength  %11  %40 0
+%43 = OpULessThan  %23  %22 %42
+OpNoLine
+OpSelectionMerge %44 None
+OpBranchConditional %43 %45 %46
+%45 = OpLabel
+OpBranch %44
+%46 = OpLabel
+OpReturn
+%44 = OpLabel
+%47 = OpInBoundsAccessChain  %24  %41 %22
+OpStore %47 %38
+OpNoLine
+OpReturn
+OpFunctionEnd

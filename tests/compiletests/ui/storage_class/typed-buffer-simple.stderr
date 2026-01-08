@@ -1,0 +1,51 @@
+OpCapability Shader
+OpCapability RuntimeDescriptorArray
+OpExtension "SPV_EXT_descriptor_indexing"
+OpMemoryModel Logical Simple
+OpEntryPoint GLCompute %1 "compute" %2 %3
+OpExecutionMode %1 LocalSize 1 1 1
+OpName %7 "MyData"
+OpMemberName %7 0 "some_big_data"
+OpName %2 "global_invocation_id"
+OpName %3 "my_data"
+OpDecorate %8 ArrayStride 4
+OpMemberDecorate %7 0 Offset 0
+OpDecorate %9 Block
+OpMemberDecorate %9 0 Offset 0
+OpDecorate %2 BuiltIn GlobalInvocationId
+OpDecorate %3 Binding 0
+OpDecorate %3 DescriptorSet 0
+%10 = OpTypeInt 32 0
+%11 = OpTypeVector %10 3
+%12 = OpTypePointer Input %11
+%13 = OpConstant  %10  16777216
+%8 = OpTypeArray %10 %13
+%7 = OpTypeStruct %8
+%9 = OpTypeStruct %7
+%14 = OpTypeRuntimeArray %9
+%15 = OpTypePointer StorageBuffer %14
+%16 = OpTypeVoid
+%17 = OpTypeFunction %16
+%2 = OpVariable  %12  Input
+%18 = OpTypePointer StorageBuffer %9
+%3 = OpVariable  %15  StorageBuffer
+%19 = OpTypePointer StorageBuffer %7
+%20 = OpConstant  %10  0
+%21 = OpTypePointer StorageBuffer %10
+%22 = OpConstant  %10  32
+%1 = OpFunction  %16  None %17
+%23 = OpLabel
+%24 = OpLoad  %11  %2
+%25 = OpCompositeExtract  %10  %24 0
+%26 = OpAccessChain  %18  %3 %25
+%27 = OpAccessChain  %19  %26 %20
+%28 = OpInBoundsAccessChain  %21  %27 %20 %20
+%29 = OpLoad  %10  %28
+%30 = OpCompositeExtract  %10  %24 1
+%31 = OpAccessChain  %18  %3 %30
+%32 = OpAccessChain  %19  %31 %20
+%33 = OpInBoundsAccessChain  %21  %32 %20 %20
+OpStore %33 %22
+OpNoLine
+OpReturn
+OpFunctionEnd

@@ -1,0 +1,114 @@
+OpCapability Shader
+OpCapability RuntimeDescriptorArray
+OpExtension "SPV_EXT_descriptor_indexing"
+OpMemoryModel Logical Simple
+OpEntryPoint Fragment %1 "main" %2 %3
+OpExecutionMode %1 OriginUpperLeft
+OpName %10 "core::ops::Range<usize>"
+OpMemberName %10 0 "start"
+OpMemberName %10 1 "end"
+OpName %2 "desc_array"
+OpName %3 "desc_array_mut"
+OpDecorate %11 Block
+OpMemberDecorate %11 0 Offset 0
+OpMemberDecorate %10 0 Offset 0
+OpMemberDecorate %10 1 Offset 4
+OpDecorate %2 NonWritable
+OpDecorate %2 Binding 0
+OpDecorate %2 DescriptorSet 0
+OpDecorate %3 Binding 1
+OpDecorate %3 DescriptorSet 0
+%12 = OpTypeFloat 32
+%13 = OpTypeVector %12 4
+%11 = OpTypeStruct %13
+%14 = OpTypeRuntimeArray %11
+%15 = OpTypePointer StorageBuffer %14
+%16 = OpTypeVoid
+%17 = OpTypeFunction %16
+%18 = OpTypeInt 32 0
+%10 = OpTypeStruct %18 %18
+%19 = OpConstant  %18  0
+%20 = OpUndef  %10
+%21 = OpConstant  %18  3
+%22 = OpTypeBool
+%23 = OpConstantFalse  %22
+%24 = OpConstant  %18  1
+%25 = OpTypeInt 32 1
+%26 = OpConstant  %25  0
+%27 = OpTypePointer StorageBuffer %11
+%2 = OpVariable  %15  StorageBuffer
+%3 = OpVariable  %15  StorageBuffer
+%28 = OpTypePointer StorageBuffer %13
+%1 = OpFunction  %16  None %17
+%29 = OpLabel
+%30 = OpCompositeConstruct  %10  %19 %21
+OpNoLine
+OpBranch %31
+%31 = OpLabel
+%32 = OpPhi  %10  %30 %29 %33 %34
+OpLoopMerge %35 %34 None
+OpBranch %36
+%36 = OpLabel
+%37 = OpCompositeExtract  %18  %32 0
+%38 = OpCompositeExtract  %18  %32 1
+%39 = OpULessThan  %22  %37 %38
+OpNoLine
+OpSelectionMerge %40 None
+OpBranchConditional %39 %41 %42
+%41 = OpLabel
+%43 = OpCompositeExtract  %18  %32 0
+OpNoLine
+OpSelectionMerge %44 None
+OpBranchConditional %23 %45 %46
+%45 = OpLabel
+%47 = OpIAdd  %18  %43 %24
+%48 = OpULessThan  %22  %47 %43
+OpNoLine
+OpSelectionMerge %49 None
+OpBranchConditional %48 %50 %51
+%50 = OpLabel
+OpReturn
+%51 = OpLabel
+OpBranch %49
+%49 = OpLabel
+OpBranch %44
+%46 = OpLabel
+OpBranch %44
+%44 = OpLabel
+%52 = OpIAdd  %18  %43 %24
+%53 = OpCompositeInsert  %10  %52 %32 0
+%54 = OpCompositeConstruct  %10  %24 %43
+OpNoLine
+OpBranch %40
+%42 = OpLabel
+%55 = OpCompositeInsert  %10  %19 %20 0
+OpNoLine
+OpBranch %40
+%40 = OpLabel
+%33 = OpPhi  %10  %53 %44 %32 %42
+%56 = OpPhi  %10  %54 %44 %55 %42
+%57 = OpCompositeExtract  %18  %56 0
+%58 = OpCompositeExtract  %18  %56 1
+%59 = OpBitcast  %25  %57
+%60 = OpINotEqual  %22  %59 %26
+OpNoLine
+OpSelectionMerge %61 None
+OpBranchConditional %60 %62 %63
+%62 = OpLabel
+%64 = OpAccessChain  %27  %2 %58
+%65 = OpAccessChain  %27  %3 %58
+%66 = OpAccessChain  %28  %64 %19
+%67 = OpLoad  %13  %66
+%68 = OpAccessChain  %28  %65 %19
+OpStore %68 %67
+OpNoLine
+OpBranch %61
+%63 = OpLabel
+OpBranch %61
+%61 = OpLabel
+OpBranch %34
+%34 = OpLabel
+OpBranchConditional %60 %31 %35
+%35 = OpLabel
+OpReturn
+OpFunctionEnd
