@@ -2,7 +2,7 @@
 // contain references, and where the `T` values aren't immediately loaded from.
 
 // build-pass
-// compile-flags: -C target-feature=+VariablePointers
+// compile-flags: -C target-feature=+VariablePointersStorageBuffer,+VariablePointers
 
 use spirv_std::spirv;
 
