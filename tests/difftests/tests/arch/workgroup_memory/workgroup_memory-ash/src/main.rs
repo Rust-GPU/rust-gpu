@@ -1,8 +1,8 @@
 #[cfg(not(target_arch = "spirv"))]
-fn main() {
+fn main() -> anyhow::Result<()> {
     use difftest::config::Config;
 
-    let config = Config::from_path(std::env::args().nth(1).unwrap()).unwrap();
+    let config = Config::new()?;
 
     // Skip on macOS due to Vulkan/MoltenVK configuration issues
     #[cfg(target_os = "macos")]
@@ -39,23 +39,19 @@ fn main() {
             },
         ];
 
+        // Write metadata for U32 comparison
+        config.write_metadata(&difftest::config::TestMetadata::u32())?;
+
         let shader = RustComputeShader::with_target(".", "spirv-unknown-vulkan1.2")
             .with_capability(Capability::VulkanMemoryModel);
-        let test = ComputeShaderTest::<AshBackend, _>::new(
+        ComputeShaderTest::<AshBackend, _>::new(
             shader,
             [1, 1, 1], // Single workgroup with 64 threads
             buffers,
-        )
-        .unwrap();
-
-        // Write metadata for U32 comparison
-        config
-            .write_metadata(&difftest::config::TestMetadata::u32())
-            .unwrap();
-
-        test.run_test(&config).unwrap();
+        )?
+        .run_test(&config)
     }
 }
 
 #[cfg(target_arch = "spirv")]
-fn main() {}
+fn main() -> anyhow::Result<()> {}

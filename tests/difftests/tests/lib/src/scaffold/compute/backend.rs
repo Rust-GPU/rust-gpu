@@ -63,54 +63,6 @@ pub trait ComputeBackend: Sized {
     }
 }
 
-/// A compute test that can run on any backend
-pub struct ComputeTest<B: ComputeBackend> {
-    backend: B,
-    spirv_words: Vec<u32>,
-    entry_point: String,
-    dispatch: [u32; 3],
-    buffers: Vec<BufferConfig>,
-}
-
-impl<B: ComputeBackend> ComputeTest<B> {
-    pub fn new(
-        spirv_words: Vec<u32>,
-        entry_point: String,
-        dispatch: [u32; 3],
-        buffers: Vec<BufferConfig>,
-    ) -> Result<Self> {
-        Ok(Self {
-            backend: B::init()?,
-            spirv_words,
-            entry_point,
-            dispatch,
-            buffers,
-        })
-    }
-
-    pub fn run(self) -> Result<Vec<Vec<u8>>> {
-        self.backend.run_compute(
-            &self.spirv_words,
-            &self.entry_point,
-            self.dispatch,
-            self.buffers,
-        )
-    }
-
-    pub fn run_test(self, config: &Config) -> Result<()> {
-        let buffers = self.buffers.clone();
-        let outputs = self.run()?;
-        // Write the first storage buffer output to the file
-        for (output, buffer_config) in outputs.iter().zip(&buffers) {
-            if matches!(buffer_config.usage, BufferUsage::Storage) && !output.is_empty() {
-                config.write_result(output)?;
-                return Ok(());
-            }
-        }
-        anyhow::bail!("No storage buffer output found")
-    }
-}
-
 /// A compute test that can run on any backend using a shader object
 pub struct ComputeShaderTest<B: ComputeBackend, S: SpirvShader> {
     backend: B,
@@ -127,6 +79,18 @@ impl<B: ComputeBackend, S: SpirvShader> ComputeShaderTest<B, S> {
             dispatch,
             buffers,
         })
+    }
+
+    pub fn new_with_sizes(shader: S, dispatch: [u32; 3], sizes: &[u64]) -> Result<Self> {
+        let buffers = sizes
+            .iter()
+            .map(|&size| crate::scaffold::compute::wgpu::BufferConfig {
+                size,
+                usage: BufferUsage::Storage,
+                initial_data: None,
+            })
+            .collect();
+        Self::new(shader, dispatch, buffers)
     }
 
     pub fn run(self) -> Result<Vec<Vec<u8>>> {

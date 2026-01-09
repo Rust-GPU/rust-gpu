@@ -12,8 +12,8 @@ pub struct PushConstants {
     count: u32,
 }
 
-fn main() {
-    let config = Config::from_path(std::env::args().nth(1).unwrap()).unwrap();
+fn main() -> anyhow::Result<()> {
+    let config = Config::new()?;
 
     let num_elements = 256;
     let buffer_size = num_elements * 4; // 4 bytes per f32
@@ -30,7 +30,7 @@ fn main() {
         count: num_elements as u32,
     };
 
-    let test = WgpuComputeTestPushConstants::new(
+    WgpuComputeTestPushConstants::new(
         RustComputeShader::default(),
         [4, 1, 1], // 256 / 64 = 4 workgroups
         vec![
@@ -47,7 +47,6 @@ fn main() {
         ],
         std::mem::size_of::<PushConstants>() as u32,
         bytemuck::bytes_of(&push_constants).to_vec(),
-    );
-
-    test.run_test(&config).unwrap();
+    )?
+    .run_test(&config)
 }

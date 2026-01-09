@@ -1,5 +1,5 @@
 use abi_vector_layout_cpu::glam_features::GlamFeatures;
 
-fn main() {
+fn main() -> anyhow::Result<()> {
     abi_vector_layout_cpu::shader_driver::run(GlamFeatures::Cuda);
 }

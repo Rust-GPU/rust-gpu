@@ -4,7 +4,7 @@ use difftest::config::Config;
 
 pub fn run(glam_feature: GlamFeatures) {
     glam_feature.assert();
-    let config = Config::from_path(std::env::args().nth(1).unwrap()).unwrap();
+    let config = Config::new()?;
     let mut out = vec![0; LAYOUT_LEN];
     for gid in LAYOUT_RANGE {
         eval_layouts(gid as u32, &mut out);

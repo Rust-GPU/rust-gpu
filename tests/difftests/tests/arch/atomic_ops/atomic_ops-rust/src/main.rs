@@ -1,10 +1,10 @@
 use difftest::config::Config;
 use difftest::scaffold::compute::{
-    BufferConfig, BufferUsage, RustComputeShader, WgpuComputeTestMultiBuffer,
+    BufferConfig, BufferUsage, ComputeShaderTest, RustComputeShader, WgpuBackend,
 };
 
-fn main() {
-    let config = Config::from_path(std::env::args().nth(1).unwrap()).unwrap();
+fn main() -> anyhow::Result<()> {
+    let config = Config::new()?;
 
     // Initialize counter buffer with test values
     let counter_data = vec![100u32, 50, 20, 5, 0];
@@ -23,11 +23,10 @@ fn main() {
         },
     ];
 
-    let test = WgpuComputeTestMultiBuffer::new(
+    ComputeShaderTest::<WgpuBackend, _>::new(
         RustComputeShader::default(),
         [1, 1, 1], // Single workgroup with 32 threads
         buffers,
-    );
-
-    test.run_test(&config).unwrap();
+    )?
+    .run_test(&config)
 }

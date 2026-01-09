@@ -1,11 +1,11 @@
 #[cfg(not(target_arch = "spirv"))]
-fn main() {
+fn main() -> anyhow::Result<()> {
     use difftest::config::Config;
     use difftest::scaffold::compute::{
-        BufferConfig, BufferUsage, RustComputeShader, WgpuComputeTestMultiBuffer,
+        BufferConfig, BufferUsage, ComputeShaderTest, RustComputeShader, WgpuBackend,
     };
 
-    let config = Config::from_path(std::env::args().nth(1).unwrap()).unwrap();
+    let config = Config::new()?;
 
     // Create input data with various values to test different control flow paths
     let input_data: Vec<u32> = (0..64).map(|i| i as u32).collect();
@@ -24,14 +24,13 @@ fn main() {
         },
     ];
 
-    let test = WgpuComputeTestMultiBuffer::new(
+    ComputeShaderTest::<WgpuBackend, _>::new(
         RustComputeShader::default(),
         [1, 1, 1], // Single workgroup with 64 threads
         buffers,
-    );
-
-    test.run_test(&config).unwrap();
+    )?
+    .run_test(&config)
 }
 
 #[cfg(target_arch = "spirv")]
-fn main() {}
+fn main() -> anyhow::Result<()> {}

@@ -1,10 +1,10 @@
 use difftest::config::Config;
 use difftest::scaffold::compute::{
-    BufferConfig, BufferUsage, WgpuComputeTestMultiBuffer, WgslComputeShader,
+    BufferConfig, BufferUsage, ComputeShaderTest, WgpuBackend, WgslComputeShader,
 };
 
-fn main() {
-    let config = Config::from_path(std::env::args().nth(1).unwrap()).unwrap();
+fn main() -> anyhow::Result<()> {
+    let config = Config::new()?;
 
     // Initialize input buffer with values to sum
     let input_data: Vec<u32> = (1..=64).collect();
@@ -23,16 +23,13 @@ fn main() {
         },
     ];
 
-    let test = WgpuComputeTestMultiBuffer::new(
+    // Write metadata for U32 comparison
+    config.write_metadata(&difftest::config::TestMetadata::u32())?;
+
+    ComputeShaderTest::<WgpuBackend, _>::new(
         WgslComputeShader::default(),
         [1, 1, 1], // Single workgroup with 64 threads
         buffers,
-    );
-
-    // Write metadata for U32 comparison
-    config
-        .write_metadata(&difftest::config::TestMetadata::u32())
-        .unwrap();
-
-    test.run_test(&config).unwrap();
+    )?
+    .run_test(&config)
 }

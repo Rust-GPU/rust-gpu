@@ -6,6 +6,8 @@ pub use difftest_types::config;
 pub mod scaffold;
 
 #[cfg(not(target_arch = "spirv"))]
+pub use anyhow;
+#[cfg(not(target_arch = "spirv"))]
 pub use ash;
 #[cfg(not(target_arch = "spirv"))]
 pub use spirv_builder;

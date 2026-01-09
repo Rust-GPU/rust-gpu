@@ -1,11 +1,11 @@
 #[cfg(not(target_arch = "spirv"))]
-fn main() {
+fn main() -> anyhow::Result<()> {
     use difftest::config::Config;
     use difftest::scaffold::compute::{
-        BufferConfig, BufferUsage, RustComputeShader, WgpuComputeTestMultiBuffer,
+        BufferConfig, BufferUsage, ComputeShaderTest, RustComputeShader, WgpuBackend,
     };
 
-    let config = Config::from_path(std::env::args().nth(1).unwrap()).unwrap();
+    let config = Config::new()?;
 
     // Create input data with various float values
     let input_data: Vec<f32> = (0..128)
@@ -45,20 +45,17 @@ fn main() {
         },
     ];
 
-    let test = WgpuComputeTestMultiBuffer::new(
+    // Write metadata file
+    // this one requires higher epsilon, noticed on an RDNA2 680M (Ryzen iGPU) with radv
+    config.write_metadata(&difftest::config::TestMetadata::f32(2e-5))?;
+
+    ComputeShaderTest::<WgpuBackend, _>::new(
         RustComputeShader::default(),
         [1, 1, 1], // Single workgroup with 32 threads
         buffers,
-    );
-
-    // Write metadata file
-    // this one requires higher epsilon, noticed on an RDNA2 680M (Ryzen iGPU) with radv
-    config
-        .write_metadata(&difftest::config::TestMetadata::f32(2e-5))
-        .unwrap();
-
-    test.run_test(&config).unwrap();
+    )?
+    .run_test(&config)
 }
 
 #[cfg(target_arch = "spirv")]
-fn main() {}
+fn main() -> anyhow::Result<()> {}

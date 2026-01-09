@@ -1,10 +1,10 @@
 use difftest::config::Config;
 use difftest::scaffold::compute::{
-    BufferConfig, BufferUsage, WgpuComputeTestMultiBuffer, WgslComputeShader,
+    BufferConfig, BufferUsage, ComputeShaderTest, WgpuBackend, WgslComputeShader,
 };
 
-fn main() {
-    let config = Config::from_path(std::env::args().nth(1).unwrap()).unwrap();
+fn main() -> anyhow::Result<()> {
+    let config = Config::new()?;
 
     // Create input data with various float values
     let input_data: Vec<f32> = (0..32)
@@ -44,16 +44,13 @@ fn main() {
         },
     ];
 
-    let test = WgpuComputeTestMultiBuffer::new(
+    // Write metadata file
+    config.write_metadata(&difftest::config::TestMetadata::f32(2e-6))?;
+
+    ComputeShaderTest::<WgpuBackend, _>::new(
         WgslComputeShader::default(),
         [1, 1, 1], // Single workgroup with 32 threads
         buffers,
-    );
-
-    // Write metadata file
-    config
-        .write_metadata(&difftest::config::TestMetadata::f32(2e-6))
-        .unwrap();
-
-    test.run_test(&config).unwrap();
+    )?
+    .run_test(&config)
 }

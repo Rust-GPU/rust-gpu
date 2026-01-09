@@ -1,11 +1,13 @@
 use crate::{EvalResult, INTERESTING_PATTERNS, Variants};
 use difftest::config::Config;
-use difftest::scaffold::compute::{BufferConfig, RustComputeShader, WgpuComputeTestMultiBuffer};
+use difftest::scaffold::compute::{
+    BufferConfig, ComputeShaderTest, RustComputeShader, WgpuBackend,
+};
 
-pub fn run(variant: Variants) {
-    let config = Config::from_path(std::env::args().nth(1).unwrap()).unwrap();
+pub fn run(variant: Variants) -> anyhow::Result<()> {
+    let config = Config::new()?;
 
-    let test = WgpuComputeTestMultiBuffer::new(
+    ComputeShaderTest::<WgpuBackend, _>::new(
         RustComputeShader::default(),
         [64, 1, 1],
         Vec::from(&[
@@ -13,7 +15,6 @@ pub fn run(variant: Variants) {
             BufferConfig::read_only(&INTERESTING_PATTERNS),
             BufferConfig::writeback(size_of::<EvalResult>()),
         ]),
-    );
-
-    test.run_test(&config).unwrap();
+    )?
+    .run_test(&config)
 }

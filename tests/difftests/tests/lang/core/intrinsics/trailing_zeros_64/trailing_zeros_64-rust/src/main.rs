@@ -1,5 +1,5 @@
 #[cfg(not(target_arch = "spirv"))]
-fn main() {
+fn main() -> anyhow::Result<()> {
     use difftest::config::{Config, TestMetadata};
     use difftest::scaffold::compute::{
         AshBackend, BufferConfig, BufferUsage, ComputeShaderTest, RustComputeShader,
@@ -7,7 +7,7 @@ fn main() {
     use difftest::spirv_builder::Capability;
     use trailing_zeros_64_rust::TEST_DATA;
 
-    let config = Config::from_path(std::env::args().nth(1).unwrap()).unwrap();
+    let config = Config::new()?;
 
     // Skip on macOS due to Vulkan/MoltenVK configuration issues
     #[cfg(target_os = "macos")]
@@ -37,19 +37,15 @@ fn main() {
             },
         ];
 
+        config.write_metadata(&TestMetadata::u32())?;
+
         // Use Ash backend since wgpu/naga doesn't support Int64
         let shader = RustComputeShader::default().with_capability(Capability::Int64);
         let num_workgroups = TEST_DATA.len() as u32;
-        let test = ComputeShaderTest::<AshBackend, _>::new(shader, [num_workgroups, 1, 1], buffers)
-            .unwrap();
-
-        config
-            .write_metadata(&TestMetadata::u32())
-            .expect("Failed to write metadata");
-
-        test.run_test(&config).unwrap();
+        ComputeShaderTest::<AshBackend, _>::new(shader, [num_workgroups, 1, 1], buffers)?
+            .run_test(&config)
     }
 }
 
 #[cfg(target_arch = "spirv")]
-fn main() {}
+fn main() -> anyhow::Result<()> {}

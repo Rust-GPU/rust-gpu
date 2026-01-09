@@ -116,6 +116,14 @@ impl TestMetadata {
 }
 
 impl Config {
+    pub fn new() -> anyhow::Result<Self> {
+        Self::from_path(
+            std::env::args()
+                .nth(1)
+                .context("expected path to config in args[1]")?,
+        )
+    }
+
     pub fn from_path<P: AsRef<Path>>(path: P) -> anyhow::Result<Self> {
         let path = path.as_ref();
         let content = fs::read_to_string(path)

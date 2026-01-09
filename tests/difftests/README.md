@@ -92,7 +92,7 @@ The library provides helper types for common test patterns:
 **Test types:**
 
 - `WgpuComputeTest` - Single buffer compute shader test
-- `WgpuComputeTestMultiBuffer` - Multi-buffer compute shader test with input/output
+- `ComputeShaderTest, WgpuBackend` - Multi-buffer compute shader test with input/output
   separation
 - `WgpuComputeTestPushConstants` - Compute shader test with push constants support
 - `Skip` - Marks a test variant as skipped with a reason
