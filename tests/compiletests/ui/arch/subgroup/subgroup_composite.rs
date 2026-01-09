@@ -30,7 +30,7 @@ pub struct Zst;
 
 #[spirv(compute(threads(32)))]
 pub fn main(
-    #[spirv(local_invocation_index)] inv_id: UVec3,
+    #[spirv(local_invocation_id)] inv_id: UVec3,
     #[spirv(descriptor_set = 0, binding = 0, storage_buffer)] output: &mut UVec3,
 ) {
     unsafe {

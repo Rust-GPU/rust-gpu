@@ -22,10 +22,10 @@ pub fn main(
     #[spirv(descriptor_set = 0, binding = 0, storage_buffer)] input: &[Value],
     #[spirv(descriptor_set = 0, binding = 1, storage_buffer)] output: &mut Value,
     #[spirv(workgroup)] shared: &mut [Value; WG_SIZE],
-    #[spirv(local_invocation_index)] inv_id: UVec3,
+    #[spirv(local_invocation_index)] inv_id: u32,
 ) {
     unsafe {
-        let inv_id = inv_id.x as usize;
+        let inv_id = inv_id as usize;
         shared[inv_id] = input[inv_id];
         workgroup_memory_barrier_with_group_sync();
 

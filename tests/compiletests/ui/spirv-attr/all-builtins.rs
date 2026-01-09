@@ -44,7 +44,7 @@ pub fn vertex(
     #[spirv(frag_stencil_ref_ext)] frag_stencil_ref_ext: &mut u32,
     #[spirv(instance_index)] instance_index: u32,
     #[spirv(layer_per_view_nv)] layer_per_view_nv: u32,
-    #[spirv(local_invocation_index)] local_invocation_index: UVec3,
+    #[spirv(local_invocation_index)] local_invocation_index: u32,
     #[spirv(mesh_view_count_nv)] mesh_view_count_nv: u32,
     #[spirv(mesh_view_indices_nv)] mesh_view_indices_nv: u32,
     #[spirv(point_size)] point_size: &mut u32,

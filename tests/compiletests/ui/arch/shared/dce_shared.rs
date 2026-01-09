@@ -21,10 +21,10 @@ pub fn main(
     #[spirv(descriptor_set = 0, binding = 1, storage_buffer)] output: &mut f32,
     #[spirv(workgroup)] used_shared: &mut f32,
     #[spirv(workgroup)] dce_shared: &mut [i32; 2],
-    #[spirv(local_invocation_index)] inv_id: UVec3,
+    #[spirv(local_invocation_index)] inv_id: u32,
 ) {
     unsafe {
-        let inv_id = inv_id.x as usize;
+        let inv_id = inv_id as usize;
         if inv_id == 0 {
             *used_shared = *input;
         }
