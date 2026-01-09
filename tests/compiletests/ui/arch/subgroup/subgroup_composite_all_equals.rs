@@ -29,14 +29,15 @@ fn disassembly(my_struct: MyStruct) -> bool {
 
 #[spirv(compute(threads(32)))]
 pub fn main(
-    #[spirv(local_invocation_index)] inv_id: UVec3,
+    #[spirv(local_invocation_index)] inv_id: u32,
+    #[spirv(local_invocation_id)] inv_id_3d: UVec3,
     #[spirv(descriptor_set = 0, binding = 0, storage_buffer)] output: &mut u32,
 ) {
     unsafe {
         let my_struct = MyStruct {
-            a: inv_id.x as f32,
-            b: inv_id,
-            c: Nested(5i32 - inv_id.x as i32),
+            a: inv_id as f32,
+            b: inv_id_3d,
+            c: Nested(5i32 - inv_id as i32),
             d: Zst,
         };
 

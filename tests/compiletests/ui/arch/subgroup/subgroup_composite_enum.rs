@@ -43,11 +43,11 @@ fn disassembly(my_struct: MyEnum, id: u32) -> MyEnum {
 
 #[spirv(compute(threads(32)))]
 pub fn main(
-    #[spirv(local_invocation_index)] inv_id: UVec3,
+    #[spirv(local_invocation_index)] inv_id: u32,
     #[spirv(descriptor_set = 0, binding = 0, storage_buffer)] output: &mut MyEnum,
 ) {
     unsafe {
-        let my_enum = MyEnum::from(inv_id.x % 3);
+        let my_enum = MyEnum::from(inv_id % 3);
         *output = disassembly(my_enum, 5);
     }
 }
