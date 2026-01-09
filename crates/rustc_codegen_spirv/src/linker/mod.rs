@@ -415,6 +415,16 @@ pub fn link(
         inline::inline(sess, &mut output)?;
     }
 
+    // Fold OpLoad from Private/Function variables with constant initializers.
+    // This must run after inlining (which may expose such patterns) and before DCE
+    // (so that the now-unused variables can be removed).
+    // This is critical for pointer-to-pointer patterns like `&&123` which would
+    // otherwise generate invalid SPIR-V in Logical addressing mode.
+    {
+        let _timer = sess.timer("link_fold_load_from_constant_variable");
+        peephole_opts::fold_load_from_constant_variable(&mut output);
+    }
+
     {
         let _timer = sess.timer("link_dce-after-inlining");
         dce::dce(&mut output);

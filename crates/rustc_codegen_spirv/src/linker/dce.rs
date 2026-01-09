@@ -282,7 +282,15 @@ fn instruction_is_pure(inst: &Instruction) -> bool {
         | PtrEqual
         | PtrNotEqual
         | PtrDiff => true,
-        Variable => inst.operands.first() == Some(&Operand::StorageClass(StorageClass::Function)),
+        // Variables with Function or Private storage class are pure and can be DCE'd if unused.
+        // Other storage classes (Input, Output, Uniform, etc.) are part of the shader interface
+        // and must be kept.
+        Variable => matches!(
+            inst.operands.first(),
+            Some(&Operand::StorageClass(
+                StorageClass::Function | StorageClass::Private
+            ))
+        ),
         _ => false,
     }
 }
