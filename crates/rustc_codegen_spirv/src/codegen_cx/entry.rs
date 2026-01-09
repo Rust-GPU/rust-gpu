@@ -722,8 +722,9 @@ impl<'tcx> CodegenCx<'tcx> {
             Ok(StorageClass::Input | StorageClass::Output | StorageClass::UniformConstant)
         );
         let mut assign_location = |var_id: Result<Word, &str>, explicit: Option<u32>| {
+            let storage_class = storage_class.unwrap();
             let location = decoration_locations
-                .entry(storage_class.unwrap())
+                .entry(storage_class)
                 .or_insert_with(|| 0);
             if let Some(explicit) = explicit {
                 *location = explicit;
@@ -733,7 +734,46 @@ impl<'tcx> CodegenCx<'tcx> {
                 Decoration::Location,
                 std::iter::once(Operand::LiteralBit32(*location)),
             );
-            let spirv_type = self.lookup_type(value_spirv_type);
+            let mut spirv_type = self.lookup_type(value_spirv_type);
+
+            // These shader types and storage classes skip the outer array or pointer of the declaration when computing
+            // the location layout, see bug at https://github.com/Rust-GPU/rust-gpu/issues/500.
+            //
+            // The match statment follows the rules at:
+            // https://registry.khronos.org/vulkan/specs/latest/html/vkspec.html#interfaces-iointerfaces-matching
+            #[allow(clippy::match_same_arms)]
+            let can_skip_outer_array =
+                match (execution_model, storage_class, attrs.per_primitive_ext) {
+                    // > if the input is declared in a tessellation control or geometry shader...
+                    (
+                        ExecutionModel::TessellationControl | ExecutionModel::Geometry,
+                        StorageClass::Input,
+                        _,
+                    ) => true,
+                    // > if the maintenance4 feature is enabled, they are declared as OpTypeVector variables, and the
+                    // > output has a Component Count value higher than that of the input but the same Component Type
+                    // Irrelevant: This allows a vertex shader to output a Vec4 and a fragment shader to accept a vector
+                    // type with fewer components, like Vec3, Vec2 (or f32?). Which has no influence on locations.
+                    // > if the output is declared in a mesh shader...
+                    (ExecutionModel::MeshEXT | ExecutionModel::MeshNV, StorageClass::Output, _) => {
+                        true
+                    }
+                    // > if the input is decorated with PerVertexKHR, and is declared in a fragment shader...
+                    (ExecutionModel::Fragment, StorageClass::Input, Some(_)) => true,
+                    // > if in any other case...
+                    (_, _, _) => false,
+                };
+            if can_skip_outer_array {
+                spirv_type = match spirv_type {
+                    SpirvType::Array { element, .. }
+                    | SpirvType::RuntimeArray { element, .. }
+                    | SpirvType::Pointer {
+                        pointee: element, ..
+                    } => self.lookup_type(element),
+                    e => e,
+                };
+            }
+
             if let Some(location_size) = spirv_type.location_size(self) {
                 *location += location_size;
             } else {
