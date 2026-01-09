@@ -9,7 +9,7 @@ use crate::builder_spirv::{SpirvFunctionCursor, SpirvValue, SpirvValueExt};
 use crate::spirv_type::SpirvType;
 use rspirv::dr::Operand;
 use rspirv::spirv::{
-    Capability, Decoration, Dim, ExecutionModel, FunctionControl, StorageClass, Word,
+    BuiltIn, Capability, Decoration, Dim, ExecutionModel, FunctionControl, StorageClass, Word,
 };
 use rustc_abi::FieldsShape;
 use rustc_codegen_ssa::traits::{BaseTypeCodegenMethods, BuilderMethods, MiscCodegenMethods as _};
@@ -916,6 +916,11 @@ impl<'tcx> CodegenCx<'tcx> {
             );
         }
 
+        // Check builtin-specific type requirements.
+        if let Some(builtin) = attrs.builtin {
+            self.check_builtin_type(hir_param.ty_span, value_layout.ty, builtin);
+        }
+
         if let Ok(storage_class) = storage_class {
             self.check_for_bad_types(
                 execution_model,
@@ -1081,6 +1086,17 @@ impl<'tcx> CodegenCx<'tcx> {
                 }
                 _ => (),
             }
+        }
+    }
+
+    /// Check that builtin variables have the correct type.
+    fn check_builtin_type(&self, span: Span, rust_ty: Ty<'tcx>, builtin: Spanned<BuiltIn>) {
+        // LocalInvocationIndex must be a u32.
+        if builtin.value == BuiltIn::LocalInvocationIndex && rust_ty != self.tcx.types.u32 {
+            self.tcx.dcx().span_err(
+                span,
+                format!("`#[spirv(local_invocation_index)]` must be a `u32`, not `{rust_ty}`"),
+            );
         }
     }
 }
