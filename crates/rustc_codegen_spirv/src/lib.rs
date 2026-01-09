@@ -141,7 +141,7 @@ mod target_feature;
 
 use builder::Builder;
 use codegen_cx::CodegenCx;
-use maybe_pqp_cg_ssa::back::lto::{LtoModuleCodegen, SerializedModule, ThinModule};
+use maybe_pqp_cg_ssa::back::lto::{SerializedModule, ThinModule};
 use maybe_pqp_cg_ssa::back::write::{
     CodegenContext, FatLtoInput, ModuleConfig, OngoingCodegen, TargetMachineFactoryConfig,
 };
@@ -170,7 +170,7 @@ use std::any::Any;
 use std::fs;
 use std::io::Cursor;
 use std::io::Write;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tracing::{error, warn};
 
@@ -333,32 +333,19 @@ impl WriteBackendMethods for SpirvCodegenBackend {
     type ThinBuffer = SpirvModuleBuffer;
 
     // FIXME(eddyb) reuse the "merge" stage of `crate::linker` for this, or even
-    // delegate to `run_fat_lto` (although `-Zcombine-cgu` is much more niche).
-    fn run_link(
-        cgcx: &CodegenContext<Self>,
-        diag_handler: DiagCtxtHandle<'_>,
-        _modules: Vec<ModuleCodegen<Self::Module>>,
-    ) -> Result<ModuleCodegen<Self::Module>, FatalError> {
-        assert!(
-            cgcx.opts.unstable_opts.combine_cgu,
-            "`run_link` (for `WorkItemResult::NeedsLink`) should \
-             only be invoked due to `-Zcombine-cgu`"
-        );
-        diag_handler.fatal("Rust-GPU does not support `-Zcombine-cgu`")
-    }
-
-    // FIXME(eddyb) reuse the "merge" stage of `crate::linker` for this, or even
     // consider setting `requires_lto = true` in the target specs and moving the
     // entirety of `crate::linker` into this stage (lacking diagnostics may be
     // an issue - it's surprising `CodegenBackend::link` has `Session` at all).
-    fn run_fat_lto(
+    fn run_and_optimize_fat_lto(
         cgcx: &CodegenContext<Self>,
+        _exported_symbols_for_lto: &[String],
+        _each_linked_rlib_for_lto: &[PathBuf],
         _modules: Vec<FatLtoInput<Self>>,
-        _cached_modules: Vec<(SerializedModule<Self::ModuleBuffer>, WorkProduct)>,
-    ) -> Result<LtoModuleCodegen<Self>, FatalError> {
+        _diff_fncs: Vec<AutoDiffItem>,
+    ) -> Result<ModuleCodegen<Self::Module>, FatalError> {
         assert!(
             cgcx.lto == rustc_session::config::Lto::Fat,
-            "`run_fat_lto` (for `WorkItemResult::NeedsFatLto`) should \
+            "`run_and_optimize_fat_lto` (for `WorkItemResult::NeedsFatLto`) should \
              only be invoked due to `-Clto` (or equivalent)"
         );
         unreachable!("Rust-GPU does not support fat LTO")
@@ -366,9 +353,12 @@ impl WriteBackendMethods for SpirvCodegenBackend {
 
     fn run_thin_lto(
         cgcx: &CodegenContext<Self>,
+        // FIXME(bjorn3): Limit LTO exports to these symbols
+        _exported_symbols_for_lto: &[String],
+        _each_linked_rlib_for_lto: &[PathBuf], // njn: ?
         modules: Vec<(String, Self::ThinBuffer)>,
         cached_modules: Vec<(SerializedModule<Self::ModuleBuffer>, WorkProduct)>,
-    ) -> Result<(Vec<LtoModuleCodegen<Self>>, Vec<WorkProduct>), FatalError> {
+    ) -> Result<(Vec<ThinModule<Self>>, Vec<WorkProduct>), FatalError> {
         link::run_thin(cgcx, modules, cached_modules)
     }
 
@@ -409,16 +399,8 @@ impl WriteBackendMethods for SpirvCodegenBackend {
         Ok(module)
     }
 
-    fn optimize_fat(
-        cgcx: &CodegenContext<Self>,
-        module: &mut ModuleCodegen<Self::Module>,
-    ) -> Result<(), FatalError> {
-        Self::optimize_common(cgcx, module)
-    }
-
     fn codegen(
         cgcx: &CodegenContext<Self>,
-        _diag_handler: DiagCtxtHandle<'_>,
         module: ModuleCodegen<Self::Module>,
         _config: &ModuleConfig,
     ) -> Result<CompiledModule, FatalError> {
@@ -456,15 +438,6 @@ impl WriteBackendMethods for SpirvCodegenBackend {
             module.name,
             SpirvModuleBuffer(module.module_llvm.assemble()),
         )
-    }
-
-    fn autodiff(
-        _cgcx: &CodegenContext<Self>,
-        _module: &ModuleCodegen<Self::Module>,
-        _diff_fncs: Vec<AutoDiffItem>,
-        _config: &ModuleConfig,
-    ) -> Result<(), FatalError> {
-        unreachable!("Rust-GPU does not support autodiff")
     }
 }
 
@@ -547,8 +520,7 @@ impl ExtraBackendMethods for SpirvCodegenBackend {
         _sess: &Session,
         _opt_level: config::OptLevel,
         _target_features: &[String],
-    ) -> Arc<(dyn Fn(TargetMachineFactoryConfig) -> Result<(), String> + Send + Sync + 'static)>
-    {
+    ) -> Arc<dyn Fn(TargetMachineFactoryConfig) -> Result<(), String> + Send + Sync + 'static> {
         Arc::new(|_| Ok(()))
     }
 }
