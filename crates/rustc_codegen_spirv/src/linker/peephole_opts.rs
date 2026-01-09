@@ -606,3 +606,77 @@ pub fn bool_fusion(
     }
     super::apply_rewrite_rules(&rewrite_rules, &mut function.blocks);
 }
+
+/// Fold `OpLoad` from Private/Function storage class variables that have constant initializers.
+///
+/// This optimization handles patterns like:
+/// ```text
+/// %ptr = OpVariable %_ptr_Private_T Private %initializer
+/// %val = OpLoad %T %ptr
+/// ```
+/// After this optimization, uses of `%val` are replaced with `%initializer`.
+///
+/// This is particularly important for pointer-to-pointer constants (e.g., `&&123`)
+/// where the outer pointer variable has a known initializer (the inner pointer).
+/// Without this optimization, such patterns generate invalid SPIR-V in Logical
+/// addressing mode (pointer-to-pointer with Private storage class is not allowed).
+pub fn fold_load_from_constant_variable(module: &mut Module) {
+    use rspirv::spirv::StorageClass;
+
+    // Build a map of variable ID -> initializer ID for Private/Function variables
+    // that have constant initializers.
+    let var_initializers: FxHashMap<Word, Word> = module
+        .types_global_values
+        .iter()
+        .filter_map(|inst| {
+            if inst.class.opcode != Op::Variable {
+                return None;
+            }
+            // Check storage class - only Private and Function can be folded
+            let storage_class = inst.operands.first()?.unwrap_storage_class();
+            if !matches!(
+                storage_class,
+                StorageClass::Private | StorageClass::Function
+            ) {
+                return None;
+            }
+            // Check for initializer (second operand after storage class)
+            let initializer = inst.operands.get(1)?.id_ref_any()?;
+            Some((inst.result_id?, initializer))
+        })
+        .collect();
+
+    if var_initializers.is_empty() {
+        return;
+    }
+
+    // Rewrite OpLoad instructions that load from variables with known initializers
+    let mut rewrite_rules: FxHashMap<Word, Word> = FxHashMap::default();
+
+    for func in &mut module.functions {
+        for block in &mut func.blocks {
+            for inst in &mut block.instructions {
+                if inst.class.opcode != Op::Load {
+                    continue;
+                }
+                // OpLoad has pointer as first operand
+                let ptr_id = inst.operands[0].unwrap_id_ref();
+                if let Some(&initializer) = var_initializers.get(&ptr_id) {
+                    // This load can be replaced with the initializer value
+                    if let Some(result_id) = inst.result_id {
+                        rewrite_rules.insert(result_id, initializer);
+                        // Turn this instruction into a Nop
+                        *inst = Instruction::new(Op::Nop, None, None, Vec::new());
+                    }
+                }
+            }
+        }
+    }
+
+    if !rewrite_rules.is_empty() {
+        // Apply rewrite rules to all functions
+        for func in &mut module.functions {
+            super::apply_rewrite_rules(&rewrite_rules, &mut func.blocks);
+        }
+    }
+}
