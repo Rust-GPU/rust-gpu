@@ -7,7 +7,11 @@ use anyhow::Context;
 use bytemuck::Pod;
 use futures::executor::block_on;
 use std::{borrow::Cow, sync::Arc};
-use wgpu::{ExperimentalFeatures, PipelineCompilationOptions, util::DeviceExt};
+use wgpu::{
+    BindGroupLayout, BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingType,
+    BufferBindingType, ExperimentalFeatures, InstanceDescriptor, PipelineCompilationOptions,
+    PipelineLayoutDescriptor, ShaderStages, util::DeviceExt,
+};
 
 pub type BufferConfig = backend::BufferConfig;
 pub type BufferUsage = backend::BufferUsage;
@@ -54,20 +58,8 @@ where
     fn init_with_features(features: wgpu::Features) -> anyhow::Result<(wgpu::Device, wgpu::Queue)> {
         block_on(async {
             let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
-                #[cfg(target_os = "linux")]
-                backends: wgpu::Backends::VULKAN,
-                #[cfg(not(target_os = "linux"))]
                 backends: wgpu::Backends::PRIMARY,
-                flags: Default::default(),
-                memory_budget_thresholds: Default::default(),
-                backend_options: wgpu::BackendOptions {
-                    #[cfg(target_os = "windows")]
-                    dx12: wgpu::Dx12BackendOptions {
-                        shader_compiler: wgpu::Dx12Compiler::StaticDxc,
-                        ..Default::default()
-                    },
-                    ..Default::default()
-                },
+                ..InstanceDescriptor::default()
             });
             let adapter = instance
                 .request_adapter(&wgpu::RequestAdapterOptions {
@@ -80,9 +72,6 @@ where
             let (device, queue) = adapter
                 .request_device(&wgpu::DeviceDescriptor {
                     label: Some("wgpu Device"),
-                    #[cfg(target_os = "linux")]
-                    required_features: wgpu::Features::EXPERIMENTAL_PASSTHROUGH_SHADERS | features,
-                    #[cfg(not(target_os = "linux"))]
                     required_features: features,
                     required_limits: wgpu::Limits {
                         max_push_constant_size: 128,
@@ -251,23 +240,17 @@ impl ComputeBackend for WgpuBackend {
 
     fn run_compute(
         &self,
-        spirv_bytes: &[u8],
+        spirv_words: &[u32],
         entry_point: &str,
         dispatch: [u32; 3],
         buffers: Vec<BufferConfig>,
     ) -> anyhow::Result<Vec<Vec<u8>>> {
-        // Convert bytes to u32 words
-        if !spirv_bytes.len().is_multiple_of(4) {
-            anyhow::bail!("SPIR-V binary length is not a multiple of 4");
-        }
-        let spirv_words: Vec<u32> = bytemuck::cast_slice(spirv_bytes).to_vec();
-
         // Create shader module
         let module = self
             .device
             .create_shader_module(wgpu::ShaderModuleDescriptor {
                 label: Some("Compute Shader"),
-                source: wgpu::ShaderSource::SpirV(Cow::Owned(spirv_words)),
+                source: wgpu::ShaderSource::SpirV(Cow::Borrowed(spirv_words)),
             });
 
         // Create pipeline

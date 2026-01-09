@@ -36,7 +36,7 @@ impl RustComputeShader {
 }
 
 impl SpirvShader for RustComputeShader {
-    fn spirv_bytes(&self) -> anyhow::Result<(Vec<u8>, String)> {
+    fn spirv_bytes(&self) -> anyhow::Result<(Vec<u32>, String)> {
         let mut builder = SpirvBuilder::new(&self.path, &self.target)
             .print_metadata(spirv_builder::MetadataPrintout::None)
             .release(true)
@@ -65,8 +65,8 @@ impl SpirvShader for RustComputeShader {
                 anyhow::bail!("MultiModule modules produced");
             }
         };
-
-        Ok((shader_bytes, entry_point))
+        let shader_words = ash::util::read_spv(&mut std::io::Cursor::new(&shader_bytes))?;
+        Ok((shader_words, entry_point))
     }
 }
 
@@ -75,12 +75,7 @@ impl WgpuShader for RustComputeShader {
         &self,
         device: &wgpu::Device,
     ) -> anyhow::Result<(wgpu::ShaderModule, Option<String>)> {
-        let (shader_bytes, entry_point) = self.spirv_bytes()?;
-
-        if !shader_bytes.len().is_multiple_of(4) {
-            anyhow::bail!("SPIR-V binary length is not a multiple of 4");
-        }
-        let shader_words: Vec<u32> = bytemuck::cast_slice(&shader_bytes).to_vec();
+        let (shader_words, entry_point) = self.spirv_bytes()?;
         let module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Compute Shader"),
             source: wgpu::ShaderSource::SpirV(Cow::Owned(shader_words)),

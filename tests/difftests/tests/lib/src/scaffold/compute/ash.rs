@@ -161,7 +161,7 @@ impl ComputeBackend for AshBackend {
 
     fn run_compute(
         &self,
-        spirv_bytes: &[u8],
+        spirv_words: &[u32],
         entry_point: &str,
         dispatch: [u32; 3],
         buffers: Vec<BufferConfig>,
@@ -198,14 +198,10 @@ impl ComputeBackend for AshBackend {
 
             // Create compute pipeline
             let pipeline = {
-                let spirv_u32: Vec<u32> = spirv_bytes
-                    .chunks_exact(4)
-                    .map(|chunk| u32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]))
-                    .collect();
                 let shader_module = self
                     .device
                     .create_shader_module(
-                        &vk::ShaderModuleCreateInfo::default().code(&spirv_u32),
+                        &vk::ShaderModuleCreateInfo::default().code(&spirv_words),
                         None,
                     )
                     .context("Failed to create shader module")?;

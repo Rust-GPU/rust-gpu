@@ -45,7 +45,7 @@ pub trait ComputeBackend: Sized {
     /// Create and run a compute shader with multiple buffers from raw SPIRV bytes
     fn run_compute(
         &self,
-        spirv_bytes: &[u8],
+        spirv_bytes: &[u32],
         entry_point: &str,
         dispatch: [u32; 3],
         buffers: Vec<BufferConfig>,
@@ -66,7 +66,7 @@ pub trait ComputeBackend: Sized {
 /// A compute test that can run on any backend
 pub struct ComputeTest<B: ComputeBackend> {
     backend: B,
-    spirv_bytes: Vec<u8>,
+    spirv_words: Vec<u32>,
     entry_point: String,
     dispatch: [u32; 3],
     buffers: Vec<BufferConfig>,
@@ -74,14 +74,14 @@ pub struct ComputeTest<B: ComputeBackend> {
 
 impl<B: ComputeBackend> ComputeTest<B> {
     pub fn new(
-        spirv_bytes: Vec<u8>,
+        spirv_words: Vec<u32>,
         entry_point: String,
         dispatch: [u32; 3],
         buffers: Vec<BufferConfig>,
     ) -> Result<Self> {
         Ok(Self {
             backend: B::init()?,
-            spirv_bytes,
+            spirv_words,
             entry_point,
             dispatch,
             buffers,
@@ -90,7 +90,7 @@ impl<B: ComputeBackend> ComputeTest<B> {
 
     pub fn run(self) -> Result<Vec<Vec<u8>>> {
         self.backend.run_compute(
-            &self.spirv_bytes,
+            &self.spirv_words,
             &self.entry_point,
             self.dispatch,
             self.buffers,

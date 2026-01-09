@@ -6,7 +6,11 @@ pub use difftest_types::config;
 pub mod scaffold;
 
 #[cfg(not(target_arch = "spirv"))]
+pub use ash;
+#[cfg(not(target_arch = "spirv"))]
 pub use spirv_builder;
+#[cfg(not(target_arch = "spirv"))]
+pub use wgpu;
 
 /// Macro to round a f32 value for cross-platform compatibility in floating-point
 /// operations. This helps ensure difftest results are consistent across different
