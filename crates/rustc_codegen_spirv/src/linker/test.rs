@@ -13,6 +13,7 @@ use std::sync::{Arc, Mutex};
 // We need to construct an emitter as yet another workaround,
 // see https://github.com/rust-lang/rust/pull/102992.
 extern crate termcolor;
+use crate::target::SpirvTarget;
 use termcolor::{ColorSpec, WriteColor};
 
 // https://github.com/colin-kiegel/rust-pretty-assertions/issues/24
@@ -130,10 +131,7 @@ fn link_with_linker_opts(
                 .unwrap();
         let sopts = rustc_session::config::build_session_options(&mut early_dcx, &matches);
 
-        let target = "spirv-unknown-spv1.0"
-            .parse::<crate::target::SpirvTarget>()
-            .unwrap()
-            .rustc_target();
+        let target = SpirvTarget::UNIVERSAL_1_0.rustc_target();
         let sm_inputs = rustc_span::source_map::SourceMapInputs {
             file_loader: Box::new(rustc_span::source_map::RealFileLoader),
             path_mapping: sopts.file_path_mapping(),
