@@ -10,8 +10,8 @@ use crate::spirv_type::SpirvType;
 use itertools::Itertools;
 use rspirv::spirv::{FunctionControl, LinkageType, StorageClass, Word};
 use rustc_abi::Align;
-use rustc_attr_data_structures::InlineAttr;
 use rustc_codegen_ssa::traits::{PreDefineCodegenMethods, StaticCodegenMethods};
+use rustc_hir::attrs::InlineAttr;
 use rustc_middle::bug;
 use rustc_middle::middle::codegen_fn_attrs::{CodegenFnAttrFlags, CodegenFnAttrs};
 use rustc_middle::mir::mono::{Linkage, MonoItem, Visibility};
@@ -133,7 +133,7 @@ impl<'tcx> CodegenCx<'tcx> {
             self.set_linkage(fn_id, symbol_name.to_owned(), linkage);
         }
 
-        let attrs = AggregatedSpirvAttributes::parse(self, self.tcx.get_attrs_unchecked(def_id));
+        let attrs = AggregatedSpirvAttributes::parse(self, self.tcx.get_all_attrs(def_id));
         if let Some(entry) = attrs.entry.map(|attr| attr.value) {
             // HACK(eddyb) early insert to let `shader_entry_stub` call this
             // very function via `get_fn_addr`.
@@ -167,7 +167,7 @@ impl<'tcx> CodegenCx<'tcx> {
         }
 
         // Check if this is a From trait implementation
-        if let Some(impl_def_id) = self.tcx.impl_of_method(def_id)
+        if let Some(impl_def_id) = self.tcx.impl_of_assoc(def_id)
             && let Some(trait_ref) = self.tcx.impl_trait_ref(impl_def_id)
         {
             let trait_def_id = trait_ref.skip_binder().def_id;
