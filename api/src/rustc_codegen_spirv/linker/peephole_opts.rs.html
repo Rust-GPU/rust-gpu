@@ -605,4 +605,78 @@
 <a href=#605 id=605 data-nosnippet>605</a>        function.blocks[block].instructions.insert(<span class="number">0</span>, phi);
 <a href=#606 id=606 data-nosnippet>606</a>    }
 <a href=#607 id=607 data-nosnippet>607</a>    <span class="kw">super</span>::apply_rewrite_rules(<span class="kw-2">&amp;</span>rewrite_rules, <span class="kw-2">&amp;mut </span>function.blocks);
-<a href=#608 id=608 data-nosnippet>608</a>}</code></pre></div></section></main></body></html>
+<a href=#608 id=608 data-nosnippet>608</a>}
+<a href=#609 id=609 data-nosnippet>609</a>
+<a href=#610 id=610 data-nosnippet>610</a><span class="doccomment">/// Fold `OpLoad` from Private/Function storage class variables that have constant initializers.
+<a href=#611 id=611 data-nosnippet>611</a>///
+<a href=#612 id=612 data-nosnippet>612</a>/// This optimization handles patterns like:
+<a href=#613 id=613 data-nosnippet>613</a>/// ```text
+<a href=#614 id=614 data-nosnippet>614</a>/// %ptr = OpVariable %_ptr_Private_T Private %initializer
+<a href=#615 id=615 data-nosnippet>615</a>/// %val = OpLoad %T %ptr
+<a href=#616 id=616 data-nosnippet>616</a>/// ```
+<a href=#617 id=617 data-nosnippet>617</a>/// After this optimization, uses of `%val` are replaced with `%initializer`.
+<a href=#618 id=618 data-nosnippet>618</a>///
+<a href=#619 id=619 data-nosnippet>619</a>/// This is particularly important for pointer-to-pointer constants (e.g., `&amp;&amp;123`)
+<a href=#620 id=620 data-nosnippet>620</a>/// where the outer pointer variable has a known initializer (the inner pointer).
+<a href=#621 id=621 data-nosnippet>621</a>/// Without this optimization, such patterns generate invalid SPIR-V in Logical
+<a href=#622 id=622 data-nosnippet>622</a>/// addressing mode (pointer-to-pointer with Private storage class is not allowed).
+<a href=#623 id=623 data-nosnippet>623</a></span><span class="kw">pub fn </span>fold_load_from_constant_variable(module: <span class="kw-2">&amp;mut </span>Module) {
+<a href=#624 id=624 data-nosnippet>624</a>    <span class="kw">use </span>rspirv::spirv::StorageClass;
+<a href=#625 id=625 data-nosnippet>625</a>
+<a href=#626 id=626 data-nosnippet>626</a>    <span class="comment">// Build a map of variable ID -&gt; initializer ID for Private/Function variables
+<a href=#627 id=627 data-nosnippet>627</a>    // that have constant initializers.
+<a href=#628 id=628 data-nosnippet>628</a>    </span><span class="kw">let </span>var_initializers: FxHashMap&lt;Word, Word&gt; = module
+<a href=#629 id=629 data-nosnippet>629</a>        .types_global_values
+<a href=#630 id=630 data-nosnippet>630</a>        .iter()
+<a href=#631 id=631 data-nosnippet>631</a>        .filter_map(|inst| {
+<a href=#632 id=632 data-nosnippet>632</a>            <span class="kw">if </span>inst.class.opcode != Op::Variable {
+<a href=#633 id=633 data-nosnippet>633</a>                <span class="kw">return </span><span class="prelude-val">None</span>;
+<a href=#634 id=634 data-nosnippet>634</a>            }
+<a href=#635 id=635 data-nosnippet>635</a>            <span class="comment">// Check storage class - only Private and Function can be folded
+<a href=#636 id=636 data-nosnippet>636</a>            </span><span class="kw">let </span>storage_class = inst.operands.first()<span class="question-mark">?</span>.unwrap_storage_class();
+<a href=#637 id=637 data-nosnippet>637</a>            <span class="kw">if </span>!<span class="macro">matches!</span>(
+<a href=#638 id=638 data-nosnippet>638</a>                storage_class,
+<a href=#639 id=639 data-nosnippet>639</a>                StorageClass::Private | StorageClass::Function
+<a href=#640 id=640 data-nosnippet>640</a>            ) {
+<a href=#641 id=641 data-nosnippet>641</a>                <span class="kw">return </span><span class="prelude-val">None</span>;
+<a href=#642 id=642 data-nosnippet>642</a>            }
+<a href=#643 id=643 data-nosnippet>643</a>            <span class="comment">// Check for initializer (second operand after storage class)
+<a href=#644 id=644 data-nosnippet>644</a>            </span><span class="kw">let </span>initializer = inst.operands.get(<span class="number">1</span>)<span class="question-mark">?</span>.id_ref_any()<span class="question-mark">?</span>;
+<a href=#645 id=645 data-nosnippet>645</a>            <span class="prelude-val">Some</span>((inst.result_id<span class="question-mark">?</span>, initializer))
+<a href=#646 id=646 data-nosnippet>646</a>        })
+<a href=#647 id=647 data-nosnippet>647</a>        .collect();
+<a href=#648 id=648 data-nosnippet>648</a>
+<a href=#649 id=649 data-nosnippet>649</a>    <span class="kw">if </span>var_initializers.is_empty() {
+<a href=#650 id=650 data-nosnippet>650</a>        <span class="kw">return</span>;
+<a href=#651 id=651 data-nosnippet>651</a>    }
+<a href=#652 id=652 data-nosnippet>652</a>
+<a href=#653 id=653 data-nosnippet>653</a>    <span class="comment">// Rewrite OpLoad instructions that load from variables with known initializers
+<a href=#654 id=654 data-nosnippet>654</a>    </span><span class="kw">let </span><span class="kw-2">mut </span>rewrite_rules: FxHashMap&lt;Word, Word&gt; = FxHashMap::default();
+<a href=#655 id=655 data-nosnippet>655</a>
+<a href=#656 id=656 data-nosnippet>656</a>    <span class="kw">for </span>func <span class="kw">in </span><span class="kw-2">&amp;mut </span>module.functions {
+<a href=#657 id=657 data-nosnippet>657</a>        <span class="kw">for </span>block <span class="kw">in </span><span class="kw-2">&amp;mut </span>func.blocks {
+<a href=#658 id=658 data-nosnippet>658</a>            <span class="kw">for </span>inst <span class="kw">in </span><span class="kw-2">&amp;mut </span>block.instructions {
+<a href=#659 id=659 data-nosnippet>659</a>                <span class="kw">if </span>inst.class.opcode != Op::Load {
+<a href=#660 id=660 data-nosnippet>660</a>                    <span class="kw">continue</span>;
+<a href=#661 id=661 data-nosnippet>661</a>                }
+<a href=#662 id=662 data-nosnippet>662</a>                <span class="comment">// OpLoad has pointer as first operand
+<a href=#663 id=663 data-nosnippet>663</a>                </span><span class="kw">let </span>ptr_id = inst.operands[<span class="number">0</span>].unwrap_id_ref();
+<a href=#664 id=664 data-nosnippet>664</a>                <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>initializer) = var_initializers.get(<span class="kw-2">&amp;</span>ptr_id) {
+<a href=#665 id=665 data-nosnippet>665</a>                    <span class="comment">// This load can be replaced with the initializer value
+<a href=#666 id=666 data-nosnippet>666</a>                    </span><span class="kw">if let </span><span class="prelude-val">Some</span>(result_id) = inst.result_id {
+<a href=#667 id=667 data-nosnippet>667</a>                        rewrite_rules.insert(result_id, initializer);
+<a href=#668 id=668 data-nosnippet>668</a>                        <span class="comment">// Turn this instruction into a Nop
+<a href=#669 id=669 data-nosnippet>669</a>                        </span><span class="kw-2">*</span>inst = Instruction::new(Op::Nop, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, Vec::new());
+<a href=#670 id=670 data-nosnippet>670</a>                    }
+<a href=#671 id=671 data-nosnippet>671</a>                }
+<a href=#672 id=672 data-nosnippet>672</a>            }
+<a href=#673 id=673 data-nosnippet>673</a>        }
+<a href=#674 id=674 data-nosnippet>674</a>    }
+<a href=#675 id=675 data-nosnippet>675</a>
+<a href=#676 id=676 data-nosnippet>676</a>    <span class="kw">if </span>!rewrite_rules.is_empty() {
+<a href=#677 id=677 data-nosnippet>677</a>        <span class="comment">// Apply rewrite rules to all functions
+<a href=#678 id=678 data-nosnippet>678</a>        </span><span class="kw">for </span>func <span class="kw">in </span><span class="kw-2">&amp;mut </span>module.functions {
+<a href=#679 id=679 data-nosnippet>679</a>            <span class="kw">super</span>::apply_rewrite_rules(<span class="kw-2">&amp;</span>rewrite_rules, <span class="kw-2">&amp;mut </span>func.blocks);
+<a href=#680 id=680 data-nosnippet>680</a>        }
+<a href=#681 id=681 data-nosnippet>681</a>    }
+<a href=#682 id=682 data-nosnippet>682</a>}</code></pre></div></section></main></body></html>
