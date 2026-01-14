@@ -11,12 +11,13 @@ It takes care of pulling in the `SPIR-V` backend for Rust, `rustc_codegen_spirv`
 ## Example
 
 ```rust,no_run
-use spirv_builder::{MetadataPrintout, SpirvBuilder};
-
+# use spirv_builder::SpirvBuilder;
+# 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    SpirvBuilder::new("my_shaders", "spirv-unknown-vulkan1.1")
-        .print_metadata(MetadataPrintout::Full)
-        .build()?;
+    let mut builder = SpirvBuilder::new("my_shaders", "spirv-unknown-vulkan1.3");
+    builder.build_script.defaults = true;
+    builder.build_script.env_shader_spv_path = Some(true);
+    builder.build()?;
     Ok(())
 }
 ```
