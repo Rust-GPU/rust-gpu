@@ -87,7 +87,7 @@ impl<'tcx> CodegenCx<'tcx> {
         };
         for (arg_abi, hir_param) in fn_abi.args.iter().zip(hir_params) {
             match arg_abi.mode {
-                PassMode::Direct(_) => {}
+                PassMode::Direct(_) | PassMode::Ignore => {}
                 PassMode::Pair(..) => {
                     // FIXME(eddyb) implement `ScalarPair` `Input`s, or change
                     // the `FnAbi` readjustment to only use `PassMode::Pair` for
@@ -103,16 +103,6 @@ impl<'tcx> CodegenCx<'tcx> {
                         );
                     }
                 }
-                // FIXME(eddyb) support these (by just ignoring them) - if there
-                // is any validation concern, it should be done on the types.
-                PassMode::Ignore => self.tcx.dcx().span_fatal(
-                    hir_param.ty_span,
-                    format!(
-                        "entry point parameter type not yet supported \
-                        (`{}` has size `0`)",
-                        arg_abi.layout.ty
-                    ),
-                ),
                 _ => span_bug!(
                     hir_param.ty_span,
                     "query hooks should've made this `PassMode` impossible: {:#?}",
@@ -674,28 +664,37 @@ impl<'tcx> CodegenCx<'tcx> {
         // starting from the `value_ptr` pointing to a `value_spirv_type`
         // (e.g. `Input` doesn't use indirection, so we have to load from it).
         if let ty::Ref(..) = entry_arg_abi.layout.ty.kind() {
-            call_args.push(value_ptr.unwrap());
             match entry_arg_abi.mode {
-                PassMode::Direct(_) => assert_eq!(value_len, None),
-                PassMode::Pair(..) => call_args.push(value_len.unwrap()),
+                PassMode::Direct(_) => {
+                    assert_eq!(value_len, None);
+                    call_args.push(value_ptr.unwrap());
+                }
+                PassMode::Pair(..) => call_args.extend([value_ptr.unwrap(), value_len.unwrap()]),
+                PassMode::Ignore => (),
                 _ => unreachable!(),
             }
         } else {
-            assert_matches!(entry_arg_abi.mode, PassMode::Direct(_));
-
-            let value = match storage_class {
-                Ok(_) => {
-                    assert_eq!(storage_class, Ok(StorageClass::Input));
-                    bx.load(
-                        entry_arg_abi.layout.spirv_type(hir_param.ty_span, bx),
-                        value_ptr.unwrap(),
-                        entry_arg_abi.layout.align.abi,
-                    )
+            match entry_arg_abi.mode {
+                PassMode::Ignore => {}
+                PassMode::Direct(_) => {
+                    let value = match storage_class {
+                        Ok(_) => {
+                            assert_eq!(storage_class, Ok(StorageClass::Input));
+                            bx.load(
+                                entry_arg_abi.layout.spirv_type(hir_param.ty_span, bx),
+                                value_ptr.unwrap(),
+                                entry_arg_abi.layout.align.abi,
+                            )
+                        }
+                        Err(SpecConstant { .. }) => {
+                            spec_const_id.unwrap().with_type(value_spirv_type)
+                        }
+                    };
+                    call_args.push(value);
+                    assert_eq!(value_len, None);
                 }
-                Err(SpecConstant { .. }) => spec_const_id.unwrap().with_type(value_spirv_type),
-            };
-            call_args.push(value);
-            assert_eq!(value_len, None);
+                _ => unreachable!(),
+            }
         }
 
         // FIXME(eddyb) check whether the storage class is compatible with the
