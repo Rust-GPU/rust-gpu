@@ -28,15 +28,10 @@ LL | pub fn main(i: f32, o: &mut f32) {
 error: cannot cast between pointer types
        from `*f32`
          to `*struct () {  }`
-  --> $CORE_SRC/ptr/mod.rs:621:9
+  --> $CORE_SRC/ptr/mod.rs:625:34
    |
-LL | /         ub_checks::assert_unsafe_precondition!(
-LL | |             check_language_ub,
-LL | |             "ptr::copy requires that both pointer arguments are aligned and non-null",
-...  |
-LL | |                 && ub_checks::maybe_is_aligned_and_not_null(dst, align, zero_size)
-LL | |         );
-   | |_________^
+LL |                 src: *const () = src as *const (),
+   |                                  ^^^^^^^^^^^^^^^^
    |
 note: used from within `core::ptr::copy::<f32>`
   --> $CORE_SRC/ptr/mod.rs:621:9
@@ -64,5 +59,39 @@ note: called by `main`
 LL | pub fn main(i: f32, o: &mut f32) {
    |        ^^^^
 
-error: aborting due to 2 previous errors
+error: cannot cast between pointer types
+       from `*f32`
+         to `*struct () {  }`
+  --> $CORE_SRC/ptr/mod.rs:626:32
+   |
+LL |                 dst: *mut () = dst as *mut (),
+   |                                ^^^^^^^^^^^^^^
+   |
+note: used from within `core::ptr::copy::<f32>`
+  --> $CORE_SRC/ptr/mod.rs:621:9
+   |
+LL | /         ub_checks::assert_unsafe_precondition!(
+LL | |             check_language_ub,
+LL | |             "ptr::copy requires that both pointer arguments are aligned and non-null",
+...  |
+LL | |                 && ub_checks::maybe_is_aligned_and_not_null(dst, align, zero_size)
+LL | |         );
+   | |_________^
+note: called by `ptr_copy::copy_via_raw_ptr`
+  --> $DIR/ptr_copy.rs:28:18
+   |
+LL |         unsafe { core::ptr::copy(src, dst, 1) }
+   |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+note: called by `ptr_copy::main`
+  --> $DIR/ptr_copy.rs:33:5
+   |
+LL |     copy_via_raw_ptr(&i, o);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^
+note: called by `main`
+  --> $DIR/ptr_copy.rs:32:8
+   |
+LL | pub fn main(i: f32, o: &mut f32) {
+   |        ^^^^
+
+error: aborting due to 3 previous errors
 
