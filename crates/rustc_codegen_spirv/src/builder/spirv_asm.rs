@@ -192,6 +192,7 @@ impl<'a, 'tcx> AsmBuilderMethods<'tcx> for Builder<'a, 'tcx> {
                     let typeof_kind = line.last().and_then(|prev| match prev {
                         Token::Word("typeof") => Some(TypeofKind::Plain),
                         Token::Word("typeof*") => Some(TypeofKind::Dereference),
+                        Token::Word("typeof**") => Some(TypeofKind::DoubleDereference),
                         _ => None,
                     });
                     match typeof_kind {
@@ -272,6 +273,7 @@ impl<'a, 'tcx> AsmBuilderMethods<'tcx> for Builder<'a, 'tcx> {
 enum TypeofKind {
     Plain,
     Dereference,
+    DoubleDereference,
 }
 
 enum Token<'a, 'cx, 'tcx> {
@@ -1020,21 +1022,23 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
                 InlineAsmOperandRef::In { reg, value } => {
                     self.check_reg(span, reg);
                     let ty = value.immediate().ty;
+                    let deref = |ty| match self.lookup_type(ty) {
+                        SpirvType::Pointer { pointee } => pointee,
+                        other => {
+                            self.tcx.dcx().span_err(
+                                span,
+                                format!(
+                                    "cannot use typeof* on non-pointer type: {}",
+                                    other.debug(ty, self)
+                                ),
+                            );
+                            ty
+                        }
+                    };
                     Some(match kind {
                         TypeofKind::Plain => ty,
-                        TypeofKind::Dereference => match self.lookup_type(ty) {
-                            SpirvType::Pointer { pointee } => pointee,
-                            other => {
-                                self.tcx.dcx().span_err(
-                                    span,
-                                    format!(
-                                        "cannot use typeof* on non-pointer type: {}",
-                                        other.debug(ty, self)
-                                    ),
-                                );
-                                ty
-                            }
-                        },
+                        TypeofKind::Dereference => deref(ty),
+                        TypeofKind::DoubleDereference => deref(deref(ty)),
                     })
                 }
                 InlineAsmOperandRef::Out {
