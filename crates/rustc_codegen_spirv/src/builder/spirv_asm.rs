@@ -1,3 +1,4 @@
+use std::assert_matches::assert_matches;
 // HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
 use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 
@@ -132,6 +133,7 @@ impl<'a, 'tcx> AsmBuilderMethods<'tcx> for Builder<'a, 'tcx> {
                 if let SpirvValueKind::FnAddr { function } = in_value_spv.kind
                     && let SpirvType::Pointer { pointee } = self.lookup_type(in_value_spv.ty)
                 {
+                    assert_matches!(self.lookup_type(pointee), SpirvType::Function { .. });
                     // reference to function pointer must be unwrapped from its pointer to be used in calls
                     *in_value_spv = function.with_type(pointee);
                 } else if let BackendRepr::Scalar(scalar) = in_value.layout.backend_repr

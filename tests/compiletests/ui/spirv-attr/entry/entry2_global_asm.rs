@@ -36,23 +36,27 @@ pub fn entry() {
 
         // FAILURE: rustc sees this struct as `#[repr(transparent)]` and "inlines" the member, removing the struct.
         // We can't declare structs in asm either atm, so kinda stuck.
-        #[derive(Copy, Clone, Default)]
-        struct ViewportBuffer(Vec2);
-        let mut viewport_size = &ViewportBuffer::default();
+        let mut viewport_size = &Vec2::default();
         asm! {
-            "OpDecorate typeof**{viewport_size} Block",
-            "%viewport_size = OpVariable typeof{viewport_size} Input",
-            "OpDecorate %viewport_size DescriptorSet 0",
-            "OpDecorate %viewport_size Binding 0",
-            "OpDecorate %viewport_size NonWritable",
-            "OpName %viewport_size \"viewport_size\"",
-            "%tmp = OpLoad typeof*{viewport_size} %viewport_size",
-            "OpStore {viewport_size} %tmp",
-            viewport_size = in(reg) &mut viewport_size,
+            "%block = OpTypeStruct typeof**{buffer}",
+            "OpDecorate %block Block",
+            "%ptr_block = OpTypePointer Generic %block",
+            "%variable = OpVariable %ptr_block Input",
+            "OpDecorate %variable DescriptorSet 0",
+            "OpDecorate %variable Binding 0",
+            "OpDecorate %variable NonWritable",
+            "OpName %variable \"viewport_size\"",
+            "%u32 = OpTypeInt 32 0",
+            "%u32_0 = OpConstant %u32 0",
+            "%ptr_content = OpTypePointer Generic typeof**{buffer}",
+            "%block_value = OpInBoundsAccessChain %ptr_content %variable %u32_0",
+            "%tmp = OpLoad typeof*{buffer} %block_value",
+            "OpStore {buffer} %tmp",
+            buffer = in(reg) &mut viewport_size,
         };
 
         let mut output = Vec4::default();
-        main(frag_coord, &viewport_size.0, &mut output);
+        main(frag_coord, viewport_size, &mut output);
         asm! {
             "%output = OpVariable typeof{output} Output",
             "OpName %output \"output\"",
