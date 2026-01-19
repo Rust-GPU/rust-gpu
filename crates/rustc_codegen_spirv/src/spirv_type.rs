@@ -156,11 +156,6 @@ impl SpirvType<'_> {
                 let result = cx
                     .emit_global()
                     .type_pointer(id, StorageClass::Generic, pointee);
-                // no pointers to functions
-                if let SpirvType::Function { .. } = cx.lookup_type(pointee) {
-                    // FIXME(eddyb) use the `SPV_INTEL_function_pointers` extension.
-                    cx.zombie_with_span(result, def_span, "function pointer types are not allowed");
-                }
                 result
             }
             Self::Function {
@@ -242,11 +237,6 @@ impl SpirvType<'_> {
                 let result =
                     cx.emit_global()
                         .type_pointer(Some(id), StorageClass::Generic, pointee);
-                // no pointers to functions
-                if let SpirvType::Function { .. } = cx.lookup_type(pointee) {
-                    // FIXME(eddyb) use the `SPV_INTEL_function_pointers` extension.
-                    cx.zombie_with_span(result, def_span, "function pointer types are not allowed");
-                }
                 result
             }
             ref other => cx
