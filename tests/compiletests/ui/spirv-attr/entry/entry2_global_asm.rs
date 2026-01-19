@@ -34,11 +34,13 @@ pub fn entry() {
             frag_coord = in(reg) &mut frag_coord,
         };
 
+        // FAILURE: rustc sees this struct as `#[repr(transparent)]` and "inlines" the member, removing the struct.
+        // We can't declare structs in asm either atm, so kinda stuck.
         #[derive(Copy, Clone, Default)]
         struct ViewportBuffer(Vec2);
         let mut viewport_size = &ViewportBuffer::default();
         asm! {
-            "OpDecorate typeof*{viewport_size} Block",
+            "OpDecorate typeof**{viewport_size} Block",
             "%viewport_size = OpVariable typeof{viewport_size} Input",
             "OpDecorate %viewport_size DescriptorSet 0",
             "OpDecorate %viewport_size Binding 0",
