@@ -376,10 +376,6 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
             Op::TypeFloat => {
                 SpirvType::Float(inst.operands[0].unwrap_literal_bit32()).def(self.span(), self)
             }
-            Op::TypeStruct => {
-                self.err("`OpTypeStruct` in asm! is not supported");
-                return;
-            }
             Op::TypeVector => {
                 self.struct_err(
                     "`OpTypeVector` in asm! is not supported, since `#[spirv(vector)]` structs can \
