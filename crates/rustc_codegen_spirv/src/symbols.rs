@@ -18,6 +18,7 @@ pub struct Symbols {
     pub vector: Symbol,
     pub v1: Symbol,
     pub libm: Symbol,
+    pub num_traits: Symbol,
     pub entry_point_name: Symbol,
     pub spv_khr_vulkan_memory_model: Symbol,
 
@@ -416,6 +417,7 @@ impl Symbols {
             vector: Symbol::intern("vector"),
             v1: Symbol::intern("v1"),
             libm: Symbol::intern("libm"),
+            num_traits: Symbol::intern("num_traits"),
             entry_point_name: Symbol::intern("entry_point_name"),
             spv_khr_vulkan_memory_model: Symbol::intern("SPV_KHR_vulkan_memory_model"),
 
