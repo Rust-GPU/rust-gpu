@@ -582,8 +582,8 @@ impl Builder<'_, '_> {
 
                         if trailing {
                             let use_lower = self.emit().i_equal(bool, None, lower, u32_0).unwrap();
-                            let lower_bits = find_xsb(self, lower, 32);
-                            let higher_bits = find_xsb(self, higher, 0);
+                            let lower_bits = find_xsb(self, lower, 0);
+                            let higher_bits = find_xsb(self, higher, 32);
                             self.emit()
                                 .select(u32, None, use_lower, higher_bits, lower_bits)
                                 .unwrap()
