@@ -113,7 +113,7 @@ def_spv_spec_with_extra_well_known! {
         MemoryAccess,
     ],
     decoration: u32 = [
-        UserTypeGOOGLE,
+        UserSemantic,
         MatrixStride,
     ],
     storage_class: u32 = [
