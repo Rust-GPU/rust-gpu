@@ -313,6 +313,10 @@ pub struct CodegenArgs {
 
     pub run_spirv_opt: bool,
 
+    /// Preserve internal debug decorations (SrcLocDecoration, ZombieDecoration) in the output.
+    /// These are normally stripped after validation. Enable for debugging or testing.
+    pub preserve_debug_decorations: bool,
+
     /// All options pertinent to `rustc_codegen_spirv::linker` specifically.
     //
     // FIXME(eddyb) should these be handled as `-C linker-args="..."` instead?
@@ -382,6 +386,12 @@ impl CodegenArgs {
             "",
             "no-spirv-opt",
             "disables running spirv-opt on the final output",
+        );
+
+        opts.optflag(
+            "",
+            "preserve-debug-decorations",
+            "preserve internal debug decorations (SrcLocDecoration, ZombieDecoration) in the output",
         );
 
         opts.optflag(
@@ -651,6 +661,8 @@ impl CodegenArgs {
             skip_block_layout,
 
             run_spirv_opt,
+
+            preserve_debug_decorations: matches.opt_present("preserve-debug-decorations"),
 
             linker_opts,
 
