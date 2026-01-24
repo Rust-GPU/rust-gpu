@@ -55,6 +55,13 @@ impl<'a> ValidationErrorContext<'a> {
                     *storage_class,
                 );
             }
+            ValidationError::NotALogicalPointer {
+                instruction,
+                pointer,
+                source_opcode,
+            } => {
+                self.emit_not_a_logical_pointer(*instruction, u32::from(*pointer), *source_opcode);
+            }
             _ => {
                 // Fall back to generic error message
                 self.emit_generic_error(error);
@@ -137,6 +144,119 @@ impl<'a> ValidationErrorContext<'a> {
                 first_name_display, second_name_display, location, component
             ));
             err.emit();
+        }
+    }
+
+    fn emit_not_a_logical_pointer(&mut self, instruction: Op, pointer_id: u32, source_opcode: Op) {
+        // Try to find a useful span - first the pointer, then the instruction using it,
+        // then trace back through the def chain
+        let span = self.id_to_span(pointer_id).or_else(|| {
+            // Try to find the load/store instruction that uses this pointer
+            self.find_instruction_using_pointer(pointer_id, instruction)
+                .and_then(|inst_id| self.id_to_span(inst_id))
+        });
+
+        let pointer_name = self.get_name(pointer_id);
+        let pointer_name_fallback = format!("%{}", pointer_id);
+        let pointer_name_display = pointer_name.as_deref().unwrap_or(&pointer_name_fallback);
+
+        // Get SPIR-V context showing the relevant instructions
+        let spirv_context = self.get_spirv_context_for_pointer(pointer_id, source_opcode);
+
+        let message = format!(
+            "Op{:?} cannot use pointer `{}` because it was produced by Op{:?}",
+            instruction, pointer_name_display, source_opcode
+        );
+
+        let mut err = if let Some(span) = span {
+            self.sess.dcx().struct_span_err(span, message)
+        } else {
+            self.sess.dcx().struct_err(message)
+        };
+
+        err.note(format!(
+            "in SPIR-V's logical addressing mode, pointers for Op{:?} must come from \
+             specific instructions like OpVariable, OpAccessChain, or OpFunctionParameter",
+            instruction
+        ));
+        err.help(format!(
+            "Op{:?} cannot produce pointers valid for memory operations in logical addressing",
+            source_opcode
+        ));
+
+        // Show SPIR-V context if available
+        if let Some(context) = spirv_context {
+            err.note(format!("generated SPIR-V:\n{}", context));
+        }
+
+        err.note("spirv-val failed");
+        err.note(format!("module `{}`", self.filename.display()));
+        err.emit();
+    }
+
+    /// Finds an instruction that uses the given pointer ID with the specified opcode.
+    fn find_instruction_using_pointer(&self, pointer_id: u32, opcode: Op) -> Option<u32> {
+        let m = self.module?;
+        for func in &m.functions {
+            for block in &func.blocks {
+                for inst in &block.instructions {
+                    if inst.class.opcode == opcode {
+                        // Check if any operand references our pointer
+                        for operand in &inst.operands {
+                            if let rspirv::dr::Operand::IdRef(id) = operand {
+                                if *id == pointer_id {
+                                    return inst.result_id;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    /// Gets SPIR-V context showing the pointer-producing instruction and its use.
+    fn get_spirv_context_for_pointer(&self, pointer_id: u32, source_opcode: Op) -> Option<String> {
+        let m = self.module?;
+
+        // Find the instruction that produced the pointer
+        let mut context_lines = Vec::new();
+
+        for func in &m.functions {
+            for block in &func.blocks {
+                for inst in &block.instructions {
+                    // Found the instruction that produced the pointer
+                    if inst.result_id == Some(pointer_id) && inst.class.opcode == source_opcode {
+                        context_lines.push(format!("       %{} = Op{:?} ...", pointer_id, source_opcode));
+                    }
+                    // Found instructions using the pointer
+                    if matches!(inst.class.opcode, Op::Load | Op::Store) {
+                        for operand in &inst.operands {
+                            if let rspirv::dr::Operand::IdRef(id) = operand {
+                                if *id == pointer_id {
+                                    let result = inst
+                                        .result_id
+                                        .map(|r| format!("%{} = ", r))
+                                        .unwrap_or_default();
+                                    context_lines.push(format!(
+                                        "    -> {}Op{:?} %{} ...",
+                                        result,
+                                        inst.class.opcode,
+                                        pointer_id
+                                    ));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if context_lines.is_empty() {
+            None
+        } else {
+            Some(context_lines.join("\n"))
         }
     }
 

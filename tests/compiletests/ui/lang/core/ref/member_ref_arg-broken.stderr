@@ -34,8 +34,13 @@ LL | fn h_newtyped(xyz: ((&u32, &u32, &u32),)) -> (u32, u32, u32) {
    = note: inlining was required due to illegal parameter type
    = note: called from `member_ref_arg_broken::main`
 
-error: error:0:0 - OpLoad Pointer <id> '$ID[%$ID]' is not a logical pointer.
+error: OpLoad cannot use pointer `%38` because it was produced by OpCompositeExtract
    |
+   = note: in SPIR-V's logical addressing mode, pointers for OpLoad must come from specific instructions like OpVariable, OpAccessChain, or OpFunctionParameter
+   = help: OpCompositeExtract cannot produce pointers valid for memory operations in logical addressing
+   = note: generated SPIR-V:
+                  %38 = OpCompositeExtract ...
+               -> %39 = OpLoad %38 ...
    = note: spirv-val failed
    = note: module `$TEST_BUILD_DIR/lang/core/ref/member_ref_arg-broken`
 
