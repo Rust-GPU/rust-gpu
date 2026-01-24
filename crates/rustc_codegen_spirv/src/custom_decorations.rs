@@ -18,7 +18,7 @@ use std::{fmt, iter, slice, str};
 
 /// Decorations not native to SPIR-V require some form of encoding into existing
 /// SPIR-V constructs, for which we use `OpDecorateString` with decoration type
-/// `UserTypeGOOGLE` and some encoded Rust value as the decoration string.
+/// `UserSemantic` and some encoded Rust value as the decoration string.
 ///
 /// Each decoration type has to implement this trait, and use a different
 /// `ENCODING_PREFIX` from any other decoration type, to disambiguate them.
@@ -27,7 +27,10 @@ use std::{fmt, iter, slice, str};
 /// ideally as soon as they're no longer needed, because no other tools
 /// processing the SPIR-V would understand them correctly.
 ///
-/// TODO: uses `non_semantic` instead of piggybacking off of `UserTypeGOOGLE`
+/// Custom decorations are encoded using `OpDecorateString` with `UserSemantic`,
+/// which is a standard SPIR-V decoration that doesn't require any extension.
+///
+/// TODO: consider using `non_semantic` instead for even cleaner separation
 /// <https://htmlpreview.github.io/?https://github.com/KhronosGroup/SPIRV-Registry/blob/master/extensions/KHR/SPV_KHR_non_semantic_info.html>
 pub trait CustomDecoration<'a>: Sized {
     const ENCODING_PREFIX: &'static str;
@@ -45,7 +48,7 @@ pub trait CustomDecoration<'a>: Sized {
             None,
             vec![
                 Operand::IdRef(id),
-                Operand::Decoration(Decoration::UserTypeGOOGLE),
+                Operand::Decoration(Decoration::UserSemantic),
                 Operand::LiteralString(encoded),
             ],
         )
@@ -53,7 +56,7 @@ pub trait CustomDecoration<'a>: Sized {
 
     fn try_decode_from_inst(inst: &Instruction) -> Option<(Word, LazilyDecoded<'_, Self>)> {
         if inst.class.opcode == Op::DecorateString
-            && inst.operands[1].unwrap_decoration() == Decoration::UserTypeGOOGLE
+            && inst.operands[1].unwrap_decoration() == Decoration::UserSemantic
         {
             let id = inst.operands[0].unwrap_id_ref();
             let prefixed_encoded = inst.operands[2].unwrap_literal_string();

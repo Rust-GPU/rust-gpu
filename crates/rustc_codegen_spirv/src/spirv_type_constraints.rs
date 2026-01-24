@@ -1096,9 +1096,9 @@ pub fn instruction_signatures(op: Op) -> Option<&'static [InstSig<'static>]> {
         | Op::ImageBlockMatchSSDQCOM
         | Op::ImageBlockMatchSADQCOM => reserved!(SPV_QCOM_image_processing),
         // SPV_AMDX_shader_enqueue
-        Op::FinalizeNodePayloadsAMDX
+        Op::EnqueueNodePayloadsAMDX
         | Op::FinishWritingNodePayloadAMDX
-        | Op::InitializeNodePayloadsAMDX => reserved!(SPV_AMDX_shader_enqueue),
+        | Op::AllocateNodePayloadsAMDX => reserved!(SPV_AMDX_shader_enqueue),
         // SPV_NV_displacement_micromap
         Op::FetchMicroTriangleVertexPositionNV | Op::FetchMicroTriangleVertexBarycentricNV => {
             reserved!(SPV_NV_displacement_micromap)
@@ -1124,6 +1124,8 @@ pub fn instruction_signatures(op: Op) -> Option<&'static [InstSig<'static>]> {
         | Op::SpecConstantCompositeContinuedINTEL
         | Op::ControlBarrierArriveINTEL
         | Op::ControlBarrierWaitINTEL => reserved!(unknown_extension_INTEL),
+        // Catch-all for any new ops added in newer SPIR-V versions
+        _ => return None,
     }
 
     None

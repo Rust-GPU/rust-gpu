@@ -128,7 +128,7 @@ fn try_decode_custom_decoration<'a, D: CustomDecoration<'a>>(
         };
         let str_imms = spv_inst
             .imms
-            .strip_prefix(&[spv::Imm::Short(wk.Decoration, wk.UserTypeGOOGLE)])?;
+            .strip_prefix(&[spv::Imm::Short(wk.Decoration, wk.UserSemantic)])?;
 
         decode_spv_lit_str_with(str_imms, |prefixed_encoded| {
             let encoded = prefixed_encoded.strip_prefix(D::ENCODING_PREFIX)?;

@@ -104,7 +104,7 @@ impl SpirvType<'_> {
             Self::Void => cx.emit_global().type_void_id(id),
             Self::Bool => cx.emit_global().type_bool_id(id),
             Self::Integer(width, signed) => cx.emit_global().type_int_id(id, width, signed as u32),
-            Self::Float(width) => cx.emit_global().type_float_id(id, width),
+            Self::Float(width) => cx.emit_global().type_float_id(id, width, None),
             Self::Adt {
                 def_id: _,
                 align: _,
