@@ -5,6 +5,7 @@
 // build-fail
 // normalize-stderr-test     "ref/member_ref_arg-broken\.[^`]*" -> "ref/member_ref_arg-broken"
 // normalize-stderr-test     "38\[%38\]" -> "$$ID[%$$ID]"
+// normalize-stderr-test     "'38'" -> "'$$ID[%$$ID]'"
 
 use spirv_std::spirv;
 
