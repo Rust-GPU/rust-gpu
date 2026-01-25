@@ -72,7 +72,6 @@ impl<'a> ValidationErrorContext<'a> {
     /// Emits a generic validation error without rich formatting.
     fn emit_generic_error(&self, error: &spirv_tools::val::ValidatorError) {
         let mut err = self.sess.dcx().struct_err(error.to_string());
-        err.note("spirv-val failed");
         err.note(format!("module `{}`", self.filename.display()));
         err.emit();
     }
@@ -128,7 +127,6 @@ impl<'a> ValidationErrorContext<'a> {
                 }
             }
 
-            err.note("spirv-val failed");
             err.note(format!("module `{}`", self.filename.display()));
             err.emit();
         } else {
@@ -137,7 +135,6 @@ impl<'a> ValidationErrorContext<'a> {
                 "{:?} variable `{}` at location {} conflicts with `{}`",
                 storage_class, second_name_display, location, first_name_display
             ));
-            err.note("spirv-val failed");
             err.note(format!("module `{}`", self.filename.display()));
             err.note(format!(
                 "variables `{}` and `{}` both use location {} component {}",
@@ -189,7 +186,6 @@ impl<'a> ValidationErrorContext<'a> {
             err.note(format!("generated SPIR-V:\n{}", context));
         }
 
-        err.note("spirv-val failed");
         err.note(format!("module `{}`", self.filename.display()));
         err.emit();
     }
