@@ -6,7 +6,7 @@
 use std::path::Path;
 
 use rspirv::dr::Module;
-use rspirv::spirv::{Decoration, Op};
+use rspirv::spirv::{BuiltIn, Capability, Decoration, Op};
 use rustc_session::Session;
 use spirv_tools::ValidationError;
 
@@ -61,6 +61,42 @@ impl<'a> ValidationErrorContext<'a> {
                 source_opcode,
             } => {
                 self.emit_not_a_logical_pointer(*instruction, u32::from(*pointer), *source_opcode);
+            }
+            ValidationError::MissingInstructionCapability {
+                opcode,
+                required_capability,
+            } => {
+                self.emit_missing_capability(*opcode, *required_capability, None);
+            }
+            ValidationError::MissingOperandCapability {
+                opcode,
+                operand_index,
+                required_capability,
+            } => {
+                self.emit_missing_capability(*opcode, *required_capability, Some(*operand_index));
+            }
+            ValidationError::MissingDescriptorSetDecoration { variable } => {
+                self.emit_missing_decoration(
+                    u32::from(*variable),
+                    "DescriptorSet",
+                    "#[spirv(descriptor_set = N)]",
+                );
+            }
+            ValidationError::MissingBindingDecoration { variable } => {
+                self.emit_missing_decoration(
+                    u32::from(*variable),
+                    "Binding",
+                    "#[spirv(binding = N)]",
+                );
+            }
+            ValidationError::InvalidBlockLayout {
+                struct_type,
+                reason,
+            } => {
+                self.emit_invalid_block_layout(u32::from(*struct_type), reason);
+            }
+            ValidationError::InvalidBuiltInType { builtin, expected } => {
+                self.emit_invalid_builtin_type(*builtin, expected);
             }
             _ => {
                 // Fall back to generic error message
@@ -144,6 +180,96 @@ impl<'a> ValidationErrorContext<'a> {
         }
     }
 
+    fn emit_invalid_block_layout(&mut self, struct_type_id: u32, reason: &str) {
+        let span = self.id_to_span(struct_type_id);
+        let type_name = self.get_name(struct_type_id);
+        let type_name_fallback = format!("%{}", struct_type_id);
+        let type_name_display = type_name.as_deref().unwrap_or(&type_name_fallback);
+
+        let message = format!(
+            "struct `{}` has invalid block layout: {}",
+            type_name_display, reason
+        );
+
+        let mut err = if let Some(span) = span {
+            self.sess.dcx().struct_span_err(span, message)
+        } else {
+            self.sess.dcx().struct_err(message)
+        };
+
+        err.help("ensure struct members are properly aligned according to std140/std430 layout rules");
+        err.note(format!("module `{}`", self.filename.display()));
+        err.emit();
+    }
+
+    fn emit_invalid_builtin_type(&self, builtin: BuiltIn, expected: &str) {
+        let mut err = self.sess.dcx().struct_err(format!(
+            "BuiltIn {:?} has incorrect type, expected {}",
+            builtin, expected
+        ));
+
+        err.help(format!(
+            "variables with `#[spirv(builtin = \"{:?}\")]` must have the correct type",
+            builtin
+        ));
+        err.note(format!("module `{}`", self.filename.display()));
+        err.emit();
+    }
+
+    fn emit_missing_decoration(&mut self, var_id: u32, decoration_name: &str, hint: &str) {
+        let span = self.id_to_span(var_id);
+        let var_name = self.get_name(var_id);
+        let var_name_fallback = format!("%{}", var_id);
+        let var_name_display = var_name.as_deref().unwrap_or(&var_name_fallback);
+
+        let message = format!(
+            "resource variable `{}` is missing {} decoration",
+            var_name_display, decoration_name
+        );
+
+        let mut err = if let Some(span) = span {
+            self.sess.dcx().struct_span_err(span, message)
+        } else {
+            self.sess.dcx().struct_err(message)
+        };
+
+        err.help(format!("add `{}` to the variable", hint));
+        err.note(format!("module `{}`", self.filename.display()));
+        err.emit();
+    }
+
+    fn emit_missing_capability(
+        &mut self,
+        opcode: Op,
+        capability: Capability,
+        operand_index: Option<usize>,
+    ) {
+        // Try to find an instruction with this opcode to get a span
+        let span = self.find_instruction_span_by_opcode(opcode);
+
+        let message = if let Some(idx) = operand_index {
+            format!(
+                "operand {} of Op{:?} requires capability {:?}",
+                idx, opcode, capability
+            )
+        } else {
+            format!("Op{:?} requires capability {:?}", opcode, capability)
+        };
+
+        let mut err = if let Some(span) = span {
+            self.sess.dcx().struct_span_err(span, message)
+        } else {
+            self.sess.dcx().struct_err(message)
+        };
+
+        err.help(format!(
+            "add `#[spirv(capability({:?}))]` to your entry point function",
+            capability
+        ));
+        err.note(format!("module `{}`", self.filename.display()));
+        err.emit();
+    }
+
     fn emit_not_a_logical_pointer(&mut self, instruction: Op, pointer_id: u32, source_opcode: Op) {
         // Try to find a useful span - first the pointer, then the instruction using it,
         // then trace back through the def chain
@@ -188,6 +314,39 @@ impl<'a> ValidationErrorContext<'a> {
 
         err.note(format!("module `{}`", self.filename.display()));
         err.emit();
+    }
+
+    /// Finds the first instruction with the given opcode and returns its span.
+    fn find_instruction_span_by_opcode(&mut self, opcode: Op) -> Option<rustc_span::Span> {
+        let m = self.module?;
+
+        // Search in functions first (most common case)
+        for func in &m.functions {
+            for block in &func.blocks {
+                for inst in &block.instructions {
+                    if inst.class.opcode == opcode {
+                        if let Some(id) = inst.result_id {
+                            if let Some(span) = self.id_to_span(id) {
+                                return Some(span);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Search in types/globals
+        for inst in &m.types_global_values {
+            if inst.class.opcode == opcode {
+                if let Some(id) = inst.result_id {
+                    if let Some(span) = self.id_to_span(id) {
+                        return Some(span);
+                    }
+                }
+            }
+        }
+
+        None
     }
 
     /// Finds an instruction that uses the given pointer ID with the specified opcode.
