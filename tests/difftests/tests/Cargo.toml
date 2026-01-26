@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+    "lib",
     "simple-compute/simple-compute-rust",
     "simple-compute/simple-compute-wgsl",
     "arch/atomic_ops/atomic_ops-rust",
@@ -60,13 +61,18 @@ unexpected_cfgs = { level = "allow", check-cfg = [
     'cfg(target_arch, values("spirv"))',
 ] }
 
+# Cargo Windows bug: workspace dependencies of crates.io dependencies are resolved
+# incorrectly in the root workspace instead of this difftest workspace. So all
+# workspace dependencies here must be mirrored into the root workspace as well.
 [workspace.dependencies]
+spirv-builder = { path = "../../../crates/spirv-builder", default-features = false }
 spirv-std = { path = "../../../crates/spirv-std", version = "=0.9.0" }
-difftest = { path = "../../../tests/difftests/lib" }
+difftest = { path = "lib" }
+difftest-types = { path = "../types" }
 # External dependencies that need to be mentioned more than once.
 num-traits = { version = "0.2.15", default-features = false }
 glam = { version = ">=0.30.8", default-features = false }
-bytemuck = { version = "1.14", features = ["derive"] }
+bytemuck = { version = "1.23", features = ["derive"] }
 
 # Enable incremental by default in release mode.
 [profile.release]
