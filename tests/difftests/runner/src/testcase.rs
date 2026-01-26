@@ -1,4 +1,5 @@
 use crate::runner::RunnerResult;
+use std::ffi::OsStr;
 use std::fmt::{Display, Formatter};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -47,6 +48,14 @@ impl TestCase {
         for entry in fs::read_dir(&self.absolute_path)? {
             let entry = entry?;
             let path = entry.path();
+            let relative_path = self.relative_path.join(entry.file_name());
+            if IGNORE_DIR_LIST
+                .iter()
+                .any(|dir| relative_path.as_os_str() == OsStr::new(dir))
+            {
+                debug!("Ignoring test binary: {}", path.display());
+                return Ok(());
+            }
             if path.is_dir() && path.join("Cargo.toml").exists() {
                 debug!("Found binary package candidate: {}", path.display());
                 self.test_binaries
@@ -93,11 +102,17 @@ impl Display for TestBinary {
     }
 }
 
+/// List of paths relative to `./tests/difftests/tests/` to ignore
+pub const IGNORE_DIR_LIST: &[&str] = &["target", "lib"];
+
 pub fn collect_test_dirs(root: &Path) -> RunnerResult<Vec<TestCase>> {
     fn recurse(root: &Path, traverse: &Path, test_cases: &mut Vec<TestCase>) -> RunnerResult<()> {
         let absolute_path = root.join(traverse);
-        // skip target dir
-        if absolute_path.file_name() == Some(std::ffi::OsStr::new("target")) {
+        if IGNORE_DIR_LIST
+            .iter()
+            .any(|dir| traverse.as_os_str() == OsStr::new(dir))
+        {
+            debug!("Ignoring path: {}", absolute_path.display());
             return Ok(());
         }
 
