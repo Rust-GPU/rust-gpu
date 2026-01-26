@@ -1,6 +1,7 @@
 use bytesize::ByteSize;
-use difftest::config::{OutputType, TestMetadata};
+use difftest_types::config::{OutputType, TestMetadata};
 use serde::{Deserialize, Serialize};
+use std::process::Stdio;
 use std::{
     collections::{HashMap, HashSet},
     fs,
@@ -288,6 +289,8 @@ impl Runner {
 
             let output = cmd
                 .current_dir(&package.absolute_path)
+                .stdout(Stdio::inherit())
+                .stderr(Stdio::inherit())
                 .output()
                 .map_err(|e| RunnerError::Io { source: e })?;
             let exit_code = output.status.code().unwrap_or(-1);
@@ -651,7 +654,7 @@ pub fn forward_features(cmd: &mut Command) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use difftest::config::OutputType;
+    use difftest_types::config::OutputType;
     use std::{fs, io::Write, path::Path, path::PathBuf};
     use tempfile::{NamedTempFile, tempdir};
 
@@ -862,8 +865,7 @@ mod tests {
     fn test_invalid_metadata_json() {
         // Test that invalid JSON in metadata file causes proper error
         let metadata_content = "{ invalid json }";
-        let result: Result<difftest::config::TestMetadata, _> =
-            serde_json::from_str(metadata_content);
+        let result: Result<TestMetadata, _> = serde_json::from_str(metadata_content);
         assert!(result.is_err());
         // Just check that it's an error, don't check the specific message
     }
