@@ -323,7 +323,13 @@ fn post_link_single_module(
     };
 
     if cg_args.run_spirv_val {
-        do_spirv_val(sess, &spv_binary, &original_module_for_spans, out_filename, val_options);
+        do_spirv_val(
+            sess,
+            &spv_binary,
+            &original_module_for_spans,
+            out_filename,
+            val_options,
+        );
     }
 
     {
