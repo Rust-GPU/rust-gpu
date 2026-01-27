@@ -19,7 +19,6 @@ mod zombies;
 use std::borrow::Cow;
 
 use crate::codegen_cx::{ModuleOutputType, SpirvMetadata};
-// Note: SrcLocDecoration and ZombieDecoration are stripped in link.rs after validation
 use crate::custom_insts;
 use either::Either;
 use rspirv::binary::Assemble;
