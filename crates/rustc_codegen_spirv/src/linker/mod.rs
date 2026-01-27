@@ -19,7 +19,6 @@ mod zombies;
 use std::borrow::Cow;
 
 use crate::codegen_cx::{ModuleOutputType, SpirvMetadata};
-use crate::custom_decorations::{CustomDecoration, SrcLocDecoration, ZombieDecoration};
 use crate::custom_insts;
 use either::Either;
 use rspirv::binary::Assemble;
@@ -768,13 +767,10 @@ pub fn link(
             output.header.as_mut().unwrap().bound = simple_passes::compact_ids(output);
         };
 
-        // FIXME(eddyb) convert these into actual `OpLine`s with a SPIR-T pass,
-        // but that'd require keeping the modules in SPIR-T form (once lowered),
-        // and never loading them back into `rspirv` once lifted back to SPIR-V.
-        SrcLocDecoration::remove_all(output);
-
-        // FIXME(eddyb) might make more sense to rewrite these away on SPIR-T.
-        ZombieDecoration::remove_all(output);
+        // NOTE: We keep SrcLocDecoration and ZombieDecoration in the module
+        // so that they can be used for rich error messages during validation.
+        // These are encoded as OpDecorateString with UserSemantic, which is
+        // valid SPIR-V and should not cause validation failures.
     }
 
     Ok(output)
