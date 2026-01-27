@@ -22,11 +22,7 @@ pub struct ValidationErrorContext<'a> {
 
 impl<'a> ValidationErrorContext<'a> {
     /// Creates a new validation error context.
-    pub fn new(
-        sess: &'a Session,
-        module: Option<&'a Module>,
-        filename: &'a Path,
-    ) -> Self {
+    pub fn new(sess: &'a Session, module: Option<&'a Module>, filename: &'a Path) -> Self {
         let span_regen = module.map(|m| SpanRegenerator::new(sess.source_map(), m));
         Self {
             sess,
@@ -197,7 +193,9 @@ impl<'a> ValidationErrorContext<'a> {
             self.sess.dcx().struct_err(message)
         };
 
-        err.help("ensure struct members are properly aligned according to std140/std430 layout rules");
+        err.help(
+            "ensure struct members are properly aligned according to std140/std430 layout rules",
+        );
         err.note(format!("module `{}`", self.filename.display()));
         err.emit();
     }
@@ -383,7 +381,10 @@ impl<'a> ValidationErrorContext<'a> {
                 for inst in &block.instructions {
                     // Found the instruction that produced the pointer
                     if inst.result_id == Some(pointer_id) && inst.class.opcode == source_opcode {
-                        context_lines.push(format!("       %{} = Op{:?} ...", pointer_id, source_opcode));
+                        context_lines.push(format!(
+                            "       %{} = Op{:?} ...",
+                            pointer_id, source_opcode
+                        ));
                     }
                     // Found instructions using the pointer
                     if matches!(inst.class.opcode, Op::Load | Op::Store) {
@@ -396,9 +397,7 @@ impl<'a> ValidationErrorContext<'a> {
                                         .unwrap_or_default();
                                     context_lines.push(format!(
                                         "    -> {}Op{:?} %{} ...",
-                                        result,
-                                        inst.class.opcode,
-                                        pointer_id
+                                        result, inst.class.opcode, pointer_id
                                     ));
                                 }
                             }
@@ -457,9 +456,10 @@ impl<'a> ValidationErrorContext<'a> {
         let m = self.module?;
 
         // Find the OpVariable
-        let var_inst = m.types_global_values.iter().find(|inst| {
-            inst.class.opcode == Op::Variable && inst.result_id == Some(var_id)
-        })?;
+        let var_inst = m
+            .types_global_values
+            .iter()
+            .find(|inst| inst.class.opcode == Op::Variable && inst.result_id == Some(var_id))?;
 
         // Get the pointer type, then the pointee type
         let ptr_type_id = var_inst.result_type?;

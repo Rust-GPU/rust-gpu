@@ -1554,16 +1554,22 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
                 self.err(format!("TensorClampMode not yet supported: {word}"));
             }
             (OperandKind::TensorAddressingOperands, Some(word)) => {
-                self.err(format!("TensorAddressingOperands not yet supported: {word}"));
+                self.err(format!(
+                    "TensorAddressingOperands not yet supported: {word}"
+                ));
             }
             (OperandKind::FPEncoding, Some(word)) => {
                 self.err(format!("FPEncoding not yet supported: {word}"));
             }
             (OperandKind::NamedMaximumNumberOfRegisters, Some(word)) => {
-                self.err(format!("NamedMaximumNumberOfRegisters not yet supported: {word}"));
+                self.err(format!(
+                    "NamedMaximumNumberOfRegisters not yet supported: {word}"
+                ));
             }
             (OperandKind::MatrixMultiplyAccumulateOperands, Some(word)) => {
-                self.err(format!("MatrixMultiplyAccumulateOperands not yet supported: {word}"));
+                self.err(format!(
+                    "MatrixMultiplyAccumulateOperands not yet supported: {word}"
+                ));
             }
             // Catch-all for any other new operand kinds
             (kind, Some(word)) => {
@@ -1603,10 +1609,7 @@ pub const IMAGE_OPERANDS: &[(&str, ImageOperands)] = &[
     ("Sample", ImageOperands::SAMPLE),
     ("MinLod", ImageOperands::MIN_LOD),
     ("MakeTexelAvailable", ImageOperands::MAKE_TEXEL_AVAILABLE),
-    (
-        "MakeTexelAvailableKHR",
-        ImageOperands::MAKE_TEXEL_AVAILABLE,
-    ),
+    ("MakeTexelAvailableKHR", ImageOperands::MAKE_TEXEL_AVAILABLE),
     ("MakeTexelVisible", ImageOperands::MAKE_TEXEL_VISIBLE),
     ("MakeTexelVisibleKHR", ImageOperands::MAKE_TEXEL_VISIBLE),
     ("NonPrivateTexel", ImageOperands::NON_PRIVATE_TEXEL),
@@ -1689,15 +1692,9 @@ pub const MEMORY_ACCESS: &[(&str, MemoryAccess)] = &[
         MemoryAccess::MAKE_POINTER_AVAILABLE,
     ),
     ("MakePointerVisible", MemoryAccess::MAKE_POINTER_VISIBLE),
-    (
-        "MakePointerVisibleKHR",
-        MemoryAccess::MAKE_POINTER_VISIBLE,
-    ),
+    ("MakePointerVisibleKHR", MemoryAccess::MAKE_POINTER_VISIBLE),
     ("NonPrivatePointer", MemoryAccess::NON_PRIVATE_POINTER),
-    (
-        "NonPrivatePointerKHR",
-        MemoryAccess::NON_PRIVATE_POINTER,
-    ),
+    ("NonPrivatePointerKHR", MemoryAccess::NON_PRIVATE_POINTER),
 ];
 pub const KERNEL_PROFILING_INFO: &[(&str, KernelProfilingInfo)] = &[
     ("None", KernelProfilingInfo::NONE),
