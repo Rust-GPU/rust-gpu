@@ -62,11 +62,17 @@ pub struct Options {
     pub dump_pre_inline: Option<PathBuf>,
     pub dump_post_inline: Option<PathBuf>,
     pub dump_post_split: Option<PathBuf>,
-    pub dump_spirt_passes: Option<PathBuf>,
+    pub dump_spirt: Option<(PathBuf, DumpSpirtMode)>,
     pub spirt_strip_custom_debuginfo_from_dumps: bool,
     pub spirt_keep_debug_sources_in_dumps: bool,
     pub spirt_keep_unstructured_cfg_in_dumps: bool,
     pub specializer_dump_instances: Option<PathBuf>,
+}
+
+#[derive(Copy, Clone, PartialEq, Eq)]
+pub enum DumpSpirtMode {
+    AllPasses,
+    OnlyFinal,
 }
 
 pub enum LinkResult {
@@ -104,7 +110,7 @@ fn apply_rewrite_rules<'a>(
                 )
         });
     for id in all_ids_mut {
-        if let Some(&rewrite) = rewrite_rules.get(id) {
+        while let Some(&rewrite) = rewrite_rules.get(id) {
             *id = rewrite;
         }
     }
@@ -531,7 +537,7 @@ pub fn link(
             drop(timer);
             let pass_name = dump_guard.in_progress_pass_name.take().unwrap();
             if let Some(module) = module
-                && opts.dump_spirt_passes.is_some()
+                && matches!(opts.dump_spirt, Some((_, DumpSpirtMode::AllPasses)))
             {
                 dump_guard
                     .per_pass_module_for_dumping
@@ -812,9 +818,9 @@ impl Drop for SpirtDumpGuard<'_> {
 
         let mut dump_spirt_file_path =
             self.linker_options
-                .dump_spirt_passes
+                .dump_spirt
                 .as_ref()
-                .map(|dump_dir| {
+                .map(|(dump_dir, _)| {
                     dump_dir
                         .join(self.disambiguated_crate_name_for_dumps)
                         .with_extension("spirt")
@@ -826,16 +832,17 @@ impl Drop for SpirtDumpGuard<'_> {
         // but that requires keeping around e.g. the initial SPIR-V for longer,
         // and probably invoking the "SPIR-T pipeline" here, as looping is hard).
         if self.any_spirt_bugs && dump_spirt_file_path.is_none() {
-            if self.per_pass_module_for_dumping.is_empty() {
-                self.per_pass_module_for_dumping
-                    .push(("".into(), self.module.clone()));
-            }
             dump_spirt_file_path = Some(self.outputs.temp_path_for_diagnostic("spirt"));
         }
 
         let Some(dump_spirt_file_path) = &dump_spirt_file_path else {
             return;
         };
+
+        if self.per_pass_module_for_dumping.is_empty() {
+            self.per_pass_module_for_dumping
+                .push(("".into(), self.module.clone()));
+        }
 
         for (_, module) in &mut self.per_pass_module_for_dumping {
             // FIXME(eddyb) consider catching panics in this?
@@ -846,7 +853,16 @@ impl Drop for SpirtDumpGuard<'_> {
         let versions = self
             .per_pass_module_for_dumping
             .iter()
-            .map(|(pass_name, module)| (format!("after {pass_name}"), module));
+            .map(|(pass_name, module)| {
+                (
+                    if pass_name.is_empty() {
+                        "".into()
+                    } else {
+                        format!("after {pass_name}")
+                    },
+                    module,
+                )
+            });
 
         let mut panicked_printing_after_passes = None;
         for truncate_version_count in (1..=versions.len()).rev() {
@@ -907,7 +923,11 @@ impl Drop for SpirtDumpGuard<'_> {
                 "pretty-printed SPIR-T was saved to {}.html",
                 dump_spirt_file_path.display()
             ));
-            if self.linker_options.dump_spirt_passes.is_none() {
+            let is_dumping_spirt_passes = matches!(
+                self.linker_options.dump_spirt,
+                Some((_, DumpSpirtMode::AllPasses))
+            );
+            if !is_dumping_spirt_passes {
                 note.help("re-run with `RUSTGPU_CODEGEN_ARGS=\"--dump-spirt-passes=$PWD\"` for more details");
             }
             note.note("pretty-printed SPIR-T is preferred when reporting Rust-GPU issues");
