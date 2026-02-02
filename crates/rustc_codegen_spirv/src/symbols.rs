@@ -34,6 +34,7 @@ pub struct Symbols {
     pub attributes: FxHashMap<Symbol, SpirvAttribute>,
     pub execution_modes: FxHashMap<Symbol, (ExecutionMode, ExecutionModeExtraDim)>,
     pub libm_intrinsics: FxHashMap<Symbol, libm_intrinsics::LibmIntrinsic>,
+    pub num_traits_intrinsics: FxHashMap<Symbol, libm_intrinsics::LibmIntrinsic>,
 }
 
 const BUILTINS: &[(&str, BuiltIn)] = {
@@ -406,10 +407,17 @@ impl Symbols {
         }
 
         let mut libm_intrinsics = FxHashMap::default();
-        for &(a, b) in libm_intrinsics::TABLE {
+        for &(a, b) in libm_intrinsics::LIBM_TABLE {
             let old = libm_intrinsics.insert(Symbol::intern(a), b);
             assert!(old.is_none());
         }
+
+        let mut num_traits_intrinsics = FxHashMap::default();
+        for &(a, b) in libm_intrinsics::NUM_TRAITS_TABLE {
+            let old = num_traits_intrinsics.insert(Symbol::intern(a), b);
+            assert!(old.is_none());
+        }
+
         Self {
             discriminant: Symbol::intern("discriminant"),
             rust_gpu: Symbol::intern("rust_gpu"),
@@ -433,6 +441,7 @@ impl Symbols {
             attributes,
             execution_modes,
             libm_intrinsics,
+            num_traits_intrinsics,
         }
     }
 
