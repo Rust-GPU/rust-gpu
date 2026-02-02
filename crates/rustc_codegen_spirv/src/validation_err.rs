@@ -178,9 +178,7 @@ impl<'a> ValidationErrorContext<'a> {
         let type_name_fallback = format!("%{struct_type_id}");
         let type_name_display = type_name.as_deref().unwrap_or(&type_name_fallback);
 
-        let message = format!(
-            "struct `{type_name_display}` has invalid block layout: {reason}"
-        );
+        let message = format!("struct `{type_name_display}` has invalid block layout: {reason}");
 
         let mut err = if let Some(span) = span {
             self.sess.dcx().struct_span_err(span, message)
@@ -238,9 +236,7 @@ impl<'a> ValidationErrorContext<'a> {
         let span = self.find_instruction_span_by_opcode(opcode);
 
         let message = if let Some(idx) = operand_index {
-            format!(
-                "operand {idx} of Op{opcode:?} requires capability {capability:?}"
-            )
+            format!("operand {idx} of Op{opcode:?} requires capability {capability:?}")
         } else {
             format!("Op{opcode:?} requires capability {capability:?}")
         };
@@ -366,9 +362,8 @@ impl<'a> ValidationErrorContext<'a> {
                 for inst in &block.instructions {
                     // Found the instruction that produced the pointer
                     if inst.result_id == Some(pointer_id) && inst.class.opcode == source_opcode {
-                        context_lines.push(format!(
-                            "       %{pointer_id} = Op{source_opcode:?} ..."
-                        ));
+                        context_lines
+                            .push(format!("       %{pointer_id} = Op{source_opcode:?} ..."));
                     }
                     // Found instructions using the pointer
                     if matches!(inst.class.opcode, Op::Load | Op::Store) {
@@ -522,8 +517,8 @@ impl<'a> ValidationErrorContext<'a> {
         start_loc: u32,
         type_info: Option<&TypeInfo>,
     ) -> String {
-        let (type_name, location_count) = type_info
-            .map_or((None, None), |ti| (ti.name.as_deref(), ti.location_count));
+        let (type_name, location_count) =
+            type_info.map_or((None, None), |ti| (ti.name.as_deref(), ti.location_count));
 
         match (type_name, location_count) {
             (Some(name), Some(count)) => {
