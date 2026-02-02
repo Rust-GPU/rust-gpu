@@ -43,7 +43,7 @@ pub enum LibmIntrinsic {
     Custom(LibmCustomIntrinsic),
 }
 
-pub const TABLE: &[(&str, LibmIntrinsic)] = &[
+pub const LIBM_TABLE: &[(&str, LibmIntrinsic)] = &[
     ("acos", LibmIntrinsic::GLOp(GLOp::Acos)),
     ("acosf", LibmIntrinsic::GLOp(GLOp::Acos)),
     ("acosh", LibmIntrinsic::GLOp(GLOp::Acosh)),
@@ -158,7 +158,6 @@ pub const TABLE: &[(&str, LibmIntrinsic)] = &[
     ),
     ("pow", LibmIntrinsic::GLOp(GLOp::Pow)),
     ("powf", LibmIntrinsic::GLOp(GLOp::Pow)),
-    ("powi", LibmIntrinsic::Custom(LibmCustomIntrinsic::Powi)),
     (
         "remainder",
         LibmIntrinsic::Custom(LibmCustomIntrinsic::Remainder),
@@ -199,6 +198,9 @@ pub const TABLE: &[(&str, LibmIntrinsic)] = &[
     ("trunc", LibmIntrinsic::GLOp(GLOp::Trunc)),
     ("truncf", LibmIntrinsic::GLOp(GLOp::Trunc)),
 ];
+
+pub const NUM_TRAITS_TABLE: &[(&str, LibmIntrinsic)] =
+    &[("powi", LibmIntrinsic::Custom(LibmCustomIntrinsic::Powi))];
 
 impl Builder<'_, '_> {
     pub fn call_libm_intrinsic(

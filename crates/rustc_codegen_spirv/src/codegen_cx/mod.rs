@@ -66,6 +66,8 @@ pub struct CodegenCx<'tcx> {
     // FIXME(eddyb) should the maps exist at all, now that the `DefId` is known
     // at `call` time, and presumably its high-level details can be looked up?
     pub libm_intrinsics: RefCell<FxHashMap<DefId, super::builder::libm_intrinsics::LibmIntrinsic>>,
+    pub num_traits_intrinsics:
+        RefCell<FxHashMap<DefId, super::builder::libm_intrinsics::LibmIntrinsic>>,
 
     /// All `panic!(...)`s and builtin panics (from MIR `Assert`s) call into one
     /// of these lang items, which we always replace with an "abort".
@@ -202,6 +204,7 @@ impl<'tcx> CodegenCx<'tcx> {
             sym,
             instruction_table: InstructionTable::new(),
             libm_intrinsics: Default::default(),
+            num_traits_intrinsics: Default::default(),
             panic_entry_points: Default::default(),
             fmt_args_new_fn_ids: Default::default(),
             fmt_rt_arg_new_fn_ids_to_ty_and_spec: Default::default(),
