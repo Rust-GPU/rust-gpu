@@ -313,7 +313,7 @@ pub struct CodegenArgs {
 
     pub run_spirv_opt: bool,
 
-    /// Preserve internal debug decorations (SrcLocDecoration, ZombieDecoration) in the output.
+    /// Preserve internal debug decorations (`SrcLocDecoration`, `ZombieDecoration`) in the output.
     /// These are normally stripped after validation. Enable for debugging or testing.
     pub preserve_debug_decorations: bool,
 

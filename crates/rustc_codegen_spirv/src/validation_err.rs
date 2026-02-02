@@ -125,8 +125,8 @@ impl<'a> ValidationErrorContext<'a> {
         let first_var_start_location = self.get_location_decoration(first_var_id);
         let first_var_type_info = self.get_variable_type_info(first_var_id);
 
-        let first_name_fallback = format!("%{}", first_var_id);
-        let second_name_fallback = format!("%{}", second_var_id);
+        let first_name_fallback = format!("%{first_var_id}");
+        let second_name_fallback = format!("%{second_var_id}");
         let first_name_display = first_name.as_deref().unwrap_or(&first_name_fallback);
         let second_name_display = second_name.as_deref().unwrap_or(&second_name_fallback);
 
@@ -135,28 +135,26 @@ impl<'a> ValidationErrorContext<'a> {
             let mut err = self.sess.dcx().struct_span_err(
                 span2,
                 format!(
-                    "{:?} variable `{}` at location {} conflicts with another variable",
-                    storage_class, second_name_display, location
+                    "{storage_class:?} variable `{second_name_display}` at location {location} conflicts with another variable"
                 ),
             );
 
             err.span_note(
                 span1,
                 format!(
-                    "variable `{}` already uses location {} component {}",
-                    first_name_display, location, component
+                    "variable `{first_name_display}` already uses location {location} component {component}"
                 ),
             );
 
             // Add hint if the first variable spans multiple locations
-            if let Some(start_loc) = first_var_start_location {
-                if start_loc != location {
-                    err.help(self.format_multi_location_hint(
-                        first_name_display,
-                        start_loc,
-                        first_var_type_info.as_ref(),
-                    ));
-                }
+            if let Some(start_loc) = first_var_start_location
+                && start_loc != location
+            {
+                err.help(Self::format_multi_location_hint(
+                    first_name_display,
+                    start_loc,
+                    first_var_type_info.as_ref(),
+                ));
             }
 
             err.note(format!("module `{}`", self.filename.display()));
@@ -164,13 +162,11 @@ impl<'a> ValidationErrorContext<'a> {
         } else {
             // Fall back to non-span error
             let mut err = self.sess.dcx().struct_err(format!(
-                "{:?} variable `{}` at location {} conflicts with `{}`",
-                storage_class, second_name_display, location, first_name_display
+                "{storage_class:?} variable `{second_name_display}` at location {location} conflicts with `{first_name_display}`"
             ));
             err.note(format!("module `{}`", self.filename.display()));
             err.note(format!(
-                "variables `{}` and `{}` both use location {} component {}",
-                first_name_display, second_name_display, location, component
+                "variables `{first_name_display}` and `{second_name_display}` both use location {location} component {component}"
             ));
             err.emit();
         }
@@ -179,12 +175,11 @@ impl<'a> ValidationErrorContext<'a> {
     fn emit_invalid_block_layout(&mut self, struct_type_id: u32, reason: &str) {
         let span = self.id_to_span(struct_type_id);
         let type_name = self.get_name(struct_type_id);
-        let type_name_fallback = format!("%{}", struct_type_id);
+        let type_name_fallback = format!("%{struct_type_id}");
         let type_name_display = type_name.as_deref().unwrap_or(&type_name_fallback);
 
         let message = format!(
-            "struct `{}` has invalid block layout: {}",
-            type_name_display, reason
+            "struct `{type_name_display}` has invalid block layout: {reason}"
         );
 
         let mut err = if let Some(span) = span {
@@ -202,13 +197,11 @@ impl<'a> ValidationErrorContext<'a> {
 
     fn emit_invalid_builtin_type(&self, builtin: BuiltIn, expected: &str) {
         let mut err = self.sess.dcx().struct_err(format!(
-            "BuiltIn {:?} has incorrect type, expected {}",
-            builtin, expected
+            "BuiltIn {builtin:?} has incorrect type, expected {expected}"
         ));
 
         err.help(format!(
-            "variables with `#[spirv(builtin = \"{:?}\")]` must have the correct type",
-            builtin
+            "variables with `#[spirv(builtin = \"{builtin:?}\")]` must have the correct type"
         ));
         err.note(format!("module `{}`", self.filename.display()));
         err.emit();
@@ -217,12 +210,11 @@ impl<'a> ValidationErrorContext<'a> {
     fn emit_missing_decoration(&mut self, var_id: u32, decoration_name: &str, hint: &str) {
         let span = self.id_to_span(var_id);
         let var_name = self.get_name(var_id);
-        let var_name_fallback = format!("%{}", var_id);
+        let var_name_fallback = format!("%{var_id}");
         let var_name_display = var_name.as_deref().unwrap_or(&var_name_fallback);
 
         let message = format!(
-            "resource variable `{}` is missing {} decoration",
-            var_name_display, decoration_name
+            "resource variable `{var_name_display}` is missing {decoration_name} decoration"
         );
 
         let mut err = if let Some(span) = span {
@@ -231,7 +223,7 @@ impl<'a> ValidationErrorContext<'a> {
             self.sess.dcx().struct_err(message)
         };
 
-        err.help(format!("add `{}` to the variable", hint));
+        err.help(format!("add `{hint}` to the variable"));
         err.note(format!("module `{}`", self.filename.display()));
         err.emit();
     }
@@ -247,11 +239,10 @@ impl<'a> ValidationErrorContext<'a> {
 
         let message = if let Some(idx) = operand_index {
             format!(
-                "operand {} of Op{:?} requires capability {:?}",
-                idx, opcode, capability
+                "operand {idx} of Op{opcode:?} requires capability {capability:?}"
             )
         } else {
-            format!("Op{:?} requires capability {:?}", opcode, capability)
+            format!("Op{opcode:?} requires capability {capability:?}")
         };
 
         let mut err = if let Some(span) = span {
@@ -261,8 +252,7 @@ impl<'a> ValidationErrorContext<'a> {
         };
 
         err.help(format!(
-            "add `#[spirv(capability({:?}))]` to your entry point function",
-            capability
+            "add `#[spirv(capability({capability:?}))]` to your entry point function"
         ));
         err.note(format!("module `{}`", self.filename.display()));
         err.emit();
@@ -278,15 +268,14 @@ impl<'a> ValidationErrorContext<'a> {
         });
 
         let pointer_name = self.get_name(pointer_id);
-        let pointer_name_fallback = format!("%{}", pointer_id);
+        let pointer_name_fallback = format!("%{pointer_id}");
         let pointer_name_display = pointer_name.as_deref().unwrap_or(&pointer_name_fallback);
 
         // Get SPIR-V context showing the relevant instructions
         let spirv_context = self.get_spirv_context_for_pointer(pointer_id, source_opcode);
 
         let message = format!(
-            "Op{:?} cannot use pointer `{}` because it was produced by Op{:?}",
-            instruction, pointer_name_display, source_opcode
+            "Op{instruction:?} cannot use pointer `{pointer_name_display}` because it was produced by Op{source_opcode:?}"
         );
 
         let mut err = if let Some(span) = span {
@@ -296,18 +285,16 @@ impl<'a> ValidationErrorContext<'a> {
         };
 
         err.note(format!(
-            "in SPIR-V's logical addressing mode, pointers for Op{:?} must come from \
-             specific instructions like OpVariable, OpAccessChain, or OpFunctionParameter",
-            instruction
+            "in SPIR-V's logical addressing mode, pointers for Op{instruction:?} must come from \
+             specific instructions like OpVariable, OpAccessChain, or OpFunctionParameter"
         ));
         err.help(format!(
-            "Op{:?} cannot produce pointers valid for memory operations in logical addressing",
-            source_opcode
+            "Op{source_opcode:?} cannot produce pointers valid for memory operations in logical addressing"
         ));
 
         // Show SPIR-V context if available
         if let Some(context) = spirv_context {
-            err.note(format!("generated SPIR-V:\n{}", context));
+            err.note(format!("generated SPIR-V:\n{context}"));
         }
 
         err.note(format!("module `{}`", self.filename.display()));
@@ -322,12 +309,11 @@ impl<'a> ValidationErrorContext<'a> {
         for func in &m.functions {
             for block in &func.blocks {
                 for inst in &block.instructions {
-                    if inst.class.opcode == opcode {
-                        if let Some(id) = inst.result_id {
-                            if let Some(span) = self.id_to_span(id) {
-                                return Some(span);
-                            }
-                        }
+                    if inst.class.opcode == opcode
+                        && let Some(id) = inst.result_id
+                        && let Some(span) = self.id_to_span(id)
+                    {
+                        return Some(span);
                     }
                 }
             }
@@ -335,12 +321,11 @@ impl<'a> ValidationErrorContext<'a> {
 
         // Search in types/globals
         for inst in &m.types_global_values {
-            if inst.class.opcode == opcode {
-                if let Some(id) = inst.result_id {
-                    if let Some(span) = self.id_to_span(id) {
-                        return Some(span);
-                    }
-                }
+            if inst.class.opcode == opcode
+                && let Some(id) = inst.result_id
+                && let Some(span) = self.id_to_span(id)
+            {
+                return Some(span);
             }
         }
 
@@ -356,10 +341,10 @@ impl<'a> ValidationErrorContext<'a> {
                     if inst.class.opcode == opcode {
                         // Check if any operand references our pointer
                         for operand in &inst.operands {
-                            if let rspirv::dr::Operand::IdRef(id) = operand {
-                                if *id == pointer_id {
-                                    return inst.result_id;
-                                }
+                            if let rspirv::dr::Operand::IdRef(id) = operand
+                                && *id == pointer_id
+                            {
+                                return inst.result_id;
                             }
                         }
                     }
@@ -382,24 +367,23 @@ impl<'a> ValidationErrorContext<'a> {
                     // Found the instruction that produced the pointer
                     if inst.result_id == Some(pointer_id) && inst.class.opcode == source_opcode {
                         context_lines.push(format!(
-                            "       %{} = Op{:?} ...",
-                            pointer_id, source_opcode
+                            "       %{pointer_id} = Op{source_opcode:?} ..."
                         ));
                     }
                     // Found instructions using the pointer
                     if matches!(inst.class.opcode, Op::Load | Op::Store) {
                         for operand in &inst.operands {
-                            if let rspirv::dr::Operand::IdRef(id) = operand {
-                                if *id == pointer_id {
-                                    let result = inst
-                                        .result_id
-                                        .map(|r| format!("%{} = ", r))
-                                        .unwrap_or_default();
-                                    context_lines.push(format!(
-                                        "    -> {}Op{:?} %{} ...",
-                                        result, inst.class.opcode, pointer_id
-                                    ));
-                                }
+                            if let rspirv::dr::Operand::IdRef(id) = operand
+                                && *id == pointer_id
+                            {
+                                let result = inst
+                                    .result_id
+                                    .map(|r| format!("%{r} = "))
+                                    .unwrap_or_default();
+                                context_lines.push(format!(
+                                    "    -> {result}Op{:?} %{pointer_id} ...",
+                                    inst.class.opcode
+                                ));
                             }
                         }
                     }
@@ -422,7 +406,7 @@ impl<'a> ValidationErrorContext<'a> {
         })
     }
 
-    /// Gets the name of a SPIR-V ID from OpName.
+    /// Gets the name of a SPIR-V ID from `OpName`.
     fn get_name(&self, id: u32) -> Option<String> {
         self.module.and_then(|m| {
             m.debug_names.iter().find_map(|inst| {
@@ -534,47 +518,36 @@ impl<'a> ValidationErrorContext<'a> {
     }
 
     fn format_multi_location_hint(
-        &self,
         var_name: &str,
         start_loc: u32,
         type_info: Option<&TypeInfo>,
     ) -> String {
         let (type_name, location_count) = type_info
-            .map(|ti| (ti.name.as_deref(), ti.location_count))
-            .unwrap_or((None, None));
+            .map_or((None, None), |ti| (ti.name.as_deref(), ti.location_count));
 
         match (type_name, location_count) {
             (Some(name), Some(count)) => {
                 format!(
-                    "`{}` is at location {} but type `{}` consumes {} locations ({}–{})",
-                    var_name,
-                    start_loc,
-                    name,
-                    count,
+                    "`{var_name}` is at location {start_loc} but type `{name}` consumes {count} locations ({}–{})",
                     start_loc,
                     start_loc + count - 1
                 )
             }
             (Some(name), None) => {
                 format!(
-                    "`{}` is at location {} but type `{}` consumes multiple locations",
-                    var_name, start_loc, name
+                    "`{var_name}` is at location {start_loc} but type `{name}` consumes multiple locations"
                 )
             }
             (None, Some(count)) => {
                 format!(
-                    "`{}` is at location {} but its type consumes {} locations ({}–{})",
-                    var_name,
-                    start_loc,
-                    count,
+                    "`{var_name}` is at location {start_loc} but its type consumes {count} locations ({}–{})",
                     start_loc,
                     start_loc + count - 1
                 )
             }
             (None, None) => {
                 format!(
-                    "`{}` is at location {} but its type consumes multiple locations",
-                    var_name, start_loc
+                    "`{var_name}` is at location {start_loc} but its type consumes multiple locations"
                 )
             }
         }
@@ -583,7 +556,7 @@ impl<'a> ValidationErrorContext<'a> {
 
 /// Information about a SPIR-V type for error reporting.
 struct TypeInfo {
-    /// The type name from OpName, if available.
+    /// The type name from `OpName`, if available.
     name: Option<String>,
     /// The number of interface locations consumed by this type.
     location_count: Option<u32>,
