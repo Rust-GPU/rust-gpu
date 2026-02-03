@@ -757,24 +757,22 @@ impl SpirvBuilder {
         let metadata: CompileResult =
             rustc_codegen_spirv_types::serde_json::from_reader(BufReader::new(metadata_contents))
                 .map_err(SpirvBuilderError::MetadataFileMalformed)?;
-        match &metadata.module {
-            ModuleResult::SingleModule(spirv_module) => {
-                assert!(!self.multimodule);
-                if self.build_script.get_env_shader_spv_path() {
-                    let env_var = format!(
-                        "{}.spv",
-                        at.file_name()
-                            .unwrap()
-                            .to_str()
-                            .unwrap()
-                            .strip_suffix(ARTIFACT_SUFFIX)
-                            .unwrap()
-                    );
+
+        let is_multimodule = match &metadata.module {
+            ModuleResult::SingleModule(_) => false,
+            ModuleResult::MultiModule(_) => true,
+        };
+        assert_eq!(self.multimodule, is_multimodule);
+
+        if self.build_script.get_env_shader_spv_path() {
+            match &metadata.module {
+                ModuleResult::SingleModule(spirv_module) => {
+                    let env_var = spirv_module.file_name().unwrap().to_str().unwrap();
                     println!("cargo::rustc-env={}={}", env_var, spirv_module.display());
                 }
-            }
-            ModuleResult::MultiModule(_) => {
-                assert!(self.multimodule);
+                ModuleResult::MultiModule(_) => {
+                    Err(SpirvBuilderError::MultiModuleWithEnvShaderSpvPath)?;
+                }
             }
         }
         Ok(metadata)
@@ -849,10 +847,6 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<RustcOutput, SpirvBuilderError
             .as_ref()
             .ok_or(SpirvBuilderError::MissingTarget)?;
         target = SpirvTarget::parse(target_str)?;
-
-        if builder.build_script.get_env_shader_spv_path() && builder.multimodule {
-            return Err(SpirvBuilderError::MultiModuleWithEnvShaderSpvPath);
-        }
         if !path_to_crate.is_dir() {
             return Err(SpirvBuilderError::CratePathDoesntExist(
                 path_to_crate.clone(),
