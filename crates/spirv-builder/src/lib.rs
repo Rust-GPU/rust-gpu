@@ -392,7 +392,7 @@ pub struct BuildScriptConfig {
 
     /// Whether to emit an env var pointing to the shader module file  (via `cargo::rustc-env={}`). The name of the env
     /// var is the crate name with `.spv` appended, e.g. `sky_shader.spv`.
-    /// Not supported together with `multimodule=true` or `.watch()`.
+    /// Not supported together with `multimodule=true`.
     ///
     /// Some examples on how to include the shader module in the source code:
     /// * wgpu:
