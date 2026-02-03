@@ -55,9 +55,6 @@ impl SpirvWatcher {
             .as_ref()
             .ok_or(SpirvBuilderError::MissingCratePath)?
             .clone();
-        if builder.build_script.get_env_shader_spv_path() {
-            return Err(SpirvWatcherError::WatchWithPrintMetadata.into());
-        }
 
         let (tx, rx) = sync_channel(1);
         let watcher =
@@ -170,8 +167,6 @@ impl SpirvWatcher {
 
 #[derive(Debug, thiserror::Error)]
 pub enum SpirvWatcherError {
-    #[error("watching within build scripts will prevent build completion")]
-    WatchWithPrintMetadata,
     #[error("could not notify for changes: {0}")]
     NotifyFailed(#[from] notify::Error),
     #[error("watcher died and closed channel")]
