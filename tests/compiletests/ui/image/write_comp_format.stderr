@@ -1,0 +1,69 @@
+OpCapability Shader
+OpCapability StorageImageExtendedFormats
+OpMemoryModel Logical Simple
+OpEntryPoint GLCompute %1 "main" %2 %3 %4
+OpExecutionMode %1 LocalSize 8 8 1
+OpName %2 "global_id"
+OpName %3 "fill_color"
+OpName %4 "image"
+OpName %8 "<spirv_std::image::Image<f32, 1, 2, 0, 0, 2, 6, 2>>::write::<u32, glam::u32::uvec2::UVec2>"
+OpDecorate %9 Block
+OpMemberDecorate %9 0 Offset 0
+OpDecorate %2 BuiltIn GlobalInvocationId
+OpDecorate %3 NonWritable
+OpDecorate %3 Binding 0
+OpDecorate %3 DescriptorSet 0
+OpDecorate %4 Binding 1
+OpDecorate %4 DescriptorSet 0
+%10 = OpTypeInt 32 0
+%11 = OpTypeVector %10 3
+%12 = OpTypePointer Input %11
+%13 = OpTypeFloat 32
+%14 = OpTypeVector %13 2
+%9 = OpTypeStruct %14
+%15 = OpTypePointer StorageBuffer %9
+%16 = OpTypeImage %13 2D 2 0 0 2 Rg32f
+%17 = OpTypePointer UniformConstant %16
+%18 = OpTypeVoid
+%19 = OpTypeFunction %18
+%2 = OpVariable  %12  Input
+%20 = OpTypePointer StorageBuffer %14
+%3 = OpVariable  %15  StorageBuffer
+%21 = OpConstant  %10  0
+%22 = OpTypePointer StorageBuffer %13
+%23 = OpConstant  %10  1
+%24 = OpTypeVector %10 2
+%25 = OpTypeFunction %18 %17 %24 %14
+%4 = OpVariable  %17  UniformConstant
+%1 = OpFunction  %18  None %19
+%26 = OpLabel
+%27 = OpLoad  %11  %2
+%28 = OpInBoundsAccessChain  %20  %3 %21
+%29 = OpCompositeExtract  %10  %27 0
+%30 = OpCompositeExtract  %10  %27 1
+%31 = OpInBoundsAccessChain  %22  %28 %21
+%32 = OpLoad  %13  %31
+%33 = OpInBoundsAccessChain  %22  %28 %23
+%34 = OpLoad  %13  %33
+%35 = OpCompositeConstruct  %24  %29 %30
+%36 = OpCompositeConstruct  %14  %32 %34
+%37 = OpFunctionCall  %18  %8 %4 %35 %36
+OpNoLine
+OpReturn
+OpFunctionEnd
+%8 = OpFunction  %18  None %25
+%38 = OpFunctionParameter  %17
+%39 = OpFunctionParameter  %24
+%40 = OpFunctionParameter  %14
+%41 = OpLabel
+%42 = OpCompositeExtract  %10  %39 0
+%43 = OpCompositeExtract  %10  %39 1
+%44 = OpCompositeConstruct  %24  %42 %43
+%45 = OpCompositeExtract  %13  %40 0
+%46 = OpCompositeExtract  %13  %40 1
+%47 = OpCompositeConstruct  %14  %45 %46
+%48 = OpLoad  %16  %38
+OpImageWrite %48 %44 %47
+OpNoLine
+OpReturn
+OpFunctionEnd
