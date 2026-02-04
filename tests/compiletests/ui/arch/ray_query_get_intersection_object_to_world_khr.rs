@@ -1,5 +1,6 @@
 // build-pass
 // compile-flags: -Ctarget-feature=+RayQueryKHR,+ext:SPV_KHR_ray_query
+// ignore-naga
 
 use glam::Vec3;
 use spirv_std::matrix::Matrix4x3;

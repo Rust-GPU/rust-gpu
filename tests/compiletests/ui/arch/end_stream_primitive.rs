@@ -1,5 +1,6 @@
 // build-pass
 // compile-flags: -C target-feature=+Int64,+Geometry,+GeometryStreams
+// ignore-naga
 
 use spirv_std::spirv;
 
