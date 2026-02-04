@@ -37,6 +37,7 @@ pub struct SampleParams<B: OptionTy, L: OptionTy, G: OptionTy, S: OptionTy> {
 }
 
 /// Sets the 'Bias' image operand
+#[inline]
 pub fn bias<B>(bias: B) -> SampleParams<SomeTy<B>, NoneTy, NoneTy, NoneTy> {
     SampleParams {
         bias: SomeTy(bias),
@@ -47,6 +48,7 @@ pub fn bias<B>(bias: B) -> SampleParams<SomeTy<B>, NoneTy, NoneTy, NoneTy> {
 }
 
 /// Sets the 'Lod' image operand
+#[inline]
 pub fn lod<L>(lod: L) -> SampleParams<NoneTy, SomeTy<L>, NoneTy, NoneTy> {
     SampleParams {
         bias: NoneTy,
@@ -57,6 +59,7 @@ pub fn lod<L>(lod: L) -> SampleParams<NoneTy, SomeTy<L>, NoneTy, NoneTy> {
 }
 
 /// Sets the 'Grad' image operand
+#[inline]
 pub fn grad<T>(grad_x: T, grad_y: T) -> SampleParams<NoneTy, NoneTy, SomeTy<(T, T)>, NoneTy> {
     SampleParams {
         bias: NoneTy,
@@ -67,6 +70,7 @@ pub fn grad<T>(grad_x: T, grad_y: T) -> SampleParams<NoneTy, NoneTy, SomeTy<(T, 
 }
 
 /// Sets the 'Sample' image operand
+#[inline]
 pub fn sample_index<S>(sample_index: S) -> SampleParams<NoneTy, NoneTy, NoneTy, SomeTy<S>> {
     SampleParams {
         bias: NoneTy,
@@ -78,6 +82,7 @@ pub fn sample_index<S>(sample_index: S) -> SampleParams<NoneTy, NoneTy, NoneTy, 
 
 impl<L: OptionTy, G: OptionTy, S: OptionTy> SampleParams<NoneTy, L, G, S> {
     /// Sets the 'Bias' image operand
+    #[inline]
     pub fn bias<B>(self, bias: B) -> SampleParams<SomeTy<B>, L, G, S> {
         SampleParams {
             bias: SomeTy(bias),
@@ -90,6 +95,7 @@ impl<L: OptionTy, G: OptionTy, S: OptionTy> SampleParams<NoneTy, L, G, S> {
 
 impl<B: OptionTy, G: OptionTy, S: OptionTy> SampleParams<B, NoneTy, G, S> {
     /// Sets the 'Lod' image operand
+    #[inline]
     pub fn lod<L>(self, lod: L) -> SampleParams<B, SomeTy<L>, G, S> {
         SampleParams {
             bias: self.bias,
@@ -102,6 +108,7 @@ impl<B: OptionTy, G: OptionTy, S: OptionTy> SampleParams<B, NoneTy, G, S> {
 
 impl<B: OptionTy, L: OptionTy, S: OptionTy> SampleParams<B, L, NoneTy, S> {
     /// Sets the 'Lod' image operand
+    #[inline]
     pub fn grad<T>(self, grad_x: T, grad_y: T) -> SampleParams<B, L, SomeTy<(T, T)>, S> {
         SampleParams {
             bias: self.bias,
@@ -114,6 +121,7 @@ impl<B: OptionTy, L: OptionTy, S: OptionTy> SampleParams<B, L, NoneTy, S> {
 
 impl<B: OptionTy, L: OptionTy, G: OptionTy> SampleParams<B, L, G, NoneTy> {
     /// Sets the 'Sample' image operand
+    #[inline]
     pub fn sample_index<S>(self, sample_index: S) -> SampleParams<B, L, G, SomeTy<S>> {
         SampleParams {
             bias: self.bias,
