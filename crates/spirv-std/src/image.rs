@@ -136,6 +136,7 @@ impl<
     /// Fetch a single texel with a sampler set at compile time
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageFetch")]
+    #[inline]
     pub fn fetch<I>(
         &self,
         coordinate: impl ImageCoordinate<I, DIM, ARRAYED>,
@@ -165,6 +166,7 @@ impl<
     /// `lod` is also known as `level` in WGSL's `textureLoad`
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageFetch")]
+    #[inline]
     pub fn fetch_with_lod<I>(
         &self,
         coordinate: impl ImageCoordinate<I, DIM, ARRAYED>,
@@ -238,6 +240,7 @@ impl<
 
     /// Sample texels at `coord` from the image using `sampler`.
     #[crate::macros::gpu_only]
+    #[inline]
     pub fn sample<F>(
         &self,
         sampler: Sampler,
@@ -272,6 +275,7 @@ impl<
     /// Sample texels at `coord` from the image using `sampler`, after adding the input bias to the
     /// implicit level of detail.
     #[crate::macros::gpu_only]
+    #[inline]
     pub fn sample_bias<F>(
         &self,
         sampler: Sampler,
@@ -310,6 +314,7 @@ impl<
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageSampleExplicitLod")]
     /// Sample the image at a coordinate by a lod
+    #[inline]
     pub fn sample_by_lod<F>(
         &self,
         sampler: Sampler,
@@ -346,6 +351,7 @@ impl<
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageSampleExplicitLod")]
     /// Sample the image based on a gradient formed by (dx, dy). Specifically, ([du/dx, dv/dx], [du/dy, dv/dy])
+    #[inline]
     pub fn sample_by_gradient<F>(
         &self,
         sampler: Sampler,
@@ -385,6 +391,7 @@ impl<
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageSampleDrefImplicitLod")]
     /// Sample the image's depth reference
+    #[inline]
     pub fn sample_depth_reference<F>(
         &self,
         sampler: Sampler,
@@ -421,6 +428,7 @@ impl<
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageSampleDrefExplicitLod")]
     /// Sample the image's depth reference based on an explicit lod
+    #[inline]
     pub fn sample_depth_reference_by_lod<F>(
         &self,
         sampler: Sampler,
@@ -461,6 +469,7 @@ impl<
     #[doc(alias = "OpImageSampleDrefExplicitLod")]
     /// Sample the image's depth reference based on a gradient formed by (dx, dy).
     /// Specifically, ([du/dx, dv/dx], [du/dy, dv/dy])
+    #[inline]
     pub fn sample_depth_reference_by_gradient<F>(
         &self,
         sampler: Sampler,
@@ -523,6 +532,7 @@ impl<
     /// Sample the image with a project coordinate
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageSampleProjImplicitLod")]
+    #[inline]
     pub fn sample_with_project_coordinate<F>(
         &self,
         sampler: Sampler,
@@ -556,6 +566,7 @@ impl<
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageSampleProjExplicitLod")]
     /// Sample the image with a project coordinate by a lod
+    #[inline]
     pub fn sample_with_project_coordinate_by_lod<F>(
         &self,
         sampler: Sampler,
@@ -592,6 +603,7 @@ impl<
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageSampleProjExplicitLod")]
     /// Sample the image with a project coordinate based on a gradient formed by (dx, dy). Specifically, ([du/dx, dv/dx], [du/dy, dv/dy])
+    #[inline]
     pub fn sample_with_project_coordinate_by_gradient<F>(
         &self,
         sampler: Sampler,
@@ -631,6 +643,7 @@ impl<
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageSampleProjDrefImplicitLod")]
     /// Sample the image's depth reference with the project coordinate
+    #[inline]
     pub fn sample_depth_reference_with_project_coordinate<F>(
         &self,
         sampler: Sampler,
@@ -667,6 +680,7 @@ impl<
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageSampleProjDrefExplicitLod")]
     /// Sample the image's depth reference with the project coordinate based on an explicit lod
+    #[inline]
     pub fn sample_depth_reference_with_project_coordinate_by_lod<F>(
         &self,
         sampler: Sampler,
@@ -707,6 +721,7 @@ impl<
     #[doc(alias = "OpImageSampleProjDrefExplicitLod")]
     /// Sample the image's depth reference with the project coordinate based on a gradient formed by (dx, dy).
     /// Specifically, ([du/dx, dv/dx], [du/dy, dv/dy])
+    #[inline]
     pub fn sample_depth_reference_with_project_coordinate_by_gradient<F>(
         &self,
         sampler: Sampler,
@@ -770,6 +785,7 @@ impl<
     /// Read a texel from an image without a sampler.
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageRead")]
+    #[inline]
     pub fn read<I>(
         &self,
         coordinate: impl ImageCoordinate<I, DIM, ARRAYED>,
@@ -799,6 +815,7 @@ impl<
     /// Write a texel to an image without a sampler.
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageWrite")]
+    #[inline]
     pub unsafe fn write<I>(
         &self,
         coordinate: impl ImageCoordinate<I, DIM, ARRAYED>,
@@ -844,6 +861,7 @@ impl<
     /// Read a texel from an image without a sampler.
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageRead")]
+    #[inline]
     pub fn read<I>(
         &self,
         coordinate: impl ImageCoordinate<I, DIM, ARRAYED>,
@@ -873,6 +891,7 @@ impl<
     /// Write a texel to an image without a sampler.
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageWrite")]
+    #[inline]
     pub unsafe fn write<I>(
         &self,
         coordinate: impl ImageCoordinate<I, DIM, ARRAYED>,
@@ -918,6 +937,7 @@ impl<
     /// Note: Vulkan only allows the read if the first two components of the coordinate are zero.
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageRead")]
+    #[inline]
     pub fn read_subpass<I>(
         &self,
         coordinate: impl ImageCoordinateSubpassData<I, ARRAYED>,
@@ -959,6 +979,7 @@ impl<
     /// Query the number of mipmap levels.
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageQueryLevels")]
+    #[inline]
     pub fn query_levels(&self) -> u32
     where
         Self: HasQueryLevels,
@@ -984,6 +1005,7 @@ impl<
     /// detail relative to the base level.
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageQueryLod")]
+    #[inline]
     pub fn query_lod(
         &self,
         sampler: Sampler,
@@ -1023,6 +1045,7 @@ impl<
     /// Query the dimensions of Image, with no level of detail.
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageQuerySize")]
+    #[inline]
     pub fn query_size<Size: ImageSizeQuery<u32, DIM, ARRAYED> + Default>(&self) -> Size
     where
         Self: HasQuerySize,
@@ -1066,6 +1089,7 @@ impl<
     /// Query the dimensions of Image at a specific level of detail.
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageQuerySizeLod")]
+    #[inline]
     pub fn query_size_lod<Size: ImageSizeQuery<u32, DIM, ARRAYED> + Default>(
         &self,
         lod: u32,
@@ -1112,6 +1136,7 @@ impl<
     /// Query the number of samples available per texel fetch in a multisample image.
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageQuerySamples")]
+    #[inline]
     pub fn query_samples(&self) -> u32 {
         let mut result = Default::default();
         unsafe {
@@ -1166,6 +1191,7 @@ impl<
 {
     /// Sample texels at `coord` from the sampled image with an implicit lod.
     #[crate::macros::gpu_only]
+    #[inline]
     pub fn sample<F>(
         &self,
         coord: impl ImageCoordinate<F, DIM, ARRAYED>,
@@ -1192,6 +1218,7 @@ impl<
 
     /// Sample texels at `coord` from the sampled image with an explicit lod.
     #[crate::macros::gpu_only]
+    #[inline]
     pub fn sample_by_lod<F>(
         &self,
         coord: impl ImageCoordinate<F, DIM, ARRAYED>,
@@ -1222,6 +1249,7 @@ impl<
     /// Query the dimensions of the image at the specified level of detail.
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageQuerySizeLod")]
+    #[inline]
     pub fn query_size_lod<Size: ImageSizeQuery<u32, DIM, ARRAYED> + Default>(
         &self,
         lod: u32,
@@ -1280,6 +1308,7 @@ impl<
     /// Available only for multisampled images.
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageQuerySize")]
+    #[inline]
     pub fn query_size<Size: ImageSizeQuery<u32, DIM, ARRAYED> + Default>(&self) -> Size
     where
         Image<
@@ -1416,6 +1445,7 @@ impl<
 {
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageFetch")]
+    #[inline]
     fn fetch_with<I>(
         &self,
         coordinate: impl ImageCoordinate<I, DIM, ARRAYED>,
@@ -1482,6 +1512,7 @@ impl<
 
     /// Sample texels at `coord` from the image using `sampler`.
     #[crate::macros::gpu_only]
+    #[inline]
     fn sample_with<F>(
         &self,
         sampler: Sampler,
@@ -1517,6 +1548,7 @@ impl<
     /// Sample the image's depth reference
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageSampleDrefImplicitLod")]
+    #[inline]
     fn sample_depth_reference_with<F>(
         &self,
         sampler: Sampler,
@@ -1554,6 +1586,7 @@ impl<
     /// Sample the image with a project coordinate
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageSampleProjImplicitLod")]
+    #[inline]
     fn sample_with_project_coordinate_with<F>(
         &self,
         sampler: Sampler,
@@ -1588,6 +1621,7 @@ impl<
     /// Sample the image's depth reference with the project coordinate
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageSampleProjDrefImplicitLod")]
+    #[inline]
     fn sample_depth_reference_with_project_coordinate_with<F>(
         &self,
         sampler: Sampler,
