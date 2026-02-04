@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustix-1.1.2/src/net/send_recv/msg.rs`."><title>msg.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="rustix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.90.0-nightly (35f603652 2025-06-29)" data-channel="nightly" data-search-js="search-179e01a3.js" data-settings-js="settings-5514c975.js" ><script src="../../../../static.files/storage-4e99c027.js"></script><script defer src="../../../../static.files/src-script-813739b1.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-340f468f.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustix/net/send_recv/</div>msg.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! [`recvmsg`], [`sendmsg`], and related functions.
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustix-1.1.3/src/net/send_recv/msg.rs`."><title>msg.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="rustix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.90.0-nightly (35f603652 2025-06-29)" data-channel="nightly" data-search-js="search-179e01a3.js" data-settings-js="settings-5514c975.js" ><script src="../../../../static.files/storage-4e99c027.js"></script><script defer src="../../../../static.files/src-script-813739b1.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-340f468f.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustix/net/send_recv/</div>msg.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! [`recvmsg`], [`sendmsg`], and related functions.
 <a href=#2 id=2 data-nosnippet>2</a>
 <a href=#3 id=3 data-nosnippet>3</a></span><span class="attr">#![allow(unsafe_code)]
 <a href=#4 id=4 data-nosnippet>4</a>
@@ -68,7 +68,7 @@
 <a href=#68 id=68 data-nosnippet>68</a>    };
 <a href=#69 id=69 data-nosnippet>69</a>    (TxTime(<span class="macro-nonterminal">$len</span>:expr)) =&gt; {
 <a href=#70 id=70 data-nosnippet>70</a>        <span class="macro-nonterminal">$crate::net::__cmsg_space</span>(
-<a href=#71 id=71 data-nosnippet>71</a>            <span class="macro-nonterminal">$len </span>* ::core::mem::size_of::&lt;u64&gt;(),
+<a href=#71 id=71 data-nosnippet>71</a>            <span class="macro-nonterminal">$len </span>* ::core::mem::size_of::&lt;::core::primitive::u64&gt;(),
 <a href=#72 id=72 data-nosnippet>72</a>        )
 <a href=#73 id=73 data-nosnippet>73</a>    };
 <a href=#74 id=74 data-nosnippet>74</a>
@@ -101,15 +101,15 @@
 <a href=#101 id=101 data-nosnippet>101</a>    };
 <a href=#102 id=102 data-nosnippet>102</a>    (TxTime(<span class="macro-nonterminal">$len</span>:expr)) =&gt; {
 <a href=#103 id=103 data-nosnippet>103</a>        <span class="macro-nonterminal">$crate::net::__cmsg_aligned_space</span>(
-<a href=#104 id=104 data-nosnippet>104</a>            <span class="macro-nonterminal">$len </span>* ::core::mem::size_of::&lt;u64&gt;(),
+<a href=#104 id=104 data-nosnippet>104</a>            <span class="macro-nonterminal">$len </span>* ::core::mem::size_of::&lt;::core::primitive::u64&gt;(),
 <a href=#105 id=105 data-nosnippet>105</a>        )
 <a href=#106 id=106 data-nosnippet>106</a>    };
 <a href=#107 id=107 data-nosnippet>107</a>
 <a href=#108 id=108 data-nosnippet>108</a>    <span class="comment">// Combo Rules
 <a href=#109 id=109 data-nosnippet>109</a>    </span>(<span class="macro-nonterminal">$firstid</span>:ident(<span class="macro-nonterminal">$firstex</span>:expr), $(<span class="macro-nonterminal">$restid</span>:ident(<span class="macro-nonterminal">$restex</span>:expr)),<span class="kw-2">*</span>) =&gt; {{
-<a href=#110 id=110 data-nosnippet>110</a>        <span class="kw">let </span>sum = <span class="macro">cmsg_aligned_space!</span>(<span class="macro-nonterminal">$firstid</span>(<span class="macro-nonterminal">$firstex</span>));
+<a href=#110 id=110 data-nosnippet>110</a>        <span class="kw">let </span>sum = <span class="macro-nonterminal">$</span><span class="macro">crate::cmsg_aligned_space!</span>(<span class="macro-nonterminal">$firstid</span>(<span class="macro-nonterminal">$firstex</span>));
 <a href=#111 id=111 data-nosnippet>111</a>        $(
-<a href=#112 id=112 data-nosnippet>112</a>            <span class="kw">let </span>sum = sum + <span class="macro">cmsg_aligned_space!</span>(<span class="macro-nonterminal">$restid</span>(<span class="macro-nonterminal">$restex</span>));
+<a href=#112 id=112 data-nosnippet>112</a>            <span class="kw">let </span>sum = sum + <span class="macro-nonterminal">$</span><span class="macro">crate::cmsg_aligned_space!</span>(<span class="macro-nonterminal">$restid</span>(<span class="macro-nonterminal">$restex</span>));
 <a href=#113 id=113 data-nosnippet>113</a>        )*
 <a href=#114 id=114 data-nosnippet>114</a>        sum
 <a href=#115 id=115 data-nosnippet>115</a>    }};
@@ -984,4 +984,43 @@
 <a href=#984 id=984 data-nosnippet>984</a>    }
 <a href=#985 id=985 data-nosnippet>985</a>
 <a href=#986 id=986 data-nosnippet>986</a>    <span class="kw">impl </span>FusedIterator <span class="kw">for </span>Messages&lt;<span class="lifetime">'_</span>&gt; {}
-<a href=#987 id=987 data-nosnippet>987</a>}</code></pre></div></section></main></body></html>
+<a href=#987 id=987 data-nosnippet>987</a>}
+<a href=#988 id=988 data-nosnippet>988</a>
+<a href=#989 id=989 data-nosnippet>989</a><span class="attr">#[cfg(test)]
+<a href=#990 id=990 data-nosnippet>990</a></span><span class="kw">mod </span>tests {
+<a href=#991 id=991 data-nosnippet>991</a>    <span class="attr">#[no_implicit_prelude]
+<a href=#992 id=992 data-nosnippet>992</a>    </span><span class="kw">mod </span>hygiene {
+<a href=#993 id=993 data-nosnippet>993</a>        <span class="attr">#[allow(unused_macros)]
+<a href=#994 id=994 data-nosnippet>994</a>        #[test]
+<a href=#995 id=995 data-nosnippet>995</a>        </span><span class="kw">fn </span>macro_hygiene() {
+<a href=#996 id=996 data-nosnippet>996</a>            <span class="comment">// This `u64` is `!Sized`, so `cmsg_space!` will fail if it tries to get its size with
+<a href=#997 id=997 data-nosnippet>997</a>            // `size_of()`.
+<a href=#998 id=998 data-nosnippet>998</a>            </span><span class="attr">#[allow(dead_code, non_camel_case_types)]
+<a href=#999 id=999 data-nosnippet>999</a>            </span><span class="kw">struct </span>u64([u8]);
+<a href=#1000 id=1000 data-nosnippet>1000</a>
+<a href=#1001 id=1001 data-nosnippet>1001</a>            <span class="comment">// Ensure that when `cmsg*_space!` calls itself recursively, it really calls itself and
+<a href=#1002 id=1002 data-nosnippet>1002</a>            // not these macros.
+<a href=#1003 id=1003 data-nosnippet>1003</a>            </span><span class="macro">macro_rules!</span> cmsg_space {
+<a href=#1004 id=1004 data-nosnippet>1004</a>                ($(<span class="macro-nonterminal">$tt</span>:tt)<span class="kw-2">*</span>) =&gt; {{
+<a href=#1005 id=1005 data-nosnippet>1005</a>                    <span class="kw">let </span>v: usize = <span class="macro">::core::panic!</span>(<span class="string">"Wrong cmsg_space! macro called"</span>);
+<a href=#1006 id=1006 data-nosnippet>1006</a>                    v
+<a href=#1007 id=1007 data-nosnippet>1007</a>                }};
+<a href=#1008 id=1008 data-nosnippet>1008</a>            }
+<a href=#1009 id=1009 data-nosnippet>1009</a>            <span class="macro">macro_rules!</span> cmsg_aligned_space {
+<a href=#1010 id=1010 data-nosnippet>1010</a>                ($(<span class="macro-nonterminal">$tt</span>:tt)<span class="kw-2">*</span>) =&gt; {{
+<a href=#1011 id=1011 data-nosnippet>1011</a>                    <span class="kw">let </span>v: usize = <span class="macro">::core::panic!</span>(<span class="string">"Wrong cmsg_aligned_space! macro called"</span>);
+<a href=#1012 id=1012 data-nosnippet>1012</a>                    v
+<a href=#1013 id=1013 data-nosnippet>1013</a>                }};
+<a href=#1014 id=1014 data-nosnippet>1014</a>            }
+<a href=#1015 id=1015 data-nosnippet>1015</a>
+<a href=#1016 id=1016 data-nosnippet>1016</a>            <span class="macro">crate::cmsg_space!</span>(ScmRights(<span class="number">1</span>));
+<a href=#1017 id=1017 data-nosnippet>1017</a>            <span class="macro">crate::cmsg_space!</span>(TxTime(<span class="number">1</span>));
+<a href=#1018 id=1018 data-nosnippet>1018</a>            <span class="attr">#[cfg(linux_kernel)]
+<a href=#1019 id=1019 data-nosnippet>1019</a>            </span>{
+<a href=#1020 id=1020 data-nosnippet>1020</a>                <span class="macro">crate::cmsg_space!</span>(ScmCredentials(<span class="number">1</span>));
+<a href=#1021 id=1021 data-nosnippet>1021</a>                <span class="macro">crate::cmsg_space!</span>(ScmRights(<span class="number">1</span>), ScmCredentials(<span class="number">1</span>), TxTime(<span class="number">1</span>));
+<a href=#1022 id=1022 data-nosnippet>1022</a>                <span class="macro">crate::cmsg_aligned_space!</span>(ScmRights(<span class="number">1</span>), ScmCredentials(<span class="number">1</span>), TxTime(<span class="number">1</span>));
+<a href=#1023 id=1023 data-nosnippet>1023</a>            }
+<a href=#1024 id=1024 data-nosnippet>1024</a>        }
+<a href=#1025 id=1025 data-nosnippet>1025</a>    }
+<a href=#1026 id=1026 data-nosnippet>1026</a>}</code></pre></div></section></main></body></html>

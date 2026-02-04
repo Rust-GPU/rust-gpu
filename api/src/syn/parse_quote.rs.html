@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/syn-2.0.111/src/parse_quote.rs`."><title>parse_quote.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="syn" data-themes="" data-resource-suffix="" data-rustdoc-version="1.90.0-nightly (35f603652 2025-06-29)" data-channel="nightly" data-search-js="search-179e01a3.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-4e99c027.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-340f468f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">syn/</div>parse_quote.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/// Quasi-quotation macro that accepts input like the [`quote!`] macro but uses
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/syn-2.0.114/src/parse_quote.rs`."><title>parse_quote.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="syn" data-themes="" data-resource-suffix="" data-rustdoc-version="1.90.0-nightly (35f603652 2025-06-29)" data-channel="nightly" data-search-js="search-179e01a3.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-4e99c027.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-340f468f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">syn/</div>parse_quote.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/// Quasi-quotation macro that accepts input like the [`quote!`] macro but uses
 <a href=#2 id=2 data-nosnippet>2</a>/// type inference to figure out a return type for those tokens.
 <a href=#3 id=3 data-nosnippet>3</a>///
 <a href=#4 id=4 data-nosnippet>4</a>/// [`quote!`]: https://docs.rs/quote/1.0/quote/index.html
@@ -103,7 +103,7 @@
 <a href=#103 id=103 data-nosnippet>103</a>///         ReturnType::Type(_, ret) =&gt; quote!(#ret),
 <a href=#104 id=104 data-nosnippet>104</a>///     };
 <a href=#105 id=105 data-nosnippet>105</a>///     sig.output = parse_quote_spanned! {ret.span()=&gt;
-<a href=#106 id=106 data-nosnippet>106</a>///         -&gt; ::std::pin::Pin&lt;::std::boxed::Box&lt;dyn ::std::future::Future&lt;Output = #ret&gt;&gt;&gt;
+<a href=#106 id=106 data-nosnippet>106</a>///         -&gt; ::core::pin::Pin&lt;::alloc::boxed::Box&lt;dyn ::core::future::Future&lt;Output = #ret&gt;&gt;&gt;
 <a href=#107 id=107 data-nosnippet>107</a>///     };
 <a href=#108 id=108 data-nosnippet>108</a>/// }
 <a href=#109 id=109 data-nosnippet>109</a>/// ```
@@ -120,121 +120,125 @@
 <a href=#120 id=120 data-nosnippet>120</a>
 <a href=#121 id=121 data-nosnippet>121</a></span><span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <a href=#122 id=122 data-nosnippet>122</a><span class="kw">use </span><span class="kw">crate</span>::parse::{Parse, ParseStream, Parser};
-<a href=#123 id=123 data-nosnippet>123</a><span class="kw">use </span>proc_macro2::TokenStream;
-<a href=#124 id=124 data-nosnippet>124</a>
-<a href=#125 id=125 data-nosnippet>125</a><span class="comment">// Not public API.
-<a href=#126 id=126 data-nosnippet>126</a></span><span class="attr">#[doc(hidden)]
-<a href=#127 id=127 data-nosnippet>127</a>#[track_caller]
-<a href=#128 id=128 data-nosnippet>128</a></span><span class="kw">pub fn </span>parse&lt;T: ParseQuote&gt;(token_stream: TokenStream) -&gt; T {
-<a href=#129 id=129 data-nosnippet>129</a>    <span class="kw">let </span>parser = T::parse;
-<a href=#130 id=130 data-nosnippet>130</a>    <span class="kw">match </span>parser.parse2(token_stream) {
-<a href=#131 id=131 data-nosnippet>131</a>        <span class="prelude-val">Ok</span>(t) =&gt; t,
-<a href=#132 id=132 data-nosnippet>132</a>        <span class="prelude-val">Err</span>(err) =&gt; <span class="macro">panic!</span>(<span class="string">"{}"</span>, err),
-<a href=#133 id=133 data-nosnippet>133</a>    }
-<a href=#134 id=134 data-nosnippet>134</a>}
-<a href=#135 id=135 data-nosnippet>135</a>
-<a href=#136 id=136 data-nosnippet>136</a><span class="attr">#[doc(hidden)]
-<a href=#137 id=137 data-nosnippet>137</a></span><span class="kw">pub trait </span>ParseQuote: Sized {
-<a href=#138 id=138 data-nosnippet>138</a>    <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt;;
-<a href=#139 id=139 data-nosnippet>139</a>}
-<a href=#140 id=140 data-nosnippet>140</a>
-<a href=#141 id=141 data-nosnippet>141</a><span class="kw">impl</span>&lt;T: Parse&gt; ParseQuote <span class="kw">for </span>T {
-<a href=#142 id=142 data-nosnippet>142</a>    <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-<a href=#143 id=143 data-nosnippet>143</a>        &lt;T <span class="kw">as </span>Parse&gt;::parse(input)
-<a href=#144 id=144 data-nosnippet>144</a>    }
-<a href=#145 id=145 data-nosnippet>145</a>}
-<a href=#146 id=146 data-nosnippet>146</a>
-<a href=#147 id=147 data-nosnippet>147</a><span class="comment">////////////////////////////////////////////////////////////////////////////////
-<a href=#148 id=148 data-nosnippet>148</a>// Any other types that we want `parse_quote!` to be able to parse.
-<a href=#149 id=149 data-nosnippet>149</a>
-<a href=#150 id=150 data-nosnippet>150</a></span><span class="kw">use </span><span class="kw">crate</span>::punctuated::Punctuated;
-<a href=#151 id=151 data-nosnippet>151</a><span class="attr">#[cfg(any(feature = <span class="string">"full"</span>, feature = <span class="string">"derive"</span>))]
-<a href=#152 id=152 data-nosnippet>152</a></span><span class="kw">use crate</span>::{attr, Attribute, Field, FieldMutability, Ident, Type, Visibility};
-<a href=#153 id=153 data-nosnippet>153</a><span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
-<a href=#154 id=154 data-nosnippet>154</a></span><span class="kw">use crate</span>::{Arm, Block, Pat, Stmt};
-<a href=#155 id=155 data-nosnippet>155</a>
-<a href=#156 id=156 data-nosnippet>156</a><span class="attr">#[cfg(any(feature = <span class="string">"full"</span>, feature = <span class="string">"derive"</span>))]
-<a href=#157 id=157 data-nosnippet>157</a></span><span class="kw">impl </span>ParseQuote <span class="kw">for </span>Attribute {
-<a href=#158 id=158 data-nosnippet>158</a>    <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-<a href=#159 id=159 data-nosnippet>159</a>        <span class="kw">if </span>input.peek(<span class="macro">Token!</span>[#]) &amp;&amp; input.peek2(<span class="macro">Token!</span>[!]) {
-<a href=#160 id=160 data-nosnippet>160</a>            attr::parsing::single_parse_inner(input)
-<a href=#161 id=161 data-nosnippet>161</a>        } <span class="kw">else </span>{
-<a href=#162 id=162 data-nosnippet>162</a>            attr::parsing::single_parse_outer(input)
-<a href=#163 id=163 data-nosnippet>163</a>        }
-<a href=#164 id=164 data-nosnippet>164</a>    }
-<a href=#165 id=165 data-nosnippet>165</a>}
-<a href=#166 id=166 data-nosnippet>166</a>
-<a href=#167 id=167 data-nosnippet>167</a><span class="attr">#[cfg(any(feature = <span class="string">"full"</span>, feature = <span class="string">"derive"</span>))]
-<a href=#168 id=168 data-nosnippet>168</a></span><span class="kw">impl </span>ParseQuote <span class="kw">for </span>Vec&lt;Attribute&gt; {
-<a href=#169 id=169 data-nosnippet>169</a>    <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-<a href=#170 id=170 data-nosnippet>170</a>        <span class="kw">let </span><span class="kw-2">mut </span>attrs = Vec::new();
-<a href=#171 id=171 data-nosnippet>171</a>        <span class="kw">while </span>!input.is_empty() {
-<a href=#172 id=172 data-nosnippet>172</a>            attrs.push(ParseQuote::parse(input)<span class="question-mark">?</span>);
-<a href=#173 id=173 data-nosnippet>173</a>        }
-<a href=#174 id=174 data-nosnippet>174</a>        <span class="prelude-val">Ok</span>(attrs)
-<a href=#175 id=175 data-nosnippet>175</a>    }
-<a href=#176 id=176 data-nosnippet>176</a>}
-<a href=#177 id=177 data-nosnippet>177</a>
-<a href=#178 id=178 data-nosnippet>178</a><span class="attr">#[cfg(any(feature = <span class="string">"full"</span>, feature = <span class="string">"derive"</span>))]
-<a href=#179 id=179 data-nosnippet>179</a></span><span class="kw">impl </span>ParseQuote <span class="kw">for </span>Field {
-<a href=#180 id=180 data-nosnippet>180</a>    <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-<a href=#181 id=181 data-nosnippet>181</a>        <span class="kw">let </span>attrs = input.call(Attribute::parse_outer)<span class="question-mark">?</span>;
-<a href=#182 id=182 data-nosnippet>182</a>        <span class="kw">let </span>vis: Visibility = input.parse()<span class="question-mark">?</span>;
-<a href=#183 id=183 data-nosnippet>183</a>
-<a href=#184 id=184 data-nosnippet>184</a>        <span class="kw">let </span>ident: <span class="prelude-ty">Option</span>&lt;Ident&gt;;
-<a href=#185 id=185 data-nosnippet>185</a>        <span class="kw">let </span>colon_token: <span class="prelude-ty">Option</span>&lt;<span class="macro">Token!</span>[:]&gt;;
-<a href=#186 id=186 data-nosnippet>186</a>        <span class="kw">let </span>is_named = input.peek(Ident) &amp;&amp; input.peek2(<span class="macro">Token!</span>[:]) &amp;&amp; !input.peek2(<span class="macro">Token!</span>[::]);
-<a href=#187 id=187 data-nosnippet>187</a>        <span class="kw">if </span>is_named {
-<a href=#188 id=188 data-nosnippet>188</a>            ident = <span class="prelude-val">Some</span>(input.parse()<span class="question-mark">?</span>);
-<a href=#189 id=189 data-nosnippet>189</a>            colon_token = <span class="prelude-val">Some</span>(input.parse()<span class="question-mark">?</span>);
-<a href=#190 id=190 data-nosnippet>190</a>        } <span class="kw">else </span>{
-<a href=#191 id=191 data-nosnippet>191</a>            ident = <span class="prelude-val">None</span>;
-<a href=#192 id=192 data-nosnippet>192</a>            colon_token = <span class="prelude-val">None</span>;
-<a href=#193 id=193 data-nosnippet>193</a>        }
-<a href=#194 id=194 data-nosnippet>194</a>
-<a href=#195 id=195 data-nosnippet>195</a>        <span class="kw">let </span>ty: Type = input.parse()<span class="question-mark">?</span>;
-<a href=#196 id=196 data-nosnippet>196</a>
-<a href=#197 id=197 data-nosnippet>197</a>        <span class="prelude-val">Ok</span>(Field {
-<a href=#198 id=198 data-nosnippet>198</a>            attrs,
-<a href=#199 id=199 data-nosnippet>199</a>            vis,
-<a href=#200 id=200 data-nosnippet>200</a>            mutability: FieldMutability::None,
-<a href=#201 id=201 data-nosnippet>201</a>            ident,
-<a href=#202 id=202 data-nosnippet>202</a>            colon_token,
-<a href=#203 id=203 data-nosnippet>203</a>            ty,
-<a href=#204 id=204 data-nosnippet>204</a>        })
-<a href=#205 id=205 data-nosnippet>205</a>    }
-<a href=#206 id=206 data-nosnippet>206</a>}
-<a href=#207 id=207 data-nosnippet>207</a>
-<a href=#208 id=208 data-nosnippet>208</a><span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
-<a href=#209 id=209 data-nosnippet>209</a></span><span class="kw">impl </span>ParseQuote <span class="kw">for </span>Pat {
-<a href=#210 id=210 data-nosnippet>210</a>    <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-<a href=#211 id=211 data-nosnippet>211</a>        Pat::parse_multi_with_leading_vert(input)
-<a href=#212 id=212 data-nosnippet>212</a>    }
-<a href=#213 id=213 data-nosnippet>213</a>}
-<a href=#214 id=214 data-nosnippet>214</a>
-<a href=#215 id=215 data-nosnippet>215</a><span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
-<a href=#216 id=216 data-nosnippet>216</a></span><span class="kw">impl </span>ParseQuote <span class="kw">for </span>Box&lt;Pat&gt; {
-<a href=#217 id=217 data-nosnippet>217</a>    <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-<a href=#218 id=218 data-nosnippet>218</a>        &lt;Pat <span class="kw">as </span>ParseQuote&gt;::parse(input).map(Box::new)
-<a href=#219 id=219 data-nosnippet>219</a>    }
-<a href=#220 id=220 data-nosnippet>220</a>}
-<a href=#221 id=221 data-nosnippet>221</a>
-<a href=#222 id=222 data-nosnippet>222</a><span class="kw">impl</span>&lt;T: Parse, P: Parse&gt; ParseQuote <span class="kw">for </span>Punctuated&lt;T, P&gt; {
-<a href=#223 id=223 data-nosnippet>223</a>    <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-<a href=#224 id=224 data-nosnippet>224</a>        <span class="self">Self</span>::parse_terminated(input)
-<a href=#225 id=225 data-nosnippet>225</a>    }
-<a href=#226 id=226 data-nosnippet>226</a>}
-<a href=#227 id=227 data-nosnippet>227</a>
-<a href=#228 id=228 data-nosnippet>228</a><span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
-<a href=#229 id=229 data-nosnippet>229</a></span><span class="kw">impl </span>ParseQuote <span class="kw">for </span>Vec&lt;Stmt&gt; {
-<a href=#230 id=230 data-nosnippet>230</a>    <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-<a href=#231 id=231 data-nosnippet>231</a>        Block::parse_within(input)
-<a href=#232 id=232 data-nosnippet>232</a>    }
-<a href=#233 id=233 data-nosnippet>233</a>}
-<a href=#234 id=234 data-nosnippet>234</a>
-<a href=#235 id=235 data-nosnippet>235</a><span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
-<a href=#236 id=236 data-nosnippet>236</a></span><span class="kw">impl </span>ParseQuote <span class="kw">for </span>Vec&lt;Arm&gt; {
-<a href=#237 id=237 data-nosnippet>237</a>    <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-<a href=#238 id=238 data-nosnippet>238</a>        Arm::parse_multiple(input)
-<a href=#239 id=239 data-nosnippet>239</a>    }
-<a href=#240 id=240 data-nosnippet>240</a>}</code></pre></div></section></main></body></html>
+<a href=#123 id=123 data-nosnippet>123</a><span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
+<a href=#124 id=124 data-nosnippet>124</a></span><span class="kw">use </span>alloc::boxed::Box;
+<a href=#125 id=125 data-nosnippet>125</a><span class="attr">#[cfg(any(feature = <span class="string">"full"</span>, feature = <span class="string">"derive"</span>))]
+<a href=#126 id=126 data-nosnippet>126</a></span><span class="kw">use </span>alloc::vec::Vec;
+<a href=#127 id=127 data-nosnippet>127</a><span class="kw">use </span>proc_macro2::TokenStream;
+<a href=#128 id=128 data-nosnippet>128</a>
+<a href=#129 id=129 data-nosnippet>129</a><span class="comment">// Not public API.
+<a href=#130 id=130 data-nosnippet>130</a></span><span class="attr">#[doc(hidden)]
+<a href=#131 id=131 data-nosnippet>131</a>#[track_caller]
+<a href=#132 id=132 data-nosnippet>132</a></span><span class="kw">pub fn </span>parse&lt;T: ParseQuote&gt;(token_stream: TokenStream) -&gt; T {
+<a href=#133 id=133 data-nosnippet>133</a>    <span class="kw">let </span>parser = T::parse;
+<a href=#134 id=134 data-nosnippet>134</a>    <span class="kw">match </span>parser.parse2(token_stream) {
+<a href=#135 id=135 data-nosnippet>135</a>        <span class="prelude-val">Ok</span>(t) =&gt; t,
+<a href=#136 id=136 data-nosnippet>136</a>        <span class="prelude-val">Err</span>(err) =&gt; <span class="macro">panic!</span>(<span class="string">"{}"</span>, err),
+<a href=#137 id=137 data-nosnippet>137</a>    }
+<a href=#138 id=138 data-nosnippet>138</a>}
+<a href=#139 id=139 data-nosnippet>139</a>
+<a href=#140 id=140 data-nosnippet>140</a><span class="attr">#[doc(hidden)]
+<a href=#141 id=141 data-nosnippet>141</a></span><span class="kw">pub trait </span>ParseQuote: Sized {
+<a href=#142 id=142 data-nosnippet>142</a>    <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt;;
+<a href=#143 id=143 data-nosnippet>143</a>}
+<a href=#144 id=144 data-nosnippet>144</a>
+<a href=#145 id=145 data-nosnippet>145</a><span class="kw">impl</span>&lt;T: Parse&gt; ParseQuote <span class="kw">for </span>T {
+<a href=#146 id=146 data-nosnippet>146</a>    <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+<a href=#147 id=147 data-nosnippet>147</a>        &lt;T <span class="kw">as </span>Parse&gt;::parse(input)
+<a href=#148 id=148 data-nosnippet>148</a>    }
+<a href=#149 id=149 data-nosnippet>149</a>}
+<a href=#150 id=150 data-nosnippet>150</a>
+<a href=#151 id=151 data-nosnippet>151</a><span class="comment">////////////////////////////////////////////////////////////////////////////////
+<a href=#152 id=152 data-nosnippet>152</a>// Any other types that we want `parse_quote!` to be able to parse.
+<a href=#153 id=153 data-nosnippet>153</a>
+<a href=#154 id=154 data-nosnippet>154</a></span><span class="kw">use </span><span class="kw">crate</span>::punctuated::Punctuated;
+<a href=#155 id=155 data-nosnippet>155</a><span class="attr">#[cfg(any(feature = <span class="string">"full"</span>, feature = <span class="string">"derive"</span>))]
+<a href=#156 id=156 data-nosnippet>156</a></span><span class="kw">use crate</span>::{attr, Attribute, Field, FieldMutability, Ident, Type, Visibility};
+<a href=#157 id=157 data-nosnippet>157</a><span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
+<a href=#158 id=158 data-nosnippet>158</a></span><span class="kw">use crate</span>::{Arm, Block, Pat, Stmt};
+<a href=#159 id=159 data-nosnippet>159</a>
+<a href=#160 id=160 data-nosnippet>160</a><span class="attr">#[cfg(any(feature = <span class="string">"full"</span>, feature = <span class="string">"derive"</span>))]
+<a href=#161 id=161 data-nosnippet>161</a></span><span class="kw">impl </span>ParseQuote <span class="kw">for </span>Attribute {
+<a href=#162 id=162 data-nosnippet>162</a>    <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+<a href=#163 id=163 data-nosnippet>163</a>        <span class="kw">if </span>input.peek(<span class="macro">Token!</span>[#]) &amp;&amp; input.peek2(<span class="macro">Token!</span>[!]) {
+<a href=#164 id=164 data-nosnippet>164</a>            attr::parsing::single_parse_inner(input)
+<a href=#165 id=165 data-nosnippet>165</a>        } <span class="kw">else </span>{
+<a href=#166 id=166 data-nosnippet>166</a>            attr::parsing::single_parse_outer(input)
+<a href=#167 id=167 data-nosnippet>167</a>        }
+<a href=#168 id=168 data-nosnippet>168</a>    }
+<a href=#169 id=169 data-nosnippet>169</a>}
+<a href=#170 id=170 data-nosnippet>170</a>
+<a href=#171 id=171 data-nosnippet>171</a><span class="attr">#[cfg(any(feature = <span class="string">"full"</span>, feature = <span class="string">"derive"</span>))]
+<a href=#172 id=172 data-nosnippet>172</a></span><span class="kw">impl </span>ParseQuote <span class="kw">for </span>Vec&lt;Attribute&gt; {
+<a href=#173 id=173 data-nosnippet>173</a>    <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+<a href=#174 id=174 data-nosnippet>174</a>        <span class="kw">let </span><span class="kw-2">mut </span>attrs = Vec::new();
+<a href=#175 id=175 data-nosnippet>175</a>        <span class="kw">while </span>!input.is_empty() {
+<a href=#176 id=176 data-nosnippet>176</a>            attrs.push(ParseQuote::parse(input)<span class="question-mark">?</span>);
+<a href=#177 id=177 data-nosnippet>177</a>        }
+<a href=#178 id=178 data-nosnippet>178</a>        <span class="prelude-val">Ok</span>(attrs)
+<a href=#179 id=179 data-nosnippet>179</a>    }
+<a href=#180 id=180 data-nosnippet>180</a>}
+<a href=#181 id=181 data-nosnippet>181</a>
+<a href=#182 id=182 data-nosnippet>182</a><span class="attr">#[cfg(any(feature = <span class="string">"full"</span>, feature = <span class="string">"derive"</span>))]
+<a href=#183 id=183 data-nosnippet>183</a></span><span class="kw">impl </span>ParseQuote <span class="kw">for </span>Field {
+<a href=#184 id=184 data-nosnippet>184</a>    <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+<a href=#185 id=185 data-nosnippet>185</a>        <span class="kw">let </span>attrs = input.call(Attribute::parse_outer)<span class="question-mark">?</span>;
+<a href=#186 id=186 data-nosnippet>186</a>        <span class="kw">let </span>vis: Visibility = input.parse()<span class="question-mark">?</span>;
+<a href=#187 id=187 data-nosnippet>187</a>
+<a href=#188 id=188 data-nosnippet>188</a>        <span class="kw">let </span>ident: <span class="prelude-ty">Option</span>&lt;Ident&gt;;
+<a href=#189 id=189 data-nosnippet>189</a>        <span class="kw">let </span>colon_token: <span class="prelude-ty">Option</span>&lt;<span class="macro">Token!</span>[:]&gt;;
+<a href=#190 id=190 data-nosnippet>190</a>        <span class="kw">let </span>is_named = input.peek(Ident) &amp;&amp; input.peek2(<span class="macro">Token!</span>[:]) &amp;&amp; !input.peek2(<span class="macro">Token!</span>[::]);
+<a href=#191 id=191 data-nosnippet>191</a>        <span class="kw">if </span>is_named {
+<a href=#192 id=192 data-nosnippet>192</a>            ident = <span class="prelude-val">Some</span>(input.parse()<span class="question-mark">?</span>);
+<a href=#193 id=193 data-nosnippet>193</a>            colon_token = <span class="prelude-val">Some</span>(input.parse()<span class="question-mark">?</span>);
+<a href=#194 id=194 data-nosnippet>194</a>        } <span class="kw">else </span>{
+<a href=#195 id=195 data-nosnippet>195</a>            ident = <span class="prelude-val">None</span>;
+<a href=#196 id=196 data-nosnippet>196</a>            colon_token = <span class="prelude-val">None</span>;
+<a href=#197 id=197 data-nosnippet>197</a>        }
+<a href=#198 id=198 data-nosnippet>198</a>
+<a href=#199 id=199 data-nosnippet>199</a>        <span class="kw">let </span>ty: Type = input.parse()<span class="question-mark">?</span>;
+<a href=#200 id=200 data-nosnippet>200</a>
+<a href=#201 id=201 data-nosnippet>201</a>        <span class="prelude-val">Ok</span>(Field {
+<a href=#202 id=202 data-nosnippet>202</a>            attrs,
+<a href=#203 id=203 data-nosnippet>203</a>            vis,
+<a href=#204 id=204 data-nosnippet>204</a>            mutability: FieldMutability::None,
+<a href=#205 id=205 data-nosnippet>205</a>            ident,
+<a href=#206 id=206 data-nosnippet>206</a>            colon_token,
+<a href=#207 id=207 data-nosnippet>207</a>            ty,
+<a href=#208 id=208 data-nosnippet>208</a>        })
+<a href=#209 id=209 data-nosnippet>209</a>    }
+<a href=#210 id=210 data-nosnippet>210</a>}
+<a href=#211 id=211 data-nosnippet>211</a>
+<a href=#212 id=212 data-nosnippet>212</a><span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
+<a href=#213 id=213 data-nosnippet>213</a></span><span class="kw">impl </span>ParseQuote <span class="kw">for </span>Pat {
+<a href=#214 id=214 data-nosnippet>214</a>    <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+<a href=#215 id=215 data-nosnippet>215</a>        Pat::parse_multi_with_leading_vert(input)
+<a href=#216 id=216 data-nosnippet>216</a>    }
+<a href=#217 id=217 data-nosnippet>217</a>}
+<a href=#218 id=218 data-nosnippet>218</a>
+<a href=#219 id=219 data-nosnippet>219</a><span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
+<a href=#220 id=220 data-nosnippet>220</a></span><span class="kw">impl </span>ParseQuote <span class="kw">for </span>Box&lt;Pat&gt; {
+<a href=#221 id=221 data-nosnippet>221</a>    <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+<a href=#222 id=222 data-nosnippet>222</a>        &lt;Pat <span class="kw">as </span>ParseQuote&gt;::parse(input).map(Box::new)
+<a href=#223 id=223 data-nosnippet>223</a>    }
+<a href=#224 id=224 data-nosnippet>224</a>}
+<a href=#225 id=225 data-nosnippet>225</a>
+<a href=#226 id=226 data-nosnippet>226</a><span class="kw">impl</span>&lt;T: Parse, P: Parse&gt; ParseQuote <span class="kw">for </span>Punctuated&lt;T, P&gt; {
+<a href=#227 id=227 data-nosnippet>227</a>    <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+<a href=#228 id=228 data-nosnippet>228</a>        <span class="self">Self</span>::parse_terminated(input)
+<a href=#229 id=229 data-nosnippet>229</a>    }
+<a href=#230 id=230 data-nosnippet>230</a>}
+<a href=#231 id=231 data-nosnippet>231</a>
+<a href=#232 id=232 data-nosnippet>232</a><span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
+<a href=#233 id=233 data-nosnippet>233</a></span><span class="kw">impl </span>ParseQuote <span class="kw">for </span>Vec&lt;Stmt&gt; {
+<a href=#234 id=234 data-nosnippet>234</a>    <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+<a href=#235 id=235 data-nosnippet>235</a>        Block::parse_within(input)
+<a href=#236 id=236 data-nosnippet>236</a>    }
+<a href=#237 id=237 data-nosnippet>237</a>}
+<a href=#238 id=238 data-nosnippet>238</a>
+<a href=#239 id=239 data-nosnippet>239</a><span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
+<a href=#240 id=240 data-nosnippet>240</a></span><span class="kw">impl </span>ParseQuote <span class="kw">for </span>Vec&lt;Arm&gt; {
+<a href=#241 id=241 data-nosnippet>241</a>    <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+<a href=#242 id=242 data-nosnippet>242</a>        Arm::parse_multiple(input)
+<a href=#243 id=243 data-nosnippet>243</a>    }
+<a href=#244 id=244 data-nosnippet>244</a>}</code></pre></div></section></main></body></html>
