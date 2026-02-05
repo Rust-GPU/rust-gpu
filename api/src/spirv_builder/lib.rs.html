@@ -719,442 +719,460 @@
 <a href=#719 id=719 data-nosnippet>719</a>        <span class="self">self
 <a href=#720 id=720 data-nosnippet>720</a>    </span>}
 <a href=#721 id=721 data-nosnippet>721</a>
-<a href=#722 id=722 data-nosnippet>722</a>    <span class="doccomment">/// Builds the module
-<a href=#723 id=723 data-nosnippet>723</a>    </span><span class="kw">pub fn </span>build(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;CompileResult, SpirvBuilderError&gt; {
-<a href=#724 id=724 data-nosnippet>724</a>        <span class="kw">let </span>metadata_file = invoke_rustc(<span class="self">self</span>)<span class="question-mark">?</span>;
-<a href=#725 id=725 data-nosnippet>725</a>        <span class="kw">if </span><span class="self">self</span>.build_script.get_dependency_info() {
-<a href=#726 id=726 data-nosnippet>726</a>            leaf_deps(<span class="kw-2">&amp;</span>metadata_file, |artifact| {
-<a href=#727 id=727 data-nosnippet>727</a>                <span class="macro">println!</span>(<span class="string">"cargo:rerun-if-changed={artifact}"</span>);
-<a href=#728 id=728 data-nosnippet>728</a>            })
-<a href=#729 id=729 data-nosnippet>729</a>            <span class="comment">// Close enough
-<a href=#730 id=730 data-nosnippet>730</a>            </span>.map_err(SpirvBuilderError::MetadataFileMissing)<span class="question-mark">?</span>;
-<a href=#731 id=731 data-nosnippet>731</a>        }
-<a href=#732 id=732 data-nosnippet>732</a>        <span class="kw">let </span>metadata = <span class="self">self</span>.parse_metadata_file(<span class="kw-2">&amp;</span>metadata_file)<span class="question-mark">?</span>;
-<a href=#733 id=733 data-nosnippet>733</a>
-<a href=#734 id=734 data-nosnippet>734</a>        <span class="prelude-val">Ok</span>(metadata)
-<a href=#735 id=735 data-nosnippet>735</a>    }
-<a href=#736 id=736 data-nosnippet>736</a>
-<a href=#737 id=737 data-nosnippet>737</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>parse_metadata_file(
-<a href=#738 id=738 data-nosnippet>738</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
-<a href=#739 id=739 data-nosnippet>739</a>        at: <span class="kw-2">&amp;</span>Path,
-<a href=#740 id=740 data-nosnippet>740</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;CompileResult, SpirvBuilderError&gt; {
-<a href=#741 id=741 data-nosnippet>741</a>        <span class="kw">let </span>metadata_contents = File::open(at).map_err(SpirvBuilderError::MetadataFileMissing)<span class="question-mark">?</span>;
-<a href=#742 id=742 data-nosnippet>742</a>        <span class="comment">// FIXME(eddyb) move this functionality into `rustc_codegen_spirv_types`.
-<a href=#743 id=743 data-nosnippet>743</a>        </span><span class="kw">let </span>metadata: CompileResult =
-<a href=#744 id=744 data-nosnippet>744</a>            rustc_codegen_spirv_types::serde_json::from_reader(BufReader::new(metadata_contents))
-<a href=#745 id=745 data-nosnippet>745</a>                .map_err(SpirvBuilderError::MetadataFileMalformed)<span class="question-mark">?</span>;
-<a href=#746 id=746 data-nosnippet>746</a>        <span class="kw">match </span><span class="kw-2">&amp;</span>metadata.module {
-<a href=#747 id=747 data-nosnippet>747</a>            ModuleResult::SingleModule(spirv_module) =&gt; {
-<a href=#748 id=748 data-nosnippet>748</a>                <span class="macro">assert!</span>(!<span class="self">self</span>.multimodule);
-<a href=#749 id=749 data-nosnippet>749</a>                <span class="kw">if </span><span class="self">self</span>.build_script.get_env_shader_spv_path() {
-<a href=#750 id=750 data-nosnippet>750</a>                    <span class="kw">let </span>env_var = <span class="macro">format!</span>(
-<a href=#751 id=751 data-nosnippet>751</a>                        <span class="string">"{}.spv"</span>,
-<a href=#752 id=752 data-nosnippet>752</a>                        at.file_name()
-<a href=#753 id=753 data-nosnippet>753</a>                            .unwrap()
-<a href=#754 id=754 data-nosnippet>754</a>                            .to_str()
-<a href=#755 id=755 data-nosnippet>755</a>                            .unwrap()
-<a href=#756 id=756 data-nosnippet>756</a>                            .strip_suffix(ARTIFACT_SUFFIX)
-<a href=#757 id=757 data-nosnippet>757</a>                            .unwrap()
-<a href=#758 id=758 data-nosnippet>758</a>                    );
-<a href=#759 id=759 data-nosnippet>759</a>                    <span class="macro">println!</span>(<span class="string">"cargo::rustc-env={}={}"</span>, env_var, spirv_module.display());
-<a href=#760 id=760 data-nosnippet>760</a>                }
-<a href=#761 id=761 data-nosnippet>761</a>            }
-<a href=#762 id=762 data-nosnippet>762</a>            ModuleResult::MultiModule(<span class="kw">_</span>) =&gt; {
-<a href=#763 id=763 data-nosnippet>763</a>                <span class="macro">assert!</span>(<span class="self">self</span>.multimodule);
-<a href=#764 id=764 data-nosnippet>764</a>            }
-<a href=#765 id=765 data-nosnippet>765</a>        }
-<a href=#766 id=766 data-nosnippet>766</a>        <span class="prelude-val">Ok</span>(metadata)
-<a href=#767 id=767 data-nosnippet>767</a>    }
-<a href=#768 id=768 data-nosnippet>768</a>}
-<a href=#769 id=769 data-nosnippet>769</a>
-<a href=#770 id=770 data-nosnippet>770</a><span class="comment">// https://github.com/rust-lang/cargo/blob/1857880b5124580c4aeb4e8bc5f1198f491d61b1/src/cargo/util/paths.rs#L29-L52
-<a href=#771 id=771 data-nosnippet>771</a></span><span class="kw">fn </span>dylib_path_envvar() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str {
-<a href=#772 id=772 data-nosnippet>772</a>    <span class="kw">if </span><span class="macro">cfg!</span>(windows) {
-<a href=#773 id=773 data-nosnippet>773</a>        <span class="string">"PATH"
-<a href=#774 id=774 data-nosnippet>774</a>    </span>} <span class="kw">else if </span><span class="macro">cfg!</span>(target_os = <span class="string">"macos"</span>) {
-<a href=#775 id=775 data-nosnippet>775</a>        <span class="string">"DYLD_FALLBACK_LIBRARY_PATH"
-<a href=#776 id=776 data-nosnippet>776</a>    </span>} <span class="kw">else </span>{
-<a href=#777 id=777 data-nosnippet>777</a>        <span class="string">"LD_LIBRARY_PATH"
-<a href=#778 id=778 data-nosnippet>778</a>    </span>}
-<a href=#779 id=779 data-nosnippet>779</a>}
-<a href=#780 id=780 data-nosnippet>780</a><span class="kw">fn </span>dylib_path() -&gt; Vec&lt;PathBuf&gt; {
-<a href=#781 id=781 data-nosnippet>781</a>    <span class="kw">let </span><span class="kw-2">mut </span>dylibs = <span class="kw">match </span>env::var_os(dylib_path_envvar()) {
-<a href=#782 id=782 data-nosnippet>782</a>        <span class="prelude-val">Some</span>(var) =&gt; env::split_paths(<span class="kw-2">&amp;</span>var).collect(),
-<a href=#783 id=783 data-nosnippet>783</a>        <span class="prelude-val">None </span>=&gt; Vec::new(),
-<a href=#784 id=784 data-nosnippet>784</a>    };
-<a href=#785 id=785 data-nosnippet>785</a>    <span class="kw">if let </span><span class="prelude-val">Ok</span>(dir) = env::current_dir() {
-<a href=#786 id=786 data-nosnippet>786</a>        dylibs.push(dir);
-<a href=#787 id=787 data-nosnippet>787</a>    }
-<a href=#788 id=788 data-nosnippet>788</a>    dylibs
-<a href=#789 id=789 data-nosnippet>789</a>}
-<a href=#790 id=790 data-nosnippet>790</a>
-<a href=#791 id=791 data-nosnippet>791</a><span class="kw">fn </span>find_rustc_codegen_spirv() -&gt; <span class="prelude-ty">Result</span>&lt;PathBuf, SpirvBuilderError&gt; {
-<a href=#792 id=792 data-nosnippet>792</a>    <span class="kw">if </span><span class="macro">cfg!</span>(feature = <span class="string">"rustc_codegen_spirv"</span>) {
-<a href=#793 id=793 data-nosnippet>793</a>        <span class="kw">let </span>filename = <span class="macro">format!</span>(
-<a href=#794 id=794 data-nosnippet>794</a>            <span class="string">"{}rustc_codegen_spirv{}"</span>,
-<a href=#795 id=795 data-nosnippet>795</a>            env::consts::DLL_PREFIX,
-<a href=#796 id=796 data-nosnippet>796</a>            env::consts::DLL_SUFFIX
-<a href=#797 id=797 data-nosnippet>797</a>        );
-<a href=#798 id=798 data-nosnippet>798</a>        <span class="kw">let </span>dylib_paths = dylib_path();
-<a href=#799 id=799 data-nosnippet>799</a>        <span class="kw">for </span><span class="kw-2">mut </span>path <span class="kw">in </span>dylib_paths {
-<a href=#800 id=800 data-nosnippet>800</a>            path.push(<span class="kw-2">&amp;</span>filename);
-<a href=#801 id=801 data-nosnippet>801</a>            <span class="kw">if </span>path.is_file() {
-<a href=#802 id=802 data-nosnippet>802</a>                <span class="kw">return </span><span class="prelude-val">Ok</span>(path);
-<a href=#803 id=803 data-nosnippet>803</a>            }
-<a href=#804 id=804 data-nosnippet>804</a>        }
-<a href=#805 id=805 data-nosnippet>805</a>        <span class="macro">panic!</span>(<span class="string">"Could not find {filename} in library path"</span>);
-<a href=#806 id=806 data-nosnippet>806</a>    } <span class="kw">else </span>{
-<a href=#807 id=807 data-nosnippet>807</a>        <span class="prelude-val">Err</span>(SpirvBuilderError::MissingRustcCodegenSpirvDylib)
-<a href=#808 id=808 data-nosnippet>808</a>    }
-<a href=#809 id=809 data-nosnippet>809</a>}
-<a href=#810 id=810 data-nosnippet>810</a>
-<a href=#811 id=811 data-nosnippet>811</a><span class="doccomment">/// Joins strings together while ensuring none of the strings contain the separator.
-<a href=#812 id=812 data-nosnippet>812</a></span><span class="comment">// NOTE(eddyb) this intentionally consumes the `Vec` to limit accidental misuse.
-<a href=#813 id=813 data-nosnippet>813</a></span><span class="kw">fn </span>join_checking_for_separators(strings: Vec&lt;<span class="kw">impl </span>Borrow&lt;str&gt;&gt;, sep: <span class="kw-2">&amp;</span>str) -&gt; String {
-<a href=#814 id=814 data-nosnippet>814</a>    <span class="kw">for </span>s <span class="kw">in </span><span class="kw-2">&amp;</span>strings {
-<a href=#815 id=815 data-nosnippet>815</a>        <span class="kw">let </span>s = s.borrow();
-<a href=#816 id=816 data-nosnippet>816</a>        <span class="macro">assert!</span>(!s.contains(sep), <span class="string">"{s:?} may not contain separator {sep:?}"</span>);
-<a href=#817 id=817 data-nosnippet>817</a>    }
-<a href=#818 id=818 data-nosnippet>818</a>    strings.join(sep)
-<a href=#819 id=819 data-nosnippet>819</a>}
-<a href=#820 id=820 data-nosnippet>820</a>
-<a href=#821 id=821 data-nosnippet>821</a><span class="comment">// Returns path to the metadata json.
-<a href=#822 id=822 data-nosnippet>822</a></span><span class="kw">fn </span>invoke_rustc(builder: <span class="kw-2">&amp;</span>SpirvBuilder) -&gt; <span class="prelude-ty">Result</span>&lt;PathBuf, SpirvBuilderError&gt; {
-<a href=#823 id=823 data-nosnippet>823</a>    <span class="kw">let </span>path_to_crate = builder
-<a href=#824 id=824 data-nosnippet>824</a>        .path_to_crate
-<a href=#825 id=825 data-nosnippet>825</a>        .as_ref()
-<a href=#826 id=826 data-nosnippet>826</a>        .ok_or(SpirvBuilderError::MissingCratePath)<span class="question-mark">?</span>;
-<a href=#827 id=827 data-nosnippet>827</a>    <span class="kw">let </span>target;
-<a href=#828 id=828 data-nosnippet>828</a>    {
-<a href=#829 id=829 data-nosnippet>829</a>        <span class="kw">let </span>target_str = builder
-<a href=#830 id=830 data-nosnippet>830</a>            .target
-<a href=#831 id=831 data-nosnippet>831</a>            .as_ref()
-<a href=#832 id=832 data-nosnippet>832</a>            .ok_or(SpirvBuilderError::MissingTarget)<span class="question-mark">?</span>;
-<a href=#833 id=833 data-nosnippet>833</a>        target = SpirvTarget::parse(target_str)<span class="question-mark">?</span>;
-<a href=#834 id=834 data-nosnippet>834</a>
-<a href=#835 id=835 data-nosnippet>835</a>        <span class="kw">if </span>builder.build_script.get_env_shader_spv_path() &amp;&amp; builder.multimodule {
-<a href=#836 id=836 data-nosnippet>836</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(SpirvBuilderError::MultiModuleWithEnvShaderSpvPath);
-<a href=#837 id=837 data-nosnippet>837</a>        }
-<a href=#838 id=838 data-nosnippet>838</a>        <span class="kw">if </span>!path_to_crate.is_dir() {
-<a href=#839 id=839 data-nosnippet>839</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(SpirvBuilderError::CratePathDoesntExist(
-<a href=#840 id=840 data-nosnippet>840</a>                path_to_crate.clone(),
-<a href=#841 id=841 data-nosnippet>841</a>            ));
-<a href=#842 id=842 data-nosnippet>842</a>        }
-<a href=#843 id=843 data-nosnippet>843</a>    }
-<a href=#844 id=844 data-nosnippet>844</a>
-<a href=#845 id=845 data-nosnippet>845</a>    <span class="kw">let </span>toolchain_rustc_version =
-<a href=#846 id=846 data-nosnippet>846</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(toolchain_rustc_version) = <span class="kw-2">&amp;</span>builder.toolchain_rustc_version {
-<a href=#847 id=847 data-nosnippet>847</a>            toolchain_rustc_version.clone()
-<a href=#848 id=848 data-nosnippet>848</a>        } <span class="kw">else </span>{
-<a href=#849 id=849 data-nosnippet>849</a>            query_rustc_version(builder.toolchain_overwrite.as_deref())<span class="question-mark">?
-<a href=#850 id=850 data-nosnippet>850</a>        </span>};
-<a href=#851 id=851 data-nosnippet>851</a>
-<a href=#852 id=852 data-nosnippet>852</a>    <span class="comment">// Okay, this is a little bonkers: in a normal world, we'd have the user clone
-<a href=#853 id=853 data-nosnippet>853</a>    // rustc_codegen_spirv and pass in the path to it, and then we'd invoke cargo to build it, grab
-<a href=#854 id=854 data-nosnippet>854</a>    // the resulting .so, and pass it into -Z codegen-backend. But that's really gross: the user
-<a href=#855 id=855 data-nosnippet>855</a>    // needs to clone rustc_codegen_spirv and tell us its path! So instead, we *directly reference
-<a href=#856 id=856 data-nosnippet>856</a>    // rustc_codegen_spirv in spirv-builder's Cargo.toml*, which means that it will get built
-<a href=#857 id=857 data-nosnippet>857</a>    // alongside build.rs, and cargo will helpfully add it to LD_LIBRARY_PATH for us! However,
-<a href=#858 id=858 data-nosnippet>858</a>    // rustc expects a full path, instead of a filename looked up via LD_LIBRARY_PATH, so we need
-<a href=#859 id=859 data-nosnippet>859</a>    // to copy cargo's understanding of library lookup and find the library and its full path.
-<a href=#860 id=860 data-nosnippet>860</a>    </span><span class="kw">let </span>rustc_codegen_spirv = <span class="prelude-val">Ok</span>(builder.rustc_codegen_spirv_location.clone())
-<a href=#861 id=861 data-nosnippet>861</a>        .transpose()
-<a href=#862 id=862 data-nosnippet>862</a>        .unwrap_or_else(find_rustc_codegen_spirv)<span class="question-mark">?</span>;
-<a href=#863 id=863 data-nosnippet>863</a>    <span class="kw">if </span>!rustc_codegen_spirv.is_file() {
-<a href=#864 id=864 data-nosnippet>864</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(SpirvBuilderError::RustcCodegenSpirvDylibDoesNotExist(
-<a href=#865 id=865 data-nosnippet>865</a>            rustc_codegen_spirv,
-<a href=#866 id=866 data-nosnippet>866</a>        ));
-<a href=#867 id=867 data-nosnippet>867</a>    }
-<a href=#868 id=868 data-nosnippet>868</a>
-<a href=#869 id=869 data-nosnippet>869</a>    <span class="kw">let </span><span class="kw-2">mut </span>rustflags = <span class="macro">vec!</span>[
-<a href=#870 id=870 data-nosnippet>870</a>        <span class="macro">format!</span>(<span class="string">"-Zcodegen-backend={}"</span>, rustc_codegen_spirv.display()),
-<a href=#871 id=871 data-nosnippet>871</a>        <span class="comment">// Ensure the codegen backend is emitted in `.d` files to force Cargo
-<a href=#872 id=872 data-nosnippet>872</a>        // to rebuild crates compiled with it when it changes (this used to be
-<a href=#873 id=873 data-nosnippet>873</a>        // the default until https://github.com/rust-lang/rust/pull/93969).
-<a href=#874 id=874 data-nosnippet>874</a>        </span><span class="string">"-Zbinary-dep-depinfo"</span>.to_string(),
-<a href=#875 id=875 data-nosnippet>875</a>        <span class="string">"-Csymbol-mangling-version=v0"</span>.to_string(),
-<a href=#876 id=876 data-nosnippet>876</a>        <span class="string">"-Zcrate-attr=feature(register_tool)"</span>.to_string(),
-<a href=#877 id=877 data-nosnippet>877</a>        <span class="string">"-Zcrate-attr=register_tool(rust_gpu)"</span>.to_string(),
-<a href=#878 id=878 data-nosnippet>878</a>        <span class="comment">// HACK(eddyb) this is the same configuration that we test with, and
-<a href=#879 id=879 data-nosnippet>879</a>        // ensures no unwanted surprises from e.g. `core` debug assertions.
-<a href=#880 id=880 data-nosnippet>880</a>        </span><span class="string">"-Coverflow-checks=off"</span>.to_string(),
-<a href=#881 id=881 data-nosnippet>881</a>        <span class="string">"-Cdebug-assertions=off"</span>.to_string(),
-<a href=#882 id=882 data-nosnippet>882</a>        <span class="comment">// HACK(eddyb) we need this for `core::fmt::rt::Argument::new_*` calls
-<a href=#883 id=883 data-nosnippet>883</a>        // to *never* be inlined, so we can pattern-match the calls themselves.
-<a href=#884 id=884 data-nosnippet>884</a>        </span><span class="string">"-Zinline-mir=off"</span>.to_string(),
-<a href=#885 id=885 data-nosnippet>885</a>        <span class="comment">// HACK(eddyb) similar to turning MIR inlining off, we also can't allow
-<a href=#886 id=886 data-nosnippet>886</a>        // optimizations that drastically impact (the quality of) codegen, and
-<a href=#887 id=887 data-nosnippet>887</a>        // GVN currently can lead to the memcpy-out-of-const-alloc-global-var
-<a href=#888 id=888 data-nosnippet>888</a>        // pattern, even for `ScalarPair` (e.g. `return None::&lt;u32&gt;;`).
-<a href=#889 id=889 data-nosnippet>889</a>        </span><span class="string">"-Zmir-enable-passes=-GVN"</span>.to_string(),
-<a href=#890 id=890 data-nosnippet>890</a>        <span class="comment">// HACK(eddyb) avoid ever reusing instantiations from `compiler_builtins`
-<a href=#891 id=891 data-nosnippet>891</a>        // which is special-cased to turn calls to functions that never return,
-<a href=#892 id=892 data-nosnippet>892</a>        // into aborts, and this applies to the panics of UB-checking helpers
-<a href=#893 id=893 data-nosnippet>893</a>        // (https://github.com/rust-lang/rust/pull/122580#issuecomment-3033026194)
-<a href=#894 id=894 data-nosnippet>894</a>        // but while upstream that only loses the panic message, for us it's even
-<a href=#895 id=895 data-nosnippet>895</a>        // worse, as we lose the chance to remove otherwise-dead `fmt::Arguments`.
-<a href=#896 id=896 data-nosnippet>896</a>        </span><span class="string">"-Zshare-generics=off"</span>.to_string(),
-<a href=#897 id=897 data-nosnippet>897</a>    ];
-<a href=#898 id=898 data-nosnippet>898</a>
-<a href=#899 id=899 data-nosnippet>899</a>    <span class="comment">// Wrapper for `env::var` that appropriately informs Cargo of the dependency.
-<a href=#900 id=900 data-nosnippet>900</a>    </span><span class="kw">let </span>tracked_env_var_get = |name| {
-<a href=#901 id=901 data-nosnippet>901</a>        <span class="kw">if </span>builder.build_script.get_dependency_info() {
-<a href=#902 id=902 data-nosnippet>902</a>            <span class="macro">println!</span>(<span class="string">"cargo:rerun-if-env-changed={name}"</span>);
-<a href=#903 id=903 data-nosnippet>903</a>        }
-<a href=#904 id=904 data-nosnippet>904</a>        env::var(name)
-<a href=#905 id=905 data-nosnippet>905</a>    };
-<a href=#906 id=906 data-nosnippet>906</a>
-<a href=#907 id=907 data-nosnippet>907</a>    <span class="kw">let </span><span class="kw-2">mut </span>llvm_args = <span class="macro">vec!</span>[];
-<a href=#908 id=908 data-nosnippet>908</a>    <span class="kw">if </span>builder.multimodule {
-<a href=#909 id=909 data-nosnippet>909</a>        llvm_args.push(<span class="string">"--module-output=multiple"</span>.to_string());
-<a href=#910 id=910 data-nosnippet>910</a>    }
-<a href=#911 id=911 data-nosnippet>911</a>    <span class="kw">match </span>builder.spirv_metadata {
-<a href=#912 id=912 data-nosnippet>912</a>        SpirvMetadata::None =&gt; (),
-<a href=#913 id=913 data-nosnippet>913</a>        SpirvMetadata::NameVariables =&gt; {
-<a href=#914 id=914 data-nosnippet>914</a>            llvm_args.push(<span class="string">"--spirv-metadata=name-variables"</span>.to_string());
-<a href=#915 id=915 data-nosnippet>915</a>        }
-<a href=#916 id=916 data-nosnippet>916</a>        SpirvMetadata::Full =&gt; llvm_args.push(<span class="string">"--spirv-metadata=full"</span>.to_string()),
-<a href=#917 id=917 data-nosnippet>917</a>    }
-<a href=#918 id=918 data-nosnippet>918</a>    <span class="kw">if </span>builder.validator.relax_struct_store {
-<a href=#919 id=919 data-nosnippet>919</a>        llvm_args.push(<span class="string">"--relax-struct-store"</span>.to_string());
-<a href=#920 id=920 data-nosnippet>920</a>    }
-<a href=#921 id=921 data-nosnippet>921</a>    <span class="kw">if </span>builder.validator.relax_logical_pointer {
-<a href=#922 id=922 data-nosnippet>922</a>        llvm_args.push(<span class="string">"--relax-logical-pointer"</span>.to_string());
-<a href=#923 id=923 data-nosnippet>923</a>    }
-<a href=#924 id=924 data-nosnippet>924</a>    <span class="kw">if </span>builder.validator.relax_block_layout.unwrap_or(<span class="bool-val">false</span>) {
-<a href=#925 id=925 data-nosnippet>925</a>        llvm_args.push(<span class="string">"--relax-block-layout"</span>.to_string());
-<a href=#926 id=926 data-nosnippet>926</a>    }
-<a href=#927 id=927 data-nosnippet>927</a>    <span class="kw">if </span>builder.validator.uniform_buffer_standard_layout {
-<a href=#928 id=928 data-nosnippet>928</a>        llvm_args.push(<span class="string">"--uniform-buffer-standard-layout"</span>.to_string());
-<a href=#929 id=929 data-nosnippet>929</a>    }
-<a href=#930 id=930 data-nosnippet>930</a>    <span class="kw">if </span>builder.validator.scalar_block_layout {
-<a href=#931 id=931 data-nosnippet>931</a>        llvm_args.push(<span class="string">"--scalar-block-layout"</span>.to_string());
-<a href=#932 id=932 data-nosnippet>932</a>    }
-<a href=#933 id=933 data-nosnippet>933</a>    <span class="kw">if </span>builder.validator.skip_block_layout {
-<a href=#934 id=934 data-nosnippet>934</a>        llvm_args.push(<span class="string">"--skip-block-layout"</span>.to_string());
+<a href=#722 id=722 data-nosnippet>722</a>    <span class="doccomment">/// Shortcut for `cargo check`
+<a href=#723 id=723 data-nosnippet>723</a>    </span><span class="kw">pub fn </span>check(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;CompileResult, SpirvBuilderError&gt; {
+<a href=#724 id=724 data-nosnippet>724</a>        <span class="self">self</span>.run_cargo_cmd(<span class="string">"check"</span>)
+<a href=#725 id=725 data-nosnippet>725</a>    }
+<a href=#726 id=726 data-nosnippet>726</a>
+<a href=#727 id=727 data-nosnippet>727</a>    <span class="doccomment">/// Shortcut for `cargo clippy`
+<a href=#728 id=728 data-nosnippet>728</a>    </span><span class="kw">pub fn </span>clippy(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;CompileResult, SpirvBuilderError&gt; {
+<a href=#729 id=729 data-nosnippet>729</a>        <span class="self">self</span>.run_cargo_cmd(<span class="string">"clippy"</span>)
+<a href=#730 id=730 data-nosnippet>730</a>    }
+<a href=#731 id=731 data-nosnippet>731</a>
+<a href=#732 id=732 data-nosnippet>732</a>    <span class="doccomment">/// Run the supplied cargo cmd, and ensure to reset the state so [`Self::build`] still works as normal
+<a href=#733 id=733 data-nosnippet>733</a>    </span><span class="kw">fn </span>run_cargo_cmd(<span class="kw-2">&amp;mut </span><span class="self">self</span>, cmd: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;CompileResult, SpirvBuilderError&gt; {
+<a href=#734 id=734 data-nosnippet>734</a>        <span class="kw">let </span>old = <span class="self">self</span>.cargo_cmd.replace(cmd.into());
+<a href=#735 id=735 data-nosnippet>735</a>        <span class="kw">let </span>result = <span class="self">self</span>.build();
+<a href=#736 id=736 data-nosnippet>736</a>        <span class="self">self</span>.cargo_cmd = old;
+<a href=#737 id=737 data-nosnippet>737</a>        result
+<a href=#738 id=738 data-nosnippet>738</a>    }
+<a href=#739 id=739 data-nosnippet>739</a>
+<a href=#740 id=740 data-nosnippet>740</a>    <span class="doccomment">/// Builds the module
+<a href=#741 id=741 data-nosnippet>741</a>    </span><span class="kw">pub fn </span>build(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;CompileResult, SpirvBuilderError&gt; {
+<a href=#742 id=742 data-nosnippet>742</a>        <span class="kw">let </span>metadata_file = invoke_rustc(<span class="self">self</span>)<span class="question-mark">?</span>;
+<a href=#743 id=743 data-nosnippet>743</a>        <span class="kw">if </span><span class="self">self</span>.build_script.get_dependency_info() {
+<a href=#744 id=744 data-nosnippet>744</a>            leaf_deps(<span class="kw-2">&amp;</span>metadata_file, |artifact| {
+<a href=#745 id=745 data-nosnippet>745</a>                <span class="macro">println!</span>(<span class="string">"cargo:rerun-if-changed={artifact}"</span>);
+<a href=#746 id=746 data-nosnippet>746</a>            })
+<a href=#747 id=747 data-nosnippet>747</a>            <span class="comment">// Close enough
+<a href=#748 id=748 data-nosnippet>748</a>            </span>.map_err(SpirvBuilderError::MetadataFileMissing)<span class="question-mark">?</span>;
+<a href=#749 id=749 data-nosnippet>749</a>        }
+<a href=#750 id=750 data-nosnippet>750</a>        <span class="kw">let </span>metadata = <span class="self">self</span>.parse_metadata_file(<span class="kw-2">&amp;</span>metadata_file)<span class="question-mark">?</span>;
+<a href=#751 id=751 data-nosnippet>751</a>
+<a href=#752 id=752 data-nosnippet>752</a>        <span class="prelude-val">Ok</span>(metadata)
+<a href=#753 id=753 data-nosnippet>753</a>    }
+<a href=#754 id=754 data-nosnippet>754</a>
+<a href=#755 id=755 data-nosnippet>755</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>parse_metadata_file(
+<a href=#756 id=756 data-nosnippet>756</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
+<a href=#757 id=757 data-nosnippet>757</a>        at: <span class="kw-2">&amp;</span>Path,
+<a href=#758 id=758 data-nosnippet>758</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;CompileResult, SpirvBuilderError&gt; {
+<a href=#759 id=759 data-nosnippet>759</a>        <span class="kw">let </span>metadata_contents = File::open(at).map_err(SpirvBuilderError::MetadataFileMissing)<span class="question-mark">?</span>;
+<a href=#760 id=760 data-nosnippet>760</a>        <span class="comment">// FIXME(eddyb) move this functionality into `rustc_codegen_spirv_types`.
+<a href=#761 id=761 data-nosnippet>761</a>        </span><span class="kw">let </span>metadata: CompileResult =
+<a href=#762 id=762 data-nosnippet>762</a>            rustc_codegen_spirv_types::serde_json::from_reader(BufReader::new(metadata_contents))
+<a href=#763 id=763 data-nosnippet>763</a>                .map_err(SpirvBuilderError::MetadataFileMalformed)<span class="question-mark">?</span>;
+<a href=#764 id=764 data-nosnippet>764</a>        <span class="kw">match </span><span class="kw-2">&amp;</span>metadata.module {
+<a href=#765 id=765 data-nosnippet>765</a>            ModuleResult::SingleModule(spirv_module) =&gt; {
+<a href=#766 id=766 data-nosnippet>766</a>                <span class="macro">assert!</span>(!<span class="self">self</span>.multimodule);
+<a href=#767 id=767 data-nosnippet>767</a>                <span class="kw">if </span><span class="self">self</span>.build_script.get_env_shader_spv_path() {
+<a href=#768 id=768 data-nosnippet>768</a>                    <span class="kw">let </span>env_var = <span class="macro">format!</span>(
+<a href=#769 id=769 data-nosnippet>769</a>                        <span class="string">"{}.spv"</span>,
+<a href=#770 id=770 data-nosnippet>770</a>                        at.file_name()
+<a href=#771 id=771 data-nosnippet>771</a>                            .unwrap()
+<a href=#772 id=772 data-nosnippet>772</a>                            .to_str()
+<a href=#773 id=773 data-nosnippet>773</a>                            .unwrap()
+<a href=#774 id=774 data-nosnippet>774</a>                            .strip_suffix(ARTIFACT_SUFFIX)
+<a href=#775 id=775 data-nosnippet>775</a>                            .unwrap()
+<a href=#776 id=776 data-nosnippet>776</a>                    );
+<a href=#777 id=777 data-nosnippet>777</a>                    <span class="macro">println!</span>(<span class="string">"cargo::rustc-env={}={}"</span>, env_var, spirv_module.display());
+<a href=#778 id=778 data-nosnippet>778</a>                }
+<a href=#779 id=779 data-nosnippet>779</a>            }
+<a href=#780 id=780 data-nosnippet>780</a>            ModuleResult::MultiModule(<span class="kw">_</span>) =&gt; {
+<a href=#781 id=781 data-nosnippet>781</a>                <span class="macro">assert!</span>(<span class="self">self</span>.multimodule);
+<a href=#782 id=782 data-nosnippet>782</a>            }
+<a href=#783 id=783 data-nosnippet>783</a>        }
+<a href=#784 id=784 data-nosnippet>784</a>        <span class="prelude-val">Ok</span>(metadata)
+<a href=#785 id=785 data-nosnippet>785</a>    }
+<a href=#786 id=786 data-nosnippet>786</a>}
+<a href=#787 id=787 data-nosnippet>787</a>
+<a href=#788 id=788 data-nosnippet>788</a><span class="comment">// https://github.com/rust-lang/cargo/blob/1857880b5124580c4aeb4e8bc5f1198f491d61b1/src/cargo/util/paths.rs#L29-L52
+<a href=#789 id=789 data-nosnippet>789</a></span><span class="kw">fn </span>dylib_path_envvar() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str {
+<a href=#790 id=790 data-nosnippet>790</a>    <span class="kw">if </span><span class="macro">cfg!</span>(windows) {
+<a href=#791 id=791 data-nosnippet>791</a>        <span class="string">"PATH"
+<a href=#792 id=792 data-nosnippet>792</a>    </span>} <span class="kw">else if </span><span class="macro">cfg!</span>(target_os = <span class="string">"macos"</span>) {
+<a href=#793 id=793 data-nosnippet>793</a>        <span class="string">"DYLD_FALLBACK_LIBRARY_PATH"
+<a href=#794 id=794 data-nosnippet>794</a>    </span>} <span class="kw">else </span>{
+<a href=#795 id=795 data-nosnippet>795</a>        <span class="string">"LD_LIBRARY_PATH"
+<a href=#796 id=796 data-nosnippet>796</a>    </span>}
+<a href=#797 id=797 data-nosnippet>797</a>}
+<a href=#798 id=798 data-nosnippet>798</a><span class="kw">fn </span>dylib_path() -&gt; Vec&lt;PathBuf&gt; {
+<a href=#799 id=799 data-nosnippet>799</a>    <span class="kw">let </span><span class="kw-2">mut </span>dylibs = <span class="kw">match </span>env::var_os(dylib_path_envvar()) {
+<a href=#800 id=800 data-nosnippet>800</a>        <span class="prelude-val">Some</span>(var) =&gt; env::split_paths(<span class="kw-2">&amp;</span>var).collect(),
+<a href=#801 id=801 data-nosnippet>801</a>        <span class="prelude-val">None </span>=&gt; Vec::new(),
+<a href=#802 id=802 data-nosnippet>802</a>    };
+<a href=#803 id=803 data-nosnippet>803</a>    <span class="kw">if let </span><span class="prelude-val">Ok</span>(dir) = env::current_dir() {
+<a href=#804 id=804 data-nosnippet>804</a>        dylibs.push(dir);
+<a href=#805 id=805 data-nosnippet>805</a>    }
+<a href=#806 id=806 data-nosnippet>806</a>    dylibs
+<a href=#807 id=807 data-nosnippet>807</a>}
+<a href=#808 id=808 data-nosnippet>808</a>
+<a href=#809 id=809 data-nosnippet>809</a><span class="kw">fn </span>find_rustc_codegen_spirv() -&gt; <span class="prelude-ty">Result</span>&lt;PathBuf, SpirvBuilderError&gt; {
+<a href=#810 id=810 data-nosnippet>810</a>    <span class="kw">if </span><span class="macro">cfg!</span>(feature = <span class="string">"rustc_codegen_spirv"</span>) {
+<a href=#811 id=811 data-nosnippet>811</a>        <span class="kw">let </span>filename = <span class="macro">format!</span>(
+<a href=#812 id=812 data-nosnippet>812</a>            <span class="string">"{}rustc_codegen_spirv{}"</span>,
+<a href=#813 id=813 data-nosnippet>813</a>            env::consts::DLL_PREFIX,
+<a href=#814 id=814 data-nosnippet>814</a>            env::consts::DLL_SUFFIX
+<a href=#815 id=815 data-nosnippet>815</a>        );
+<a href=#816 id=816 data-nosnippet>816</a>        <span class="kw">let </span>dylib_paths = dylib_path();
+<a href=#817 id=817 data-nosnippet>817</a>        <span class="kw">for </span><span class="kw-2">mut </span>path <span class="kw">in </span>dylib_paths {
+<a href=#818 id=818 data-nosnippet>818</a>            path.push(<span class="kw-2">&amp;</span>filename);
+<a href=#819 id=819 data-nosnippet>819</a>            <span class="kw">if </span>path.is_file() {
+<a href=#820 id=820 data-nosnippet>820</a>                <span class="kw">return </span><span class="prelude-val">Ok</span>(path);
+<a href=#821 id=821 data-nosnippet>821</a>            }
+<a href=#822 id=822 data-nosnippet>822</a>        }
+<a href=#823 id=823 data-nosnippet>823</a>        <span class="macro">panic!</span>(<span class="string">"Could not find {filename} in library path"</span>);
+<a href=#824 id=824 data-nosnippet>824</a>    } <span class="kw">else </span>{
+<a href=#825 id=825 data-nosnippet>825</a>        <span class="prelude-val">Err</span>(SpirvBuilderError::MissingRustcCodegenSpirvDylib)
+<a href=#826 id=826 data-nosnippet>826</a>    }
+<a href=#827 id=827 data-nosnippet>827</a>}
+<a href=#828 id=828 data-nosnippet>828</a>
+<a href=#829 id=829 data-nosnippet>829</a><span class="doccomment">/// Joins strings together while ensuring none of the strings contain the separator.
+<a href=#830 id=830 data-nosnippet>830</a></span><span class="comment">// NOTE(eddyb) this intentionally consumes the `Vec` to limit accidental misuse.
+<a href=#831 id=831 data-nosnippet>831</a></span><span class="kw">fn </span>join_checking_for_separators(strings: Vec&lt;<span class="kw">impl </span>Borrow&lt;str&gt;&gt;, sep: <span class="kw-2">&amp;</span>str) -&gt; String {
+<a href=#832 id=832 data-nosnippet>832</a>    <span class="kw">for </span>s <span class="kw">in </span><span class="kw-2">&amp;</span>strings {
+<a href=#833 id=833 data-nosnippet>833</a>        <span class="kw">let </span>s = s.borrow();
+<a href=#834 id=834 data-nosnippet>834</a>        <span class="macro">assert!</span>(!s.contains(sep), <span class="string">"{s:?} may not contain separator {sep:?}"</span>);
+<a href=#835 id=835 data-nosnippet>835</a>    }
+<a href=#836 id=836 data-nosnippet>836</a>    strings.join(sep)
+<a href=#837 id=837 data-nosnippet>837</a>}
+<a href=#838 id=838 data-nosnippet>838</a>
+<a href=#839 id=839 data-nosnippet>839</a><span class="comment">// Returns path to the metadata json.
+<a href=#840 id=840 data-nosnippet>840</a></span><span class="kw">fn </span>invoke_rustc(builder: <span class="kw-2">&amp;</span>SpirvBuilder) -&gt; <span class="prelude-ty">Result</span>&lt;PathBuf, SpirvBuilderError&gt; {
+<a href=#841 id=841 data-nosnippet>841</a>    <span class="kw">let </span>path_to_crate = builder
+<a href=#842 id=842 data-nosnippet>842</a>        .path_to_crate
+<a href=#843 id=843 data-nosnippet>843</a>        .as_ref()
+<a href=#844 id=844 data-nosnippet>844</a>        .ok_or(SpirvBuilderError::MissingCratePath)<span class="question-mark">?</span>;
+<a href=#845 id=845 data-nosnippet>845</a>    <span class="kw">let </span>target;
+<a href=#846 id=846 data-nosnippet>846</a>    {
+<a href=#847 id=847 data-nosnippet>847</a>        <span class="kw">let </span>target_str = builder
+<a href=#848 id=848 data-nosnippet>848</a>            .target
+<a href=#849 id=849 data-nosnippet>849</a>            .as_ref()
+<a href=#850 id=850 data-nosnippet>850</a>            .ok_or(SpirvBuilderError::MissingTarget)<span class="question-mark">?</span>;
+<a href=#851 id=851 data-nosnippet>851</a>        target = SpirvTarget::parse(target_str)<span class="question-mark">?</span>;
+<a href=#852 id=852 data-nosnippet>852</a>
+<a href=#853 id=853 data-nosnippet>853</a>        <span class="kw">if </span>builder.build_script.get_env_shader_spv_path() &amp;&amp; builder.multimodule {
+<a href=#854 id=854 data-nosnippet>854</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(SpirvBuilderError::MultiModuleWithEnvShaderSpvPath);
+<a href=#855 id=855 data-nosnippet>855</a>        }
+<a href=#856 id=856 data-nosnippet>856</a>        <span class="kw">if </span>!path_to_crate.is_dir() {
+<a href=#857 id=857 data-nosnippet>857</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(SpirvBuilderError::CratePathDoesntExist(
+<a href=#858 id=858 data-nosnippet>858</a>                path_to_crate.clone(),
+<a href=#859 id=859 data-nosnippet>859</a>            ));
+<a href=#860 id=860 data-nosnippet>860</a>        }
+<a href=#861 id=861 data-nosnippet>861</a>    }
+<a href=#862 id=862 data-nosnippet>862</a>
+<a href=#863 id=863 data-nosnippet>863</a>    <span class="kw">let </span>toolchain_rustc_version =
+<a href=#864 id=864 data-nosnippet>864</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(toolchain_rustc_version) = <span class="kw-2">&amp;</span>builder.toolchain_rustc_version {
+<a href=#865 id=865 data-nosnippet>865</a>            toolchain_rustc_version.clone()
+<a href=#866 id=866 data-nosnippet>866</a>        } <span class="kw">else </span>{
+<a href=#867 id=867 data-nosnippet>867</a>            query_rustc_version(builder.toolchain_overwrite.as_deref())<span class="question-mark">?
+<a href=#868 id=868 data-nosnippet>868</a>        </span>};
+<a href=#869 id=869 data-nosnippet>869</a>
+<a href=#870 id=870 data-nosnippet>870</a>    <span class="comment">// Okay, this is a little bonkers: in a normal world, we'd have the user clone
+<a href=#871 id=871 data-nosnippet>871</a>    // rustc_codegen_spirv and pass in the path to it, and then we'd invoke cargo to build it, grab
+<a href=#872 id=872 data-nosnippet>872</a>    // the resulting .so, and pass it into -Z codegen-backend. But that's really gross: the user
+<a href=#873 id=873 data-nosnippet>873</a>    // needs to clone rustc_codegen_spirv and tell us its path! So instead, we *directly reference
+<a href=#874 id=874 data-nosnippet>874</a>    // rustc_codegen_spirv in spirv-builder's Cargo.toml*, which means that it will get built
+<a href=#875 id=875 data-nosnippet>875</a>    // alongside build.rs, and cargo will helpfully add it to LD_LIBRARY_PATH for us! However,
+<a href=#876 id=876 data-nosnippet>876</a>    // rustc expects a full path, instead of a filename looked up via LD_LIBRARY_PATH, so we need
+<a href=#877 id=877 data-nosnippet>877</a>    // to copy cargo's understanding of library lookup and find the library and its full path.
+<a href=#878 id=878 data-nosnippet>878</a>    </span><span class="kw">let </span>rustc_codegen_spirv = <span class="prelude-val">Ok</span>(builder.rustc_codegen_spirv_location.clone())
+<a href=#879 id=879 data-nosnippet>879</a>        .transpose()
+<a href=#880 id=880 data-nosnippet>880</a>        .unwrap_or_else(find_rustc_codegen_spirv)<span class="question-mark">?</span>;
+<a href=#881 id=881 data-nosnippet>881</a>    <span class="kw">if </span>!rustc_codegen_spirv.is_file() {
+<a href=#882 id=882 data-nosnippet>882</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(SpirvBuilderError::RustcCodegenSpirvDylibDoesNotExist(
+<a href=#883 id=883 data-nosnippet>883</a>            rustc_codegen_spirv,
+<a href=#884 id=884 data-nosnippet>884</a>        ));
+<a href=#885 id=885 data-nosnippet>885</a>    }
+<a href=#886 id=886 data-nosnippet>886</a>
+<a href=#887 id=887 data-nosnippet>887</a>    <span class="kw">let </span><span class="kw-2">mut </span>rustflags = <span class="macro">vec!</span>[
+<a href=#888 id=888 data-nosnippet>888</a>        <span class="macro">format!</span>(<span class="string">"-Zcodegen-backend={}"</span>, rustc_codegen_spirv.display()),
+<a href=#889 id=889 data-nosnippet>889</a>        <span class="comment">// Ensure the codegen backend is emitted in `.d` files to force Cargo
+<a href=#890 id=890 data-nosnippet>890</a>        // to rebuild crates compiled with it when it changes (this used to be
+<a href=#891 id=891 data-nosnippet>891</a>        // the default until https://github.com/rust-lang/rust/pull/93969).
+<a href=#892 id=892 data-nosnippet>892</a>        </span><span class="string">"-Zbinary-dep-depinfo"</span>.to_string(),
+<a href=#893 id=893 data-nosnippet>893</a>        <span class="string">"-Csymbol-mangling-version=v0"</span>.to_string(),
+<a href=#894 id=894 data-nosnippet>894</a>        <span class="string">"-Zcrate-attr=feature(register_tool)"</span>.to_string(),
+<a href=#895 id=895 data-nosnippet>895</a>        <span class="string">"-Zcrate-attr=register_tool(rust_gpu)"</span>.to_string(),
+<a href=#896 id=896 data-nosnippet>896</a>        <span class="comment">// HACK(eddyb) this is the same configuration that we test with, and
+<a href=#897 id=897 data-nosnippet>897</a>        // ensures no unwanted surprises from e.g. `core` debug assertions.
+<a href=#898 id=898 data-nosnippet>898</a>        </span><span class="string">"-Coverflow-checks=off"</span>.to_string(),
+<a href=#899 id=899 data-nosnippet>899</a>        <span class="string">"-Cdebug-assertions=off"</span>.to_string(),
+<a href=#900 id=900 data-nosnippet>900</a>        <span class="comment">// HACK(eddyb) we need this for `core::fmt::rt::Argument::new_*` calls
+<a href=#901 id=901 data-nosnippet>901</a>        // to *never* be inlined, so we can pattern-match the calls themselves.
+<a href=#902 id=902 data-nosnippet>902</a>        </span><span class="string">"-Zinline-mir=off"</span>.to_string(),
+<a href=#903 id=903 data-nosnippet>903</a>        <span class="comment">// HACK(eddyb) similar to turning MIR inlining off, we also can't allow
+<a href=#904 id=904 data-nosnippet>904</a>        // optimizations that drastically impact (the quality of) codegen, and
+<a href=#905 id=905 data-nosnippet>905</a>        // GVN currently can lead to the memcpy-out-of-const-alloc-global-var
+<a href=#906 id=906 data-nosnippet>906</a>        // pattern, even for `ScalarPair` (e.g. `return None::&lt;u32&gt;;`).
+<a href=#907 id=907 data-nosnippet>907</a>        </span><span class="string">"-Zmir-enable-passes=-GVN"</span>.to_string(),
+<a href=#908 id=908 data-nosnippet>908</a>        <span class="comment">// HACK(eddyb) avoid ever reusing instantiations from `compiler_builtins`
+<a href=#909 id=909 data-nosnippet>909</a>        // which is special-cased to turn calls to functions that never return,
+<a href=#910 id=910 data-nosnippet>910</a>        // into aborts, and this applies to the panics of UB-checking helpers
+<a href=#911 id=911 data-nosnippet>911</a>        // (https://github.com/rust-lang/rust/pull/122580#issuecomment-3033026194)
+<a href=#912 id=912 data-nosnippet>912</a>        // but while upstream that only loses the panic message, for us it's even
+<a href=#913 id=913 data-nosnippet>913</a>        // worse, as we lose the chance to remove otherwise-dead `fmt::Arguments`.
+<a href=#914 id=914 data-nosnippet>914</a>        </span><span class="string">"-Zshare-generics=off"</span>.to_string(),
+<a href=#915 id=915 data-nosnippet>915</a>    ];
+<a href=#916 id=916 data-nosnippet>916</a>
+<a href=#917 id=917 data-nosnippet>917</a>    <span class="comment">// Wrapper for `env::var` that appropriately informs Cargo of the dependency.
+<a href=#918 id=918 data-nosnippet>918</a>    </span><span class="kw">let </span>tracked_env_var_get = |name| {
+<a href=#919 id=919 data-nosnippet>919</a>        <span class="kw">if </span>builder.build_script.get_dependency_info() {
+<a href=#920 id=920 data-nosnippet>920</a>            <span class="macro">println!</span>(<span class="string">"cargo:rerun-if-env-changed={name}"</span>);
+<a href=#921 id=921 data-nosnippet>921</a>        }
+<a href=#922 id=922 data-nosnippet>922</a>        env::var(name)
+<a href=#923 id=923 data-nosnippet>923</a>    };
+<a href=#924 id=924 data-nosnippet>924</a>
+<a href=#925 id=925 data-nosnippet>925</a>    <span class="kw">let </span><span class="kw-2">mut </span>llvm_args = <span class="macro">vec!</span>[];
+<a href=#926 id=926 data-nosnippet>926</a>    <span class="kw">if </span>builder.multimodule {
+<a href=#927 id=927 data-nosnippet>927</a>        llvm_args.push(<span class="string">"--module-output=multiple"</span>.to_string());
+<a href=#928 id=928 data-nosnippet>928</a>    }
+<a href=#929 id=929 data-nosnippet>929</a>    <span class="kw">match </span>builder.spirv_metadata {
+<a href=#930 id=930 data-nosnippet>930</a>        SpirvMetadata::None =&gt; (),
+<a href=#931 id=931 data-nosnippet>931</a>        SpirvMetadata::NameVariables =&gt; {
+<a href=#932 id=932 data-nosnippet>932</a>            llvm_args.push(<span class="string">"--spirv-metadata=name-variables"</span>.to_string());
+<a href=#933 id=933 data-nosnippet>933</a>        }
+<a href=#934 id=934 data-nosnippet>934</a>        SpirvMetadata::Full =&gt; llvm_args.push(<span class="string">"--spirv-metadata=full"</span>.to_string()),
 <a href=#935 id=935 data-nosnippet>935</a>    }
-<a href=#936 id=936 data-nosnippet>936</a>    <span class="kw">if </span>builder.optimizer.preserve_bindings {
-<a href=#937 id=937 data-nosnippet>937</a>        llvm_args.push(<span class="string">"--preserve-bindings"</span>.to_string());
+<a href=#936 id=936 data-nosnippet>936</a>    <span class="kw">if </span>builder.validator.relax_struct_store {
+<a href=#937 id=937 data-nosnippet>937</a>        llvm_args.push(<span class="string">"--relax-struct-store"</span>.to_string());
 <a href=#938 id=938 data-nosnippet>938</a>    }
-<a href=#939 id=939 data-nosnippet>939</a>    <span class="kw">let </span><span class="kw-2">mut </span>target_features = <span class="macro">vec!</span>[];
-<a href=#940 id=940 data-nosnippet>940</a>    <span class="kw">let </span>abort_strategy = <span class="kw">match </span>builder.shader_panic_strategy {
-<a href=#941 id=941 data-nosnippet>941</a>        ShaderPanicStrategy::SilentExit =&gt; <span class="prelude-val">None</span>,
-<a href=#942 id=942 data-nosnippet>942</a>        ShaderPanicStrategy::DebugPrintfThenExit {
-<a href=#943 id=943 data-nosnippet>943</a>            print_inputs,
-<a href=#944 id=944 data-nosnippet>944</a>            print_backtrace,
-<a href=#945 id=945 data-nosnippet>945</a>        } =&gt; {
-<a href=#946 id=946 data-nosnippet>946</a>            target_features.push(<span class="string">"+ext:SPV_KHR_non_semantic_info"</span>.into());
-<a href=#947 id=947 data-nosnippet>947</a>            <span class="prelude-val">Some</span>(<span class="macro">format!</span>(
-<a href=#948 id=948 data-nosnippet>948</a>                <span class="string">"debug-printf{}{}"</span>,
-<a href=#949 id=949 data-nosnippet>949</a>                <span class="kw">if </span>print_inputs { <span class="string">"+inputs" </span>} <span class="kw">else </span>{ <span class="string">"" </span>},
-<a href=#950 id=950 data-nosnippet>950</a>                <span class="kw">if </span>print_backtrace { <span class="string">"+backtrace" </span>} <span class="kw">else </span>{ <span class="string">"" </span>}
-<a href=#951 id=951 data-nosnippet>951</a>            ))
-<a href=#952 id=952 data-nosnippet>952</a>        }
-<a href=#953 id=953 data-nosnippet>953</a>        ShaderPanicStrategy::UNSOUND_DO_NOT_USE_UndefinedBehaviorViaUnreachable =&gt; {
-<a href=#954 id=954 data-nosnippet>954</a>            <span class="prelude-val">Some</span>(<span class="string">"unreachable"</span>.into())
-<a href=#955 id=955 data-nosnippet>955</a>        }
-<a href=#956 id=956 data-nosnippet>956</a>    };
-<a href=#957 id=957 data-nosnippet>957</a>    llvm_args.extend(abort_strategy.map(|strategy| <span class="macro">format!</span>(<span class="string">"--abort-strategy={strategy}"</span>)));
-<a href=#958 id=958 data-nosnippet>958</a>
-<a href=#959 id=959 data-nosnippet>959</a>    <span class="kw">if let </span><span class="prelude-val">Ok</span>(extra_codegen_args) = tracked_env_var_get(<span class="string">"RUSTGPU_CODEGEN_ARGS"</span>) {
-<a href=#960 id=960 data-nosnippet>960</a>        llvm_args.extend(extra_codegen_args.split_whitespace().map(|s| s.to_string()));
-<a href=#961 id=961 data-nosnippet>961</a>    } <span class="kw">else </span>{
-<a href=#962 id=962 data-nosnippet>962</a>        llvm_args.extend(builder.extra_args.iter().cloned());
-<a href=#963 id=963 data-nosnippet>963</a>    }
-<a href=#964 id=964 data-nosnippet>964</a>
-<a href=#965 id=965 data-nosnippet>965</a>    <span class="kw">let </span>llvm_args = join_checking_for_separators(llvm_args, <span class="string">" "</span>);
-<a href=#966 id=966 data-nosnippet>966</a>    <span class="kw">if </span>!llvm_args.is_empty() {
-<a href=#967 id=967 data-nosnippet>967</a>        rustflags.push([<span class="string">"-Cllvm-args="</span>, <span class="kw-2">&amp;</span>llvm_args].concat());
-<a href=#968 id=968 data-nosnippet>968</a>    }
-<a href=#969 id=969 data-nosnippet>969</a>
-<a href=#970 id=970 data-nosnippet>970</a>    target_features.extend(builder.capabilities.iter().map(|cap| <span class="macro">format!</span>(<span class="string">"+{cap:?}"</span>)));
-<a href=#971 id=971 data-nosnippet>971</a>    target_features.extend(builder.extensions.iter().map(|ext| <span class="macro">format!</span>(<span class="string">"+ext:{ext}"</span>)));
-<a href=#972 id=972 data-nosnippet>972</a>    <span class="kw">let </span>target_features = join_checking_for_separators(target_features, <span class="string">","</span>);
-<a href=#973 id=973 data-nosnippet>973</a>    <span class="kw">if </span>!target_features.is_empty() {
-<a href=#974 id=974 data-nosnippet>974</a>        rustflags.push([<span class="string">"-Ctarget-feature="</span>, <span class="kw-2">&amp;</span>target_features].concat());
-<a href=#975 id=975 data-nosnippet>975</a>    }
+<a href=#939 id=939 data-nosnippet>939</a>    <span class="kw">if </span>builder.validator.relax_logical_pointer {
+<a href=#940 id=940 data-nosnippet>940</a>        llvm_args.push(<span class="string">"--relax-logical-pointer"</span>.to_string());
+<a href=#941 id=941 data-nosnippet>941</a>    }
+<a href=#942 id=942 data-nosnippet>942</a>    <span class="kw">if </span>builder.validator.relax_block_layout.unwrap_or(<span class="bool-val">false</span>) {
+<a href=#943 id=943 data-nosnippet>943</a>        llvm_args.push(<span class="string">"--relax-block-layout"</span>.to_string());
+<a href=#944 id=944 data-nosnippet>944</a>    }
+<a href=#945 id=945 data-nosnippet>945</a>    <span class="kw">if </span>builder.validator.uniform_buffer_standard_layout {
+<a href=#946 id=946 data-nosnippet>946</a>        llvm_args.push(<span class="string">"--uniform-buffer-standard-layout"</span>.to_string());
+<a href=#947 id=947 data-nosnippet>947</a>    }
+<a href=#948 id=948 data-nosnippet>948</a>    <span class="kw">if </span>builder.validator.scalar_block_layout {
+<a href=#949 id=949 data-nosnippet>949</a>        llvm_args.push(<span class="string">"--scalar-block-layout"</span>.to_string());
+<a href=#950 id=950 data-nosnippet>950</a>    }
+<a href=#951 id=951 data-nosnippet>951</a>    <span class="kw">if </span>builder.validator.skip_block_layout {
+<a href=#952 id=952 data-nosnippet>952</a>        llvm_args.push(<span class="string">"--skip-block-layout"</span>.to_string());
+<a href=#953 id=953 data-nosnippet>953</a>    }
+<a href=#954 id=954 data-nosnippet>954</a>    <span class="kw">if </span>builder.optimizer.preserve_bindings {
+<a href=#955 id=955 data-nosnippet>955</a>        llvm_args.push(<span class="string">"--preserve-bindings"</span>.to_string());
+<a href=#956 id=956 data-nosnippet>956</a>    }
+<a href=#957 id=957 data-nosnippet>957</a>    <span class="kw">let </span><span class="kw-2">mut </span>target_features = <span class="macro">vec!</span>[];
+<a href=#958 id=958 data-nosnippet>958</a>    <span class="kw">let </span>abort_strategy = <span class="kw">match </span>builder.shader_panic_strategy {
+<a href=#959 id=959 data-nosnippet>959</a>        ShaderPanicStrategy::SilentExit =&gt; <span class="prelude-val">None</span>,
+<a href=#960 id=960 data-nosnippet>960</a>        ShaderPanicStrategy::DebugPrintfThenExit {
+<a href=#961 id=961 data-nosnippet>961</a>            print_inputs,
+<a href=#962 id=962 data-nosnippet>962</a>            print_backtrace,
+<a href=#963 id=963 data-nosnippet>963</a>        } =&gt; {
+<a href=#964 id=964 data-nosnippet>964</a>            target_features.push(<span class="string">"+ext:SPV_KHR_non_semantic_info"</span>.into());
+<a href=#965 id=965 data-nosnippet>965</a>            <span class="prelude-val">Some</span>(<span class="macro">format!</span>(
+<a href=#966 id=966 data-nosnippet>966</a>                <span class="string">"debug-printf{}{}"</span>,
+<a href=#967 id=967 data-nosnippet>967</a>                <span class="kw">if </span>print_inputs { <span class="string">"+inputs" </span>} <span class="kw">else </span>{ <span class="string">"" </span>},
+<a href=#968 id=968 data-nosnippet>968</a>                <span class="kw">if </span>print_backtrace { <span class="string">"+backtrace" </span>} <span class="kw">else </span>{ <span class="string">"" </span>}
+<a href=#969 id=969 data-nosnippet>969</a>            ))
+<a href=#970 id=970 data-nosnippet>970</a>        }
+<a href=#971 id=971 data-nosnippet>971</a>        ShaderPanicStrategy::UNSOUND_DO_NOT_USE_UndefinedBehaviorViaUnreachable =&gt; {
+<a href=#972 id=972 data-nosnippet>972</a>            <span class="prelude-val">Some</span>(<span class="string">"unreachable"</span>.into())
+<a href=#973 id=973 data-nosnippet>973</a>        }
+<a href=#974 id=974 data-nosnippet>974</a>    };
+<a href=#975 id=975 data-nosnippet>975</a>    llvm_args.extend(abort_strategy.map(|strategy| <span class="macro">format!</span>(<span class="string">"--abort-strategy={strategy}"</span>)));
 <a href=#976 id=976 data-nosnippet>976</a>
-<a href=#977 id=977 data-nosnippet>977</a>    <span class="kw">if </span>builder.deny_warnings {
-<a href=#978 id=978 data-nosnippet>978</a>        rustflags.push(<span class="string">"-Dwarnings"</span>.to_string());
-<a href=#979 id=979 data-nosnippet>979</a>    }
-<a href=#980 id=980 data-nosnippet>980</a>
-<a href=#981 id=981 data-nosnippet>981</a>    <span class="kw">if let </span><span class="prelude-val">Ok</span>(extra_rustflags) = tracked_env_var_get(<span class="string">"RUSTGPU_RUSTFLAGS"</span>) {
-<a href=#982 id=982 data-nosnippet>982</a>        rustflags.extend(extra_rustflags.split_whitespace().map(|s| s.to_string()));
-<a href=#983 id=983 data-nosnippet>983</a>    }
-<a href=#984 id=984 data-nosnippet>984</a>
-<a href=#985 id=985 data-nosnippet>985</a>    <span class="kw">let </span>target_dir_path = builder
-<a href=#986 id=986 data-nosnippet>986</a>        .target_dir_path
-<a href=#987 id=987 data-nosnippet>987</a>        .clone()
-<a href=#988 id=988 data-nosnippet>988</a>        .unwrap_or_else(|| PathBuf::from(<span class="string">"spirv-builder"</span>));
-<a href=#989 id=989 data-nosnippet>989</a>    <span class="kw">let </span>target_dir = <span class="kw">if </span>target_dir_path.is_absolute() {
-<a href=#990 id=990 data-nosnippet>990</a>        target_dir_path
-<a href=#991 id=991 data-nosnippet>991</a>    } <span class="kw">else </span>{
-<a href=#992 id=992 data-nosnippet>992</a>        <span class="kw">let </span>metadata = cargo_metadata::MetadataCommand::new()
-<a href=#993 id=993 data-nosnippet>993</a>            .current_dir(path_to_crate)
-<a href=#994 id=994 data-nosnippet>994</a>            .exec()<span class="question-mark">?</span>;
-<a href=#995 id=995 data-nosnippet>995</a>        metadata
-<a href=#996 id=996 data-nosnippet>996</a>            .target_directory
-<a href=#997 id=997 data-nosnippet>997</a>            .into_std_path_buf()
-<a href=#998 id=998 data-nosnippet>998</a>            .join(target_dir_path)
-<a href=#999 id=999 data-nosnippet>999</a>    };
-<a href=#1000 id=1000 data-nosnippet>1000</a>
-<a href=#1001 id=1001 data-nosnippet>1001</a>    <span class="kw">let </span><span class="kw-2">mut </span>cargo = cargo_cmd::CargoCmd::new();
-<a href=#1002 id=1002 data-nosnippet>1002</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(toolchain) = <span class="kw-2">&amp;</span>builder.toolchain_overwrite {
-<a href=#1003 id=1003 data-nosnippet>1003</a>        cargo.arg(<span class="macro">format!</span>(<span class="string">"+{toolchain}"</span>));
-<a href=#1004 id=1004 data-nosnippet>1004</a>    }
-<a href=#1005 id=1005 data-nosnippet>1005</a>
-<a href=#1006 id=1006 data-nosnippet>1006</a>    <span class="kw">let </span>cargo_cmd = builder.cargo_cmd.as_ref().map_or(<span class="string">"rustc"</span>, |s| s.as_str());
-<a href=#1007 id=1007 data-nosnippet>1007</a>    <span class="kw">let </span>cargo_cmd_like_rustc = builder.cargo_cmd_like_rustc.unwrap_or(cargo_cmd == <span class="string">"rustc"</span>);
-<a href=#1008 id=1008 data-nosnippet>1008</a>    <span class="kw">let </span>profile = <span class="kw">if </span>builder.release { <span class="string">"release" </span>} <span class="kw">else </span>{ <span class="string">"dev" </span>};
-<a href=#1009 id=1009 data-nosnippet>1009</a>    cargo.args([
-<a href=#1010 id=1010 data-nosnippet>1010</a>        cargo_cmd,
-<a href=#1011 id=1011 data-nosnippet>1011</a>        <span class="string">"--lib"</span>,
-<a href=#1012 id=1012 data-nosnippet>1012</a>        <span class="string">"--message-format=json-render-diagnostics"</span>,
-<a href=#1013 id=1013 data-nosnippet>1013</a>        <span class="string">"-Zbuild-std=core"</span>,
-<a href=#1014 id=1014 data-nosnippet>1014</a>        <span class="string">"-Zbuild-std-features=compiler-builtins-mem"</span>,
-<a href=#1015 id=1015 data-nosnippet>1015</a>        <span class="string">"--profile"</span>,
-<a href=#1016 id=1016 data-nosnippet>1016</a>        profile,
-<a href=#1017 id=1017 data-nosnippet>1017</a>    ]);
-<a href=#1018 id=1018 data-nosnippet>1018</a>    <span class="kw">if </span>cargo_cmd_like_rustc {
-<a href=#1019 id=1019 data-nosnippet>1019</a>        <span class="comment">// About `crate-type`: We use it to determine whether the crate needs to be linked into shaders. For `rlib`,
-<a href=#1020 id=1020 data-nosnippet>1020</a>        // we're emitting regular rust libraries as is expected. For `dylib` or `cdylib`, we're linking all `rlib`s
-<a href=#1021 id=1021 data-nosnippet>1021</a>        // together, legalize them in many passes and emit a final `*.spv` file. Quirk: If you depend on a crate
-<a href=#1022 id=1022 data-nosnippet>1022</a>        // that has crate-type `dylib`, we also link it, and it will fail if it has no shaders, which may not be
-<a href=#1023 id=1023 data-nosnippet>1023</a>        // desired. (Gathered from reading source code and experimenting, @firestar99)
-<a href=#1024 id=1024 data-nosnippet>1024</a>        </span>cargo.args([<span class="string">"--crate-type"</span>, <span class="string">"dylib"</span>]);
-<a href=#1025 id=1025 data-nosnippet>1025</a>    }
-<a href=#1026 id=1026 data-nosnippet>1026</a>
-<a href=#1027 id=1027 data-nosnippet>1027</a>    <span class="kw">if let </span><span class="prelude-val">Ok</span>(extra_cargoflags) = tracked_env_var_get(<span class="string">"RUSTGPU_CARGOFLAGS"</span>) {
-<a href=#1028 id=1028 data-nosnippet>1028</a>        cargo.args(extra_cargoflags.split_whitespace());
-<a href=#1029 id=1029 data-nosnippet>1029</a>    }
-<a href=#1030 id=1030 data-nosnippet>1030</a>
-<a href=#1031 id=1031 data-nosnippet>1031</a>    <span class="kw">let </span>target_spec_dir = target_dir.join(<span class="string">"target-specs"</span>);
-<a href=#1032 id=1032 data-nosnippet>1032</a>    <span class="kw">let </span>target = TargetSpecVersion::target_arg(toolchain_rustc_version, <span class="kw-2">&amp;</span>target, <span class="kw-2">&amp;</span>target_spec_dir)<span class="question-mark">?</span>;
-<a href=#1033 id=1033 data-nosnippet>1033</a>    cargo.arg(<span class="string">"--target"</span>).arg(target);
-<a href=#1034 id=1034 data-nosnippet>1034</a>
-<a href=#1035 id=1035 data-nosnippet>1035</a>    <span class="kw">if </span>!builder.shader_crate_features.default_features {
-<a href=#1036 id=1036 data-nosnippet>1036</a>        cargo.arg(<span class="string">"--no-default-features"</span>);
-<a href=#1037 id=1037 data-nosnippet>1037</a>    }
-<a href=#1038 id=1038 data-nosnippet>1038</a>
-<a href=#1039 id=1039 data-nosnippet>1039</a>    <span class="kw">if </span>!builder.shader_crate_features.features.is_empty() {
-<a href=#1040 id=1040 data-nosnippet>1040</a>        cargo
-<a href=#1041 id=1041 data-nosnippet>1041</a>            .arg(<span class="string">"--features"</span>)
-<a href=#1042 id=1042 data-nosnippet>1042</a>            .arg(builder.shader_crate_features.features.join(<span class="string">","</span>));
+<a href=#977 id=977 data-nosnippet>977</a>    <span class="kw">if let </span><span class="prelude-val">Ok</span>(extra_codegen_args) = tracked_env_var_get(<span class="string">"RUSTGPU_CODEGEN_ARGS"</span>) {
+<a href=#978 id=978 data-nosnippet>978</a>        llvm_args.extend(extra_codegen_args.split_whitespace().map(|s| s.to_string()));
+<a href=#979 id=979 data-nosnippet>979</a>    } <span class="kw">else </span>{
+<a href=#980 id=980 data-nosnippet>980</a>        llvm_args.extend(builder.extra_args.iter().cloned());
+<a href=#981 id=981 data-nosnippet>981</a>    }
+<a href=#982 id=982 data-nosnippet>982</a>
+<a href=#983 id=983 data-nosnippet>983</a>    <span class="kw">let </span>llvm_args = join_checking_for_separators(llvm_args, <span class="string">" "</span>);
+<a href=#984 id=984 data-nosnippet>984</a>    <span class="kw">if </span>!llvm_args.is_empty() {
+<a href=#985 id=985 data-nosnippet>985</a>        rustflags.push([<span class="string">"-Cllvm-args="</span>, <span class="kw-2">&amp;</span>llvm_args].concat());
+<a href=#986 id=986 data-nosnippet>986</a>    }
+<a href=#987 id=987 data-nosnippet>987</a>
+<a href=#988 id=988 data-nosnippet>988</a>    target_features.extend(builder.capabilities.iter().map(|cap| <span class="macro">format!</span>(<span class="string">"+{cap:?}"</span>)));
+<a href=#989 id=989 data-nosnippet>989</a>    target_features.extend(builder.extensions.iter().map(|ext| <span class="macro">format!</span>(<span class="string">"+ext:{ext}"</span>)));
+<a href=#990 id=990 data-nosnippet>990</a>    <span class="kw">let </span>target_features = join_checking_for_separators(target_features, <span class="string">","</span>);
+<a href=#991 id=991 data-nosnippet>991</a>    <span class="kw">if </span>!target_features.is_empty() {
+<a href=#992 id=992 data-nosnippet>992</a>        rustflags.push([<span class="string">"-Ctarget-feature="</span>, <span class="kw-2">&amp;</span>target_features].concat());
+<a href=#993 id=993 data-nosnippet>993</a>    }
+<a href=#994 id=994 data-nosnippet>994</a>
+<a href=#995 id=995 data-nosnippet>995</a>    <span class="kw">if </span>builder.deny_warnings {
+<a href=#996 id=996 data-nosnippet>996</a>        rustflags.push(<span class="string">"-Dwarnings"</span>.to_string());
+<a href=#997 id=997 data-nosnippet>997</a>    }
+<a href=#998 id=998 data-nosnippet>998</a>
+<a href=#999 id=999 data-nosnippet>999</a>    <span class="kw">if let </span><span class="prelude-val">Ok</span>(extra_rustflags) = tracked_env_var_get(<span class="string">"RUSTGPU_RUSTFLAGS"</span>) {
+<a href=#1000 id=1000 data-nosnippet>1000</a>        rustflags.extend(extra_rustflags.split_whitespace().map(|s| s.to_string()));
+<a href=#1001 id=1001 data-nosnippet>1001</a>    }
+<a href=#1002 id=1002 data-nosnippet>1002</a>
+<a href=#1003 id=1003 data-nosnippet>1003</a>    <span class="kw">let </span>target_dir_path = builder
+<a href=#1004 id=1004 data-nosnippet>1004</a>        .target_dir_path
+<a href=#1005 id=1005 data-nosnippet>1005</a>        .clone()
+<a href=#1006 id=1006 data-nosnippet>1006</a>        .unwrap_or_else(|| PathBuf::from(<span class="string">"spirv-builder"</span>));
+<a href=#1007 id=1007 data-nosnippet>1007</a>    <span class="kw">let </span>target_dir = <span class="kw">if </span>target_dir_path.is_absolute() {
+<a href=#1008 id=1008 data-nosnippet>1008</a>        target_dir_path
+<a href=#1009 id=1009 data-nosnippet>1009</a>    } <span class="kw">else </span>{
+<a href=#1010 id=1010 data-nosnippet>1010</a>        <span class="kw">let </span>metadata = cargo_metadata::MetadataCommand::new()
+<a href=#1011 id=1011 data-nosnippet>1011</a>            .current_dir(path_to_crate)
+<a href=#1012 id=1012 data-nosnippet>1012</a>            .exec()<span class="question-mark">?</span>;
+<a href=#1013 id=1013 data-nosnippet>1013</a>        metadata
+<a href=#1014 id=1014 data-nosnippet>1014</a>            .target_directory
+<a href=#1015 id=1015 data-nosnippet>1015</a>            .into_std_path_buf()
+<a href=#1016 id=1016 data-nosnippet>1016</a>            .join(target_dir_path)
+<a href=#1017 id=1017 data-nosnippet>1017</a>    };
+<a href=#1018 id=1018 data-nosnippet>1018</a>
+<a href=#1019 id=1019 data-nosnippet>1019</a>    <span class="kw">let </span><span class="kw-2">mut </span>cargo = cargo_cmd::CargoCmd::new();
+<a href=#1020 id=1020 data-nosnippet>1020</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(toolchain) = <span class="kw-2">&amp;</span>builder.toolchain_overwrite {
+<a href=#1021 id=1021 data-nosnippet>1021</a>        cargo.arg(<span class="macro">format!</span>(<span class="string">"+{toolchain}"</span>));
+<a href=#1022 id=1022 data-nosnippet>1022</a>    }
+<a href=#1023 id=1023 data-nosnippet>1023</a>
+<a href=#1024 id=1024 data-nosnippet>1024</a>    <span class="kw">let </span>cargo_cmd = builder.cargo_cmd.as_ref().map_or(<span class="string">"rustc"</span>, |s| s.as_str());
+<a href=#1025 id=1025 data-nosnippet>1025</a>    <span class="kw">let </span>cargo_cmd_like_rustc = builder.cargo_cmd_like_rustc.unwrap_or(cargo_cmd == <span class="string">"rustc"</span>);
+<a href=#1026 id=1026 data-nosnippet>1026</a>    <span class="kw">let </span>profile = <span class="kw">if </span>builder.release { <span class="string">"release" </span>} <span class="kw">else </span>{ <span class="string">"dev" </span>};
+<a href=#1027 id=1027 data-nosnippet>1027</a>    cargo.args([
+<a href=#1028 id=1028 data-nosnippet>1028</a>        cargo_cmd,
+<a href=#1029 id=1029 data-nosnippet>1029</a>        <span class="string">"--lib"</span>,
+<a href=#1030 id=1030 data-nosnippet>1030</a>        <span class="string">"--message-format=json-render-diagnostics"</span>,
+<a href=#1031 id=1031 data-nosnippet>1031</a>        <span class="string">"-Zbuild-std=core"</span>,
+<a href=#1032 id=1032 data-nosnippet>1032</a>        <span class="string">"-Zbuild-std-features=compiler-builtins-mem"</span>,
+<a href=#1033 id=1033 data-nosnippet>1033</a>        <span class="string">"--profile"</span>,
+<a href=#1034 id=1034 data-nosnippet>1034</a>        profile,
+<a href=#1035 id=1035 data-nosnippet>1035</a>    ]);
+<a href=#1036 id=1036 data-nosnippet>1036</a>    <span class="kw">if </span>cargo_cmd_like_rustc {
+<a href=#1037 id=1037 data-nosnippet>1037</a>        <span class="comment">// About `crate-type`: We use it to determine whether the crate needs to be linked into shaders. For `rlib`,
+<a href=#1038 id=1038 data-nosnippet>1038</a>        // we're emitting regular rust libraries as is expected. For `dylib` or `cdylib`, we're linking all `rlib`s
+<a href=#1039 id=1039 data-nosnippet>1039</a>        // together, legalize them in many passes and emit a final `*.spv` file. Quirk: If you depend on a crate
+<a href=#1040 id=1040 data-nosnippet>1040</a>        // that has crate-type `dylib`, we also link it, and it will fail if it has no shaders, which may not be
+<a href=#1041 id=1041 data-nosnippet>1041</a>        // desired. (Gathered from reading source code and experimenting, @firestar99)
+<a href=#1042 id=1042 data-nosnippet>1042</a>        </span>cargo.args([<span class="string">"--crate-type"</span>, <span class="string">"dylib"</span>]);
 <a href=#1043 id=1043 data-nosnippet>1043</a>    }
 <a href=#1044 id=1044 data-nosnippet>1044</a>
-<a href=#1045 id=1045 data-nosnippet>1045</a>    cargo.arg(<span class="string">"--target-dir"</span>).arg(target_dir);
-<a href=#1046 id=1046 data-nosnippet>1046</a>
-<a href=#1047 id=1047 data-nosnippet>1047</a>    <span class="comment">// Args for warning and error forwarding
-<a href=#1048 id=1048 data-nosnippet>1048</a>    </span><span class="kw">if </span>builder.build_script.get_forward_rustc_warnings() {
-<a href=#1049 id=1049 data-nosnippet>1049</a>        <span class="comment">// Quiet to remove all the status messages and only emit errors and warnings
-<a href=#1050 id=1050 data-nosnippet>1050</a>        </span>cargo.args([<span class="string">"--quiet"</span>]);
-<a href=#1051 id=1051 data-nosnippet>1051</a>    }
-<a href=#1052 id=1052 data-nosnippet>1052</a>    <span class="kw">if </span>builder.build_script.get_cargo_color_always() {
-<a href=#1053 id=1053 data-nosnippet>1053</a>        <span class="comment">// Always emit color, since the outer cargo will remove ascii escape sequences if color is turned off
-<a href=#1054 id=1054 data-nosnippet>1054</a>        </span>cargo.args([<span class="string">"--color"</span>, <span class="string">"always"</span>]);
+<a href=#1045 id=1045 data-nosnippet>1045</a>    <span class="kw">if let </span><span class="prelude-val">Ok</span>(extra_cargoflags) = tracked_env_var_get(<span class="string">"RUSTGPU_CARGOFLAGS"</span>) {
+<a href=#1046 id=1046 data-nosnippet>1046</a>        cargo.args(extra_cargoflags.split_whitespace());
+<a href=#1047 id=1047 data-nosnippet>1047</a>    }
+<a href=#1048 id=1048 data-nosnippet>1048</a>
+<a href=#1049 id=1049 data-nosnippet>1049</a>    <span class="kw">let </span>target_spec_dir = target_dir.join(<span class="string">"target-specs"</span>);
+<a href=#1050 id=1050 data-nosnippet>1050</a>    <span class="kw">let </span>target = TargetSpecVersion::target_arg(toolchain_rustc_version, <span class="kw-2">&amp;</span>target, <span class="kw-2">&amp;</span>target_spec_dir)<span class="question-mark">?</span>;
+<a href=#1051 id=1051 data-nosnippet>1051</a>    cargo.arg(<span class="string">"--target"</span>).arg(target);
+<a href=#1052 id=1052 data-nosnippet>1052</a>
+<a href=#1053 id=1053 data-nosnippet>1053</a>    <span class="kw">if </span>!builder.shader_crate_features.default_features {
+<a href=#1054 id=1054 data-nosnippet>1054</a>        cargo.arg(<span class="string">"--no-default-features"</span>);
 <a href=#1055 id=1055 data-nosnippet>1055</a>    }
 <a href=#1056 id=1056 data-nosnippet>1056</a>
-<a href=#1057 id=1057 data-nosnippet>1057</a>    <span class="comment">// NOTE(eddyb) this used to be just `RUSTFLAGS` but at some point Cargo
-<a href=#1058 id=1058 data-nosnippet>1058</a>    // added a separate environment variable using `\x1f` instead of spaces,
-<a href=#1059 id=1059 data-nosnippet>1059</a>    // which allows us to have spaces within individual `rustc` flags.
-<a href=#1060 id=1060 data-nosnippet>1060</a>    </span>cargo.env(
-<a href=#1061 id=1061 data-nosnippet>1061</a>        <span class="string">"CARGO_ENCODED_RUSTFLAGS"</span>,
-<a href=#1062 id=1062 data-nosnippet>1062</a>        join_checking_for_separators(rustflags, <span class="string">"\x1f"</span>),
-<a href=#1063 id=1063 data-nosnippet>1063</a>    );
+<a href=#1057 id=1057 data-nosnippet>1057</a>    <span class="kw">if </span>!builder.shader_crate_features.features.is_empty() {
+<a href=#1058 id=1058 data-nosnippet>1058</a>        cargo
+<a href=#1059 id=1059 data-nosnippet>1059</a>            .arg(<span class="string">"--features"</span>)
+<a href=#1060 id=1060 data-nosnippet>1060</a>            .arg(builder.shader_crate_features.features.join(<span class="string">","</span>));
+<a href=#1061 id=1061 data-nosnippet>1061</a>    }
+<a href=#1062 id=1062 data-nosnippet>1062</a>
+<a href=#1063 id=1063 data-nosnippet>1063</a>    cargo.arg(<span class="string">"--target-dir"</span>).arg(target_dir);
 <a href=#1064 id=1064 data-nosnippet>1064</a>
-<a href=#1065 id=1065 data-nosnippet>1065</a>    <span class="comment">// NOTE(eddyb) there's no parallelism to take advantage of multiple CGUs,
-<a href=#1066 id=1066 data-nosnippet>1066</a>    // and inter-CGU duplication can be wasteful, so this forces 1 CGU for now.
-<a href=#1067 id=1067 data-nosnippet>1067</a>    </span><span class="kw">let </span>profile_in_env_var = profile.replace(<span class="string">'-'</span>, <span class="string">"_"</span>).to_ascii_uppercase();
-<a href=#1068 id=1068 data-nosnippet>1068</a>    <span class="kw">let </span>num_cgus = <span class="number">1</span>;
-<a href=#1069 id=1069 data-nosnippet>1069</a>    cargo.env(
-<a href=#1070 id=1070 data-nosnippet>1070</a>        <span class="macro">format!</span>(<span class="string">"CARGO_PROFILE_{profile_in_env_var}_CODEGEN_UNITS"</span>),
-<a href=#1071 id=1071 data-nosnippet>1071</a>        num_cgus.to_string(),
-<a href=#1072 id=1072 data-nosnippet>1072</a>    );
-<a href=#1073 id=1073 data-nosnippet>1073</a>
-<a href=#1074 id=1074 data-nosnippet>1074</a>    <span class="kw">if </span>!builder.build_script.get_forward_rustc_warnings() {
-<a href=#1075 id=1075 data-nosnippet>1075</a>        cargo.stderr(Stdio::inherit());
-<a href=#1076 id=1076 data-nosnippet>1076</a>    }
-<a href=#1077 id=1077 data-nosnippet>1077</a>    cargo.current_dir(path_to_crate);
-<a href=#1078 id=1078 data-nosnippet>1078</a>    <span class="macro">log::debug!</span>(<span class="string">"building shaders with `{cargo:?}`"</span>);
-<a href=#1079 id=1079 data-nosnippet>1079</a>    <span class="kw">let </span>build = cargo.output().expect(<span class="string">"failed to execute cargo build"</span>);
-<a href=#1080 id=1080 data-nosnippet>1080</a>
-<a href=#1081 id=1081 data-nosnippet>1081</a>    <span class="kw">if </span>builder.build_script.get_forward_rustc_warnings() {
-<a href=#1082 id=1082 data-nosnippet>1082</a>        <span class="kw">let </span>stderr = String::from_utf8_lossy(<span class="kw-2">&amp;</span>build.stderr);
-<a href=#1083 id=1083 data-nosnippet>1083</a>        <span class="kw">for </span>line <span class="kw">in </span>stderr.lines() {
-<a href=#1084 id=1084 data-nosnippet>1084</a>            <span class="macro">println!</span>(<span class="string">"cargo::warning={line}"</span>);
-<a href=#1085 id=1085 data-nosnippet>1085</a>        }
-<a href=#1086 id=1086 data-nosnippet>1086</a>    }
-<a href=#1087 id=1087 data-nosnippet>1087</a>
-<a href=#1088 id=1088 data-nosnippet>1088</a>    <span class="comment">// `get_last_artifact` has the side-effect of printing invalid lines, so
-<a href=#1089 id=1089 data-nosnippet>1089</a>    // we do that even in case of an error, to let through any useful messages
-<a href=#1090 id=1090 data-nosnippet>1090</a>    // that ended up on stdout instead of stderr.
-<a href=#1091 id=1091 data-nosnippet>1091</a>    </span><span class="kw">let </span>stdout = String::from_utf8(build.stdout).unwrap();
-<a href=#1092 id=1092 data-nosnippet>1092</a>    <span class="kw">if </span>build.status.success() {
-<a href=#1093 id=1093 data-nosnippet>1093</a>        get_sole_artifact(<span class="kw-2">&amp;</span>stdout).ok_or(SpirvBuilderError::NoArtifactProduced { stdout })
-<a href=#1094 id=1094 data-nosnippet>1094</a>    } <span class="kw">else </span>{
-<a href=#1095 id=1095 data-nosnippet>1095</a>        <span class="prelude-val">Err</span>(SpirvBuilderError::BuildFailed)
-<a href=#1096 id=1096 data-nosnippet>1096</a>    }
-<a href=#1097 id=1097 data-nosnippet>1097</a>}
+<a href=#1065 id=1065 data-nosnippet>1065</a>    <span class="comment">// Args for warning and error forwarding
+<a href=#1066 id=1066 data-nosnippet>1066</a>    </span><span class="kw">if </span>builder.build_script.get_forward_rustc_warnings() {
+<a href=#1067 id=1067 data-nosnippet>1067</a>        <span class="comment">// Quiet to remove all the status messages and only emit errors and warnings
+<a href=#1068 id=1068 data-nosnippet>1068</a>        </span>cargo.args([<span class="string">"--quiet"</span>]);
+<a href=#1069 id=1069 data-nosnippet>1069</a>    }
+<a href=#1070 id=1070 data-nosnippet>1070</a>    <span class="kw">if </span>builder.build_script.get_cargo_color_always() {
+<a href=#1071 id=1071 data-nosnippet>1071</a>        <span class="comment">// Always emit color, since the outer cargo will remove ascii escape sequences if color is turned off
+<a href=#1072 id=1072 data-nosnippet>1072</a>        </span>cargo.args([<span class="string">"--color"</span>, <span class="string">"always"</span>]);
+<a href=#1073 id=1073 data-nosnippet>1073</a>    }
+<a href=#1074 id=1074 data-nosnippet>1074</a>
+<a href=#1075 id=1075 data-nosnippet>1075</a>    <span class="comment">// NOTE(eddyb) this used to be just `RUSTFLAGS` but at some point Cargo
+<a href=#1076 id=1076 data-nosnippet>1076</a>    // added a separate environment variable using `\x1f` instead of spaces,
+<a href=#1077 id=1077 data-nosnippet>1077</a>    // which allows us to have spaces within individual `rustc` flags.
+<a href=#1078 id=1078 data-nosnippet>1078</a>    </span>cargo.env(
+<a href=#1079 id=1079 data-nosnippet>1079</a>        <span class="string">"CARGO_ENCODED_RUSTFLAGS"</span>,
+<a href=#1080 id=1080 data-nosnippet>1080</a>        join_checking_for_separators(rustflags, <span class="string">"\x1f"</span>),
+<a href=#1081 id=1081 data-nosnippet>1081</a>    );
+<a href=#1082 id=1082 data-nosnippet>1082</a>
+<a href=#1083 id=1083 data-nosnippet>1083</a>    <span class="comment">// NOTE(eddyb) there's no parallelism to take advantage of multiple CGUs,
+<a href=#1084 id=1084 data-nosnippet>1084</a>    // and inter-CGU duplication can be wasteful, so this forces 1 CGU for now.
+<a href=#1085 id=1085 data-nosnippet>1085</a>    </span><span class="kw">let </span>profile_in_env_var = profile.replace(<span class="string">'-'</span>, <span class="string">"_"</span>).to_ascii_uppercase();
+<a href=#1086 id=1086 data-nosnippet>1086</a>    <span class="kw">let </span>num_cgus = <span class="number">1</span>;
+<a href=#1087 id=1087 data-nosnippet>1087</a>    cargo.env(
+<a href=#1088 id=1088 data-nosnippet>1088</a>        <span class="macro">format!</span>(<span class="string">"CARGO_PROFILE_{profile_in_env_var}_CODEGEN_UNITS"</span>),
+<a href=#1089 id=1089 data-nosnippet>1089</a>        num_cgus.to_string(),
+<a href=#1090 id=1090 data-nosnippet>1090</a>    );
+<a href=#1091 id=1091 data-nosnippet>1091</a>
+<a href=#1092 id=1092 data-nosnippet>1092</a>    <span class="kw">if </span>!builder.build_script.get_forward_rustc_warnings() {
+<a href=#1093 id=1093 data-nosnippet>1093</a>        cargo.stderr(Stdio::inherit());
+<a href=#1094 id=1094 data-nosnippet>1094</a>    }
+<a href=#1095 id=1095 data-nosnippet>1095</a>    cargo.current_dir(path_to_crate);
+<a href=#1096 id=1096 data-nosnippet>1096</a>    <span class="macro">log::debug!</span>(<span class="string">"building shaders with `{cargo:?}`"</span>);
+<a href=#1097 id=1097 data-nosnippet>1097</a>    <span class="kw">let </span>build = cargo.output().expect(<span class="string">"failed to execute cargo build"</span>);
 <a href=#1098 id=1098 data-nosnippet>1098</a>
-<a href=#1099 id=1099 data-nosnippet>1099</a><span class="attr">#[derive(Deserialize)]
-<a href=#1100 id=1100 data-nosnippet>1100</a></span><span class="kw">struct </span>RustcOutput {
-<a href=#1101 id=1101 data-nosnippet>1101</a>    reason: String,
-<a href=#1102 id=1102 data-nosnippet>1102</a>    filenames: <span class="prelude-ty">Option</span>&lt;Vec&lt;String&gt;&gt;,
-<a href=#1103 id=1103 data-nosnippet>1103</a>}
-<a href=#1104 id=1104 data-nosnippet>1104</a>
-<a href=#1105 id=1105 data-nosnippet>1105</a><span class="kw">const </span>ARTIFACT_SUFFIX: <span class="kw-2">&amp;</span>str = <span class="string">".spv.json"</span>;
-<a href=#1106 id=1106 data-nosnippet>1106</a>
-<a href=#1107 id=1107 data-nosnippet>1107</a><span class="kw">fn </span>get_sole_artifact(out: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;PathBuf&gt; {
-<a href=#1108 id=1108 data-nosnippet>1108</a>    <span class="kw">let </span><span class="kw-2">mut </span>last_compiler_artifact = <span class="prelude-val">None</span>;
-<a href=#1109 id=1109 data-nosnippet>1109</a>    <span class="kw">for </span>line <span class="kw">in </span>out.lines() {
-<a href=#1110 id=1110 data-nosnippet>1110</a>        <span class="kw">let </span><span class="prelude-val">Ok</span>(msg) = serde_json::from_str::&lt;RustcOutput&gt;(line) <span class="kw">else </span>{
-<a href=#1111 id=1111 data-nosnippet>1111</a>            <span class="comment">// Pass through invalid lines
-<a href=#1112 id=1112 data-nosnippet>1112</a>            </span><span class="macro">println!</span>(<span class="string">"{line}"</span>);
-<a href=#1113 id=1113 data-nosnippet>1113</a>            <span class="kw">continue</span>;
-<a href=#1114 id=1114 data-nosnippet>1114</a>        };
-<a href=#1115 id=1115 data-nosnippet>1115</a>        <span class="kw">if </span>msg.reason == <span class="string">"compiler-artifact" </span>{
-<a href=#1116 id=1116 data-nosnippet>1116</a>            last_compiler_artifact = <span class="prelude-val">Some</span>(msg);
-<a href=#1117 id=1117 data-nosnippet>1117</a>        }
-<a href=#1118 id=1118 data-nosnippet>1118</a>    }
-<a href=#1119 id=1119 data-nosnippet>1119</a>    <span class="kw">let </span>last_compiler_artifact =
-<a href=#1120 id=1120 data-nosnippet>1120</a>        last_compiler_artifact.expect(<span class="string">"Did not find output file in rustc output"</span>);
-<a href=#1121 id=1121 data-nosnippet>1121</a>
-<a href=#1122 id=1122 data-nosnippet>1122</a>    <span class="kw">let </span><span class="kw-2">mut </span>filenames = last_compiler_artifact
-<a href=#1123 id=1123 data-nosnippet>1123</a>        .filenames
-<a href=#1124 id=1124 data-nosnippet>1124</a>        .unwrap()
-<a href=#1125 id=1125 data-nosnippet>1125</a>        .into_iter()
-<a href=#1126 id=1126 data-nosnippet>1126</a>        .filter(|v| v.ends_with(ARTIFACT_SUFFIX));
-<a href=#1127 id=1127 data-nosnippet>1127</a>    <span class="kw">let </span>filename = filenames.next()<span class="question-mark">?</span>;
-<a href=#1128 id=1128 data-nosnippet>1128</a>    <span class="macro">assert_eq!</span>(
-<a href=#1129 id=1129 data-nosnippet>1129</a>        filenames.next(),
-<a href=#1130 id=1130 data-nosnippet>1130</a>        <span class="prelude-val">None</span>,
-<a href=#1131 id=1131 data-nosnippet>1131</a>        <span class="string">"build had multiple `{ARTIFACT_SUFFIX}` artifacts"
-<a href=#1132 id=1132 data-nosnippet>1132</a>    </span>);
-<a href=#1133 id=1133 data-nosnippet>1133</a>    <span class="prelude-val">Some</span>(filename.into())
-<a href=#1134 id=1134 data-nosnippet>1134</a>}
-<a href=#1135 id=1135 data-nosnippet>1135</a>
-<a href=#1136 id=1136 data-nosnippet>1136</a><span class="doccomment">/// Internally iterate through the leaf dependencies of the artifact at `artifact`
-<a href=#1137 id=1137 data-nosnippet>1137</a></span><span class="kw">fn </span>leaf_deps(artifact: <span class="kw-2">&amp;</span>Path, <span class="kw-2">mut </span>handle: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span>RawStr)) -&gt; std::io::Result&lt;()&gt; {
-<a href=#1138 id=1138 data-nosnippet>1138</a>    <span class="kw">let </span>deps_file = artifact.with_extension(<span class="string">"d"</span>);
-<a href=#1139 id=1139 data-nosnippet>1139</a>    <span class="kw">let </span><span class="kw-2">mut </span>deps_map = HashMap::new();
-<a href=#1140 id=1140 data-nosnippet>1140</a>    depfile::read_deps_file(<span class="kw-2">&amp;</span>deps_file, |item, deps| {
-<a href=#1141 id=1141 data-nosnippet>1141</a>        deps_map.insert(item, deps);
-<a href=#1142 id=1142 data-nosnippet>1142</a>        <span class="prelude-val">Ok</span>(())
-<a href=#1143 id=1143 data-nosnippet>1143</a>    })<span class="question-mark">?</span>;
-<a href=#1144 id=1144 data-nosnippet>1144</a>    <span class="kw">fn </span>recurse(
-<a href=#1145 id=1145 data-nosnippet>1145</a>        map: <span class="kw-2">&amp;</span>HashMap&lt;RawString, Vec&lt;RawString&gt;&gt;,
-<a href=#1146 id=1146 data-nosnippet>1146</a>        artifact: <span class="kw-2">&amp;</span>RawStr,
-<a href=#1147 id=1147 data-nosnippet>1147</a>        handle: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span>RawStr),
-<a href=#1148 id=1148 data-nosnippet>1148</a>    ) {
-<a href=#1149 id=1149 data-nosnippet>1149</a>        <span class="kw">match </span>map.get(artifact) {
-<a href=#1150 id=1150 data-nosnippet>1150</a>            <span class="prelude-val">Some</span>(entries) =&gt; {
-<a href=#1151 id=1151 data-nosnippet>1151</a>                <span class="kw">for </span>entry <span class="kw">in </span>entries {
-<a href=#1152 id=1152 data-nosnippet>1152</a>                    recurse(map, entry, handle);
-<a href=#1153 id=1153 data-nosnippet>1153</a>                }
-<a href=#1154 id=1154 data-nosnippet>1154</a>            }
-<a href=#1155 id=1155 data-nosnippet>1155</a>            <span class="prelude-val">None </span>=&gt; handle(artifact),
-<a href=#1156 id=1156 data-nosnippet>1156</a>        }
-<a href=#1157 id=1157 data-nosnippet>1157</a>    }
-<a href=#1158 id=1158 data-nosnippet>1158</a>    recurse(<span class="kw-2">&amp;</span>deps_map, artifact.to_str().unwrap().into(), <span class="kw-2">&amp;mut </span>handle);
-<a href=#1159 id=1159 data-nosnippet>1159</a>    <span class="prelude-val">Ok</span>(())
-<a href=#1160 id=1160 data-nosnippet>1160</a>}</code></pre></div></section></main></body></html>
+<a href=#1099 id=1099 data-nosnippet>1099</a>    <span class="kw">if </span>builder.build_script.get_forward_rustc_warnings() {
+<a href=#1100 id=1100 data-nosnippet>1100</a>        <span class="kw">let </span>stderr = String::from_utf8_lossy(<span class="kw-2">&amp;</span>build.stderr);
+<a href=#1101 id=1101 data-nosnippet>1101</a>        <span class="kw">for </span>line <span class="kw">in </span>stderr.lines() {
+<a href=#1102 id=1102 data-nosnippet>1102</a>            <span class="macro">println!</span>(<span class="string">"cargo::warning={line}"</span>);
+<a href=#1103 id=1103 data-nosnippet>1103</a>        }
+<a href=#1104 id=1104 data-nosnippet>1104</a>    }
+<a href=#1105 id=1105 data-nosnippet>1105</a>
+<a href=#1106 id=1106 data-nosnippet>1106</a>    <span class="comment">// `get_last_artifact` has the side-effect of printing invalid lines, so
+<a href=#1107 id=1107 data-nosnippet>1107</a>    // we do that even in case of an error, to let through any useful messages
+<a href=#1108 id=1108 data-nosnippet>1108</a>    // that ended up on stdout instead of stderr.
+<a href=#1109 id=1109 data-nosnippet>1109</a>    </span><span class="kw">let </span>stdout = String::from_utf8(build.stdout).unwrap();
+<a href=#1110 id=1110 data-nosnippet>1110</a>    <span class="kw">if </span>build.status.success() {
+<a href=#1111 id=1111 data-nosnippet>1111</a>        get_sole_artifact(<span class="kw-2">&amp;</span>stdout).ok_or(SpirvBuilderError::NoArtifactProduced { stdout })
+<a href=#1112 id=1112 data-nosnippet>1112</a>    } <span class="kw">else </span>{
+<a href=#1113 id=1113 data-nosnippet>1113</a>        <span class="prelude-val">Err</span>(SpirvBuilderError::BuildFailed)
+<a href=#1114 id=1114 data-nosnippet>1114</a>    }
+<a href=#1115 id=1115 data-nosnippet>1115</a>}
+<a href=#1116 id=1116 data-nosnippet>1116</a>
+<a href=#1117 id=1117 data-nosnippet>1117</a><span class="attr">#[derive(Deserialize)]
+<a href=#1118 id=1118 data-nosnippet>1118</a></span><span class="kw">struct </span>RustcOutput {
+<a href=#1119 id=1119 data-nosnippet>1119</a>    reason: String,
+<a href=#1120 id=1120 data-nosnippet>1120</a>    filenames: <span class="prelude-ty">Option</span>&lt;Vec&lt;String&gt;&gt;,
+<a href=#1121 id=1121 data-nosnippet>1121</a>}
+<a href=#1122 id=1122 data-nosnippet>1122</a>
+<a href=#1123 id=1123 data-nosnippet>1123</a><span class="kw">const </span>ARTIFACT_SUFFIX: <span class="kw-2">&amp;</span>str = <span class="string">".spv.json"</span>;
+<a href=#1124 id=1124 data-nosnippet>1124</a>
+<a href=#1125 id=1125 data-nosnippet>1125</a><span class="kw">fn </span>get_sole_artifact(out: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;PathBuf&gt; {
+<a href=#1126 id=1126 data-nosnippet>1126</a>    <span class="kw">let </span><span class="kw-2">mut </span>last_compiler_artifact = <span class="prelude-val">None</span>;
+<a href=#1127 id=1127 data-nosnippet>1127</a>    <span class="kw">for </span>line <span class="kw">in </span>out.lines() {
+<a href=#1128 id=1128 data-nosnippet>1128</a>        <span class="kw">let </span><span class="prelude-val">Ok</span>(msg) = serde_json::from_str::&lt;RustcOutput&gt;(line) <span class="kw">else </span>{
+<a href=#1129 id=1129 data-nosnippet>1129</a>            <span class="comment">// Pass through invalid lines
+<a href=#1130 id=1130 data-nosnippet>1130</a>            </span><span class="macro">println!</span>(<span class="string">"{line}"</span>);
+<a href=#1131 id=1131 data-nosnippet>1131</a>            <span class="kw">continue</span>;
+<a href=#1132 id=1132 data-nosnippet>1132</a>        };
+<a href=#1133 id=1133 data-nosnippet>1133</a>        <span class="kw">if </span>msg.reason == <span class="string">"compiler-artifact" </span>{
+<a href=#1134 id=1134 data-nosnippet>1134</a>            last_compiler_artifact = <span class="prelude-val">Some</span>(msg);
+<a href=#1135 id=1135 data-nosnippet>1135</a>        }
+<a href=#1136 id=1136 data-nosnippet>1136</a>    }
+<a href=#1137 id=1137 data-nosnippet>1137</a>    <span class="kw">let </span>last_compiler_artifact =
+<a href=#1138 id=1138 data-nosnippet>1138</a>        last_compiler_artifact.expect(<span class="string">"Did not find output file in rustc output"</span>);
+<a href=#1139 id=1139 data-nosnippet>1139</a>
+<a href=#1140 id=1140 data-nosnippet>1140</a>    <span class="kw">let </span><span class="kw-2">mut </span>filenames = last_compiler_artifact
+<a href=#1141 id=1141 data-nosnippet>1141</a>        .filenames
+<a href=#1142 id=1142 data-nosnippet>1142</a>        .unwrap()
+<a href=#1143 id=1143 data-nosnippet>1143</a>        .into_iter()
+<a href=#1144 id=1144 data-nosnippet>1144</a>        .filter(|v| v.ends_with(ARTIFACT_SUFFIX));
+<a href=#1145 id=1145 data-nosnippet>1145</a>    <span class="kw">let </span>filename = filenames.next()<span class="question-mark">?</span>;
+<a href=#1146 id=1146 data-nosnippet>1146</a>    <span class="macro">assert_eq!</span>(
+<a href=#1147 id=1147 data-nosnippet>1147</a>        filenames.next(),
+<a href=#1148 id=1148 data-nosnippet>1148</a>        <span class="prelude-val">None</span>,
+<a href=#1149 id=1149 data-nosnippet>1149</a>        <span class="string">"build had multiple `{ARTIFACT_SUFFIX}` artifacts"
+<a href=#1150 id=1150 data-nosnippet>1150</a>    </span>);
+<a href=#1151 id=1151 data-nosnippet>1151</a>    <span class="prelude-val">Some</span>(filename.into())
+<a href=#1152 id=1152 data-nosnippet>1152</a>}
+<a href=#1153 id=1153 data-nosnippet>1153</a>
+<a href=#1154 id=1154 data-nosnippet>1154</a><span class="doccomment">/// Internally iterate through the leaf dependencies of the artifact at `artifact`
+<a href=#1155 id=1155 data-nosnippet>1155</a></span><span class="kw">fn </span>leaf_deps(artifact: <span class="kw-2">&amp;</span>Path, <span class="kw-2">mut </span>handle: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span>RawStr)) -&gt; std::io::Result&lt;()&gt; {
+<a href=#1156 id=1156 data-nosnippet>1156</a>    <span class="kw">let </span>deps_file = artifact.with_extension(<span class="string">"d"</span>);
+<a href=#1157 id=1157 data-nosnippet>1157</a>    <span class="kw">let </span><span class="kw-2">mut </span>deps_map = HashMap::new();
+<a href=#1158 id=1158 data-nosnippet>1158</a>    depfile::read_deps_file(<span class="kw-2">&amp;</span>deps_file, |item, deps| {
+<a href=#1159 id=1159 data-nosnippet>1159</a>        deps_map.insert(item, deps);
+<a href=#1160 id=1160 data-nosnippet>1160</a>        <span class="prelude-val">Ok</span>(())
+<a href=#1161 id=1161 data-nosnippet>1161</a>    })<span class="question-mark">?</span>;
+<a href=#1162 id=1162 data-nosnippet>1162</a>    <span class="kw">fn </span>recurse(
+<a href=#1163 id=1163 data-nosnippet>1163</a>        map: <span class="kw-2">&amp;</span>HashMap&lt;RawString, Vec&lt;RawString&gt;&gt;,
+<a href=#1164 id=1164 data-nosnippet>1164</a>        artifact: <span class="kw-2">&amp;</span>RawStr,
+<a href=#1165 id=1165 data-nosnippet>1165</a>        handle: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span>RawStr),
+<a href=#1166 id=1166 data-nosnippet>1166</a>    ) {
+<a href=#1167 id=1167 data-nosnippet>1167</a>        <span class="kw">match </span>map.get(artifact) {
+<a href=#1168 id=1168 data-nosnippet>1168</a>            <span class="prelude-val">Some</span>(entries) =&gt; {
+<a href=#1169 id=1169 data-nosnippet>1169</a>                <span class="kw">for </span>entry <span class="kw">in </span>entries {
+<a href=#1170 id=1170 data-nosnippet>1170</a>                    recurse(map, entry, handle);
+<a href=#1171 id=1171 data-nosnippet>1171</a>                }
+<a href=#1172 id=1172 data-nosnippet>1172</a>            }
+<a href=#1173 id=1173 data-nosnippet>1173</a>            <span class="prelude-val">None </span>=&gt; handle(artifact),
+<a href=#1174 id=1174 data-nosnippet>1174</a>        }
+<a href=#1175 id=1175 data-nosnippet>1175</a>    }
+<a href=#1176 id=1176 data-nosnippet>1176</a>    recurse(<span class="kw-2">&amp;</span>deps_map, artifact.to_str().unwrap().into(), <span class="kw-2">&amp;mut </span>handle);
+<a href=#1177 id=1177 data-nosnippet>1177</a>    <span class="prelude-val">Ok</span>(())
+<a href=#1178 id=1178 data-nosnippet>1178</a>}</code></pre></div></section></main></body></html>
