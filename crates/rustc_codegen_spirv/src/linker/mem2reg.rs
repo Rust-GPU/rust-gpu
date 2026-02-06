@@ -193,6 +193,8 @@ fn insert_phis_all(
     for (var_map, _) in &var_maps_and_types {
         split_copy_memory(header, blocks, var_map);
     }
+
+    let mut rewrite_rules = FxHashMap::default();
     for &(ref var_map, base_var_type) in &var_maps_and_types {
         let blocks_with_phi = insert_phis(blocks, dominance_frontier, var_map);
         let mut renamer = Renamer {
@@ -205,16 +207,15 @@ fn insert_phis_all(
             phi_defs: FxHashSet::default(),
             visited: FxHashSet::default(),
             stack: Vec::new(),
-            rewrite_rules: FxHashMap::default(),
+            rewrite_rules: &mut rewrite_rules,
         };
         renamer.rename(0, None);
-        // FIXME(eddyb) shouldn't this full rescan of the function be done once?
-        apply_rewrite_rules(
-            &renamer.rewrite_rules,
-            blocks.values_mut().map(|block| &mut **block),
-        );
-        remove_nops(blocks);
     }
+    apply_rewrite_rules(
+        &rewrite_rules,
+        blocks.values_mut().map(|block| &mut **block),
+    );
+    remove_nops(blocks);
     remove_old_variables(blocks, &var_maps_and_types);
     true
 }
@@ -443,7 +444,7 @@ struct Renamer<'a, 'b> {
     phi_defs: FxHashSet<Word>,
     visited: FxHashSet<usize>,
     stack: Vec<Word>,
-    rewrite_rules: FxHashMap<Word, Word>,
+    rewrite_rules: &'a mut FxHashMap<Word, Word>,
 }
 
 impl Renamer<'_, '_> {
