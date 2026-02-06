@@ -18,6 +18,7 @@ pub struct Symbols {
     pub vector: Symbol,
     pub v1: Symbol,
     pub libm: Symbol,
+    pub num_traits: Symbol,
     pub entry_point_name: Symbol,
     pub spv_khr_vulkan_memory_model: Symbol,
 
@@ -33,6 +34,7 @@ pub struct Symbols {
     pub attributes: FxHashMap<Symbol, SpirvAttribute>,
     pub execution_modes: FxHashMap<Symbol, (ExecutionMode, ExecutionModeExtraDim)>,
     pub libm_intrinsics: FxHashMap<Symbol, libm_intrinsics::LibmIntrinsic>,
+    pub num_traits_intrinsics: FxHashMap<Symbol, libm_intrinsics::LibmIntrinsic>,
 }
 
 const BUILTINS: &[(&str, BuiltIn)] = {
@@ -405,10 +407,17 @@ impl Symbols {
         }
 
         let mut libm_intrinsics = FxHashMap::default();
-        for &(a, b) in libm_intrinsics::TABLE {
+        for &(a, b) in libm_intrinsics::LIBM_TABLE {
             let old = libm_intrinsics.insert(Symbol::intern(a), b);
             assert!(old.is_none());
         }
+
+        let mut num_traits_intrinsics = FxHashMap::default();
+        for &(a, b) in libm_intrinsics::NUM_TRAITS_TABLE {
+            let old = num_traits_intrinsics.insert(Symbol::intern(a), b);
+            assert!(old.is_none());
+        }
+
         Self {
             discriminant: Symbol::intern("discriminant"),
             rust_gpu: Symbol::intern("rust_gpu"),
@@ -416,6 +425,7 @@ impl Symbols {
             vector: Symbol::intern("vector"),
             v1: Symbol::intern("v1"),
             libm: Symbol::intern("libm"),
+            num_traits: Symbol::intern("num_traits"),
             entry_point_name: Symbol::intern("entry_point_name"),
             spv_khr_vulkan_memory_model: Symbol::intern("SPV_KHR_vulkan_memory_model"),
 
@@ -431,6 +441,7 @@ impl Symbols {
             attributes,
             execution_modes,
             libm_intrinsics,
+            num_traits_intrinsics,
         }
     }
 

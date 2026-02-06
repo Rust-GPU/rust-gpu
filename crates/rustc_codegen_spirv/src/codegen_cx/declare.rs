@@ -166,6 +166,16 @@ impl<'tcx> CodegenCx<'tcx> {
             }
         }
 
+        // Check for usage of `num_traits` intrinsics (like Float::powi) that we can optimize
+        if self.tcx.crate_name(def_id.krate) == self.sym.num_traits && !def_id.is_local() {
+            let item_name = self.tcx.item_name(def_id);
+            if let Some(&intrinsic) = self.sym.num_traits_intrinsics.get(&item_name) {
+                self.num_traits_intrinsics
+                    .borrow_mut()
+                    .insert(def_id, intrinsic);
+            }
+        }
+
         // Check if this is a From trait implementation
         if let Some(impl_def_id) = self.tcx.impl_of_method(def_id)
             && let Some(trait_ref) = self.tcx.impl_trait_ref(impl_def_id)
