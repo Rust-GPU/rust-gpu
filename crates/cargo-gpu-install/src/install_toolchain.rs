@@ -181,7 +181,7 @@ fn get_consent_for_toolchain_install(
 
     log::debug!("asking for consent to install the required toolchain");
     crossterm::terminal::enable_raw_mode().context("enabling raw mode")?;
-    crate::user_output!("{prompt} [y/n]: ");
+    user_output!("{prompt} [Y/n]: ");
     let mut input = crossterm::event::read().context("reading crossterm event")?;
 
     if let crossterm::event::Event::Key(crossterm::event::KeyEvent {
@@ -196,14 +196,19 @@ fn get_consent_for_toolchain_install(
     }
     crossterm::terminal::disable_raw_mode().context("disabling raw mode")?;
 
+    #[expect(clippy::print_stdout, reason = "need a newline after crossterm input")]
+    {
+        println!();
+    }
+
     if let crossterm::event::Event::Key(crossterm::event::KeyEvent {
-        code: crossterm::event::KeyCode::Char('y'),
+        code: crossterm::event::KeyCode::Char('y') | crossterm::event::KeyCode::Enter,
         ..
     }) = input
     {
         Ok(())
     } else {
-        crate::user_output!("Exiting...\n");
+        user_output!("Exiting...\n");
         #[expect(clippy::exit, reason = "user requested abort")]
         std::process::exit(0);
     }
