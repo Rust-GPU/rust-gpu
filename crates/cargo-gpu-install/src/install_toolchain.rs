@@ -9,8 +9,16 @@ use std::process::Command;
 use std::string::FromUtf8Error;
 
 /// list of required rustup components
-pub const REQUIRED_COMPONENTS: &[&str] =
-    ["rust-src", "rustc-dev", "llvm-tools", "clippy"].as_slice();
+pub const REQUIRED_COMPONENTS: &[&str] = [
+    "cargo",
+    "rustc",
+    "rust-std",
+    "clippy",
+    "rust-src",
+    "rustc-dev",
+    "llvm-tools",
+]
+.as_slice();
 
 /// Use `rustup` to install the toolchain and components, if not already installed.
 ///
