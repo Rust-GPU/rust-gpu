@@ -36,6 +36,7 @@ enum Cli {
     },
 }
 
+/// run some cmd
 fn cmd(args: impl IntoIterator<Item = impl AsRef<str>>) -> anyhow::Result<()> {
     let mut args = args.into_iter();
     let mut cmd = std::process::Command::new(args.next().context("no args")?.as_ref());
