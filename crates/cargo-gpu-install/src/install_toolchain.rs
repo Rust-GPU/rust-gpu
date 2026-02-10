@@ -51,6 +51,8 @@ pub fn ensure_toolchain_and_components_exist(
                     "toolchain",
                     "install",
                     &toolchain,
+                    "--profile",
+                    "minimal",
                     "-c",
                     &intersperse(",", REQUIRED_COMPONENTS.iter().copied()),
                 ])
