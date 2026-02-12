@@ -1,7 +1,7 @@
-use crate::{SpirvBuilder, SpirvBuilderError, leaf_deps};
+use crate::{SpirvBuilder, SpirvBuilderError};
 use notify::{Event, RecommendedWatcher, RecursiveMode, Watcher};
+use raw_string::RawStr;
 use rustc_codegen_spirv_types::CompileResult;
-use std::path::Path;
 use std::sync::mpsc::TryRecvError;
 use std::{
     collections::HashSet,
@@ -121,10 +121,9 @@ impl SpirvWatcher {
         }
 
         let result = (|| {
-            let metadata_file = crate::invoke_rustc(&self.builder)?;
-            let result = self.builder.parse_metadata_file(&metadata_file)?;
-            self.watch_leaf_deps(&metadata_file)?;
-            Ok(result)
+            let out = self.builder.invoke_rustc()?;
+            self.watch_leaf_deps(out.deps.iter().map(|d| d.as_ref()));
+            Ok(out.compile_result)
         })();
         match result {
             Ok(result) => {
@@ -152,16 +151,15 @@ impl SpirvWatcher {
         }
     }
 
-    fn watch_leaf_deps(&mut self, watch_path: &Path) -> Result<(), SpirvBuilderError> {
-        leaf_deps(watch_path, |artifact| {
-            let path = artifact.to_path().unwrap();
+    fn watch_leaf_deps<'a>(&mut self, deps: impl Iterator<Item = &'a RawStr>) {
+        for dep in deps {
+            let path = dep.to_path().unwrap();
             if self.watched_paths.insert(path.to_owned())
                 && let Err(err) = self.watcher.watch(path, RecursiveMode::NonRecursive)
             {
-                log::error!("files of cargo dependencies are not valid: {err}");
+                log::error!("failed to watch `{}`: {err}", path.display());
             }
-        })
-        .map_err(SpirvBuilderError::MetadataFileMissing)
+        }
     }
 }
 
