@@ -44,9 +44,8 @@ jobs:
         run: echo "TARGET=$(rustc --print host-tuple)" >> "$GITHUB_ENV"
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: |
-            .
-            tests/difftests/tests
+          add-job-id-key: "false"
+          shared-key: "base"
       # Fetch dependencies in a separate step to clearly show how long each part
       # of the testing takes
       - name: cargo fetch --locked
@@ -105,9 +104,8 @@ jobs:
         run: cargo version
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: |
-            .
-            tests/difftests/tests
+          add-job-id-key: "false"
+          shared-key: "android"
       - name: cargo fetch --locked
         run: cargo fetch --locked --target ${{ matrix.target }}
 
@@ -154,9 +152,9 @@ jobs:
         run: echo "TARGET=$(rustc --print host-tuple)" >> "$GITHUB_ENV"
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: |
-            .
-            tests/difftests/tests
+          add-job-id-key: "false"
+          shared-key: "base"
+          save-if: "false"
       - name: cargo fetch --locked
         run: cargo fetch --locked --target $TARGET
       - name: compiletest
@@ -194,9 +192,14 @@ jobs:
         run: echo "TARGET=$(rustc --print host-tuple)" >> "$GITHUB_ENV"
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: |
-            .
-            tests/difftests/tests
+          add-job-id-key: "false"
+          shared-key: "base"
+          save-if: "false"
+      - uses: Swatinem/rust-cache@v2
+        with:
+          add-job-id-key: "false"
+          shared-key: "difftest"
+          workspaces: "tests/difftests/tests"
       - name: cargo fetch --locked
         run: cargo fetch --locked --target $TARGET
       - name: cargo fetch --locked difftests
@@ -248,9 +251,9 @@ jobs:
         run: cargo version
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: |
-            .
-            tests/difftests/tests
+          add-job-id-key: "false"
+          shared-key: "base"
+          save-if: "false"
       - name: Install rustup components
         run: rustup component add rustfmt clippy
       - name: cargo fetch --locked
