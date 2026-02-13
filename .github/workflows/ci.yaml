@@ -80,6 +80,16 @@ jobs:
           OUT_DIR: "target/debug/ci/out"
         run: cargo run -p example-runner-wgpu-builder --no-default-features --features "use-installed-tools"
 
+      # Our test runners select very different features for dependencies, so they need to be two separate builds.
+      # * compiletests depends on `rustc_codegen_spirv` directly with features `use-installed-tools`
+      # * difftests depends on `spirv-builder` with no features, which excludes `rustc_codegen_spirv` entirely.
+      #   The individual difftest crates depend on it and run the spirv compile, never the test runner itself.
+      - name: prep cache for other jobs
+        run: |
+          cargo build -p compiletests --release --no-default-features --features "use-installed-tools"
+          cargo build -p difftests --release --no-default-features --features "use-installed-tools"
+
+
   android:
     name: Android
     strategy:
