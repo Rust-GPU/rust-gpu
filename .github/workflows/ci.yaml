@@ -23,9 +23,6 @@ jobs:
       matrix:
         os: [ ubuntu-latest, windows-latest, macOS-latest ]
     runs-on: ${{ matrix.os }}
-    env:
-      RUSTUP_UNPACK_RAM: "26214400"
-      RUSTUP_IO_THREADS: "1"
     steps:
       - uses: actions/checkout@v4
       - name: Install Vulkan SDK
@@ -42,6 +39,10 @@ jobs:
       # figure out native target triple while we're at it
       - name: install rust-toolchain
         run: echo "TARGET=$(rustc --print host-tuple)" >> "$GITHUB_ENV"
+      - uses: Swatinem/rust-cache@v2
+        with:
+          add-job-id-key: "false"
+          shared-key: "base"
       # Fetch dependencies in a separate step to clearly show how long each part
       # of the testing takes
       - name: cargo fetch --locked
@@ -55,8 +56,8 @@ jobs:
       - name: rustc_codegen_spirv test
         run: cargo test -p rustc_codegen_spirv --release --no-default-features --features "use-installed-tools"
 
-      - name: workspace test (excluding examples & difftest)
-        run: cargo test --release --workspace --exclude "example-runner-*" --exclude "difftest*" --no-default-features --features "use-installed-tools,clap"
+      - name: workspace test (excluding examples)
+        run: cargo test --release --workspace --exclude "example-runner-*" --no-default-features --features "use-installed-tools,clap"
 
       # Examples
       - name: cargo check examples
@@ -77,6 +78,10 @@ jobs:
           OUT_DIR: "target/debug/ci/out"
         run: cargo run -p example-runner-wgpu-builder --no-default-features --features "use-installed-tools"
 
+      - name: prep cache for compiletest and difftest
+        run: cargo build -p compiletests -p difftests --release --no-default-features --features "use-installed-tools"
+
+
   android:
     name: Android
     strategy:
@@ -84,9 +89,6 @@ jobs:
         os: [ ubuntu-latest ]
         target: [ aarch64-linux-android ]
     runs-on: ${{ matrix.os }}
-    env:
-      RUSTUP_UNPACK_RAM: "26214400"
-      RUSTUP_IO_THREADS: "1"
     steps:
       - uses: actions/checkout@v4
       - name: Install Vulkan SDK
@@ -98,6 +100,10 @@ jobs:
           stripdown: true
       - name: install rust-toolchain
         run: cargo version
+      - uses: Swatinem/rust-cache@v2
+        with:
+          add-job-id-key: "false"
+          shared-key: "android"
       - name: cargo fetch --locked
         run: cargo fetch --locked --target ${{ matrix.target }}
 
@@ -142,6 +148,11 @@ jobs:
           stripdown: true
       - name: install rust-toolchain
         run: echo "TARGET=$(rustc --print host-tuple)" >> "$GITHUB_ENV"
+      - uses: Swatinem/rust-cache@v2
+        with:
+          add-job-id-key: "false"
+          shared-key: "base"
+          save-if: "false"
       - name: cargo fetch --locked
         run: cargo fetch --locked --target $TARGET
       - name: compiletest
@@ -177,12 +188,20 @@ jobs:
           sudo apt install -y xvfb libgl1-mesa-dri libxcb-xfixes0-dev mesa-vulkan-drivers
       - name: install rust-toolchain
         run: echo "TARGET=$(rustc --print host-tuple)" >> "$GITHUB_ENV"
+      - uses: Swatinem/rust-cache@v2
+        with:
+          add-job-id-key: "false"
+          shared-key: "base"
+          save-if: "false"
+      - uses: Swatinem/rust-cache@v2
+        with:
+          add-job-id-key: "false"
+          shared-key: "difftest"
+          workspaces: "tests/difftests/tests"
       - name: cargo fetch --locked
         run: cargo fetch --locked --target $TARGET
       - name: cargo fetch --locked difftests
         run: cargo fetch --locked --manifest-path=tests/difftests/tests/Cargo.toml --target $TARGET
-      - name: test difftest
-        run: cargo test -p "difftest*" --release --no-default-features --features "use-installed-tools"
       - name: difftests
         run: cargo run -p difftests --release --no-default-features --features "use-installed-tools"
 
@@ -226,6 +245,11 @@ jobs:
       # cargo version is a random command that forces the installation of rust-toolchain
       - name: install rust-toolchain
         run: cargo version
+      - uses: Swatinem/rust-cache@v2
+        with:
+          add-job-id-key: "false"
+          shared-key: "base"
+          save-if: "false"
       - name: Install rustup components
         run: rustup component add rustfmt clippy
       - name: cargo fetch --locked
