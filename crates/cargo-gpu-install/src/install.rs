@@ -284,6 +284,10 @@ package = "rustc_codegen_spirv"
 
             crate::user_output!("Compiling `rustc_codegen_spirv` from source {}\n", source);
             let mut cargo = spirv_builder::cargo_cmd::CargoCmd::new();
+            // Make sure spirv-tools is build normally and does not skip C++ compile due to "being run in clippy"
+            // We add this only to our install and not generally to `CargoCmd` since we do want to forward clippy args
+            // to clippy running on the spirv target via e.g. `cargo gpu clippy`.
+            cargo.env_remove("CLIPPY_ARGS");
             cargo
                 .current_dir(&install_dir)
                 .arg(format!("+{toolchain_channel}"))
