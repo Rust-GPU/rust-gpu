@@ -138,6 +138,7 @@ mod spirv_type_constraints;
 mod symbols;
 mod target;
 mod target_feature;
+mod validation_err;
 
 use builder::Builder;
 use codegen_cx::CodegenCx;

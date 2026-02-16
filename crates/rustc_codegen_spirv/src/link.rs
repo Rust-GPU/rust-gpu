@@ -253,8 +253,26 @@ fn post_link_single_module(
     out_filename: &Path,
     dump_prefix: Option<&OsStr>,
 ) {
-    cg_args.do_disassemble(&module);
-    let spv_binary = module.assemble();
+    use crate::custom_decorations::{CustomDecoration, SrcLocDecoration, ZombieDecoration};
+
+    // Strip internal debug decorations (SrcLocDecoration, ZombieDecoration) BEFORE
+    // disassembly/validation/optimization unless preserve_debug_decorations is set.
+    // These decorations are only valid on certain targets (variables), but rust-gpu
+    // also places them on functions for span tracking which is invalid SPIR-V.
+    // Keep the original module for span lookup in error messages.
+    let (module_for_output, original_module_for_spans) = if cg_args.preserve_debug_decorations {
+        // When preserving decorations, use the same module for both
+        (module.clone(), module)
+    } else {
+        let mut stripped = module.clone();
+        SrcLocDecoration::remove_all(&mut stripped);
+        ZombieDecoration::remove_all(&mut stripped);
+        (stripped, module)
+    };
+
+    // Disassemble the stripped module (unless preserving decorations)
+    cg_args.do_disassemble(&module_for_output);
+    let spv_binary = module_for_output.assemble();
 
     if let Some(dir) = &cg_args.dump_post_link {
         // FIXME(eddyb) rename `filename` with `file_path` to make this less confusing.
@@ -305,7 +323,13 @@ fn post_link_single_module(
     };
 
     if cg_args.run_spirv_val {
-        do_spirv_val(sess, &spv_binary, out_filename, val_options);
+        do_spirv_val(
+            sess,
+            &spv_binary,
+            &original_module_for_spans,
+            out_filename,
+            val_options,
+        );
     }
 
     {
@@ -393,18 +417,20 @@ fn do_spirv_opt(
 fn do_spirv_val(
     sess: &Session,
     spv_binary: &[u32],
+    original_module_for_spans: &Module,
     filename: &Path,
     options: spirv_tools::val::ValidatorOptions,
 ) {
+    use crate::validation_err::ValidationErrorContext;
     use spirv_tools::val::{self, Validator};
 
     let validator = val::create(sess.target.options.env.parse().ok());
 
     if let Err(e) = validator.validate(spv_binary, Some(options)) {
-        let mut err = sess.dcx().struct_err(e.to_string());
-        err.note("spirv-val failed");
-        err.note(format!("module `{}`", filename.display()));
-        err.emit();
+        // Use the ORIGINAL module (with SrcLocDecoration) to look up source spans
+        // Note: We validate the stripped binary, but look up spans in the original
+        let mut ctx = ValidationErrorContext::new(sess, Some(original_module_for_spans), filename);
+        ctx.emit_error(&e);
     }
 }
 
