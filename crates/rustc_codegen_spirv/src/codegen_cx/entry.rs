@@ -9,7 +9,7 @@ use crate::builder_spirv::{SpirvFunctionCursor, SpirvValue, SpirvValueExt};
 use crate::spirv_type::SpirvType;
 use rspirv::dr::Operand;
 use rspirv::spirv::{
-    BuiltIn, Capability, Decoration, Dim, ExecutionModel, FunctionControl, StorageClass, Word,
+    BuiltIn, Decoration, Dim, ExecutionModel, FunctionControl, StorageClass, Word,
 };
 use rustc_abi::FieldsShape;
 use rustc_codegen_ssa::traits::{BaseTypeCodegenMethods, BuilderMethods, MiscCodegenMethods as _};
@@ -931,16 +931,12 @@ impl<'tcx> CodegenCx<'tcx> {
             _ => false,
         };
         if let Some(attachment_index) = attrs.input_attachment_index {
-            if is_subpass_input && self.builder.has_capability(Capability::InputAttachment) {
+            if is_subpass_input {
                 self.emit_global().decorate(
                     var_id.unwrap(),
                     Decoration::InputAttachmentIndex,
                     std::iter::once(Operand::LiteralBit32(attachment_index.value)),
                 );
-            } else if is_subpass_input {
-                self.tcx
-                    .dcx()
-                    .span_err(hir_param.ty_span, "Missing capability InputAttachment");
             } else {
                 self.tcx.dcx().span_err(
                     attachment_index.span,
