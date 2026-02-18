@@ -1825,10 +1825,6 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         self.declare_func_local_var(self.type_array(self.type_i8(), size.bytes()), align)
     }
 
-    fn dynamic_alloca(&mut self, _len: Self::Value, _align: Align) -> Self::Value {
-        self.fatal("dynamic alloca not supported yet")
-    }
-
     fn load(&mut self, ty: Self::Type, ptr: Self::Value, _align: Align) -> Self::Value {
         let (ptr, access_ty) = self.adjust_pointer_for_typed_access(ptr, ty);
         let loaded_val = ptr.const_fold_load(self).unwrap_or_else(|| {
@@ -3389,12 +3385,34 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             }
         }
 
+        // HACK(fee1-dead): `MaybeUninit` uses a union which we don't have very good support yet. Replacing all calls to it
+        // with an `Undef` serves the same purpose and fixes compiler errors
+        if instance_def_id.is_some_and(|did| {
+            self.tcx
+                .is_diagnostic_item(rustc_span::sym::maybe_uninit_uninit, did)
+        }) {
+            return self.undef(result_type);
+        }
+
         // Default: emit a regular function call
         let args = args.iter().map(|arg| arg.def(self)).collect::<Vec<_>>();
         self.emit()
             .function_call(result_type, None, callee_val, args)
             .unwrap()
             .with_type(result_type)
+    }
+
+    fn tail_call(
+        &mut self,
+        _llty: Self::Type,
+        _fn_attrs: Option<&CodegenFnAttrs>,
+        _fn_abi: &FnAbi<'tcx, Ty<'tcx>>,
+        _llfn: Self::Value,
+        _args: &[Self::Value],
+        _funclet: Option<&Self::Funclet>,
+        _instance: Option<ty::Instance<'tcx>>,
+    ) {
+        todo!()
     }
 
     fn zext(&mut self, val: Self::Value, dest_ty: Self::Type) -> Self::Value {
