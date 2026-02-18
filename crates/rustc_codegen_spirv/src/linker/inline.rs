@@ -298,8 +298,8 @@ impl LegalGlobal {
             let global = match inst.class.opcode {
                 Op::TypePointer => Self::TypePointer(inst.operands[0].unwrap_storage_class()),
                 Op::Variable => Self::Variable,
-                op if rspirv::grammar::reflect::is_type(op) => Self::TypeNonPointer,
-                op if rspirv::grammar::reflect::is_constant(op) => Self::Const,
+                op if op.is_type() => Self::TypeNonPointer,
+                op if op.is_constant() => Self::Const,
 
                 // FIXME(eddyb) should this be `unreachable!()`?
                 _ => continue,

@@ -6,6 +6,7 @@ use crate::abi::ConvSpirvType;
 use crate::attr::{AggregatedSpirvAttributes, Entry, Spanned, SpecConstant};
 use crate::builder::Builder;
 use crate::builder_spirv::{SpirvFunctionCursor, SpirvValue, SpirvValueExt};
+use crate::custom_decorations::{CustomDecoration, SrcLocDecoration};
 use crate::spirv_type::SpirvType;
 use rspirv::dr::Operand;
 use rspirv::spirv::{
@@ -986,6 +987,14 @@ impl<'tcx> CodegenCx<'tcx> {
                 // Emit the `OpVariable` with its *Result* ID set to `var_id`.
                 self.emit_global()
                     .variable(var_ptr_spirv_type, Some(var), storage_class, None);
+
+                // Add SrcLocDecoration to the variable for rich error messages.
+                let src_loc_inst = SrcLocDecoration::from_rustc_span(hir_param.span, &self.builder)
+                    .map(|src_loc| src_loc.encode_to_inst(var));
+                self.emit_global()
+                    .module_mut()
+                    .annotations
+                    .extend(src_loc_inst);
 
                 // Record this `OpVariable` as needing to be added (if applicable),
                 // to the *Interface* operands of the `OpEntryPoint` instruction.
