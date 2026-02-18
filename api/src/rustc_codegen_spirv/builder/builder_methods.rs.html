@@ -3319,87 +3319,89 @@
 <a href=#3319 id=3319 data-nosnippet>3319</a>
 <a href=#3320 id=3320 data-nosnippet>3320</a>        <span class="kw">let </span>libm_intrinsic =
 <a href=#3321 id=3321 data-nosnippet>3321</a>            instance_def_id.and_then(|def_id| <span class="self">self</span>.libm_intrinsics.borrow().get(<span class="kw-2">&amp;</span>def_id).copied());
-<a href=#3322 id=3322 data-nosnippet>3322</a>        <span class="kw">let </span>buffer_load_intrinsic = instance_def_id
-<a href=#3323 id=3323 data-nosnippet>3323</a>            .is_some_and(|def_id| <span class="self">self</span>.buffer_load_intrinsics.borrow().contains(<span class="kw-2">&amp;</span>def_id));
-<a href=#3324 id=3324 data-nosnippet>3324</a>        <span class="kw">let </span>buffer_store_intrinsic = instance_def_id
-<a href=#3325 id=3325 data-nosnippet>3325</a>            .is_some_and(|def_id| <span class="self">self</span>.buffer_store_intrinsics.borrow().contains(<span class="kw-2">&amp;</span>def_id));
-<a href=#3326 id=3326 data-nosnippet>3326</a>        <span class="kw">let </span>is_panic_entry_point = instance_def_id
-<a href=#3327 id=3327 data-nosnippet>3327</a>            .is_some_and(|def_id| <span class="self">self</span>.panic_entry_points.borrow().contains(<span class="kw-2">&amp;</span>def_id));
-<a href=#3328 id=3328 data-nosnippet>3328</a>        <span class="kw">let </span>from_trait_impl =
-<a href=#3329 id=3329 data-nosnippet>3329</a>            instance_def_id.and_then(|def_id| <span class="self">self</span>.from_trait_impls.borrow().get(<span class="kw-2">&amp;</span>def_id).copied());
-<a href=#3330 id=3330 data-nosnippet>3330</a>
-<a href=#3331 id=3331 data-nosnippet>3331</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(libm_intrinsic) = libm_intrinsic {
-<a href=#3332 id=3332 data-nosnippet>3332</a>            <span class="kw">let </span>result = <span class="self">self</span>.call_libm_intrinsic(libm_intrinsic, result_type, args);
-<a href=#3333 id=3333 data-nosnippet>3333</a>            <span class="kw">if </span>result_type != result.ty {
-<a href=#3334 id=3334 data-nosnippet>3334</a>                <span class="macro">bug!</span>(
-<a href=#3335 id=3335 data-nosnippet>3335</a>                    <span class="string">"Mismatched libm result type for {:?}: expected {}, got {}"</span>,
-<a href=#3336 id=3336 data-nosnippet>3336</a>                    libm_intrinsic,
-<a href=#3337 id=3337 data-nosnippet>3337</a>                    <span class="self">self</span>.debug_type(result_type),
-<a href=#3338 id=3338 data-nosnippet>3338</a>                    <span class="self">self</span>.debug_type(result.ty),
-<a href=#3339 id=3339 data-nosnippet>3339</a>                );
-<a href=#3340 id=3340 data-nosnippet>3340</a>            }
-<a href=#3341 id=3341 data-nosnippet>3341</a>            <span class="kw">return </span>result;
-<a href=#3342 id=3342 data-nosnippet>3342</a>        }
-<a href=#3343 id=3343 data-nosnippet>3343</a>
-<a href=#3344 id=3344 data-nosnippet>3344</a>        <span class="kw">if </span>is_panic_entry_point {
-<a href=#3345 id=3345 data-nosnippet>3345</a>            <span class="kw">return </span>DecodedFormatArgs::try_decode_and_remove_format_args(<span class="self">self</span>, args)
-<a href=#3346 id=3346 data-nosnippet>3346</a>                .codegen_panic(<span class="self">self</span>, result_type);
-<a href=#3347 id=3347 data-nosnippet>3347</a>        }
-<a href=#3348 id=3348 data-nosnippet>3348</a>        <span class="kw">if </span>buffer_load_intrinsic {
-<a href=#3349 id=3349 data-nosnippet>3349</a>            <span class="kw">return </span><span class="self">self</span>.codegen_buffer_load_intrinsic(fn_abi, result_type, args);
-<a href=#3350 id=3350 data-nosnippet>3350</a>        }
-<a href=#3351 id=3351 data-nosnippet>3351</a>        <span class="kw">if </span>buffer_store_intrinsic {
-<a href=#3352 id=3352 data-nosnippet>3352</a>            <span class="self">self</span>.codegen_buffer_store_intrinsic(fn_abi, args);
-<a href=#3353 id=3353 data-nosnippet>3353</a>            <span class="kw">let </span>void_ty = SpirvType::Void.def(rustc_span::DUMMY_SP, <span class="self">self</span>);
-<a href=#3354 id=3354 data-nosnippet>3354</a>            <span class="kw">return </span>SpirvValue {
-<a href=#3355 id=3355 data-nosnippet>3355</a>                kind: SpirvValueKind::IllegalTypeUsed(void_ty),
-<a href=#3356 id=3356 data-nosnippet>3356</a>                ty: void_ty,
-<a href=#3357 id=3357 data-nosnippet>3357</a>            };
-<a href=#3358 id=3358 data-nosnippet>3358</a>        }
-<a href=#3359 id=3359 data-nosnippet>3359</a>
-<a href=#3360 id=3360 data-nosnippet>3360</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>((source_ty, target_ty)) = from_trait_impl {
-<a href=#3361 id=3361 data-nosnippet>3361</a>            <span class="comment">// Optimize From::from calls with constant arguments to avoid creating intermediate types.
-<a href=#3362 id=3362 data-nosnippet>3362</a>            // Since From is only implemented for safe conversions (widening conversions that preserve
-<a href=#3363 id=3363 data-nosnippet>3363</a>            // the numeric value), we can directly create a constant of the target type for primitive
-<a href=#3364 id=3364 data-nosnippet>3364</a>            // numeric types.
-<a href=#3365 id=3365 data-nosnippet>3365</a>            </span><span class="kw">if let </span>[arg] = args
-<a href=#3366 id=3366 data-nosnippet>3366</a>                &amp;&amp; <span class="kw">let </span><span class="prelude-val">Some</span>(const_val) = <span class="self">self</span>.builder.lookup_const_scalar(<span class="kw-2">*</span>arg)
-<a href=#3367 id=3367 data-nosnippet>3367</a>            {
-<a href=#3368 id=3368 data-nosnippet>3368</a>                <span class="kw">use </span>rustc_middle::ty::FloatTy;
-<a href=#3369 id=3369 data-nosnippet>3369</a>                <span class="kw">let </span>optimized_result = <span class="kw">match </span>(source_ty.kind(), target_ty.kind()) {
-<a href=#3370 id=3370 data-nosnippet>3370</a>                    <span class="comment">// Integer widening conversions
-<a href=#3371 id=3371 data-nosnippet>3371</a>                    </span>(ty::Uint(<span class="kw">_</span>), ty::Uint(<span class="kw">_</span>)) | (ty::Int(<span class="kw">_</span>), ty::Int(<span class="kw">_</span>)) =&gt; {
-<a href=#3372 id=3372 data-nosnippet>3372</a>                        <span class="prelude-val">Some</span>(<span class="self">self</span>.constant_int(result_type, const_val))
-<a href=#3373 id=3373 data-nosnippet>3373</a>                    }
-<a href=#3374 id=3374 data-nosnippet>3374</a>                    <span class="comment">// Float widening conversions
-<a href=#3375 id=3375 data-nosnippet>3375</a>                    // TODO(@LegNeato): Handle more float types
-<a href=#3376 id=3376 data-nosnippet>3376</a>                    </span>(ty::Float(FloatTy::F32), ty::Float(FloatTy::F64)) =&gt; {
-<a href=#3377 id=3377 data-nosnippet>3377</a>                        <span class="kw">let </span>float_val = f32::from_bits(const_val <span class="kw">as </span>u32) <span class="kw">as </span>f64;
-<a href=#3378 id=3378 data-nosnippet>3378</a>                        <span class="prelude-val">Some</span>(<span class="self">self</span>.constant_float(result_type, float_val))
-<a href=#3379 id=3379 data-nosnippet>3379</a>                    }
-<a href=#3380 id=3380 data-nosnippet>3380</a>                    <span class="comment">// No optimization for narrowing conversions or unsupported types
-<a href=#3381 id=3381 data-nosnippet>3381</a>                    </span><span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
-<a href=#3382 id=3382 data-nosnippet>3382</a>                };
-<a href=#3383 id=3383 data-nosnippet>3383</a>
-<a href=#3384 id=3384 data-nosnippet>3384</a>                <span class="kw">if let </span><span class="prelude-val">Some</span>(result) = optimized_result {
-<a href=#3385 id=3385 data-nosnippet>3385</a>                    <span class="kw">return </span>result;
-<a href=#3386 id=3386 data-nosnippet>3386</a>                }
-<a href=#3387 id=3387 data-nosnippet>3387</a>            }
-<a href=#3388 id=3388 data-nosnippet>3388</a>        }
-<a href=#3389 id=3389 data-nosnippet>3389</a>
-<a href=#3390 id=3390 data-nosnippet>3390</a>        <span class="comment">// Default: emit a regular function call
-<a href=#3391 id=3391 data-nosnippet>3391</a>        </span><span class="kw">let </span>args = args.iter().map(|arg| arg.def(<span class="self">self</span>)).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-<a href=#3392 id=3392 data-nosnippet>3392</a>        <span class="self">self</span>.emit()
-<a href=#3393 id=3393 data-nosnippet>3393</a>            .function_call(result_type, <span class="prelude-val">None</span>, callee_val, args)
-<a href=#3394 id=3394 data-nosnippet>3394</a>            .unwrap()
-<a href=#3395 id=3395 data-nosnippet>3395</a>            .with_type(result_type)
-<a href=#3396 id=3396 data-nosnippet>3396</a>    }
-<a href=#3397 id=3397 data-nosnippet>3397</a>
-<a href=#3398 id=3398 data-nosnippet>3398</a>    <span class="kw">fn </span>zext(<span class="kw-2">&amp;mut </span><span class="self">self</span>, val: <span class="self">Self</span>::Value, dest_ty: <span class="self">Self</span>::Type) -&gt; <span class="self">Self</span>::Value {
-<a href=#3399 id=3399 data-nosnippet>3399</a>        <span class="self">self</span>.intcast(val, dest_ty, <span class="bool-val">false</span>)
-<a href=#3400 id=3400 data-nosnippet>3400</a>    }
-<a href=#3401 id=3401 data-nosnippet>3401</a>
-<a href=#3402 id=3402 data-nosnippet>3402</a>    <span class="kw">fn </span>apply_attrs_to_cleanup_callsite(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _llret: <span class="self">Self</span>::Value) {
-<a href=#3403 id=3403 data-nosnippet>3403</a>        <span class="comment">// Ignore
-<a href=#3404 id=3404 data-nosnippet>3404</a>    </span>}
-<a href=#3405 id=3405 data-nosnippet>3405</a>}</code></pre></div></section></main></body></html>
+<a href=#3322 id=3322 data-nosnippet>3322</a>        <span class="kw">let </span>num_traits_intrinsics = instance_def_id
+<a href=#3323 id=3323 data-nosnippet>3323</a>            .and_then(|def_id| <span class="self">self</span>.num_traits_intrinsics.borrow().get(<span class="kw-2">&amp;</span>def_id).copied());
+<a href=#3324 id=3324 data-nosnippet>3324</a>        <span class="kw">let </span>buffer_load_intrinsic = instance_def_id
+<a href=#3325 id=3325 data-nosnippet>3325</a>            .is_some_and(|def_id| <span class="self">self</span>.buffer_load_intrinsics.borrow().contains(<span class="kw-2">&amp;</span>def_id));
+<a href=#3326 id=3326 data-nosnippet>3326</a>        <span class="kw">let </span>buffer_store_intrinsic = instance_def_id
+<a href=#3327 id=3327 data-nosnippet>3327</a>            .is_some_and(|def_id| <span class="self">self</span>.buffer_store_intrinsics.borrow().contains(<span class="kw-2">&amp;</span>def_id));
+<a href=#3328 id=3328 data-nosnippet>3328</a>        <span class="kw">let </span>is_panic_entry_point = instance_def_id
+<a href=#3329 id=3329 data-nosnippet>3329</a>            .is_some_and(|def_id| <span class="self">self</span>.panic_entry_points.borrow().contains(<span class="kw-2">&amp;</span>def_id));
+<a href=#3330 id=3330 data-nosnippet>3330</a>        <span class="kw">let </span>from_trait_impl =
+<a href=#3331 id=3331 data-nosnippet>3331</a>            instance_def_id.and_then(|def_id| <span class="self">self</span>.from_trait_impls.borrow().get(<span class="kw-2">&amp;</span>def_id).copied());
+<a href=#3332 id=3332 data-nosnippet>3332</a>
+<a href=#3333 id=3333 data-nosnippet>3333</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(libm_intrinsic) = libm_intrinsic.or(num_traits_intrinsics) {
+<a href=#3334 id=3334 data-nosnippet>3334</a>            <span class="kw">let </span>result = <span class="self">self</span>.call_libm_intrinsic(libm_intrinsic, result_type, args);
+<a href=#3335 id=3335 data-nosnippet>3335</a>            <span class="kw">if </span>result_type != result.ty {
+<a href=#3336 id=3336 data-nosnippet>3336</a>                <span class="macro">bug!</span>(
+<a href=#3337 id=3337 data-nosnippet>3337</a>                    <span class="string">"Mismatched libm result type for {:?}: expected {}, got {}"</span>,
+<a href=#3338 id=3338 data-nosnippet>3338</a>                    libm_intrinsic,
+<a href=#3339 id=3339 data-nosnippet>3339</a>                    <span class="self">self</span>.debug_type(result_type),
+<a href=#3340 id=3340 data-nosnippet>3340</a>                    <span class="self">self</span>.debug_type(result.ty),
+<a href=#3341 id=3341 data-nosnippet>3341</a>                );
+<a href=#3342 id=3342 data-nosnippet>3342</a>            }
+<a href=#3343 id=3343 data-nosnippet>3343</a>            <span class="kw">return </span>result;
+<a href=#3344 id=3344 data-nosnippet>3344</a>        }
+<a href=#3345 id=3345 data-nosnippet>3345</a>
+<a href=#3346 id=3346 data-nosnippet>3346</a>        <span class="kw">if </span>is_panic_entry_point {
+<a href=#3347 id=3347 data-nosnippet>3347</a>            <span class="kw">return </span>DecodedFormatArgs::try_decode_and_remove_format_args(<span class="self">self</span>, args)
+<a href=#3348 id=3348 data-nosnippet>3348</a>                .codegen_panic(<span class="self">self</span>, result_type);
+<a href=#3349 id=3349 data-nosnippet>3349</a>        }
+<a href=#3350 id=3350 data-nosnippet>3350</a>        <span class="kw">if </span>buffer_load_intrinsic {
+<a href=#3351 id=3351 data-nosnippet>3351</a>            <span class="kw">return </span><span class="self">self</span>.codegen_buffer_load_intrinsic(fn_abi, result_type, args);
+<a href=#3352 id=3352 data-nosnippet>3352</a>        }
+<a href=#3353 id=3353 data-nosnippet>3353</a>        <span class="kw">if </span>buffer_store_intrinsic {
+<a href=#3354 id=3354 data-nosnippet>3354</a>            <span class="self">self</span>.codegen_buffer_store_intrinsic(fn_abi, args);
+<a href=#3355 id=3355 data-nosnippet>3355</a>            <span class="kw">let </span>void_ty = SpirvType::Void.def(rustc_span::DUMMY_SP, <span class="self">self</span>);
+<a href=#3356 id=3356 data-nosnippet>3356</a>            <span class="kw">return </span>SpirvValue {
+<a href=#3357 id=3357 data-nosnippet>3357</a>                kind: SpirvValueKind::IllegalTypeUsed(void_ty),
+<a href=#3358 id=3358 data-nosnippet>3358</a>                ty: void_ty,
+<a href=#3359 id=3359 data-nosnippet>3359</a>            };
+<a href=#3360 id=3360 data-nosnippet>3360</a>        }
+<a href=#3361 id=3361 data-nosnippet>3361</a>
+<a href=#3362 id=3362 data-nosnippet>3362</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>((source_ty, target_ty)) = from_trait_impl {
+<a href=#3363 id=3363 data-nosnippet>3363</a>            <span class="comment">// Optimize From::from calls with constant arguments to avoid creating intermediate types.
+<a href=#3364 id=3364 data-nosnippet>3364</a>            // Since From is only implemented for safe conversions (widening conversions that preserve
+<a href=#3365 id=3365 data-nosnippet>3365</a>            // the numeric value), we can directly create a constant of the target type for primitive
+<a href=#3366 id=3366 data-nosnippet>3366</a>            // numeric types.
+<a href=#3367 id=3367 data-nosnippet>3367</a>            </span><span class="kw">if let </span>[arg] = args
+<a href=#3368 id=3368 data-nosnippet>3368</a>                &amp;&amp; <span class="kw">let </span><span class="prelude-val">Some</span>(const_val) = <span class="self">self</span>.builder.lookup_const_scalar(<span class="kw-2">*</span>arg)
+<a href=#3369 id=3369 data-nosnippet>3369</a>            {
+<a href=#3370 id=3370 data-nosnippet>3370</a>                <span class="kw">use </span>rustc_middle::ty::FloatTy;
+<a href=#3371 id=3371 data-nosnippet>3371</a>                <span class="kw">let </span>optimized_result = <span class="kw">match </span>(source_ty.kind(), target_ty.kind()) {
+<a href=#3372 id=3372 data-nosnippet>3372</a>                    <span class="comment">// Integer widening conversions
+<a href=#3373 id=3373 data-nosnippet>3373</a>                    </span>(ty::Uint(<span class="kw">_</span>), ty::Uint(<span class="kw">_</span>)) | (ty::Int(<span class="kw">_</span>), ty::Int(<span class="kw">_</span>)) =&gt; {
+<a href=#3374 id=3374 data-nosnippet>3374</a>                        <span class="prelude-val">Some</span>(<span class="self">self</span>.constant_int(result_type, const_val))
+<a href=#3375 id=3375 data-nosnippet>3375</a>                    }
+<a href=#3376 id=3376 data-nosnippet>3376</a>                    <span class="comment">// Float widening conversions
+<a href=#3377 id=3377 data-nosnippet>3377</a>                    // TODO(@LegNeato): Handle more float types
+<a href=#3378 id=3378 data-nosnippet>3378</a>                    </span>(ty::Float(FloatTy::F32), ty::Float(FloatTy::F64)) =&gt; {
+<a href=#3379 id=3379 data-nosnippet>3379</a>                        <span class="kw">let </span>float_val = f32::from_bits(const_val <span class="kw">as </span>u32) <span class="kw">as </span>f64;
+<a href=#3380 id=3380 data-nosnippet>3380</a>                        <span class="prelude-val">Some</span>(<span class="self">self</span>.constant_float(result_type, float_val))
+<a href=#3381 id=3381 data-nosnippet>3381</a>                    }
+<a href=#3382 id=3382 data-nosnippet>3382</a>                    <span class="comment">// No optimization for narrowing conversions or unsupported types
+<a href=#3383 id=3383 data-nosnippet>3383</a>                    </span><span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+<a href=#3384 id=3384 data-nosnippet>3384</a>                };
+<a href=#3385 id=3385 data-nosnippet>3385</a>
+<a href=#3386 id=3386 data-nosnippet>3386</a>                <span class="kw">if let </span><span class="prelude-val">Some</span>(result) = optimized_result {
+<a href=#3387 id=3387 data-nosnippet>3387</a>                    <span class="kw">return </span>result;
+<a href=#3388 id=3388 data-nosnippet>3388</a>                }
+<a href=#3389 id=3389 data-nosnippet>3389</a>            }
+<a href=#3390 id=3390 data-nosnippet>3390</a>        }
+<a href=#3391 id=3391 data-nosnippet>3391</a>
+<a href=#3392 id=3392 data-nosnippet>3392</a>        <span class="comment">// Default: emit a regular function call
+<a href=#3393 id=3393 data-nosnippet>3393</a>        </span><span class="kw">let </span>args = args.iter().map(|arg| arg.def(<span class="self">self</span>)).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+<a href=#3394 id=3394 data-nosnippet>3394</a>        <span class="self">self</span>.emit()
+<a href=#3395 id=3395 data-nosnippet>3395</a>            .function_call(result_type, <span class="prelude-val">None</span>, callee_val, args)
+<a href=#3396 id=3396 data-nosnippet>3396</a>            .unwrap()
+<a href=#3397 id=3397 data-nosnippet>3397</a>            .with_type(result_type)
+<a href=#3398 id=3398 data-nosnippet>3398</a>    }
+<a href=#3399 id=3399 data-nosnippet>3399</a>
+<a href=#3400 id=3400 data-nosnippet>3400</a>    <span class="kw">fn </span>zext(<span class="kw-2">&amp;mut </span><span class="self">self</span>, val: <span class="self">Self</span>::Value, dest_ty: <span class="self">Self</span>::Type) -&gt; <span class="self">Self</span>::Value {
+<a href=#3401 id=3401 data-nosnippet>3401</a>        <span class="self">self</span>.intcast(val, dest_ty, <span class="bool-val">false</span>)
+<a href=#3402 id=3402 data-nosnippet>3402</a>    }
+<a href=#3403 id=3403 data-nosnippet>3403</a>
+<a href=#3404 id=3404 data-nosnippet>3404</a>    <span class="kw">fn </span>apply_attrs_to_cleanup_callsite(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _llret: <span class="self">Self</span>::Value) {
+<a href=#3405 id=3405 data-nosnippet>3405</a>        <span class="comment">// Ignore
+<a href=#3406 id=3406 data-nosnippet>3406</a>    </span>}
+<a href=#3407 id=3407 data-nosnippet>3407</a>}</code></pre></div></section></main></body></html>
