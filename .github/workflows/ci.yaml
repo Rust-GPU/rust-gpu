@@ -41,6 +41,11 @@ jobs:
       # figure out native target triple while we're at it
       - name: install rust-toolchain
         run: echo "TARGET=$(rustc --print host-tuple)" >> "$GITHUB_ENV"
+      - uses: Swatinem/rust-cache@v2
+        with:
+          add-job-id-key: "false"
+          shared-key: "base"
+          save-if: ${{ github.ref_name == 'main' }}
       # Fetch dependencies in a separate step to clearly show how long each part
       # of the testing takes
       - name: cargo fetch --locked
@@ -76,6 +81,17 @@ jobs:
           OUT_DIR: "target/debug/ci/out"
         run: cargo run -p example-runner-wgpu-builder --no-default-features --features "use-installed-tools"
 
+      # Our test runners select very different features for dependencies, so they need to be two separate builds.
+      # * compiletests depends on `rustc_codegen_spirv` directly with features `use-installed-tools`
+      # * difftests depends on `spirv-builder` with no features, which excludes `rustc_codegen_spirv` entirely.
+      #   The individual difftest crates depend on it and run the spirv compile, never the test runner itself.
+      - name: prep cache for other jobs
+        if: github.ref_name == 'main'
+        run: |
+          cargo build -p compiletests --release --no-default-features --features "use-installed-tools"
+          cargo build -p difftests --release --no-default-features --features "use-installed-tools"
+
+
   android:
     name: Android
     strategy:
@@ -94,6 +110,11 @@ jobs:
           stripdown: true
       - name: install rust-toolchain
         run: cargo version
+      - uses: Swatinem/rust-cache@v2
+        with:
+          add-job-id-key: "false"
+          shared-key: "android"
+          save-if: ${{ github.ref_name == 'main' }}
       - name: cargo fetch --locked
         run: cargo fetch --locked --target ${{ matrix.target }}
 
@@ -138,6 +159,11 @@ jobs:
           stripdown: true
       - name: install rust-toolchain
         run: echo "TARGET=$(rustc --print host-tuple)" >> "$GITHUB_ENV"
+      - uses: Swatinem/rust-cache@v2
+        with:
+          add-job-id-key: "false"
+          shared-key: "base"
+          save-if: "false"
       - name: cargo fetch --locked
         run: cargo fetch --locked --target $TARGET
       - name: compiletest
@@ -173,6 +199,16 @@ jobs:
           sudo apt install -y xvfb libgl1-mesa-dri libxcb-xfixes0-dev mesa-vulkan-drivers
       - name: install rust-toolchain
         run: echo "TARGET=$(rustc --print host-tuple)" >> "$GITHUB_ENV"
+      - uses: Swatinem/rust-cache@v2
+        with:
+          add-job-id-key: "false"
+          shared-key: "base"
+          save-if: "false"
+      - uses: Swatinem/rust-cache@v2
+        with:
+          add-job-id-key: "false"
+          shared-key: "difftest"
+          workspaces: "tests/difftests/tests"
       - name: cargo fetch --locked
         run: cargo fetch --locked --target $TARGET
       - name: cargo fetch --locked difftests
