@@ -14,6 +14,7 @@
 // ignore-vulkan1.1
 
 use core::arch::asm;
+use spirv_std::TypedBuffer;
 use spirv_std::glam::*;
 use spirv_std::spirv;
 
@@ -34,23 +35,22 @@ pub fn entry() {
             frag_coord = in(reg) &mut frag_coord,
         };
 
-        #[derive(Copy, Clone, Default)]
-        struct ViewportBuffer(Vec2);
-        let mut viewport_size = &ViewportBuffer::default();
-        asm! {
-            "OpDecorate typeof*{viewport_size} Block",
-            "%viewport_size = OpVariable typeof{viewport_size} Input",
-            "OpDecorate %viewport_size DescriptorSet 0",
-            "OpDecorate %viewport_size Binding 0",
-            "OpDecorate %viewport_size NonWritable",
-            "OpName %viewport_size \"viewport_size\"",
-            "%tmp = OpLoad typeof*{viewport_size} %viewport_size",
-            "OpStore {viewport_size} %tmp",
-            viewport_size = in(reg) &mut viewport_size,
-        };
+        let mut result_slot = core::mem::MaybeUninit::<&TypedBuffer<Vec2>>::uninit();
+        asm!(
+            "%var = OpVariable typeof*{result_slot} StorageBuffer",
+            "OpDecorate %var DescriptorSet {descriptor_set}",
+            "OpDecorate %var Binding {binding}",
+            "OpName %var \"viewport_size\"",
+            "OpStore {result_slot} %var",
+            descriptor_set = const 0,
+            binding = const 0,
+            result_slot = in(reg) result_slot.as_mut_ptr(),
+        );
+        let viewport_size_buffer: &TypedBuffer<Vec2> = result_slot.assume_init();
+        let viewport_size: &Vec2 = &**viewport_size_buffer;
 
         let mut output = Vec4::default();
-        main(frag_coord, &viewport_size.0, &mut output);
+        main(frag_coord, viewport_size, &mut output);
         asm! {
             "%output = OpVariable typeof{output} Output",
             "OpName %output \"output\"",

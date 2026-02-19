@@ -4,69 +4,62 @@ OpEntryPoint Fragment %1 "main" %2 %3 %4
 OpExecutionMode %1 OriginUpperLeft
 OpName %2 "frag_coord"
 OpName %3 "viewport_size"
-OpName %9 "(spirv_std::glam::Vec2, f32, f32)"
-OpMemberName %9 0 "0"
-OpMemberName %9 1 "1"
-OpMemberName %9 2 "2"
+OpName %10 "(spirv_std::glam::Vec2, f32, f32)"
+OpMemberName %10 0 "0"
+OpMemberName %10 1 "1"
+OpMemberName %10 2 "2"
 OpName %4 "output"
 OpName %1 "entry2_global_asm::entry"
 OpDecorate %2 BuiltIn FragCoord
-OpDecorate %10 Block
-OpDecorate %3 NonWritable
+OpDecorate %11 Block
+OpMemberDecorate %11 0 Offset 0
 OpDecorate %3 Binding 0
 OpDecorate %3 DescriptorSet 0
-OpMemberDecorate %9 0 Offset 0
-OpMemberDecorate %9 1 Offset 8
-OpMemberDecorate %9 2 Offset 12
+OpMemberDecorate %10 0 Offset 0
+OpMemberDecorate %10 1 Offset 8
+OpMemberDecorate %10 2 Offset 12
 OpDecorate %4 Location 0
-%11 = OpTypeVoid
-%12 = OpTypeFunction %11
-%13 = OpTypeFloat 32
-%14 = OpTypeVector %13 4
-%15 = OpTypePointer Input %14
-%2 = OpVariable  %15  Input
-%16 = OpTypeVector %13 2
-%10 = OpTypePointer Function %16
-%17 = OpTypePointer Input %10
-%3 = OpVariable  %17  Input
-%18 = OpTypePointer Function %13
-%19 = OpTypeInt 32 0
-%20 = OpConstant  %19  0
-%21 = OpConstant  %19  1
-%9 = OpTypeStruct %16 %13 %13
-%22 = OpUndef  %9
-%23 = OpConstant  %13  0
-%24 = OpConstant  %13  1
-%25 = OpTypePointer Output %14
-%4 = OpVariable  %25  Output
-%1 = OpFunction  %11  None %12
-%26 = OpLabel
-%27 = OpLoad  %14  %2
-%28 = OpLoad  %10  %3
-%29 = OpCompositeExtract  %13  %27 0
-%30 = OpCompositeExtract  %13  %27 1
-%31 = OpInBoundsAccessChain  %18  %28 %20
-%32 = OpLoad  %13  %31
-%33 = OpInBoundsAccessChain  %18  %28 %21
-%34 = OpLoad  %13  %33
-%35 = OpFDiv  %13  %29 %32
-%36 = OpFDiv  %13  %30 %34
-%37 = OpCompositeInsert  %9  %35 %22 0 0
-%38 = OpCompositeInsert  %9  %36 %37 0 1
-%39 = OpCompositeInsert  %9  %23 %38 1
-%40 = OpCompositeInsert  %9  %24 %39 2
-%41 = OpCompositeExtract  %13  %40 0 0
-%42 = OpCompositeExtract  %13  %40 0 1
-%43 = OpCompositeConstruct  %14  %41 %42 %23 %24
-OpStore %4 %43
+%12 = OpTypeVoid
+%13 = OpTypeFunction %12
+%14 = OpTypeFloat 32
+%15 = OpTypeVector %14 4
+%16 = OpTypePointer Input %15
+%2 = OpVariable  %16  Input
+%17 = OpTypeVector %14 2
+%18 = OpTypePointer StorageBuffer %17
+%11 = OpTypeStruct %17
+%19 = OpTypePointer StorageBuffer %11
+%3 = OpVariable  %19  StorageBuffer
+%20 = OpTypeInt 32 0
+%21 = OpConstant  %20  0
+%22 = OpTypePointer StorageBuffer %14
+%23 = OpConstant  %20  1
+%10 = OpTypeStruct %17 %14 %14
+%24 = OpUndef  %10
+%25 = OpConstant  %14  0
+%26 = OpConstant  %14  1
+%27 = OpTypePointer Output %15
+%4 = OpVariable  %27  Output
+%1 = OpFunction  %12  None %13
+%28 = OpLabel
+%29 = OpLoad  %15  %2
+%30 = OpAccessChain  %18  %3 %21
+%31 = OpCompositeExtract  %14  %29 0
+%32 = OpCompositeExtract  %14  %29 1
+%33 = OpInBoundsAccessChain  %22  %30 %21
+%34 = OpLoad  %14  %33
+%35 = OpInBoundsAccessChain  %22  %30 %23
+%36 = OpLoad  %14  %35
+%37 = OpFDiv  %14  %31 %34
+%38 = OpFDiv  %14  %32 %36
+%39 = OpCompositeInsert  %10  %37 %24 0 0
+%40 = OpCompositeInsert  %10  %38 %39 0 1
+%41 = OpCompositeInsert  %10  %25 %40 1
+%42 = OpCompositeInsert  %10  %26 %41 2
+%43 = OpCompositeExtract  %14  %42 0 0
+%44 = OpCompositeExtract  %14  %42 0 1
+%45 = OpCompositeConstruct  %15  %43 %44 %25 %26
+OpStore %4 %45
 OpNoLine
 OpReturn
 OpFunctionEnd
-error: error:0:0 - Block decoration on target <id> '10[%_ptr_Function_v2float]' must be a structure type
-         OpDecorate %_ptr_Function_v2float Block
-   |
-   = note: spirv-val failed
-   = note: module `$TEST_BUILD_DIR/spirv-attr/entry/entry2_global_asm.vulkan1.2`
-
-error: aborting due to 1 previous error
-
