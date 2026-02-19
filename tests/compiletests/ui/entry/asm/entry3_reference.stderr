@@ -1,0 +1,43 @@
+OpCapability Shader
+OpMemoryModel Logical Simple
+OpEntryPoint GLCompute %1 "main" %2 %3 %4
+OpExecutionMode %1 LocalSize 32 1 1
+OpName %2 "gid"
+OpName %3 "input"
+OpName %4 "output"
+OpDecorate %8 ArrayStride 4
+OpDecorate %9 Block
+OpMemberDecorate %9 0 Offset 0
+OpDecorate %2 BuiltIn GlobalInvocationId
+OpDecorate %3 NonWritable
+OpDecorate %3 Binding 0
+OpDecorate %3 DescriptorSet 0
+OpDecorate %4 Binding 1
+OpDecorate %4 DescriptorSet 0
+%10 = OpTypeInt 32 0
+%8 = OpTypeRuntimeArray %10
+%9 = OpTypeStruct %8
+%11 = OpTypePointer StorageBuffer %9
+%12 = OpTypeVector %10 3
+%13 = OpTypePointer Input %12
+%14 = OpTypeVoid
+%15 = OpTypeFunction %14
+%2 = OpVariable  %13  Input
+%16 = OpTypePointer StorageBuffer %8
+%3 = OpVariable  %11  StorageBuffer
+%17 = OpConstant  %10  0
+%18 = OpTypePointer StorageBuffer %10
+%4 = OpVariable  %11  StorageBuffer
+%1 = OpFunction  %14  None %15
+%19 = OpLabel
+%20 = OpLoad  %12  %2
+%21 = OpCompositeExtract  %10  %20 0
+%22 = OpAccessChain  %16  %3 %17
+%23 = OpAccessChain  %18  %22 %21
+%24 = OpLoad  %10  %23
+%25 = OpAccessChain  %16  %4 %17
+%26 = OpAccessChain  %18  %25 %21
+OpStore %26 %24
+OpNoLine
+OpReturn
+OpFunctionEnd
