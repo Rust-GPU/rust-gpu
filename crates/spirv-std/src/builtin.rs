@@ -42,17 +42,5 @@ pub mod compute {
             }
             result
         }
-        #[cfg(false)]
-        unsafe {
-            let mut result = 0_u32;
-            asm! {
-                "%builtin = OpVariable typeof{result_ref} Input",
-                "OpDecorate %builtin BuiltIn LocalInvocationIndex",
-                "%result = OpLoad typeof*{result_ref} %builtin",
-                "OpStore {result_ref} %result",
-                result_ref = in(reg) &mut result,
-            }
-            result
-        }
     }
 }
