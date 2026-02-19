@@ -3,7 +3,7 @@ use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 
 use super::Builder;
 use crate::abi::ConvSpirvType;
-use crate::builder_spirv::SpirvValue;
+use crate::builder_spirv::{SpirvValue, SpirvValueExt, SpirvValueKind};
 use crate::codegen_cx::CodegenCx;
 use crate::spirv_type::SpirvType;
 use rspirv::dr;
@@ -127,12 +127,20 @@ impl<'a, 'tcx> AsmBuilderMethods<'tcx> for Builder<'a, 'tcx> {
             };
 
             if let Some(in_value) = in_value
-                && let (BackendRepr::Scalar(scalar), OperandValue::Immediate(in_value_spv)) =
-                    (in_value.layout.backend_repr, &mut in_value.val)
-                && let Primitive::Pointer(_) = scalar.primitive()
+                && let OperandValue::Immediate(in_value_spv) = &mut in_value.val
             {
-                let in_value_precise_type = in_value.layout.spirv_type(self.span(), self);
-                *in_value_spv = self.pointercast(*in_value_spv, in_value_precise_type);
+                if let SpirvValueKind::FnAddr { function } = in_value_spv.kind
+                    && let SpirvType::Pointer { pointee } = self.lookup_type(in_value_spv.ty)
+                {
+                    // reference to function pointer must be unwrapped from its pointer to be used in calls
+                    *in_value_spv = function.with_type(pointee);
+                } else if let BackendRepr::Scalar(scalar) = in_value.layout.backend_repr
+                    && let Primitive::Pointer(_) = scalar.primitive()
+                {
+                    // ordinary SPIR-V value
+                    let in_value_precise_type = in_value.layout.spirv_type(self.span(), self);
+                    *in_value_spv = self.pointercast(*in_value_spv, in_value_precise_type);
+                }
             }
             if let Some(out_place) = out_place {
                 let out_place_precise_type = out_place.layout.spirv_type(self.span(), self);
