@@ -117,10 +117,12 @@ pub enum SpirvBuilderError {
         "`multimodule: true` build cannot be used together with `build_script.env_shader_spv_path: true`"
     )]
     MultiModuleWithEnvShaderSpvPath,
-    #[error("some metadata file is missing")]
-    MetadataFileMissing(#[from] std::io::Error),
-    #[error("unable to parse some metadata file")]
-    MetadataFileMalformed(#[from] serde_json::Error),
+    #[error("Metadata file emitted by codegen backend is missing: {0}")]
+    MetadataFileMissing(std::io::Error),
+    #[error("Metadata file emitted by codegen backend contains invalid json: {0}")]
+    MetadataFileMalformed(serde_json::Error),
+    #[error("Couldn't parse rustc dependency files: {0}")]
+    DepFileParseError(std::io::Error),
     #[error(
         "`{ARTIFACT_SUFFIX}` artifact not found in (supposedly successful) build output.\n--- build output ---\n{stdout}"
     )]
@@ -130,6 +132,8 @@ pub enum SpirvBuilderError {
     #[cfg(feature = "watch")]
     #[error(transparent)]
     WatchFailed(#[from] SpirvWatcherError),
+    #[error("IO Error: {0}")]
+    IoError(#[from] std::io::Error),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default, serde::Deserialize, serde::Serialize)]
@@ -758,10 +762,7 @@ impl SpirvBuilder {
             rustc_codegen_spirv_types::serde_json::from_reader(BufReader::new(metadata_contents))
                 .map_err(SpirvBuilderError::MetadataFileMalformed)?;
 
-        let is_multimodule = match &metadata.module {
-            ModuleResult::SingleModule(_) => false,
-            ModuleResult::MultiModule(_) => true,
-        };
+        let is_multimodule = matches!(&metadata.module, ModuleResult::MultiModule(_));
         assert_eq!(self.multimodule, is_multimodule);
 
         if self.build_script.get_env_shader_spv_path() {
@@ -1110,8 +1111,7 @@ impl SpirvBuilder {
             let mut deps = Vec::new();
             leaf_deps(&metadata_file, |artifact| {
                 deps.push(RawString::from(artifact));
-            })
-            .map_err(SpirvBuilderError::MetadataFileMissing)?;
+            })?;
             Ok(RustcOutput {
                 compile_result,
                 deps,
@@ -1160,13 +1160,14 @@ fn get_sole_artifact(out: &str) -> Option<PathBuf> {
 }
 
 /// Internally iterate through the leaf dependencies of the artifact at `artifact`
-fn leaf_deps(artifact: &Path, mut handle: impl FnMut(&RawStr)) -> std::io::Result<()> {
+fn leaf_deps(artifact: &Path, mut handle: impl FnMut(&RawStr)) -> Result<(), SpirvBuilderError> {
     let deps_file = artifact.with_extension("d");
     let mut deps_map = HashMap::new();
     depfile::read_deps_file(&deps_file, |item, deps| {
         deps_map.insert(item, deps);
         Ok(())
-    })?;
+    })
+    .map_err(SpirvBuilderError::DepFileParseError)?;
     fn recurse(
         map: &HashMap<RawString, Vec<RawString>>,
         artifact: &RawStr,
