@@ -6,7 +6,6 @@ use crate::builder_spirv::{SpirvValue, SpirvValueExt, SpirvValueKind};
 use crate::spirv_type::SpirvType;
 use rspirv::spirv::{Decoration, Word};
 use rustc_abi::{Align, Size};
-use rustc_codegen_spirv_types::Capability;
 use rustc_codegen_ssa::traits::BuilderMethods;
 use rustc_errors::ErrorGuaranteed;
 use rustc_middle::ty::Ty;
@@ -50,13 +49,11 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             .in_bounds_access_chain(u32_ptr, None, array, [actual_index])
             .unwrap()
             .with_type(u32_ptr);
-        if self.builder.has_capability(Capability::ShaderNonUniform) {
-            // apply NonUniform to the operation and the index
-            self.emit()
-                .decorate(ptr.def(self), Decoration::NonUniform, []);
-            self.emit()
-                .decorate(actual_index, Decoration::NonUniform, []);
-        }
+        // apply NonUniform to the operation and the index
+        self.emit()
+            .decorate(ptr.def(self), Decoration::NonUniform, []);
+        self.emit()
+            .decorate(actual_index, Decoration::NonUniform, []);
         self.load(u32_ty, ptr, Align::ONE)
     }
 
@@ -252,13 +249,11 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             .in_bounds_access_chain(u32_ptr, None, array, [actual_index])
             .unwrap()
             .with_type(u32_ptr);
-        if self.builder.has_capability(Capability::ShaderNonUniform) {
-            // apply NonUniform to the operation and the index
-            self.emit()
-                .decorate(ptr.def(self), Decoration::NonUniform, []);
-            self.emit()
-                .decorate(actual_index, Decoration::NonUniform, []);
-        }
+        // apply NonUniform to the operation and the index
+        self.emit()
+            .decorate(ptr.def(self), Decoration::NonUniform, []);
+        self.emit()
+            .decorate(actual_index, Decoration::NonUniform, []);
         self.store(value, ptr, Align::ONE);
         Ok(())
     }

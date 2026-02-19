@@ -15,12 +15,11 @@ use rspirv::{binary::Assemble, binary::Disassemble};
 use rustc_abi::Size;
 use rustc_arena::DroplessArena;
 use rustc_codegen_ssa::traits::ConstCodegenMethods as _;
-use rustc_data_structures::fx::{FxHashMap, FxHashSet};
+use rustc_data_structures::fx::FxHashMap;
 use rustc_middle::bug;
 use rustc_middle::mir::interpret::ConstAllocation;
 use rustc_middle::ty::TyCtxt;
 use rustc_span::source_map::SourceMap;
-use rustc_span::symbol::Symbol;
 use rustc_span::{DUMMY_SP, FileName, FileNameDisplayPreference, SourceFile, Span};
 use std::assert_matches::assert_matches;
 use std::cell::{RefCell, RefMut};
@@ -443,8 +442,6 @@ pub struct BuilderSpirv<'tcx> {
     id_to_const: RefCell<FxHashMap<Word, WithConstLegality<SpirvConst<'tcx, 'tcx>>>>,
 
     debug_file_cache: RefCell<FxHashMap<DebugFileKey, DebugFileSpirv<'tcx>>>,
-
-    enabled_capabilities: FxHashSet<Capability>,
 }
 
 impl<'tcx> BuilderSpirv<'tcx> {
@@ -461,50 +458,26 @@ impl<'tcx> BuilderSpirv<'tcx> {
         builder.set_version(version.0, version.1);
         builder.module_mut().header.as_mut().unwrap().generator = 0x001B_0000;
 
-        let mut enabled_capabilities = FxHashSet::default();
-
-        fn add_cap(
-            builder: &mut Builder,
-            enabled_capabilities: &mut FxHashSet<Capability>,
-            cap: Capability,
-        ) {
-            // This should be the only callsite of Builder::capability (aside from tests), to make
-            // sure the hashset stays in sync.
-            builder.capability(cap);
-            enabled_capabilities.insert(cap);
-        }
-        fn add_ext(builder: &mut Builder, ext: Symbol) {
-            // This should be the only callsite of Builder::extension (aside from tests), to make
-            // sure the hashset stays in sync.
-            builder.extension(ext.as_str());
-        }
-
         for feature in features {
             match *feature {
                 TargetFeature::Capability(cap) => {
-                    add_cap(&mut builder, &mut enabled_capabilities, cap);
+                    builder.capability(cap);
                 }
                 TargetFeature::Extension(ext) => {
-                    add_ext(&mut builder, ext);
+                    builder.extension(ext.as_str());
                 }
             }
         }
 
-        add_cap(&mut builder, &mut enabled_capabilities, Capability::Shader);
+        builder.capability(Capability::Shader);
         if memory_model == MemoryModel::Vulkan {
             if version < (1, 5) {
-                add_ext(&mut builder, sym.spv_khr_vulkan_memory_model);
+                builder.extension(sym.spv_khr_vulkan_memory_model.as_str());
             }
-            add_cap(
-                &mut builder,
-                &mut enabled_capabilities,
-                Capability::VulkanMemoryModel,
-            );
+            builder.capability(Capability::VulkanMemoryModel);
         }
-
         // The linker will always be ran on this module
-        add_cap(&mut builder, &mut enabled_capabilities, Capability::Linkage);
-
+        builder.capability(Capability::Linkage);
         builder.memory_model(AddressingModel::Logical, memory_model);
 
         Self {
@@ -514,7 +487,6 @@ impl<'tcx> BuilderSpirv<'tcx> {
             const_to_id: Default::default(),
             id_to_const: Default::default(),
             debug_file_cache: Default::default(),
-            enabled_capabilities,
         }
     }
 
@@ -533,10 +505,6 @@ impl<'tcx> BuilderSpirv<'tcx> {
             .unwrap()
             .write_all(spirv_tools::binary::from_binary(&module))
             .unwrap();
-    }
-
-    pub fn has_capability(&self, capability: Capability) -> bool {
-        self.enabled_capabilities.contains(&capability)
     }
 
     /// See comment on `BuilderCursor`
