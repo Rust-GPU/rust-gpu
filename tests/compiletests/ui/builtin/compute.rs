@@ -13,8 +13,11 @@
 // ignore-vulkan1.0
 // ignore-vulkan1.1
 
-use spirv_std::glam::*;
-use spirv_std::spirv;
+use spirv_std::{
+    builtin::compute,
+    glam::*,
+    spirv,
+};
 
 #[spirv(compute(threads(1)))]
 pub fn compute(
@@ -27,6 +30,7 @@ pub fn compute(
     // #[spirv(subgroup_id)] subgroup_id: u32,
     // #[spirv(workgroup_id)] workgroup_id: UVec3,
 ) {
-    let local_invocation_id = spirv_std::builtin::compute::local_invocation_id();
-    *out = local_invocation_id.x;
+    let _local_invocation_id: UVec3 = compute::local_invocation_id();
+    let local_invocation_index: u32 = compute::local_invocation_index();
+    *out = local_invocation_index;
 }
