@@ -1,6 +1,8 @@
 //! Defines the [`UniqueIndex`] and [`UniqueId`], describing a unique index or id for various [`Scope`]s
 
 use crate::unique::scope::*;
+use core::fmt::{Debug, Formatter};
+use core::hash::{Hash, Hasher};
 use core::marker::PhantomData;
 use core::ops::Deref;
 use glam::UVec3;
@@ -33,7 +35,6 @@ pub type GlobalUniqueId = UniqueId<Global>;
 ///
 /// # Safety
 /// The index must be globally unique within the [`Scope`] `S`.
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct UniqueId<S: Scope> {
     index: UVec3,
     _phantom: PhantomData<S>,
@@ -72,6 +73,37 @@ impl<S: Scope> UniqueId<S> {
 impl<S: Scope> From<UniqueId<S>> for UVec3 {
     fn from(inner: UniqueId<S>) -> Self {
         inner.index
+    }
+}
+
+impl<S: Scope> Copy for UniqueId<S> {}
+
+impl<S: Scope> Clone for UniqueId<S> {
+    fn clone(&self) -> Self {
+        Self {
+            index: self.index,
+            _phantom: PhantomData,
+        }
+    }
+}
+
+impl<S: Scope> Debug for UniqueId<S> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        f.debug_tuple("UniqueId").field(&self.index).finish()
+    }
+}
+
+impl<S: Scope> Eq for UniqueId<S> {}
+
+impl<S: Scope> PartialEq for UniqueId<S> {
+    fn eq(&self, other: &Self) -> bool {
+        PartialEq::eq(&self.index, &other.index)
+    }
+}
+
+impl<S: Scope> Hash for UniqueId<S> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        Hash::hash(&self.index, state)
     }
 }
 

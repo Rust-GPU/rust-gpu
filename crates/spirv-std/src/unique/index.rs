@@ -2,6 +2,9 @@ use crate::unique::{
     ActiveInvocations, AtLeastActiveInvocations, AtLeastGlobal, AtLeastSubgroup, AtLeastWorkgroup,
     Global, Scope, Subgroup, Workgroup,
 };
+use core::cmp::Ordering;
+use core::fmt::{Debug, Formatter};
+use core::hash::{Hash, Hasher};
 use core::marker::PhantomData;
 use core::ops::{Deref, Index, IndexMut};
 
@@ -35,7 +38,6 @@ pub type GlobalUniqueIndex = UniqueIndex<Global>;
 ///
 /// # Safety
 /// The index must be globally unique within the [`Scope`] `S`.
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct UniqueIndex<S: Scope> {
     index: u32,
     _phantom: PhantomData<S>,
@@ -52,6 +54,49 @@ impl<S: Scope> UniqueIndex<S> {
             index,
             _phantom: PhantomData,
         }
+    }
+}
+
+impl<S: Scope> Copy for UniqueIndex<S> {}
+
+impl<S: Scope> Clone for UniqueIndex<S> {
+    fn clone(&self) -> Self {
+        Self {
+            index: self.index,
+            _phantom: PhantomData,
+        }
+    }
+}
+
+impl<S: Scope> Debug for UniqueIndex<S> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        f.debug_tuple("UniqueIndex").field(&self.index).finish()
+    }
+}
+
+impl<S: Scope> Eq for UniqueIndex<S> {}
+
+impl<S: Scope> PartialEq for UniqueIndex<S> {
+    fn eq(&self, other: &Self) -> bool {
+        PartialEq::eq(&self.index, &other.index)
+    }
+}
+
+impl<S: Scope> Ord for UniqueIndex<S> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        Ord::cmp(&self.index, &other.index)
+    }
+}
+
+impl<S: Scope> PartialOrd for UniqueIndex<S> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        PartialOrd::partial_cmp(&self.index, &other.index)
+    }
+}
+
+impl<S: Scope> Hash for UniqueIndex<S> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        Hash::hash(&self.index, state)
     }
 }
 
