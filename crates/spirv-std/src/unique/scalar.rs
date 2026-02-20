@@ -1,4 +1,7 @@
 use crate::unique::Scope;
+use core::cmp::Ordering;
+use core::fmt::{Debug, Formatter};
+use core::hash::{Hash, Hasher};
 use core::marker::PhantomData;
 use core::ops::{
     Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Deref, Div,
@@ -46,6 +49,49 @@ impl<T, S: Scope> Deref for ScalarValue<T, S> {
     #[inline]
     fn deref(&self) -> &Self::Target {
         &self.value
+    }
+}
+
+impl<T: Copy, S: Scope> Copy for ScalarValue<T, S> {}
+
+impl<T: Clone, S: Scope> Clone for ScalarValue<T, S> {
+    fn clone(&self) -> Self {
+        Self {
+            value: self.value.clone(),
+            _phantom: PhantomData,
+        }
+    }
+}
+
+impl<T: Debug, S: Scope> Debug for ScalarValue<T, S> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        f.debug_tuple("ScalarValue").field(&self.value).finish()
+    }
+}
+
+impl<T: Eq, S: Scope> Eq for ScalarValue<T, S> {}
+
+impl<T: PartialEq, S: Scope> PartialEq for ScalarValue<T, S> {
+    fn eq(&self, other: &Self) -> bool {
+        PartialEq::eq(&self.value, &other.value)
+    }
+}
+
+impl<T: Ord, S: Scope> Ord for ScalarValue<T, S> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        Ord::cmp(&self.value, &other.value)
+    }
+}
+
+impl<T: PartialOrd, S: Scope> PartialOrd<Self> for ScalarValue<T, S> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        PartialOrd::partial_cmp(&self.value, &other.value)
+    }
+}
+
+impl<T: Hash, S: Scope> Hash for ScalarValue<T, S> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        Hash::hash(&self.value, state)
     }
 }
 
