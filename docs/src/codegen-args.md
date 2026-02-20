@@ -175,6 +175,14 @@ _Note: passes that are not already enabled by default are considered experimenta
 Dump the `SPIR-🇹` module across passes (i.e. all of the versions before/after each pass), as a combined report, to a pair of files (`.spirt` and `.spirt.html`) in `DIR`.  
 <sub>(the `.spirt.html` version of the report is the recommended form for viewing, as it uses tabling for versions, syntax-highlighting-like styling, and use->def linking)</sub>
 
+Mutually exclusive with `--dump-spirt` (this takes precedence over that).
+
+### `--dump-spirt DIR`
+
+Dump the `SPIR-🇹` module, similar to `--dump-spirt-passes`, but only the final version.
+
+Mutually exclusive with `--dump-spirt-passes` (which takes precedence over this).
+
 ### `--spirt-strip-custom-debuginfo-from-dumps`
 
 When dumping (pretty-printed) `SPIR-🇹` (e.g. with `--dump-spirt-passes`), strip

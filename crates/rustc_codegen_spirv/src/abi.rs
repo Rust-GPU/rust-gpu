@@ -616,15 +616,6 @@ fn trans_aggregate<'tcx>(cx: &CodegenCx<'tcx>, span: Span, ty: TyAndLayout<'tcx>
     }
 }
 
-#[cfg_attr(
-    not(rustc_codegen_spirv_disable_pqp_cg_ssa),
-    expect(
-        unused,
-        reason = "actually used from \
-            `<rustc_codegen_ssa::traits::ConstCodegenMethods for CodegenCx<'_>>::const_struct`, \
-            but `rustc_codegen_ssa` being `pqp_cg_ssa` makes that trait unexported"
-    )
-)]
 // returns (field_offsets, size, align)
 pub fn auto_struct_layout(
     cx: &CodegenCx<'_>,

@@ -115,33 +115,39 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
 
             sym::saturating_add => {
                 assert_eq!(arg_tys[0], arg_tys[1]);
-                let result = match arg_tys[0].kind() {
-                    TyKind::Int(_) | TyKind::Uint(_) => {
-                        self.add(args[0].immediate(), args[1].immediate())
-                    }
-                    TyKind::Float(_) => self.fadd(args[0].immediate(), args[1].immediate()),
+                match arg_tys[0].kind() {
+                    TyKind::Int(_) | TyKind::Uint(_) => self
+                        .emit()
+                        .i_add_sat_intel(
+                            ret_ty,
+                            None,
+                            args[0].immediate().def(self),
+                            args[1].immediate().def(self),
+                        )
+                        .unwrap()
+                        .with_type(ret_ty),
                     other => self.fatal(format!(
-                        "Unimplemented saturating_add intrinsic type: {other:#?}"
+                        "unimplemented saturating_add intrinsic type: {other:#?}"
                     )),
-                };
-                // TODO: Implement this
-                self.zombie(result.def(self), "saturating_add is not implemented yet");
-                result
+                }
             }
             sym::saturating_sub => {
                 assert_eq!(arg_tys[0], arg_tys[1]);
-                let result = match &arg_tys[0].kind() {
-                    TyKind::Int(_) | TyKind::Uint(_) => {
-                        self.sub(args[0].immediate(), args[1].immediate())
-                    }
-                    TyKind::Float(_) => self.fsub(args[0].immediate(), args[1].immediate()),
+                match &arg_tys[0].kind() {
+                    TyKind::Int(_) | TyKind::Uint(_) => self
+                        .emit()
+                        .i_sub_sat_intel(
+                            ret_ty,
+                            None,
+                            args[0].immediate().def(self),
+                            args[1].immediate().def(self),
+                        )
+                        .unwrap()
+                        .with_type(ret_ty),
                     other => self.fatal(format!(
-                        "Unimplemented saturating_sub intrinsic type: {other:#?}"
+                        "unimplemented saturating_sub intrinsic type: {other:#?}"
                     )),
-                };
-                // TODO: Implement this
-                self.zombie(result.def(self), "saturating_sub is not implemented yet");
-                result
+                }
             }
 
             sym::sqrtf32 | sym::sqrtf64 | sym::sqrtf128 => {
