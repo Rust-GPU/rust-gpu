@@ -105,6 +105,7 @@ mod sampler;
 mod scalar;
 mod scalar_or_vector;
 mod typed_buffer;
+pub mod unique;
 mod vector;
 
 pub use self::sampler::Sampler;
