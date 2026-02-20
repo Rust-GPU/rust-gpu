@@ -1,0 +1,99 @@
+OpCapability Shader
+OpMemoryModel Logical Simple
+OpEntryPoint GLCompute %1 "main" %2 %3 %4 %5 %6
+OpExecutionMode %1 LocalSize 32 1 1
+OpName %2 "gid"
+OpName %3 "input"
+OpName %4 "output"
+OpName %12 "core::marker::PhantomData<spirv_std::unique::Global>"
+OpName %13 "spirv_std::unique::UniqueId<spirv_std::unique::Global>"
+OpMemberName %13 0 "index"
+OpMemberName %13 1 "_phantom"
+OpDecorate %14 ArrayStride 4
+OpDecorate %15 Block
+OpMemberDecorate %15 0 Offset 0
+OpDecorate %2 BuiltIn GlobalInvocationId
+OpDecorate %3 NonWritable
+OpDecorate %3 Binding 0
+OpDecorate %3 DescriptorSet 0
+OpDecorate %4 Binding 1
+OpDecorate %4 DescriptorSet 0
+OpDecorate %5 BuiltIn GlobalInvocationId
+OpMemberDecorate %13 0 Offset 0
+OpMemberDecorate %13 1 Offset 12
+OpDecorate %6 BuiltIn WorkgroupSize
+%16 = OpTypeInt 32 0
+%14 = OpTypeRuntimeArray %16
+%15 = OpTypeStruct %14
+%17 = OpTypePointer StorageBuffer %15
+%18 = OpTypeVector %16 3
+%19 = OpTypePointer Input %18
+%20 = OpTypeVoid
+%21 = OpTypeFunction %20
+%2 = OpVariable  %19  Input
+%22 = OpTypePointer StorageBuffer %14
+%3 = OpVariable  %17  StorageBuffer
+%23 = OpConstant  %16  0
+%24 = OpTypePointer StorageBuffer %16
+%4 = OpVariable  %17  StorageBuffer
+%5 = OpVariable  %19  Input
+%12 = OpTypeStruct
+%13 = OpTypeStruct %18 %12
+%25 = OpUndef  %13
+%6 = OpVariable  %19  Input
+%26 = OpTypeBool
+%27 = OpConstant  %16  1
+%1 = OpFunction  %20  None %21
+%28 = OpLabel
+%29 = OpLoad  %18  %2
+%30 = OpCompositeExtract  %16  %29 0
+%31 = OpAccessChain  %22  %3 %23
+%32 = OpAccessChain  %24  %31 %30
+%33 = OpLoad  %16  %32
+%34 = OpAccessChain  %22  %4 %23
+%35 = OpArrayLength  %16  %4 0
+%36 = OpLoad  %18  %5
+%37 = OpCompositeInsert  %13  %36 %25 0
+%38 = OpLoad  %18  %6
+%39 = OpCompositeInsert  %13  %38 %25 0
+%40 = OpCompositeExtract  %16  %37 0 0
+%41 = OpCompositeExtract  %16  %37 0 1
+%42 = OpCompositeExtract  %16  %39 0 0
+%43 = OpIMul  %16  %41 %42
+%44 = OpIAdd  %16  %40 %43
+%45 = OpCompositeExtract  %16  %37 0 2
+%46 = OpCompositeExtract  %16  %39 0 1
+%47 = OpIMul  %16  %45 %46
+%48 = OpCompositeExtract  %16  %39 0 0
+%49 = OpIMul  %16  %47 %48
+%50 = OpIAdd  %16  %44 %49
+%51 = OpULessThan  %26  %50 %35
+OpNoLine
+OpSelectionMerge %52 None
+OpBranchConditional %51 %53 %54
+%53 = OpLabel
+%55 = OpIAdd  %16  %23 %50
+%56 = OpInBoundsAccessChain  %24  %34 %55
+OpStore %56 %33
+%57 = OpAccessChain  %22  %3 %23
+%58 = OpAccessChain  %24  %57 %30
+%59 = OpLoad  %16  %58
+%60 = OpAccessChain  %22  %3 %23
+%61 = OpIAdd  %16  %30 %27
+%62 = OpAccessChain  %24  %60 %61
+%63 = OpLoad  %16  %62
+OpNoLine
+OpReturn
+%54 = OpLabel
+OpReturn
+%52 = OpLabel
+OpUnreachable
+OpFunctionEnd
+error: error:0:0 - BuiltIn decoration on target <id> '6[%gl_WorkGroupSize]' must be a constant for WorkgroupSize
+         OpDecorate %gl_WorkGroupSize BuiltIn WorkgroupSize
+   |
+   = note: spirv-val failed
+   = note: module `$TEST_BUILD_DIR/entry/disjoint_slice_partition.vulkan1.2`
+
+error: aborting due to 1 previous error
+

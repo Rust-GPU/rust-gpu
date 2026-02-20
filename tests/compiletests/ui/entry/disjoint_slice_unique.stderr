@@ -1,0 +1,144 @@
+OpCapability Shader
+OpMemoryModel Logical Simple
+OpEntryPoint GLCompute %1 "main" %2 %3 %4 %5
+OpExecutionMode %1 LocalSize 32 1 1
+OpName %13 "core::marker::PhantomData<spirv_std::unique::Global>"
+OpName %14 "spirv_std::unique::UniqueId<spirv_std::unique::Global>"
+OpMemberName %14 0 "index"
+OpMemberName %14 1 "_phantom"
+OpName %4 "input"
+OpName %5 "output"
+OpName %15 "<spirv_std::unique::index::UniqueIndex<spirv_std::unique::scope::Global>>::to_usize"
+OpDecorate %16 ArrayStride 4
+OpDecorate %17 Block
+OpMemberDecorate %17 0 Offset 0
+OpDecorate %2 BuiltIn GlobalInvocationId
+OpMemberDecorate %14 0 Offset 0
+OpMemberDecorate %14 1 Offset 12
+OpDecorate %3 BuiltIn WorkgroupSize
+OpDecorate %4 NonWritable
+OpDecorate %4 Binding 0
+OpDecorate %4 DescriptorSet 0
+OpDecorate %5 Binding 1
+OpDecorate %5 DescriptorSet 0
+%18 = OpTypeInt 32 0
+%16 = OpTypeRuntimeArray %18
+%17 = OpTypeStruct %16
+%19 = OpTypePointer StorageBuffer %17
+%20 = OpTypeVoid
+%21 = OpTypeFunction %20
+%22 = OpTypePointer Function %18
+%23 = OpTypeVector %18 3
+%24 = OpTypePointer Input %23
+%2 = OpVariable  %24  Input
+%13 = OpTypeStruct
+%14 = OpTypeStruct %23 %13
+%25 = OpUndef  %14
+%3 = OpVariable  %24  Input
+%26 = OpTypePointer StorageBuffer %16
+%4 = OpVariable  %19  StorageBuffer
+%27 = OpConstant  %18  0
+%28 = OpTypeFunction %18 %22
+%29 = OpTypePointer StorageBuffer %18
+%5 = OpVariable  %19  StorageBuffer
+%30 = OpTypeBool
+%31 = OpConstant  %18  2
+%32 = OpConstant  %18  1
+%1 = OpFunction  %20  None %21
+%33 = OpLabel
+%34 = OpVariable  %22  Function
+%35 = OpLoad  %23  %2
+%36 = OpCompositeInsert  %14  %35 %25 0
+%37 = OpLoad  %23  %3
+%38 = OpCompositeInsert  %14  %37 %25 0
+%39 = OpCompositeExtract  %18  %36 0 0
+%40 = OpCompositeExtract  %18  %36 0 1
+%41 = OpCompositeExtract  %18  %38 0 0
+%42 = OpIMul  %18  %40 %41
+%43 = OpIAdd  %18  %39 %42
+%44 = OpCompositeExtract  %18  %36 0 2
+%45 = OpCompositeExtract  %18  %38 0 1
+%46 = OpIMul  %18  %44 %45
+%47 = OpCompositeExtract  %18  %38 0 0
+%48 = OpIMul  %18  %46 %47
+%49 = OpIAdd  %18  %43 %48
+OpStore %34 %49
+%50 = OpAccessChain  %26  %4 %27
+%51 = OpFunctionCall  %18  %15 %34
+%52 = OpAccessChain  %29  %50 %51
+%53 = OpLoad  %18  %52
+%54 = OpLoad  %18  %34
+%55 = OpAccessChain  %26  %5 %27
+%56 = OpArrayLength  %18  %5 0
+%57 = OpULessThan  %30  %54 %56
+OpNoLine
+OpSelectionMerge %58 None
+OpBranchConditional %57 %59 %60
+%59 = OpLabel
+OpBranch %58
+%60 = OpLabel
+OpReturn
+%58 = OpLabel
+%61 = OpIAdd  %18  %27 %54
+%62 = OpInBoundsAccessChain  %29  %55 %61
+OpStore %62 %53
+%63 = OpAccessChain  %26  %4 %27
+%64 = OpFunctionCall  %18  %15 %34
+%65 = OpAccessChain  %29  %63 %64
+%66 = OpLoad  %18  %65
+%67 = OpLoad  %18  %34
+%68 = OpIMul  %18  %67 %31
+%69 = OpAccessChain  %26  %5 %27
+%70 = OpArrayLength  %18  %5 0
+%71 = OpULessThan  %30  %68 %70
+OpNoLine
+OpSelectionMerge %72 None
+OpBranchConditional %71 %73 %74
+%73 = OpLabel
+OpBranch %72
+%74 = OpLabel
+OpReturn
+%72 = OpLabel
+%75 = OpIAdd  %18  %27 %68
+%76 = OpInBoundsAccessChain  %29  %69 %75
+OpStore %76 %66
+%77 = OpAccessChain  %26  %4 %27
+%78 = OpFunctionCall  %18  %15 %34
+%79 = OpIAdd  %18  %78 %32
+%80 = OpAccessChain  %29  %77 %79
+%81 = OpLoad  %18  %80
+%82 = OpLoad  %18  %34
+%83 = OpIMul  %18  %82 %31
+%84 = OpIAdd  %18  %83 %32
+%85 = OpAccessChain  %26  %5 %27
+%86 = OpArrayLength  %18  %5 0
+%87 = OpULessThan  %30  %84 %86
+OpNoLine
+OpSelectionMerge %88 None
+OpBranchConditional %87 %89 %90
+%89 = OpLabel
+OpBranch %88
+%90 = OpLabel
+OpReturn
+%88 = OpLabel
+%91 = OpIAdd  %18  %27 %84
+%92 = OpInBoundsAccessChain  %29  %85 %91
+OpStore %92 %81
+OpNoLine
+OpReturn
+OpFunctionEnd
+%15 = OpFunction  %18  None %28
+%93 = OpFunctionParameter  %22
+%94 = OpLabel
+%95 = OpLoad  %18  %93
+OpNoLine
+OpReturnValue %95
+OpFunctionEnd
+error: error:0:0 - BuiltIn decoration on target <id> '3[%gl_WorkGroupSize]' must be a constant for WorkgroupSize
+         OpDecorate %gl_WorkGroupSize BuiltIn WorkgroupSize
+   |
+   = note: spirv-val failed
+   = note: module `$TEST_BUILD_DIR/entry/disjoint_slice_unique.vulkan1.2`
+
+error: aborting due to 1 previous error
+
