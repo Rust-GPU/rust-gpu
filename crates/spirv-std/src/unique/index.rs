@@ -1,12 +1,14 @@
 use crate::unique::{
     ActiveInvocations, AtLeastActiveInvocations, AtLeastGlobal, AtLeastSubgroup, AtLeastWorkgroup,
-    Global, Scope, Subgroup, Workgroup,
+    Global, ScalarValue, Scope, Subgroup, Workgroup,
 };
 use core::cmp::Ordering;
 use core::fmt::{Debug, Formatter};
 use core::hash::{Hash, Hasher};
 use core::marker::PhantomData;
-use core::ops::{Deref, Index, IndexMut};
+use core::ops::{
+    Add, AddAssign, Deref, Index, IndexMut, Mul, MulAssign, Shl, ShlAssign, Sub, SubAssign,
+};
 
 /// A `UniqueIndex` is an index that is unique within the [`ActiveInvocations`] scope.
 ///
@@ -169,3 +171,29 @@ impl_downcast!(
 impl_downcast!(to_subgroup_scope, AtLeastSubgroup, Subgroup);
 impl_downcast!(to_workgroup_scope, AtLeastWorkgroup, Workgroup);
 impl_downcast!(to_global_scope, AtLeastGlobal, Global);
+
+macro_rules! impl_op_binary {
+    ($op_trait:ident, $op_fn:ident, $op_assign_trait:ident, $op_assign_fn:ident) => {
+        impl<S: Scope> $op_trait<ScalarValue<u32, S>> for UniqueIndex<S> {
+            type Output = UniqueIndex<S>;
+
+            #[inline]
+            fn $op_fn(self, rhs: ScalarValue<u32, S>) -> Self::Output {
+                unsafe { Self::new_unchecked($op_trait::$op_fn(self.index, rhs.into_inner())) }
+            }
+        }
+
+        impl<S: Scope> $op_assign_trait<ScalarValue<u32, S>> for UniqueIndex<S> {
+            #[inline]
+            fn $op_assign_fn(&mut self, rhs: ScalarValue<u32, S>) {
+                *self = $op_trait::$op_fn(*self, rhs);
+            }
+        }
+    };
+}
+
+// only operation that do not degrade uniqueness (assuming they don't overflow)
+impl_op_binary!(Add, add, AddAssign, add_assign);
+impl_op_binary!(Sub, sub, SubAssign, sub_assign);
+impl_op_binary!(Mul, mul, MulAssign, mul_assign);
+impl_op_binary!(Shl, shl, ShlAssign, shl_assign);
