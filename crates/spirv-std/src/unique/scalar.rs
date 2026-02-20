@@ -99,7 +99,7 @@ impl<T: Hash, S: Scope> Hash for ScalarValue<T, S> {
 #[macro_export]
 macro_rules! const_scalar {
     ($expr:expr) => {
-        unsafe { $crate::entry::ScalarValue::<_, $crate::entry::Global>::new(const { $expr }) }
+        unsafe { $crate::unique::ScalarValue::<_, $crate::unique::Global>::new(const { $expr }) }
     };
 }
 

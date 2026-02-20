@@ -1,0 +1,40 @@
+// build-pass
+// compile-flags: -C llvm-args=--disassemble
+// normalize-stderr-test "OpSource .*\n" -> ""
+// normalize-stderr-test "OpLine .*\n" -> ""
+// normalize-stderr-test "%\d+ = OpString .*\n" -> ""
+// normalize-stderr-test "; .*\n" -> ""
+// normalize-stderr-test "OpCapability VulkanMemoryModel\n" -> ""
+// normalize-stderr-test "OpMemoryModel Logical Vulkan" -> "OpMemoryModel Logical Simple"
+// ignore-spv1.0
+// ignore-spv1.1
+// ignore-spv1.2
+// ignore-spv1.3
+// ignore-vulkan1.0
+// ignore-vulkan1.1
+
+use spirv_std::TypedBuffer;
+use spirv_std::arch::IndexUnchecked;
+use spirv_std::const_scalar;
+use spirv_std::glam::*;
+use spirv_std::spirv;
+use spirv_std::unique::DisjointSlice;
+use spirv_std::unique::GlobalUniqueIndex;
+use spirv_std::unique::global_invocation_index;
+
+#[spirv(compute(threads(32)))]
+pub fn main(
+    #[spirv(descriptor_set = 0, binding = 0, storage_buffer)] input: &TypedBuffer<[u32]>,
+    #[spirv(descriptor_set = 0, binding = 1, storage_buffer)] output: &mut TypedBuffer<[u32]>,
+) {
+    unsafe {
+        let mut output = DisjointSlice::new(output);
+        let gid: GlobalUniqueIndex = global_invocation_index();
+
+        output[gid] = *input.index_unchecked(gid.to_usize());
+
+        output[gid * const_scalar!(2)] = *input.index_unchecked(gid.to_usize());
+        output[gid * const_scalar!(2) + const_scalar!(1)] =
+            *input.index_unchecked(gid.to_usize() + 1);
+    }
+}
