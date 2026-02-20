@@ -2,8 +2,10 @@
 //!
 //! We recommend to start by reading into [`Scope`].
 
+mod id;
 mod index;
 mod scope;
 
+pub use id::*;
 pub use index::*;
 pub use scope::*;
