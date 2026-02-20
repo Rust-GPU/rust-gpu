@@ -19,12 +19,8 @@ use itertools::Itertools as _;
 use rspirv::dr::{Module, Operand};
 use rspirv::spirv::{Decoration, LinkageType, Word};
 use rustc_abi::{AddressSpace, HasDataLayout, TargetDataLayout};
-use rustc_ast::ast::{InlineAsmOptions, InlineAsmTemplatePiece};
 use rustc_codegen_ssa::mir::debuginfo::{FunctionDebugContext, VariableKind};
-use rustc_codegen_ssa::traits::{
-    AsmCodegenMethods, BackendTypes, DebugInfoCodegenMethods, GlobalAsmOperandRef,
-    MiscCodegenMethods,
-};
+use rustc_codegen_ssa::traits::{BackendTypes, DebugInfoCodegenMethods, MiscCodegenMethods};
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 use rustc_hir::def_id::DefId;
 use rustc_middle::mir;
@@ -929,29 +925,5 @@ impl<'tcx> DebugInfoCodegenMethods<'tcx> for CodegenCx<'tcx> {
         _span: Span,
     ) -> Self::DIVariable {
         todo!()
-    }
-}
-
-impl<'tcx> AsmCodegenMethods<'tcx> for CodegenCx<'tcx> {
-    fn codegen_global_asm(
-        &mut self,
-        _template: &[InlineAsmTemplatePiece],
-        _operands: &[GlobalAsmOperandRef<'tcx>],
-        _options: InlineAsmOptions,
-        line_spans: &[Span],
-    ) {
-        self.tcx.dcx().span_fatal(
-            line_spans.first().copied().unwrap_or_default(),
-            "[Rust-GPU] `global_asm!` not yet supported",
-        );
-    }
-
-    // FIXME(eddyb) should this method be implemented as just symbol mangling,
-    // or renamed upstream into something much more specific?
-    fn mangled_name(&self, instance: Instance<'tcx>) -> String {
-        self.tcx.dcx().span_bug(
-            self.tcx.def_span(instance.def_id()),
-            "[Rust-GPU] `#[naked] fn` not yet supported",
-        )
     }
 }
