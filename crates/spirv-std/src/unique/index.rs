@@ -197,3 +197,13 @@ impl_op_binary!(Add, add, AddAssign, add_assign);
 impl_op_binary!(Sub, sub, SubAssign, sub_assign);
 impl_op_binary!(Mul, mul, MulAssign, mul_assign);
 impl_op_binary!(Shl, shl, ShlAssign, shl_assign);
+
+impl UniqueIndex<ActiveInvocations> {
+    pub fn new_ballot() -> Self {
+        unsafe {
+            Self::new_unchecked(crate::arch::subgroup_ballot_exclusive_bit_count(
+                crate::arch::subgroup_ballot(true),
+            ))
+        }
+    }
+}
