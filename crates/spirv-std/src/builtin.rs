@@ -5,6 +5,25 @@
 //! * [SPIR-V specification for builtins](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#_builtin)
 //! * [GLSL 4.x reference](https://registry.khronos.org/OpenGL-Refpages/gl4/)
 
+
+#[cfg(target_arch = "spirv")]
+macro_rules! load_builtin {
+    ($ty:ty, $name:ident) => {
+        unsafe {
+            let mut result = <$ty>::default();
+            asm! {
+                "%builtin = OpVariable typeof{result_ref} Input",
+                concat!("OpDecorate %builtin BuiltIn ", stringify!($name)),
+                "%result = OpLoad typeof*{result_ref} %builtin",
+                "OpStore {result_ref} %result",
+                result_ref = in(reg) &mut result,
+            }
+            result
+        }
+    };
+}
+
+
 /// Compute shader built-ins
 pub mod compute {
     #[cfg(target_arch = "spirv")]
@@ -22,17 +41,7 @@ pub mod compute {
     #[inline]
     #[gpu_only]
     pub fn local_invocation_id() -> UVec3 {
-        unsafe {
-            let mut result = UVec3::default();
-            asm! {
-                "%builtin = OpVariable typeof{result_ref} Input",
-                "OpDecorate %builtin BuiltIn LocalInvocationId",
-                "%result = OpLoad typeof*{result_ref} %builtin",
-                "OpStore {result_ref} %result",
-                result_ref = in(reg) &mut result,
-            }
-            result
-        }
+        load_builtin!(UVec3, LocalInvocationId)
     }
 
     /// The current invocation’s local invocation index,
@@ -44,17 +53,7 @@ pub mod compute {
     #[inline]
     #[gpu_only]
     pub fn local_invocation_index() -> u32 {
-        unsafe {
-            let result: u32;
-            asm! {
-                "%builtin_t = OpTypePointer Generic typeof{result}",
-                "%builtin = OpVariable %builtin_t Input",
-                "OpDecorate %builtin BuiltIn LocalInvocationIndex",
-                "{result} = OpLoad typeof{result} %builtin",
-                result = out(reg) result,
-            }
-            result
-        }
+        load_builtin!(u32, LocalInvocationIndex)
     }
 
     // Global builtins, for this invocation's position in the compute grid.
@@ -68,17 +67,7 @@ pub mod compute {
     #[inline]
     #[gpu_only]
     pub fn global_invocation_id() -> UVec3 {
-        unsafe {
-            let mut result = UVec3::default();
-            asm! {
-                "%builtin = OpVariable typeof{result_ref} Input",
-                "OpDecorate %builtin BuiltIn GlobalInvocationId",
-                "%result = OpLoad typeof*{result_ref} %builtin",
-                "OpStore {result_ref} %result",
-                result_ref = in(reg) &mut result,
-            }
-            result
-        }
+        load_builtin!(UVec3, GlobalInvocationId)
     }
 
     // Subgroup builtins
@@ -90,17 +79,7 @@ pub mod compute {
     #[inline]
     #[gpu_only]
     pub fn num_subgroups() -> u32 {
-        unsafe {
-            let result: u32;
-            asm! {
-                "%builtin_t = OpTypePointer Generic typeof{result}",
-                "%builtin = OpVariable %builtin_t Input",
-                "OpDecorate %builtin BuiltIn NumSubgroups",
-                "{result} = OpLoad typeof{result} %builtin",
-                result = out(reg) result,
-            }
-            result
-        }
+        load_builtin!(u32, NumSubgroups)
     }
 
     /// The subgroup ID of current invocation’s subgroup within the workgroup.
@@ -110,17 +89,7 @@ pub mod compute {
     #[inline]
     #[gpu_only]
     pub fn subgroup_id() -> u32 {
-        unsafe {
-            let result: u32;
-            asm! {
-                "%builtin_t = OpTypePointer Generic typeof{result}",
-                "%builtin = OpVariable %builtin_t Input",
-                "OpDecorate %builtin BuiltIn SubgroupId",
-                "{result} = OpLoad typeof{result} %builtin",
-                result = out(reg) result,
-            }
-            result
-        }
+        load_builtin!(u32, SubgroupId)
     }
 
     /// This invocation's ID within its subgroup.
@@ -131,17 +100,7 @@ pub mod compute {
     #[inline]
     #[gpu_only]
     pub fn subgroup_local_invocation_id() -> u32 {
-        unsafe {
-            let result: u32;
-            asm! {
-                "%builtin_t = OpTypePointer Generic typeof{result}",
-                "%builtin = OpVariable %builtin_t Input",
-                "OpDecorate %builtin BuiltIn SubgroupLocalInvocationId",
-                "{result} = OpLoad typeof{result} %builtin",
-                result = out(reg) result,
-            }
-            result
-        }
+        load_builtin!(u32, SubgroupLocalInvocationId)
     }
 
     ///  The subgroup size of current invocation’s subgroup.
@@ -151,17 +110,7 @@ pub mod compute {
     #[inline]
     #[gpu_only]
     pub fn subgroup_size() -> u32 {
-        unsafe {
-            let result: u32;
-            asm! {
-                "%builtin_t = OpTypePointer Generic typeof{result}",
-                "%builtin = OpVariable %builtin_t Input",
-                "OpDecorate %builtin BuiltIn SubgroupSize",
-                "{result} = OpLoad typeof{result} %builtin",
-                result = out(reg) result,
-            }
-            result
-        }
+        load_builtin!(u32, SubgroupSize)
     }
 
     // Workgroup builtins
@@ -174,17 +123,7 @@ pub mod compute {
     #[inline]
     #[gpu_only]
     pub fn num_workgroups() -> UVec3 {
-        unsafe {
-            let mut result = UVec3::default();
-            asm! {
-                "%builtin = OpVariable typeof{result_ref} Input",
-                "OpDecorate %builtin BuiltIn NumWorkgroups",
-                "%result = OpLoad typeof*{result_ref} %builtin",
-                "OpStore {result_ref} %result",
-                result_ref = in(reg) &mut result,
-            }
-            result
-        }
+        load_builtin!(UVec3, NumWorkgroups)
     }
 
     /// The current invocation’s workgroup ID,
@@ -196,16 +135,6 @@ pub mod compute {
     #[inline]
     #[gpu_only]
     pub fn workgroup_id() -> UVec3 {
-        unsafe {
-            let mut result = UVec3::default();
-            asm! {
-                "%builtin = OpVariable typeof{result_ref} Input",
-                "OpDecorate %builtin BuiltIn WorkgroupId",
-                "%result = OpLoad typeof*{result_ref} %builtin",
-                "OpStore {result_ref} %result",
-                result_ref = in(reg) &mut result,
-            }
-            result
-        }
+        load_builtin!(UVec3, WorkgroupId)
     }
 }
