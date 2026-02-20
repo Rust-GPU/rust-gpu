@@ -1,11 +1,11 @@
-//! Symbols to query SPIR-V read-only global built-ins
+//! Query SPIR-V read-only global built-in values
+//!
+//! Reference links:
+//! * [WGSL specification describing these builtins](https://www.w3.org/TR/WGSL/#builtin-inputs-outputs)
+//! * [SPIR-V specification for builtins](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#_builtin)
+//! * [GLSL 4.x reference](https://registry.khronos.org/OpenGL-Refpages/gl4/)
 
 /// Compute shader built-ins
-///
-/// Reference links:
-/// * [WGSL specification describing these builtins](https://www.w3.org/TR/WGSL/#builtin-inputs-outputs)
-/// * [SPIR-V specification for builtins](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#_builtin)
-/// * [GLSL 4.x reference](https://registry.khronos.org/OpenGL-Refpages/gl4/)
 pub mod compute {
     #[cfg(target_arch = "spirv")]
     use core::arch::asm;
