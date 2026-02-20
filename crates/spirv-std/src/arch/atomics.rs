@@ -536,7 +536,7 @@ pub unsafe fn atomic_xor<I: Integer, const SCOPE: u32, const SEMANTICS: u32>(
 /// accesses within Scope to the same location:
 ///
 /// 1. Load through `ptr` to get an original value,
-/// 2. Get a new value by finding the smallest signed integer of original value
+/// 2. Get a new value by finding the smallest float of original value
 ///    and `value`, and
 /// 3. Store the new value back through `ptr`.
 ///
@@ -573,7 +573,7 @@ pub unsafe fn atomic_f_min<F: Float, const SCOPE: u32, const SEMANTICS: u32>(
 /// accesses within Scope to the same location:
 ///
 /// 1. Load through `ptr` to get an original value,
-/// 2. Get a new value by finding the largest signed integer of original value
+/// 2. Get a new value by finding the largest float of original value
 ///    and `value`, and
 /// 3. Store the new value back through `ptr`.
 ///
@@ -610,7 +610,7 @@ pub unsafe fn atomic_f_max<F: Float, const SCOPE: u32, const SEMANTICS: u32>(
 /// accesses within `SCOPE` to the same location:
 ///
 /// 1) load through `ptr` to get an original value,
-/// 2) get a new value by integer addition of original value and `value`, and
+/// 2) get a new value by float addition of original value and `value`, and
 /// 3) store the new value back through `ptr`.
 ///
 /// The result is the Original Value.
