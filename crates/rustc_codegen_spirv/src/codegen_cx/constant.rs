@@ -214,12 +214,24 @@ impl ConstCodegenMethods for CodegenCx<'_> {
     }
 
     fn const_to_opt_uint(&self, v: Self::Value) -> Option<u64> {
-        self.builder.lookup_const_scalar(v)?.try_into().ok()
+        // HACK(eddyb) this abuses the fact that sign-extension to 128-bit will
+        // exceed `u64::MAX` for negative `v`, and will therefore return `None`.
+        self.const_to_opt_u128(v, true)?.try_into().ok()
     }
-    // FIXME(eddyb) what's the purpose of the `sign_ext` argument, and can it
-    // differ from the signedness of `v`?
-    fn const_to_opt_u128(&self, v: Self::Value, _sign_ext: bool) -> Option<u128> {
-        self.builder.lookup_const_scalar(v)
+
+    fn const_to_opt_u128(&self, v: Self::Value, sign_ext: bool) -> Option<u128> {
+        match self.lookup_type(v.ty) {
+            SpirvType::Integer(bits, _) => {
+                let v = self.builder.lookup_const_scalar(v)?;
+                let size = Size::from_bits(bits);
+                Some(if sign_ext {
+                    size.sign_extend(v) as u128
+                } else {
+                    size.truncate(v)
+                })
+            }
+            _ => None,
+        }
     }
 
     fn scalar_to_backend(
