@@ -1,7 +1,7 @@
 use crate::custom_insts::{self, CustomOp};
 use rspirv::binary::Assemble;
 use rspirv::dr::{Instruction, Module, Operand};
-use rspirv::spirv::{BuiltIn, Decoration, Op, Word};
+use rspirv::spirv::{BuiltIn, Decoration, Op, StorageClass, Word};
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 use rustc_middle::bug;
 use smallvec::SmallVec;
@@ -554,16 +554,13 @@ pub fn remove_duplicate_debuginfo(module: &mut Module) {
 }
 
 
-pub fn remove_duplicate_builtin_variables(module: &mut Module) {
-    // Find the variables decorated as builtins, and any duplicates of each builtin.
+pub fn remove_duplicate_builtin_input_variables(module: &mut Module) {
+    // Find the variables decorated as input builtins, and any duplicates of them..
 
-    // A map from deleted duplicate variable ID to the new, de-duplicated ID.
-    let duplicate_vars: FxHashMap::<Word, Word> =
+    // Build a map: from a variable ID to the builtin it's decorated with.
+    let var_id_to_builtin: FxHashMap::<Word, BuiltIn>;
     {
-        // A map from builtin to a de-duplicated variable decorated as that builtin.
-        let mut builtin_to_var_id = FxHashMap::<BuiltIn, Word>::default();
-
-        let mut duplicate_vars = FxHashMap::<Word, Word>::default();
+        let mut var_id_to_builtin_mut = FxHashMap::default();
 
         for inst in module.annotations.iter() {
             if inst.class.opcode == Op::Decorate
@@ -571,23 +568,46 @@ pub fn remove_duplicate_builtin_variables(module: &mut Module) {
                         Operand::Decoration(Decoration::BuiltIn),
                         Operand::BuiltIn(builtin)] = inst.operands[..]
             {
-                match builtin_to_var_id.entry(builtin) {
-                    // first variable we've seen for this builtin,
+                // Ignore multiple BuiltIn's for one variable ID;
+                // they're invalid AFAIK, but later validation will catch them.
+                let _prev = var_id_to_builtin_mut.insert(var_id, builtin);
+            }
+        }
+        // Rebind as immutable.
+        var_id_to_builtin = var_id_to_builtin_mut;
+    };
+
+    // Build a map from deleted duplicate input variable ID to the de-duplicated ID.
+    let duplicate_vars: FxHashMap::<Word, Word>;
+    {
+        let mut duplicate_in_vars_mut = FxHashMap::<Word, Word>::default();
+
+        // Map from builtin to de-duped input variable ID.
+        let mut builtin_to_input_var_id = FxHashMap::<BuiltIn, Word>::default();
+
+        for inst in module.types_global_values.iter() {
+            if inst.class.opcode == Op::Variable
+                && let [Operand::StorageClass(StorageClass::Input), ..] = inst.operands[..]
+                && let Some(var_id) = inst.result_id
+                && let Some(builtin) = var_id_to_builtin.get(&var_id)
+            {
+                match builtin_to_input_var_id.entry(*builtin) {
+                    // first input variable we've seen for this builtin,
                     // record it in the builtins map.
                     hash_map::Entry::Vacant(vacant) => {
                         vacant.insert(var_id);
                     },
 
-                    // this builtin already has a variable,
+                    // this builtin already has an input variable,
                     // record it in the duplicates map.
                     hash_map::Entry::Occupied(occupied) => {
-                        duplicate_vars.insert(var_id, *occupied.get());
+                        duplicate_in_vars_mut.insert(var_id, *occupied.get());
                     },
                 };
             }
         }
-        // Rebind as immutable in fn scope.
-        duplicate_vars
+        // Rebind as immutable.
+        duplicate_vars = duplicate_in_vars_mut;
     };
 
     // Rewrite entry points, removing duplicate variables.
@@ -596,9 +616,10 @@ pub fn remove_duplicate_builtin_variables(module: &mut Module) {
             continue;
         }
 
-        entry.operands.retain(|operand|
-                              !matches!(operand,
-                                        Operand::IdRef(id) if duplicate_vars.contains_key(&id)));
+        entry.operands.retain(
+            |operand|
+            !matches!(operand,
+                      Operand::IdRef(id) if duplicate_vars.contains_key(&id)));
     }
 
     // Remove duplicate debug names after merging variables.
