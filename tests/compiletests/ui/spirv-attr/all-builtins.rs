@@ -1,6 +1,9 @@
 // build-pass
-// only-vulkan1.1
 // compile-flags: -Ctarget-feature=+DeviceGroup,+DrawParameters,+FragmentBarycentricNV,+FragmentBarycentricKHR,+FragmentDensityEXT,+FragmentFullyCoveredEXT,+Geometry,+GroupNonUniform,+GroupNonUniformBallot,+MeshShadingNV,+MultiView,+MultiViewport,+RayTracingKHR,+SampleRateShading,+ShaderSMBuiltinsNV,+ShaderStereoViewNV,+StencilExportEXT,+Tessellation,+ext:SPV_AMD_shader_explicit_vertex_parameter,+ext:SPV_EXT_fragment_fully_covered,+ext:SPV_EXT_fragment_invocation_density,+ext:SPV_EXT_shader_stencil_export,+ext:SPV_KHR_ray_tracing,+ext:SPV_NV_fragment_shader_barycentric,+ext:SPV_NV_mesh_shader,+ext:SPV_NV_shader_sm_builtins,+ext:SPV_NV_stereo_view_rendering
+// ignore-vulkan1.0
+// ignore-spv1.0
+// ignore-spv1.1
+// ignore-spv1.2
 
 use spirv_std::glam::*;
 use spirv_std::matrix::Matrix4x3;
@@ -22,6 +25,7 @@ pub fn tessellation_evaluation(#[spirv(tess_coord)] tess_coord: Vec3) {}
 pub fn compute(
     #[spirv(global_invocation_id)] global_invocation_id: UVec3,
     #[spirv(local_invocation_id)] local_invocation_id: UVec3,
+    #[spirv(local_invocation_index)] local_invocation_index: u32,
     #[spirv(subgroup_local_invocation_id)] subgroup_local_invocation_id: u32,
     #[spirv(num_subgroups)] num_subgroups: u32,
     #[spirv(num_workgroups)] num_workgroups: UVec3,

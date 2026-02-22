@@ -290,6 +290,7 @@ pub fn link(
         duplicates::remove_duplicate_capabilities(&mut output);
         duplicates::remove_duplicate_ext_inst_imports(&mut output);
         duplicates::remove_duplicate_types(&mut output);
+        duplicates::remove_duplicate_builtin_input_variables(&mut output);
         // jb-todo: strip identical OpDecoration / OpDecorationGroups
     }
 

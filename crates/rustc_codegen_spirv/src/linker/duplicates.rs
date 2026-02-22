@@ -1,7 +1,7 @@
 use crate::custom_insts::{self, CustomOp};
 use rspirv::binary::Assemble;
 use rspirv::dr::{Instruction, Module, Operand};
-use rspirv::spirv::{Op, Word};
+use rspirv::spirv::{BuiltIn, Decoration, Op, StorageClass, Word};
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 use rustc_middle::bug;
 use smallvec::SmallVec;
@@ -104,6 +104,7 @@ fn gather_annotations(annotations: &[Instruction]) -> FxHashMap<Word, Vec<u32>> 
         .collect()
 }
 
+/// Returns a map from an ID to its debug name (given by OpName).
 fn gather_names(debug_names: &[Instruction]) -> FxHashMap<Word, String> {
     debug_names
         .iter()
@@ -173,15 +174,33 @@ fn make_dedupe_key(
 }
 
 fn rewrite_inst_with_rules(inst: &mut Instruction, rules: &FxHashMap<u32, u32>) {
-    if let Some(ref mut id) = inst.result_type {
+    if let Some(ref mut id) = inst.result_id {
         // If the rewrite rules contain this ID, replace with the mapped value, otherwise don't touch it.
         *id = rules.get(id).copied().unwrap_or(*id);
+    }
+    if let Some(ref mut type_id) = inst.result_type {
+        *type_id = rules.get(type_id).copied().unwrap_or(*type_id);
     }
     for op in &mut inst.operands {
         if let Some(id) = op.id_ref_any_mut() {
             *id = rules.get(id).copied().unwrap_or(*id);
         }
     }
+}
+
+/// Remove duplicate OpName and OpMemberName instructions from module debug names section.
+fn remove_duplicate_debug_names(debug_names: &mut Vec<Instruction>) {
+    let mut name_ids = FxHashSet::default();
+    let mut member_name_ids = FxHashSet::default();
+    debug_names.retain(|inst| {
+        (inst.class.opcode != Op::Name || name_ids.insert(inst.operands[0].unwrap_id_ref()))
+            && (inst.class.opcode != Op::MemberName
+                || member_name_ids.insert((
+                    inst.operands[0].unwrap_id_ref(),
+                    inst.operands[1].unwrap_literal_bit32(),
+                )))
+    });
+
 }
 
 pub fn remove_duplicate_types(module: &mut Module) {
@@ -259,17 +278,9 @@ pub fn remove_duplicate_types(module: &mut Module) {
     module
         .annotations
         .retain(|inst| anno_set.insert(inst.assemble()));
-    // Same thing with OpName
-    let mut name_ids = FxHashSet::default();
-    let mut member_name_ids = FxHashSet::default();
-    module.debug_names.retain(|inst| {
-        (inst.class.opcode != Op::Name || name_ids.insert(inst.operands[0].unwrap_id_ref()))
-            && (inst.class.opcode != Op::MemberName
-                || member_name_ids.insert((
-                    inst.operands[0].unwrap_id_ref(),
-                    inst.operands[1].unwrap_literal_bit32(),
-                )))
-    });
+
+    // Same thing with debug names section
+    remove_duplicate_debug_names(&mut module.debug_names);
 }
 
 pub fn remove_duplicate_debuginfo(module: &mut Module) {
@@ -539,5 +550,107 @@ pub fn remove_duplicate_debuginfo(module: &mut Module) {
                 .instructions
                 .retain(|inst| inst.class.opcode != Op::Nop);
         }
+    }
+}
+
+
+pub fn remove_duplicate_builtin_input_variables(module: &mut Module) {
+    // Find the variables decorated as input builtins, and any duplicates of them..
+
+    // Build a map: from a variable ID to the builtin it's decorated with.
+    let var_id_to_builtin: FxHashMap::<Word, BuiltIn>;
+    {
+        let mut var_id_to_builtin_mut = FxHashMap::default();
+
+        for inst in module.annotations.iter() {
+            if inst.class.opcode == Op::Decorate
+                && let [Operand::IdRef(var_id),
+                        Operand::Decoration(Decoration::BuiltIn),
+                        Operand::BuiltIn(builtin)] = inst.operands[..]
+            {
+                // Ignore multiple BuiltIn's for one variable ID;
+                // they're invalid AFAIK, but later validation will catch them.
+                let _prev = var_id_to_builtin_mut.insert(var_id, builtin);
+            }
+        }
+        // Rebind as immutable.
+        var_id_to_builtin = var_id_to_builtin_mut;
+    };
+
+    // Build a map from deleted duplicate input variable ID to the de-duplicated ID.
+    let duplicate_vars: FxHashMap::<Word, Word>;
+    {
+        let mut duplicate_in_vars_mut = FxHashMap::<Word, Word>::default();
+
+        // Map from builtin to de-duped input variable ID.
+        let mut builtin_to_input_var_id = FxHashMap::<BuiltIn, Word>::default();
+
+        for inst in module.types_global_values.iter() {
+            if inst.class.opcode == Op::Variable
+                && let [Operand::StorageClass(StorageClass::Input), ..] = inst.operands[..]
+                && let Some(var_id) = inst.result_id
+                && let Some(builtin) = var_id_to_builtin.get(&var_id)
+            {
+                match builtin_to_input_var_id.entry(*builtin) {
+                    // first input variable we've seen for this builtin,
+                    // record it in the builtins map.
+                    hash_map::Entry::Vacant(vacant) => {
+                        vacant.insert(var_id);
+                    },
+
+                    // this builtin already has an input variable,
+                    // record it in the duplicates map.
+                    hash_map::Entry::Occupied(occupied) => {
+                        duplicate_in_vars_mut.insert(var_id, *occupied.get());
+                    },
+                };
+            }
+        }
+        // Rebind as immutable.
+        duplicate_vars = duplicate_in_vars_mut;
+    };
+
+    // Rewrite entry points, removing duplicate variables.
+    for entry in &mut module.entry_points {
+        if entry.class.opcode != Op::EntryPoint {
+            continue;
+        }
+
+        entry.operands.retain(
+            |operand|
+            !matches!(operand,
+                      Operand::IdRef(id) if duplicate_vars.contains_key(&id)));
+    }
+
+    // Remove duplicate debug names after merging variables.
+    remove_duplicate_debug_names(&mut module.debug_names);
+
+    // Rewrite annotations for duplicates to point at de-duplicated variables;
+    // this will merge the annotations sets but produce duplicate annotations
+    // (which we will remove next).
+    for inst in &mut module.annotations {
+        rewrite_inst_with_rules(inst, &duplicate_vars);
+    }
+
+    // Merge the annotations for duplicate vars.
+    {
+        let mut annotations_set = FxHashSet::default();
+        module
+            .annotations
+            // Note: insert returns true when an annotation is inserted for the first time.
+            .retain(|inst| annotations_set.insert(inst.assemble()));
+    }
+
+    // Remove the duplicate variable definitions.
+    module.types_global_values
+          .retain(|inst| !matches!(inst.result_id,
+                                   Some(id) if duplicate_vars.contains_key(&id)));
+
+    // Rewrite function blocks to use de-duplicated variables.
+    for inst in &mut module.functions.iter_mut()
+                           .flat_map(|f| &mut f.blocks)
+                           .flat_map(|b| &mut b.instructions)
+    {
+        rewrite_inst_with_rules(inst, &duplicate_vars);
     }
 }
