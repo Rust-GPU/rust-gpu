@@ -174,32 +174,15 @@ fn make_dedupe_key(
 }
 
 fn rewrite_inst_with_rules(inst: &mut Instruction, rules: &FxHashMap<u32, u32>) {
-    if let Some(ref mut id) = inst.result_id {
+    if let Some(ref mut id) = inst.result_type {
         // If the rewrite rules contain this ID, replace with the mapped value, otherwise don't touch it.
         *id = rules.get(id).copied().unwrap_or(*id);
-    }
-    if let Some(ref mut type_id) = inst.result_type {
-        *type_id = rules.get(type_id).copied().unwrap_or(*type_id);
     }
     for op in &mut inst.operands {
         if let Some(id) = op.id_ref_any_mut() {
             *id = rules.get(id).copied().unwrap_or(*id);
         }
     }
-}
-
-/// Remove duplicate `OpName` and `OpMemberName` instructions from module debug names section.
-fn remove_duplicate_debug_names(debug_names: &mut Vec<Instruction>) {
-    let mut name_ids = FxHashSet::default();
-    let mut member_name_ids = FxHashSet::default();
-    debug_names.retain(|inst| {
-        (inst.class.opcode != Op::Name || name_ids.insert(inst.operands[0].unwrap_id_ref()))
-            && (inst.class.opcode != Op::MemberName
-                || member_name_ids.insert((
-                    inst.operands[0].unwrap_id_ref(),
-                    inst.operands[1].unwrap_literal_bit32(),
-                )))
-    });
 }
 
 pub fn remove_duplicate_types(module: &mut Module) {
@@ -277,9 +260,17 @@ pub fn remove_duplicate_types(module: &mut Module) {
     module
         .annotations
         .retain(|inst| anno_set.insert(inst.assemble()));
-
-    // Same thing with debug names section
-    remove_duplicate_debug_names(&mut module.debug_names);
+    // Same thing with OpName
+    let mut name_ids = FxHashSet::default();
+    let mut member_name_ids = FxHashSet::default();
+    module.debug_names.retain(|inst| {
+        (inst.class.opcode != Op::Name || name_ids.insert(inst.operands[0].unwrap_id_ref()))
+            && (inst.class.opcode != Op::MemberName
+                || member_name_ids.insert((
+                    inst.operands[0].unwrap_id_ref(),
+                    inst.operands[1].unwrap_literal_bit32(),
+                )))
+    });
 }
 
 pub fn remove_duplicate_debuginfo(module: &mut Module) {
@@ -573,7 +564,6 @@ pub fn remove_duplicate_builtin_input_variables(module: &mut Module) {
                 let _prev = var_id_to_builtin_mut.insert(var_id, builtin);
             }
         }
-        // Rebind as immutable.
         var_id_to_builtin = var_id_to_builtin_mut;
     };
 
@@ -606,7 +596,6 @@ pub fn remove_duplicate_builtin_input_variables(module: &mut Module) {
                 };
             }
         }
-        // Rebind as immutable.
         duplicate_vars = duplicate_in_vars_mut;
     };
 
@@ -620,9 +609,6 @@ pub fn remove_duplicate_builtin_input_variables(module: &mut Module) {
             .operands
             .retain(|op| !matches!(op, Operand::IdRef(id) if duplicate_vars.contains_key(id)));
     }
-
-    // Remove duplicate debug names after merging variables.
-    remove_duplicate_debug_names(&mut module.debug_names);
 
     // Rewrite annotations for duplicates to point at de-duplicated variables;
     // this will merge the annotations sets but produce duplicate annotations
