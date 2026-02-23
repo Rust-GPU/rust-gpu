@@ -559,9 +559,12 @@ pub fn remove_duplicate_builtin_input_variables(module: &mut Module) {
                     Operand::BuiltIn(builtin),
                 ] = inst.operands[..]
             {
-                // Ignore multiple BuiltIn's for one variable ID;
-                // they're invalid AFAIK, but later validation will catch them.
-                let _prev = var_id_to_builtin_mut.insert(var_id, builtin);
+                let prev = var_id_to_builtin_mut.insert(var_id, builtin);
+                assert!(
+                    prev.is_none(),
+                    "An OpVariable `{inst:?}` shouldn't have more than one Builtin decoration, \
+                    but it has at least two: {builtin:?}, {prev:?}"
+                );
             }
         }
         var_id_to_builtin = var_id_to_builtin_mut;
@@ -599,37 +602,10 @@ pub fn remove_duplicate_builtin_input_variables(module: &mut Module) {
         duplicate_vars = duplicate_in_vars_mut;
     };
 
-    // Rewrite entry points, removing duplicate variables.
-    for entry in &mut module.entry_points {
-        if entry.class.opcode != Op::EntryPoint {
-            continue;
-        }
-
-        entry
-            .operands
-            .retain(|op| !matches!(op, Operand::IdRef(id) if duplicate_vars.contains_key(id)));
-    }
-
-    // Rewrite annotations for duplicates to point at de-duplicated variables;
-    // this will merge the annotations sets but produce duplicate annotations
-    // (which we will remove next).
-    for inst in &mut module.annotations {
+    // Rewrite entry points
+    for inst in &mut module.entry_points {
         rewrite_inst_with_rules(inst, &duplicate_vars);
     }
-
-    // Merge the annotations for duplicate vars.
-    {
-        let mut annotations_set = FxHashSet::default();
-        module
-            .annotations
-            // Note: insert returns true when an annotation is inserted for the first time.
-            .retain(|inst| annotations_set.insert(inst.assemble()));
-    }
-
-    // Remove the duplicate variable definitions.
-    module
-        .types_global_values
-        .retain(|inst| !matches!(inst.result_id, Some(id) if duplicate_vars.contains_key(&id)));
 
     // Rewrite function blocks to use de-duplicated variables.
     for inst in &mut module
@@ -640,4 +616,19 @@ pub fn remove_duplicate_builtin_input_variables(module: &mut Module) {
     {
         rewrite_inst_with_rules(inst, &duplicate_vars);
     }
+
+    // Remove duplicate BuiltIn decorations
+    module.annotations.retain(|inst| {
+        !(inst.class.opcode == Op::Decorate
+            && matches!(inst.operands[..], [
+                Operand::IdRef(var_id),
+                Operand::Decoration(Decoration::BuiltIn),
+                Operand::BuiltIn(_),
+            ] if duplicate_vars.contains_key(&var_id)))
+    });
+
+    // Remove the duplicate variable definitions.
+    module
+        .types_global_values
+        .retain(|inst| !matches!(inst.result_id, Some(id) if duplicate_vars.contains_key(&id)));
 }
