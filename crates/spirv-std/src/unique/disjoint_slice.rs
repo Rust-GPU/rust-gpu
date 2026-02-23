@@ -1,7 +1,7 @@
+use crate::TypedBuffer;
 use crate::arch::IndexUnchecked;
 use crate::unique::GlobalUniqueIndex;
 use crate::unique::builtin::global_invocation_index;
-use crate::{TypedBuffer, const_scalar};
 use core::ops::{Index, IndexMut};
 
 pub struct DisjointSlice<'a, T> {
@@ -40,10 +40,10 @@ impl<T> IndexMut<GlobalUniqueIndex> for DisjointSlice<'_, T> {
 
 impl<T> IndexUnchecked<T> for DisjointSlice<'_, T> {
     unsafe fn index_unchecked(&self, index: usize) -> &T {
-        self.buffer.index_unchecked(index)
+        unsafe { self.buffer.index_unchecked(index) }
     }
 
     unsafe fn index_unchecked_mut(&mut self, index: usize) -> &mut T {
-        self.buffer.index_unchecked_mut(index)
+        unsafe { self.buffer.index_unchecked_mut(index) }
     }
 }

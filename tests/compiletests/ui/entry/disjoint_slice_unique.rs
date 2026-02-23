@@ -20,6 +20,7 @@ use spirv_std::glam::*;
 use spirv_std::spirv;
 use spirv_std::unique::DisjointSlice;
 use spirv_std::unique::GlobalUniqueIndex;
+use spirv_std::unique::ScalarValue;
 use spirv_std::unique::global_invocation_index;
 
 #[spirv(compute(threads(32)))]
@@ -35,6 +36,10 @@ pub fn main(
 
         output[gid * const_scalar!(2)] = *input.index_unchecked(gid.to_usize());
         output[gid * const_scalar!(2) + const_scalar!(1)] =
+            *input.index_unchecked(gid.to_usize() + 1);
+
+        output[gid * ScalarValue::new::<2>()] = *input.index_unchecked(gid.to_usize());
+        output[gid * ScalarValue::new::<2>() + ScalarValue::new::<1>()] =
             *input.index_unchecked(gid.to_usize() + 1);
     }
 }

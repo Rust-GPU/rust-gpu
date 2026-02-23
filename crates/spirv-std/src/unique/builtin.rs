@@ -29,7 +29,7 @@ pub fn workgroup_size() -> ScalarValue<UVec3, Global> {
             "OpStore {result} %result",
             result = in(reg) &slot,
         }
-        ScalarValue::new(slot)
+        ScalarValue::new_unchecked(slot)
     }
 }
 
@@ -44,7 +44,7 @@ pub fn num_workgroups() -> ScalarValue<UVec3, Global> {
             "OpStore {result} %result",
             result = in(reg) &slot,
         }
-        ScalarValue::new(slot)
+        ScalarValue::new_unchecked(slot)
     }
 }
 

@@ -23,7 +23,7 @@ impl<T, S: Scope> ScalarValue<T, S> {
     /// # Safety
     /// The provided `value` must be scalar across the scope `S`.
     #[inline]
-    pub unsafe fn new(value: T) -> Self {
+    pub unsafe fn new_unchecked(value: T) -> Self {
         Self {
             value,
             _phantom: PhantomData,
@@ -40,6 +40,12 @@ impl<T, S: Scope> ScalarValue<T, S> {
     #[inline]
     pub fn into_inner(self) -> T {
         self.value
+    }
+}
+
+impl<S: Scope> ScalarValue<u32, S> {
+    pub fn new<const N: u32>() -> Self {
+        unsafe { Self::new_unchecked(N) }
     }
 }
 
@@ -99,7 +105,9 @@ impl<T: Hash, S: Scope> Hash for ScalarValue<T, S> {
 #[macro_export]
 macro_rules! const_scalar {
     ($expr:expr) => {
-        unsafe { $crate::unique::ScalarValue::<_, $crate::unique::Global>::new(const { $expr }) }
+        unsafe {
+            $crate::unique::ScalarValue::<_, $crate::unique::Global>::new_unchecked(const { $expr })
+        }
     };
 }
 
@@ -130,7 +138,7 @@ impl<T: ScalarValueMath + Not, S: Scope> Not for ScalarValue<T, S> {
 
     #[inline]
     fn not(self) -> Self::Output {
-        unsafe { Self::Output::new(T::not(self.value)) }
+        unsafe { Self::Output::new_unchecked(T::not(self.value)) }
     }
 }
 
@@ -142,7 +150,7 @@ impl<T: ScalarValueMath, S: Scope> ScalarValue<T, S> {
     where
         T: From<F>,
     {
-        unsafe { ScalarValue::new(From::from(value.value)) }
+        unsafe { ScalarValue::new_unchecked(From::from(value.value)) }
     }
 }
 
@@ -155,7 +163,7 @@ macro_rules! impl_op_binary {
 
             #[inline]
             fn $op_fn(self, rhs: ScalarValue<Rhs, S>) -> Self::Output {
-                unsafe { Self::Output::new(T::$op_fn(self.value, rhs.value)) }
+                unsafe { Self::Output::new_unchecked(T::$op_fn(self.value, rhs.value)) }
             }
         }
 
