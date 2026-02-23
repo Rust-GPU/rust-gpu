@@ -1,0 +1,73 @@
+OpCapability Shader
+OpMemoryModel Logical Simple
+OpEntryPoint GLCompute %1 "entry_1" %2 %3
+OpEntryPoint GLCompute %4 "entry_2" %2 %3
+OpExecutionMode %1 LocalSize 1 1 1
+OpExecutionMode %4 LocalSize 1 1 1
+OpName %6 "builtin_duplicates::entry_1"
+OpName %7 "builtin_duplicates::sub_1"
+OpName %8 "builtin_duplicates::sub_2"
+OpName %9 "builtin_duplicates::entry_2"
+OpDecorate %2 BuiltIn LocalInvocationIndex
+OpDecorate %3 BuiltIn LocalInvocationIndex
+%10 = OpTypeInt 32 0
+%11 = OpTypePointer Input %10
+%12 = OpTypeVoid
+%13 = OpTypeFunction %12
+%2 = OpVariable  %11  Input
+%14 = OpTypeFunction %12 %10
+%3 = OpVariable  %11  Input
+%15 = OpTypeFunction %10
+%1 = OpFunction  %12  None %13
+%16 = OpLabel
+%17 = OpLoad  %10  %2
+%18 = OpFunctionCall  %12  %6 %17
+OpNoLine
+OpReturn
+OpFunctionEnd
+%6 = OpFunction  %12  None %14
+%19 = OpFunctionParameter  %10
+%20 = OpLabel
+%21 = OpLoad  %10  %3
+%22 = OpLoad  %10  %3
+%23 = OpFunctionCall  %10  %7
+%24 = OpFunctionCall  %10  %8
+OpNoLine
+OpReturn
+OpFunctionEnd
+%7 = OpFunction  %10  DontInline %15
+%25 = OpLabel
+%26 = OpLoad  %10  %3
+OpNoLine
+OpReturnValue %26
+OpFunctionEnd
+%8 = OpFunction  %10  DontInline %15
+%27 = OpLabel
+%28 = OpLoad  %10  %3
+OpNoLine
+OpReturnValue %28
+OpFunctionEnd
+%4 = OpFunction  %12  None %13
+%29 = OpLabel
+%30 = OpLoad  %10  %2
+%31 = OpFunctionCall  %12  %9 %30
+OpNoLine
+OpReturn
+OpFunctionEnd
+%9 = OpFunction  %12  None %14
+%32 = OpFunctionParameter  %10
+%33 = OpLabel
+%34 = OpLoad  %10  %3
+%35 = OpFunctionCall  %10  %7
+%36 = OpFunctionCall  %10  %8
+OpNoLine
+OpReturn
+OpFunctionEnd
+error: error:0:0 - [VUID-StandaloneSpirv-OpEntryPoint-09658] OpEntryPoint contains duplicate input variables with LocalInvocationIndex builtin
+         %gl_LocalInvocationIndex = OpVariable %_ptr_Input_uint Input
+   |
+   = note: spirv-val failed
+   = note: module `$TEST_BUILD_DIR/entry/builtin_duplicates.vulkan1.2`
+
+error: aborting due to 1 previous error
+
