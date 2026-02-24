@@ -115,6 +115,7 @@ pub mod subgroup;
 pub mod task;
 mod typed_buffer;
 mod vector;
+pub mod vertex;
 
 pub use self::sampler::Sampler;
 pub use crate::macros::Image;
