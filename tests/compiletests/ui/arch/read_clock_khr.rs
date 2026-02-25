@@ -4,8 +4,8 @@
 use glam::UVec2;
 use spirv_std::spirv;
 use spirv_std::{
-    arch::{read_clock_khr, read_clock_uvec2_khr},
     memory::Scope,
+    shader_clock::{read_clock_khr, read_clock_uvec2_khr},
 };
 
 #[spirv(fragment)]

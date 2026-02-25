@@ -105,6 +105,7 @@ mod runtime_array;
 mod sampler;
 mod scalar;
 mod scalar_or_vector;
+pub mod shader_clock;
 pub mod subgroup;
 pub mod task;
 mod typed_buffer;
