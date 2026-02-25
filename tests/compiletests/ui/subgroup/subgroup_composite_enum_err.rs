@@ -5,8 +5,8 @@
 
 use glam::*;
 use spirv_std::ScalarComposite;
-use spirv_std::arch::*;
 use spirv_std::spirv;
+use spirv_std::subgroup::*;
 
 macro_rules! enum_repr_from {
     ($ident:ident, $repr:ty) => {

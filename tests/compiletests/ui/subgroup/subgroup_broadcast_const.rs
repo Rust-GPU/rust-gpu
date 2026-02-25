@@ -3,11 +3,11 @@
 // compile-flags: -C llvm-args=--disassemble-fn=subgroup_broadcast_const::disassembly
 // normalize-stderr-test "OpLine .*\n" -> ""
 
-use spirv_std::arch::{GroupOperation, SubgroupMask};
 use spirv_std::spirv;
+use spirv_std::subgroup::{GroupOperation, SubgroupMask};
 
 unsafe fn disassembly(value: i32) -> i32 {
-    spirv_std::arch::subgroup_broadcast_const::<_, 5>(value)
+    spirv_std::subgroup::subgroup_broadcast_const::<_, 5>(value)
 }
 
 #[spirv(compute(threads(32, 1, 1)))]

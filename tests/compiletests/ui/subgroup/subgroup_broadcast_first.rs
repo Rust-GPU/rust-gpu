@@ -7,7 +7,7 @@ use glam::Vec3;
 use spirv_std::spirv;
 
 unsafe fn subgroup_broadcast_first(vec: Vec3) -> Vec3 {
-    spirv_std::arch::subgroup_broadcast_first::<Vec3>(vec)
+    spirv_std::subgroup::subgroup_broadcast_first::<Vec3>(vec)
 }
 
 #[spirv(compute(threads(1, 1, 1)))]

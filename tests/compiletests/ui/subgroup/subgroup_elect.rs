@@ -6,7 +6,7 @@
 use spirv_std::spirv;
 
 unsafe fn subgroup_elect() -> bool {
-    spirv_std::arch::subgroup_elect()
+    spirv_std::subgroup::subgroup_elect()
 }
 
 #[spirv(compute(threads(1, 1, 1)))]
