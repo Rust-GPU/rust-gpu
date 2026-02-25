@@ -14,7 +14,7 @@
 // ignore-vulkan1.0
 // ignore-vulkan1.1
 
-use spirv_std::arch::{emit_vertex, end_primitive};
+use spirv_std::geometry::{emit_vertex, end_primitive};
 use spirv_std::glam::*;
 use spirv_std::spirv;
 
