@@ -12,13 +12,9 @@ use glam::UVec2;
 
 mod atomics;
 mod barrier;
-mod demote_to_helper_invocation_ext;
-mod derivative;
 
 pub use atomics::*;
 pub use barrier::*;
-pub use demote_to_helper_invocation_ext::*;
-pub use derivative::*;
 
 /// Result is true if any component of `vector` is true, otherwise result is
 /// false.
@@ -122,18 +118,6 @@ pub unsafe fn vector_insert_dynamic<T: Scalar, V: Vector<T, N>, const N: usize>(
 
         result
     }
-}
-
-/// Fragment-shader discard. Equivalvent to `discard()` from GLSL
-///
-/// Ceases all further processing in any invocation that executes it: Only
-/// instructions these invocations executed before [kill] have observable side
-/// effects.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpKill", alias = "discard")]
-#[allow(clippy::empty_loop)]
-pub fn kill() -> ! {
-    unsafe { asm!("OpKill", options(noreturn)) }
 }
 
 /// Read from the shader clock with either the `Subgroup` or `Device` scope.

@@ -6,6 +6,6 @@ use spirv_std::spirv;
 
 #[spirv(fragment)]
 pub fn main() {
-    unsafe { spirv_std::arch::demote_to_helper_invocation() };
-    assert!(spirv_std::arch::is_helper_invocation());
+    unsafe { spirv_std::fragment::demote_to_helper_invocation() };
+    assert!(spirv_std::fragment::is_helper_invocation());
 }
