@@ -6,8 +6,8 @@
 use spirv_std::spirv;
 
 unsafe fn subgroup_ballot(predicate: bool) -> bool {
-    let ballot = spirv_std::arch::subgroup_ballot(predicate);
-    spirv_std::arch::subgroup_inverse_ballot(ballot)
+    let ballot = spirv_std::subgroup::subgroup_ballot(predicate);
+    spirv_std::subgroup::subgroup_inverse_ballot(ballot)
 }
 
 #[spirv(compute(threads(1, 1, 1)))]
