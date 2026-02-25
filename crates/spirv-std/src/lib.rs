@@ -95,6 +95,7 @@ pub mod arch;
 pub mod byte_addressable_buffer;
 pub mod debug_printf;
 pub mod float;
+pub mod geometry;
 pub mod image;
 pub mod indirect_command;
 pub mod matrix;
