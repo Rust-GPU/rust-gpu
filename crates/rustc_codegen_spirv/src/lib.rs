@@ -483,6 +483,7 @@ impl ExtraBackendMethods for SpirvCodegenBackend {
 
             // ... and now that we have everything pre-defined, fill out those definitions.
             for &(mono_item, mono_item_data) in &mono_items {
+                tracing::trace!(?mono_item, "defining");
                 mono_item.define::<Builder<'_, '_>>(cx, cgu_name.as_str(), mono_item_data);
             }
 

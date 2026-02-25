@@ -3249,6 +3249,10 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         // ignore
     }
 
+    #[tracing::instrument(
+        level = "debug",
+        skip(self, callee_ty, _fn_attrs, fn_abi, callee, args, funclet)
+    )]
     fn call(
         &mut self,
         callee_ty: Self::Type,
@@ -3259,9 +3263,6 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         funclet: Option<&Self::Funclet>,
         instance: Option<ty::Instance<'tcx>>,
     ) -> Self::Value {
-        let span = tracing::span!(tracing::Level::DEBUG, "call");
-        let _enter = span.enter();
-
         if funclet.is_some() {
             self.fatal("TODO: Funclets are not supported");
         }

@@ -850,5 +850,6 @@ impl<'tcx> CodegenCx<'tcx> {
                 ty = ty.debug(id, self)
             );
         }
+        tracing::trace!(?id, "type_cache_def, ty={:?}", self.debug_type(id));
     }
 }
