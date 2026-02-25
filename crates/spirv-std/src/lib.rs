@@ -100,11 +100,13 @@ pub mod image;
 pub mod indirect_command;
 pub mod matrix;
 pub mod memory;
+pub mod mesh;
 pub mod ray_tracing;
 mod runtime_array;
 mod sampler;
 mod scalar;
 mod scalar_or_vector;
+pub mod task;
 mod typed_buffer;
 mod vector;
 
