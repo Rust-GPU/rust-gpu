@@ -1,3 +1,5 @@
+//! Intrinsics for geometry shaders
+
 #[cfg(target_arch = "spirv")]
 use core::arch::asm;
 
