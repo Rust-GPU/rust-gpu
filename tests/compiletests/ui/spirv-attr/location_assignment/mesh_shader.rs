@@ -14,8 +14,8 @@
 // ignore-vulkan1.0
 // ignore-vulkan1.1
 
-use spirv_std::arch::set_mesh_outputs_ext;
 use spirv_std::glam::{UVec3, Vec4};
+use spirv_std::mesh::set_mesh_outputs_ext;
 use spirv_std::spirv;
 
 #[spirv(mesh_ext(

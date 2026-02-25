@@ -2,8 +2,8 @@
 // only-vulkan1.2
 // compile-flags: -Ctarget-feature=+MeshShadingEXT,+ext:SPV_EXT_mesh_shader
 
-use spirv_std::arch::emit_mesh_tasks_ext_payload;
 use spirv_std::spirv;
+use spirv_std::task::emit_mesh_tasks_ext_payload;
 
 pub struct Payload {
     pub first: u32,
