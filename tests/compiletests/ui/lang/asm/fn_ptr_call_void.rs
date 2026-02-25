@@ -18,7 +18,7 @@ use spirv_std::glam::*;
 use spirv_std::spirv;
 
 pub fn my_func() {
-    spirv_std::arch::kill()
+    spirv_std::fragment::kill()
 }
 
 #[spirv(fragment)]
