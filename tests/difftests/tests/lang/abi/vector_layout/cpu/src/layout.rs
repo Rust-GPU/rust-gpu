@@ -2,7 +2,7 @@ use core::mem::offset_of;
 use core::ops::Range;
 use experiments::*;
 use spirv_std::glam::*;
-use spirv_std::matrix::Matrix4x3;
+use spirv_std::ray_tracing::Matrix4x3;
 
 pub struct BumpAlloc(usize);
 
