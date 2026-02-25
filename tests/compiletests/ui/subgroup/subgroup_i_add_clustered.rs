@@ -4,11 +4,11 @@
 // normalize-stderr-test "OpLine .*\n" -> ""
 
 use glam::UVec3;
-use spirv_std::arch::{GroupOperation, SubgroupMask};
 use spirv_std::spirv;
+use spirv_std::subgroup::{GroupOperation, SubgroupMask};
 
 unsafe fn subgroup_i_add_clustered(value: u32) -> u32 {
-    spirv_std::arch::subgroup_clustered_i_add::<8, _>(value)
+    spirv_std::subgroup::subgroup_clustered_i_add::<8, _>(value)
 }
 
 #[spirv(compute(threads(32, 1, 1)))]

@@ -5,8 +5,8 @@
 
 use glam::*;
 use spirv_std::ScalarComposite;
-use spirv_std::arch::*;
 use spirv_std::spirv;
+use spirv_std::subgroup::*;
 
 #[repr(u32)]
 #[derive(Copy, Clone, Default, ScalarComposite)]

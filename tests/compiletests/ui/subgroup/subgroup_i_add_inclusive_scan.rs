@@ -4,11 +4,11 @@
 // normalize-stderr-test "OpLine .*\n" -> ""
 
 use glam::UVec3;
-use spirv_std::arch::{GroupOperation, SubgroupMask};
 use spirv_std::spirv;
+use spirv_std::subgroup::{GroupOperation, SubgroupMask};
 
 unsafe fn subgroup_i_add_inclusive_scan(value: u32) -> u32 {
-    spirv_std::arch::subgroup_inclusive_i_add(value)
+    spirv_std::subgroup::subgroup_inclusive_i_add(value)
 }
 
 #[spirv(compute(threads(32, 1, 1)))]

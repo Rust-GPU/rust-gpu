@@ -104,6 +104,7 @@ mod runtime_array;
 mod sampler;
 mod scalar;
 mod scalar_or_vector;
+pub mod subgroup;
 pub mod task;
 mod typed_buffer;
 mod vector;

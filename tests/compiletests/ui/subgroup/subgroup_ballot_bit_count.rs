@@ -3,16 +3,16 @@
 // compile-flags: -C llvm-args=--disassemble-fn=subgroup_ballot_bit_count::subgroup_ballot_bit_count
 // normalize-stderr-test "OpLine .*\n" -> ""
 
-use spirv_std::arch::{GroupOperation, SubgroupMask};
 use spirv_std::spirv;
+use spirv_std::subgroup::{GroupOperation, SubgroupMask};
 
 unsafe fn subgroup_ballot_bit_count(ballot: SubgroupMask) -> u32 {
-    spirv_std::arch::subgroup_ballot_bit_count(ballot)
+    spirv_std::subgroup::subgroup_ballot_bit_count(ballot)
 }
 
 #[spirv(compute(threads(1, 1, 1)))]
 pub fn main() {
     unsafe {
-        subgroup_ballot_bit_count(spirv_std::arch::subgroup_ballot(true));
+        subgroup_ballot_bit_count(spirv_std::subgroup::subgroup_ballot(true));
     }
 }

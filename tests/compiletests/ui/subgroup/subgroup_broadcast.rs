@@ -10,11 +10,11 @@
 // ignore-spv1.3
 // ignore-spv1.4
 
-use spirv_std::arch::{GroupOperation, SubgroupMask};
 use spirv_std::spirv;
+use spirv_std::subgroup::{GroupOperation, SubgroupMask};
 
 unsafe fn disassembly(value: i32, id: u32) -> i32 {
-    spirv_std::arch::subgroup_broadcast(value, id)
+    spirv_std::subgroup::subgroup_broadcast(value, id)
 }
 
 #[spirv(compute(threads(32, 1, 1)))]

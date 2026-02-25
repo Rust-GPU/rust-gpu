@@ -1,10 +1,26 @@
+//! Intrinsics for `subgroup` operations.
+//!
+//! The glsl equivalents are `subgroup*()` functions, see [`GL_KHR_shader_subgroup`]. Most of these translate to the
+//! SPIR-V [Non-Uniform Instructions], which have an opname starting with `OpGroupNonUniform*`. There's also some
+//! barrier operations and built-in input variables exposed in this module, similarly to glsl.
+//!
+//! Not to be confused with the [Group and Subgroup Instructions] starting with `OpGroup*`, which are unavailable in
+//! vulkan with many ops still undocumented. It seems to have fallen out of favor, never gaining glsl adoption, so
+//! we're only exposing the non-uniform variants.
+//!
+//! [`GL_KHR_shader_subgroup`]: https://github.com/KhronosGroup/GLSL/blob/main/extensions/khr/GL_KHR_shader_subgroup.txt
+//! [Non-Uniform Instructions]: https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#_non_uniform_instructions
+//! [Group and Subgroup Instructions]: https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#_group_and_subgroup_instructions
+
 #[cfg(target_arch = "spirv")]
 use crate::ScalarOrVectorTransform;
 #[cfg(target_arch = "spirv")]
-use crate::arch::{asm, barrier};
+use crate::arch::{control_barrier, memory_barrier};
 #[cfg(target_arch = "spirv")]
 use crate::memory::{Scope, Semantics};
 use crate::{Float, Integer, ScalarComposite, ScalarOrVector, SignedInteger, UnsignedInteger};
+#[cfg(target_arch = "spirv")]
+use core::arch::asm;
 
 #[cfg(target_arch = "spirv")]
 const SUBGROUP: u32 = Scope::Subgroup as u32;
@@ -59,7 +75,7 @@ pub enum GroupOperation {
 #[doc(alias = "subgroupBarrier")]
 #[inline]
 pub fn subgroup_barrier() {
-    barrier::control_barrier::<
+    control_barrier::<
         SUBGROUP,
         SUBGROUP,
         {
@@ -80,7 +96,7 @@ pub fn subgroup_barrier() {
 #[doc(alias = "subgroupMemoryBarrier")]
 #[inline]
 pub fn subgroup_memory_barrier() {
-    barrier::memory_barrier::<
+    memory_barrier::<
         SUBGROUP,
         {
             Semantics::ACQUIRE_RELEASE.bits()
@@ -100,7 +116,7 @@ pub fn subgroup_memory_barrier() {
 #[doc(alias = "subgroupMemoryBarrierBuffer")]
 #[inline]
 pub fn subgroup_memory_barrier_buffer() {
-    barrier::memory_barrier::<
+    memory_barrier::<
         SUBGROUP,
         { Semantics::ACQUIRE_RELEASE.bits() | Semantics::UNIFORM_MEMORY.bits() },
     >();
@@ -117,7 +133,7 @@ pub fn subgroup_memory_barrier_buffer() {
 #[doc(alias = "subgroupMemoryBarrierShared")]
 #[inline]
 pub fn subgroup_memory_barrier_shared() {
-    barrier::memory_barrier::<
+    memory_barrier::<
         SUBGROUP,
         { Semantics::ACQUIRE_RELEASE.bits() | Semantics::WORKGROUP_MEMORY.bits() },
     >();
@@ -132,7 +148,7 @@ pub fn subgroup_memory_barrier_shared() {
 #[doc(alias = "subgroupMemoryBarrierImage")]
 #[inline]
 pub fn subgroup_memory_barrier_image() {
-    barrier::memory_barrier::<
+    memory_barrier::<
         SUBGROUP,
         { Semantics::ACQUIRE_RELEASE.bits() | Semantics::IMAGE_MEMORY.bits() },
     >();

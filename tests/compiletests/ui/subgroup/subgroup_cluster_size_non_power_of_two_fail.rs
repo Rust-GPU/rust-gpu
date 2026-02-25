@@ -6,11 +6,11 @@
 // normalize-stderr-test "\$SYSROOT/lib/rustlib/src/rust/library/core/src/panic.rs:\d+:\d+" -> "$$SYSROOT/lib/rustlib/src/rust/library/core/src/panic.rs:LL:CC"
 
 use glam::UVec3;
-use spirv_std::arch::{GroupOperation, SubgroupMask};
 use spirv_std::spirv;
+use spirv_std::subgroup::{GroupOperation, SubgroupMask};
 
 unsafe fn subgroup_test_fail(value: u32) -> u32 {
-    spirv_std::arch::subgroup_clustered_i_add::<0, _>(value)
+    spirv_std::subgroup::subgroup_clustered_i_add::<5, _>(value)
 }
 
 #[spirv(compute(threads(32, 1, 1)))]

@@ -1,13 +1,12 @@
 // build-fail
 // normalize-stderr-test "\S*/crates/spirv-std/src/" -> "$$SPIRV_STD_SRC/"
-// normalize-stderr-test "crates/spirv-std/src/" -> "$$SPIRV_STD_SRC/"
 // normalize-stderr-test "\.rs:\d+:\d+" -> ".rs:"
 // normalize-stderr-test "(\n)\d* *([ -])([\|\+\-\=])" -> "$1   $2$3"
 
 use glam::*;
 use spirv_std::ScalarComposite;
-use spirv_std::arch::*;
 use spirv_std::spirv;
+use spirv_std::subgroup::*;
 
 macro_rules! enum_repr_from {
     ($ident:ident, $repr:ty) => {

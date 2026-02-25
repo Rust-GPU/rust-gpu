@@ -9,8 +9,8 @@
 // ignore-vulkan1.0
 // ignore-vulkan1.1
 
-use spirv_std::arch::subgroup_shuffle_up;
 use spirv_std::spirv;
+use spirv_std::subgroup::subgroup_shuffle_up;
 
 #[repr(C)]
 #[derive(Copy, Clone, Default)]

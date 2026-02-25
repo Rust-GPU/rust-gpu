@@ -1,8 +1,8 @@
 // build-pass
 // compile-flags: -C target-feature=+GroupNonUniform,+GroupNonUniformBallot,+ext:SPV_KHR_vulkan_memory_model
 
-use spirv_std::arch::SubgroupMask;
 use spirv_std::spirv;
+use spirv_std::subgroup::SubgroupMask;
 
 #[spirv(compute(threads(1, 1, 1)))]
 pub fn main(
