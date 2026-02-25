@@ -97,7 +97,6 @@ pub mod float;
 pub mod geometry;
 pub mod image;
 pub mod indirect_command;
-pub mod matrix;
 pub mod memory;
 pub mod mesh;
 pub mod ray_tracing;
