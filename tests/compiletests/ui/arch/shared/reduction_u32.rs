@@ -4,7 +4,7 @@
 // ignore-spv1.2
 // ignore-vulkan1.0
 
-use spirv_std::arch::workgroup_memory_barrier_with_group_sync;
+use spirv_std::barrier::workgroup_memory_barrier_with_group_sync;
 use spirv_std::glam::*;
 use spirv_std::spirv;
 
