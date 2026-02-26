@@ -25,12 +25,14 @@ use rustc_session::config::{
 };
 use rustc_session::output::{check_file_is_writeable, invalid_output_for_target, out_filename};
 use rustc_span::Symbol;
+use spirv_tools::TargetEnv;
 use std::collections::BTreeMap;
 use std::ffi::{CString, OsStr};
 use std::fs::File;
 use std::io::{BufWriter, Read};
 use std::iter;
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
 use std::sync::Arc;
 
 pub fn link(
@@ -337,7 +339,8 @@ fn do_spirv_opt(
         opt::{self, Optimizer},
     };
 
-    let mut optimizer = opt::create(sess.target.options.env.parse().ok());
+    let target_env = TargetEnv::from_str(sess.target.options.env.desc()).ok();
+    let mut optimizer = opt::create(target_env);
 
     match sess.opts.optimize {
         OptLevel::No => {}
@@ -399,7 +402,8 @@ fn do_spirv_val(
 ) {
     use spirv_tools::val::{self, Validator};
 
-    let validator = val::create(sess.target.options.env.parse().ok());
+    let target_env = TargetEnv::from_str(sess.target.options.env.desc()).ok();
+    let validator = val::create(target_env);
 
     if let Err(e) = validator.validate(spv_binary, Some(options)) {
         let mut err = sess.dcx().struct_err(e.to_string());
@@ -498,7 +502,7 @@ fn add_upstream_native_libraries(
 fn relevant_lib(sess: &Session, lib: &NativeLib) -> bool {
     match lib.cfg {
         Some(ref cfg) => {
-            eval_config_entry(sess, cfg, CRATE_NODE_ID, None, ShouldEmit::ErrorsAndLints).as_bool()
+            eval_config_entry(sess, cfg, CRATE_NODE_ID, ShouldEmit::ErrorsAndLints).as_bool()
         }
         None => true,
     }
