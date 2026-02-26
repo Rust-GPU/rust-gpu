@@ -92,6 +92,7 @@ pub use macros::{debug_printf, debug_printfln};
 
 pub mod arch;
 pub mod atomic;
+pub mod barrier;
 pub mod byte_addressable_buffer;
 pub mod debug_printf;
 pub mod float;

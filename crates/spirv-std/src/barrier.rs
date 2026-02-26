@@ -1,3 +1,5 @@
+//! Intrinsics for barrier operations
+
 #[cfg(target_arch = "spirv")]
 use core::arch::asm;
 

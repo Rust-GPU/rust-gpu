@@ -9,7 +9,7 @@ use spirv_std::spirv;
 #[spirv(fragment)]
 pub fn main() {
     unsafe {
-        spirv_std::arch::memory_barrier::<
+        spirv_std::barrier::memory_barrier::<
             { Scope::Subgroup as u32 },
             { Semantics::ACQUIRE_RELEASE.bits() | Semantics::UNIFORM_MEMORY.bits() },
         >();

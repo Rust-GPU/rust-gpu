@@ -9,10 +9,6 @@ use crate::{Scalar, SignedInteger, UnsignedInteger, Vector};
 #[cfg(target_arch = "spirv")]
 use core::arch::asm;
 
-mod barrier;
-
-pub use barrier::*;
-
 /// Result is true if any component of `vector` is true, otherwise result is
 /// false.
 #[spirv_std_macros::gpu_only]

@@ -15,7 +15,7 @@
 #[cfg(target_arch = "spirv")]
 use crate::ScalarOrVectorTransform;
 #[cfg(target_arch = "spirv")]
-use crate::arch::{control_barrier, memory_barrier};
+use crate::barrier::{control_barrier, memory_barrier};
 #[cfg(target_arch = "spirv")]
 use crate::memory::{Scope, Semantics};
 use crate::{Float, Integer, ScalarComposite, ScalarOrVector, SignedInteger, UnsignedInteger};
