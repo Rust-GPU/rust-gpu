@@ -276,7 +276,7 @@ mod test {
             source,
             SpirvSource::Git {
                 url: "https://github.com/Rust-GPU/rust-gpu".to_owned(),
-                rev: "2aa4d4f8a8ba73103501562cfca17b8163e5a887".to_owned()
+                rev: "6a67e7b5954f37989ad540a555b5d6969073592e".to_owned()
             }
         );
     }
@@ -299,13 +299,13 @@ mod test {
             .to_str()
             .map(std::string::ToString::to_string)
             .unwrap();
-        assert_eq!("https___github_com_Rust-GPU_rust-gpu+2aa4d4f8", &name);
+        assert_eq!("https___github_com_Rust-GPU_rust-gpu+6a67e7b5", &name);
     }
 
     #[test_log::test]
     fn parse_git_with_rev() {
         let source = parse_git(
-            "git+https://github.com/Rust-GPU/rust-gpu?rev=86fc48032c4cd4afb74f1d81ae859711d20386a1#86fc4803",
+            "git+https://github.com/Rust-GPU/rust-gpu?rev=6a67e7b5954f37989ad540a555b5d6969073592e#86fc4803",
         );
         assert_eq!(
             source,
