@@ -1,5 +1,4 @@
 // HACK(eddyb) start of `rustc_codegen_ssa` crate-level attributes (see `build.rs`).
-#![allow(internal_features)]
 #![allow(rustc::diagnostic_outside_of_impl)]
 #![allow(rustc::untranslatable_diagnostic)]
 #![feature(assert_matches)]
@@ -7,7 +6,6 @@
 #![feature(file_buffered)]
 #![feature(if_let_guard)]
 #![feature(negative_impls)]
-#![feature(rustdoc_internals)]
 #![feature(string_from_utf8_lossy_owned)]
 #![feature(trait_alias)]
 #![feature(try_blocks)]
