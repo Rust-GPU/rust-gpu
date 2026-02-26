@@ -16,6 +16,8 @@ pub enum TargetSpecVersion {
     /// Some later version requires them.
     /// Some earlier version fails with them (notably our 0.9.0 release).
     Rustc_1_76_0,
+    /// rustc 1.93 requires that the value of "target-pointer-width" is no longer a string but u16
+    Rustc_1_93_0,
 }
 
 impl TargetSpecVersion {
@@ -39,7 +41,9 @@ impl TargetSpecVersion {
     /// Returns the version of the target spec required for a certain rustc version. May return `None` if the version
     /// is old enough to not need target specs.
     pub fn from_rustc_version(rustc_version: Version) -> Option<Self> {
-        if rustc_version >= Version::new(1, 85, 0) {
+        if rustc_version >= Version::new(1, 93, 0) {
+            Some(Self::Rustc_1_93_0)
+        } else if rustc_version >= Version::new(1, 85, 0) {
             Some(Self::Rustc_1_85_0)
         } else if rustc_version >= Version::new(1, 76, 0) {
             Some(Self::Rustc_1_76_0)
@@ -52,8 +56,12 @@ impl TargetSpecVersion {
     pub fn format_spec(&self, target: &SpirvTarget) -> String {
         let target_env = target.env();
         let extra = match self {
-            TargetSpecVersion::Rustc_1_85_0 => r#""crt-static-respected": true,"#,
             TargetSpecVersion::Rustc_1_76_0 => r#""os": "unknown","#,
+            _ => r#""crt-static-respected": true,"#,
+        };
+        let target_pointer_width = match self {
+            TargetSpecVersion::Rustc_1_76_0 | TargetSpecVersion::Rustc_1_85_0 => "\"32\"",
+            TargetSpecVersion::Rustc_1_93_0 => "32",
         };
         format!(
             r#"{{
@@ -80,7 +88,7 @@ impl TargetSpecVersion {
   {extra}
   "panic-strategy": "abort",
   "simd-types-indirect": false,
-  "target-pointer-width": "32"
+  "target-pointer-width": {target_pointer_width}
 }}"#
         )
     }
