@@ -1,6 +1,6 @@
 #![no_std]
 
-use spirv_std::arch::{atomic_i_add, atomic_i_sub, atomic_u_max, atomic_u_min};
+use spirv_std::atomic::{atomic_i_add, atomic_i_sub, atomic_u_max, atomic_u_min};
 use spirv_std::memory::{Scope, Semantics};
 use spirv_std::spirv;
 
