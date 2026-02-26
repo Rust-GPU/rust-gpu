@@ -9,10 +9,8 @@ use crate::{Scalar, SignedInteger, UnsignedInteger, Vector};
 #[cfg(target_arch = "spirv")]
 use core::arch::asm;
 
-mod atomics;
 mod barrier;
 
-pub use atomics::*;
 pub use barrier::*;
 
 /// Result is true if any component of `vector` is true, otherwise result is

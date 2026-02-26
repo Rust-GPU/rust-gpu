@@ -1,3 +1,5 @@
+//! Intrinsics for atomic operations
+
 #[cfg(target_arch = "spirv")]
 use core::arch::asm;
 
