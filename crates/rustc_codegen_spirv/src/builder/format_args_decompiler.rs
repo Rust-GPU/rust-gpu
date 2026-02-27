@@ -93,11 +93,11 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
         // HACK(eddyb) some entry-points only take a `&str`, not `fmt::Arguments`.
         if let [
             SpirvValue {
-                kind: SpirvValueKind::Def(a_id),
+                kind: SpirvValueKind::Def { id: a_id, .. },
                 ..
             },
             SpirvValue {
-                kind: SpirvValueKind::Def(b_id),
+                kind: SpirvValueKind::Def { id: b_id, .. },
                 ..
             },
             ref other_args @ ..,
@@ -116,14 +116,20 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
             // HACK(eddyb) `panic_nounwind_fmt` takes an extra argument.
             [
                 SpirvValue {
-                    kind: SpirvValueKind::Def(format_args_id),
+                    kind:
+                        SpirvValueKind::Def {
+                            id: format_args_id, ..
+                        },
                     ..
                 },
                 _, // `&'static panic::Location<'static>`
             ]
             | [
                 SpirvValue {
-                    kind: SpirvValueKind::Def(format_args_id),
+                    kind:
+                        SpirvValueKind::Def {
+                            id: format_args_id, ..
+                        },
                     ..
                 },
                 _, // `force_no_backtrace: bool`
