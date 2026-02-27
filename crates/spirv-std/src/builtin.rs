@@ -58,3 +58,20 @@ macro_rules! load_builtin {
         }
     };
 }
+
+/// Declare an Output built-in, returning a `&'static mut T` to write the resulting value into.
+#[macro_export]
+macro_rules! decl_builtin_output {
+    ($name:ident $(: $ty:ty)?) => {
+        unsafe {
+            let mut slot = ::core::mem::MaybeUninit$(::<&mut $ty>)?::uninit();
+            ::core::arch::asm!(
+                "%var = OpVariable typeof*{slot} Output",
+                concat!("OpDecorate %var BuiltIn ", stringify!($name)),
+                "OpStore {slot} %var",
+                slot = in(reg) slot.as_mut_ptr(),
+            );
+            slot.assume_init()
+        }
+    };
+}

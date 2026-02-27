@@ -17,6 +17,8 @@
 //! | gl_DrawID        | gl_DrawID  |
 //!
 
+use glam::Vec4;
+
 // custom: vulkan vs opengl naming
 /// [`vertex_index`] is a vertex language input variable that holds an integer index for the vertex, relative to a base.
 ///
@@ -159,4 +161,13 @@ pub fn base_vertex() -> u32 {
 #[gpu_only]
 pub fn base_instance() -> u32 {
     crate::load_builtin!(BaseInstance)
+}
+
+/// TODO docs
+#[doc(alias = "gl_Position")]
+#[doc(alias = "Position")]
+#[inline]
+#[gpu_only]
+pub fn decl_position_out() -> &'static mut Vec4 {
+    crate::decl_builtin_output!(Position)
 }
