@@ -44,18 +44,25 @@
 /// See [module level documentation] on how to use these.
 #[macro_export]
 macro_rules! load_builtin {
-    ($name:ident $(: $ty:ty)?) => {
+    ($name:ident $(: $ty:ty)? $(;default: $default:expr)? $(; extra: $($extra:expr),*)?) => {
         unsafe {
-            let mut result $(: $ty)? = Default::default();
+            let mut result $(: $ty)? = crate::load_builtin!(@default $($default)?);
             ::core::arch::asm! {
                 "%builtin = OpVariable typeof{result_ref} Input",
                 concat!("OpDecorate %builtin BuiltIn ", stringify!($name)),
+                $($($extra,)*)?
                 "%result = OpLoad typeof*{result_ref} %builtin",
                 "OpStore {result_ref} %result",
                 result_ref = in(reg) &mut result,
             }
             result
         }
+    };
+    (@default $default:expr) => {
+        $default
+    };
+    (@default) => {
+        Default::default()
     };
 }
 
