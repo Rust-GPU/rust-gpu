@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashbrown-0.16.1/src/raw/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="hashbrown" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (f34ba774c 2025-08-03)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-68b7e25d.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">hashbrown/raw/</div>mod.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span><span class="kw">crate</span>::alloc::alloc::{handle_alloc_error, Layout};
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashbrown-0.16.1/src/raw/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="hashbrown" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (adaa83897 2025-10-27)" data-channel="nightly" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">hashbrown/raw/</div>mod.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span><span class="kw">crate</span>::alloc::alloc::{handle_alloc_error, Layout};
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span><span class="kw">crate</span>::control::{BitMaskIter, Group, Tag, TagSliceExt};
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span><span class="kw">crate</span>::scopeguard::{guard, ScopeGuard};
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span><span class="kw">crate</span>::util::{invalid_mut, likely, unlikely};
@@ -172,7 +172,7 @@
 <a href=#172 id=172 data-nosnippet>172</a>// selection or growth policy changes, revisit `maximum_buckets_in`.
 <a href=#173 id=173 data-nosnippet>173</a></span><span class="attr">#[inline]
 <a href=#174 id=174 data-nosnippet>174</a></span><span class="kw">fn </span>ensure_bucket_bytes_at_least_ctrl_align(table_layout: TableLayout, buckets: usize) {
-<a href=#175 id=175 data-nosnippet>175</a>    <span class="kw">if </span>table_layout.size != <span class="number">0 </span>{
+<a href=#175 id=175 data-nosnippet>175</a>    <span class="kw">if </span>table_layout.<span class="macro">size !</span>= <span class="number">0 </span>{
 <a href=#176 id=176 data-nosnippet>176</a>        <span class="kw">let </span>prod = table_layout.size.saturating_mul(buckets);
 <a href=#177 id=177 data-nosnippet>177</a>        <span class="macro">debug_assert!</span>(prod &gt;= table_layout.ctrl_align);
 <a href=#178 id=178 data-nosnippet>178</a>    }
@@ -2250,7 +2250,7 @@
 <a href=#2250 id=2250 data-nosnippet>2250</a>    </span><span class="kw">unsafe fn </span>drop_elements&lt;T&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
 <a href=#2251 id=2251 data-nosnippet>2251</a>        <span class="comment">// Check that `self.items != 0`. Protects against the possibility
 <a href=#2252 id=2252 data-nosnippet>2252</a>        // of creating an iterator on an table with uninitialized control bytes.
-<a href=#2253 id=2253 data-nosnippet>2253</a>        </span><span class="kw">if </span>T::NEEDS_DROP &amp;&amp; <span class="self">self</span>.items != <span class="number">0 </span>{
+<a href=#2253 id=2253 data-nosnippet>2253</a>        </span><span class="kw">if </span>T::NEEDS_DROP &amp;&amp; <span class="self">self</span>.<span class="macro">items !</span>= <span class="number">0 </span>{
 <a href=#2254 id=2254 data-nosnippet>2254</a>            <span class="comment">// SAFETY: We know for sure that RawTableInner will outlive the
 <a href=#2255 id=2255 data-nosnippet>2255</a>            // returned `RawIter` iterator, and the caller of this function
 <a href=#2256 id=2256 data-nosnippet>2256</a>            // must uphold the safety contract for `drop_elements` method.
@@ -2309,7 +2309,7 @@
 <a href=#2309 id=2309 data-nosnippet>2309</a>    /// [`RawTableInner::free_buckets`]: RawTableInner::free_buckets
 <a href=#2310 id=2310 data-nosnippet>2310</a>    /// [`undefined behavior`]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
 <a href=#2311 id=2311 data-nosnippet>2311</a>    </span><span class="kw">unsafe fn </span>drop_inner_table&lt;T, A: Allocator&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, alloc: <span class="kw-2">&amp;</span>A, table_layout: TableLayout) {
-<a href=#2312 id=2312 data-nosnippet>2312</a>        <span class="kw">if </span>!<span class="self">self</span>.is_empty_singleton() {
+<a href=#2312 id=2312 data-nosnippet>2312</a>        <span class="macro">if !</span><span class="self">self</span>.is_empty_singleton() {
 <a href=#2313 id=2313 data-nosnippet>2313</a>            <span class="kw">unsafe </span>{
 <a href=#2314 id=2314 data-nosnippet>2314</a>                <span class="comment">// SAFETY: The caller must uphold the safety contract for `drop_inner_table` method.
 <a href=#2315 id=2315 data-nosnippet>2315</a>                </span><span class="self">self</span>.drop_elements::&lt;T&gt;();
@@ -2744,7 +2744,7 @@
 <a href=#2744 id=2744 data-nosnippet>2744</a>        // This guard is also used to free the old table on success, see
 <a href=#2745 id=2745 data-nosnippet>2745</a>        // the comment at the bottom of this function.
 <a href=#2746 id=2746 data-nosnippet>2746</a>        </span><span class="prelude-val">Ok</span>(guard(new_table, <span class="kw">move </span>|self_| {
-<a href=#2747 id=2747 data-nosnippet>2747</a>            <span class="kw">if </span>!self_.is_empty_singleton() {
+<a href=#2747 id=2747 data-nosnippet>2747</a>            <span class="macro">if !</span>self_.is_empty_singleton() {
 <a href=#2748 id=2748 data-nosnippet>2748</a>                <span class="comment">// SAFETY:
 <a href=#2749 id=2749 data-nosnippet>2749</a>                // 1. We have checked that our table is allocated.
 <a href=#2750 id=2750 data-nosnippet>2750</a>                // 2. We know for sure that the `alloc` and `table_layout` matches the
@@ -3205,7 +3205,7 @@
 <a href=#3205 id=3205 data-nosnippet>3205</a>    <span class="doccomment">/// Marks all table buckets as empty without dropping their contents.
 <a href=#3206 id=3206 data-nosnippet>3206</a>    </span><span class="attr">#[inline]
 <a href=#3207 id=3207 data-nosnippet>3207</a>    </span><span class="kw">fn </span>clear_no_drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-<a href=#3208 id=3208 data-nosnippet>3208</a>        <span class="kw">if </span>!<span class="self">self</span>.is_empty_singleton() {
+<a href=#3208 id=3208 data-nosnippet>3208</a>        <span class="macro">if !</span><span class="self">self</span>.is_empty_singleton() {
 <a href=#3209 id=3209 data-nosnippet>3209</a>            <span class="self">self</span>.ctrl_slice().fill_empty();
 <a href=#3210 id=3210 data-nosnippet>3210</a>        }
 <a href=#3211 id=3211 data-nosnippet>3211</a>        <span class="self">self</span>.items = <span class="number">0</span>;
@@ -3386,7 +3386,7 @@
 <a href=#3386 id=3386 data-nosnippet>3386</a>                    <span class="comment">// Replace the old inner with new uninitialized one. It's ok, since if something gets
 <a href=#3387 id=3387 data-nosnippet>3387</a>                    // wrong `ScopeGuard` will initialize all control bytes and leave empty table.
 <a href=#3388 id=3388 data-nosnippet>3388</a>                    </span><span class="kw">let </span><span class="kw-2">mut </span>old_inner = mem::replace(<span class="kw-2">&amp;mut </span>self_.table, new_inner);
-<a href=#3389 id=3389 data-nosnippet>3389</a>                    <span class="kw">if </span>!old_inner.is_empty_singleton() {
+<a href=#3389 id=3389 data-nosnippet>3389</a>                    <span class="macro">if !</span>old_inner.is_empty_singleton() {
 <a href=#3390 id=3390 data-nosnippet>3390</a>                        <span class="comment">// SAFETY:
 <a href=#3391 id=3391 data-nosnippet>3391</a>                        // 1. We have checked that our table is allocated.
 <a href=#3392 id=3392 data-nosnippet>3392</a>                        // 2. We know for sure that `alloc` and `table_layout` matches
@@ -3706,7 +3706,7 @@
 <a href=#3706 id=3706 data-nosnippet>3706</a>            <span class="kw">while let </span><span class="prelude-val">Some</span>(index) = <span class="self">self</span>.current_group.next() {
 <a href=#3707 id=3707 data-nosnippet>3707</a>                <span class="comment">// The returned `index` will always be in the range `0..Group::WIDTH`,
 <a href=#3708 id=3708 data-nosnippet>3708</a>                // so that calling `self.data.next_n(index)` is safe (see detailed explanation below).
-<a href=#3709 id=3709 data-nosnippet>3709</a>                </span><span class="macro">debug_assert!</span>(n != <span class="number">0</span>);
+<a href=#3709 id=3709 data-nosnippet>3709</a>                </span><span class="macro">debug_assert!</span>(<span class="macro">n !</span>= <span class="number">0</span>);
 <a href=#3710 id=3710 data-nosnippet>3710</a>                <span class="kw">let </span>bucket = <span class="self">self</span>.data.next_n(index);
 <a href=#3711 id=3711 data-nosnippet>3711</a>                acc = f(acc, bucket);
 <a href=#3712 id=3712 data-nosnippet>3712</a>                n -= <span class="number">1</span>;
@@ -3816,7 +3816,7 @@
 <a href=#3816 id=3816 data-nosnippet>3816</a>
 <a href=#3817 id=3817 data-nosnippet>3817</a><span class="kw">impl</span>&lt;T&gt; RawIter&lt;T&gt; {
 <a href=#3818 id=3818 data-nosnippet>3818</a>    <span class="kw">unsafe fn </span>drop_elements(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-<a href=#3819 id=3819 data-nosnippet>3819</a>        <span class="kw">if </span>T::NEEDS_DROP &amp;&amp; <span class="self">self</span>.items != <span class="number">0 </span>{
+<a href=#3819 id=3819 data-nosnippet>3819</a>        <span class="kw">if </span>T::NEEDS_DROP &amp;&amp; <span class="self">self</span>.<span class="macro">items !</span>= <span class="number">0 </span>{
 <a href=#3820 id=3820 data-nosnippet>3820</a>            <span class="kw">for </span>item <span class="kw">in </span><span class="self">self </span>{
 <a href=#3821 id=3821 data-nosnippet>3821</a>                item.drop();
 <a href=#3822 id=3822 data-nosnippet>3822</a>            }
@@ -4620,4 +4620,5 @@
 <a href=#4620 id=4620 data-nosnippet>4620</a>        <span class="comment">// All allocator clones should already be dropped.
 <a href=#4621 id=4621 data-nosnippet>4621</a>        </span><span class="macro">assert_eq!</span>(dropped.load(Ordering::SeqCst), <span class="number">1</span>);
 <a href=#4622 id=4622 data-nosnippet>4622</a>    }
-<a href=#4623 id=4623 data-nosnippet>4623</a>}</code></pre></div></section></main></body></html>
+<a href=#4623 id=4623 data-nosnippet>4623</a>}
+</code></pre></div></section></main></body></html>

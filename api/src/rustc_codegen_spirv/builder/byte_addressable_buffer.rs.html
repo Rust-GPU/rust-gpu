@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/builder/byte_addressable_buffer.rs`."><title>byte_addressable_buffer.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (f34ba774c 2025-08-03)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-68b7e25d.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/builder/</div>byte_addressable_buffer.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/builder/byte_addressable_buffer.rs`."><title>byte_addressable_buffer.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (adaa83897 2025-10-27)" data-channel="nightly" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/builder/</div>byte_addressable_buffer.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
 <a href=#2 id=2 data-nosnippet>2</a></span><span class="kw">use </span><span class="kw">crate</span>::maybe_pqp_cg_ssa <span class="kw">as </span>rustc_codegen_ssa;
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span><span class="kw">super</span>::Builder;
@@ -19,7 +19,7 @@
 <a href=#19 id=19 data-nosnippet>19</a>            <span class="string">"cannot load type {} in an untyped buffer load"</span>,
 <a href=#20 id=20 data-nosnippet>20</a>            <span class="self">self</span>.debug_type(original_type)
 <a href=#21 id=21 data-nosnippet>21</a>        ));
-<a href=#22 id=22 data-nosnippet>22</a>        <span class="kw">if </span>original_type != invalid_type {
+<a href=#22 id=22 data-nosnippet>22</a>        <span class="kw">if </span><span class="macro">original_type !</span>= invalid_type {
 <a href=#23 id=23 data-nosnippet>23</a>            err.note(<span class="macro">format!</span>(
 <a href=#24 id=24 data-nosnippet>24</a>                <span class="string">"due to containing type {}"</span>,
 <a href=#25 id=25 data-nosnippet>25</a>                <span class="self">self</span>.debug_type(invalid_type)
@@ -35,7 +35,7 @@
 <a href=#35 id=35 data-nosnippet>35</a>        dynamic_index: SpirvValue,
 <a href=#36 id=36 data-nosnippet>36</a>        constant_offset: u32,
 <a href=#37 id=37 data-nosnippet>37</a>    ) -&gt; SpirvValue {
-<a href=#38 id=38 data-nosnippet>38</a>        <span class="kw">let </span>actual_index = <span class="kw">if </span>constant_offset != <span class="number">0 </span>{
+<a href=#38 id=38 data-nosnippet>38</a>        <span class="kw">let </span>actual_index = <span class="kw">if </span><span class="macro">constant_offset !</span>= <span class="number">0 </span>{
 <a href=#39 id=39 data-nosnippet>39</a>            <span class="kw">let </span>const_offset_val = <span class="self">self</span>.constant_u32(DUMMY_SP, constant_offset);
 <a href=#40 id=40 data-nosnippet>40</a>            <span class="self">self</span>.add(dynamic_index, const_offset_val)
 <a href=#41 id=41 data-nosnippet>41</a>        } <span class="kw">else </span>{
@@ -75,7 +75,7 @@
 <a href=#75 id=75 data-nosnippet>75</a>            <span class="prelude-val">Some</span>(size) =&gt; size,
 <a href=#76 id=76 data-nosnippet>76</a>            <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="self">self</span>.load_err(original_type, result_type),
 <a href=#77 id=77 data-nosnippet>77</a>        };
-<a href=#78 id=78 data-nosnippet>78</a>        <span class="kw">if </span>!element_size_bytes.bytes().is_multiple_of(<span class="number">4</span>) {
+<a href=#78 id=78 data-nosnippet>78</a>        <span class="macro">if !</span>element_size_bytes.bytes().is_multiple_of(<span class="number">4</span>) {
 <a href=#79 id=79 data-nosnippet>79</a>            <span class="kw">return </span><span class="self">self</span>.load_err(original_type, result_type);
 <a href=#80 id=80 data-nosnippet>80</a>        }
 <a href=#81 id=81 data-nosnippet>81</a>        <span class="kw">let </span>element_size_words = (element_size_bytes.bytes() / <span class="number">4</span>) <span class="kw">as </span>u32;
@@ -149,7 +149,7 @@
 <a href=#149 id=149 data-nosnippet>149</a>                    .iter()
 <a href=#150 id=150 data-nosnippet>150</a>                    .zip(field_offsets)
 <a href=#151 id=151 data-nosnippet>151</a>                    .map(|(<span class="kw-2">&amp;</span>field_type, byte_offset)| {
-<a href=#152 id=152 data-nosnippet>152</a>                        <span class="kw">if </span>!byte_offset.bytes().is_multiple_of(<span class="number">4</span>) {
+<a href=#152 id=152 data-nosnippet>152</a>                        <span class="macro">if !</span>byte_offset.bytes().is_multiple_of(<span class="number">4</span>) {
 <a href=#153 id=153 data-nosnippet>153</a>                            <span class="kw">return </span><span class="prelude-val">None</span>;
 <a href=#154 id=154 data-nosnippet>154</a>                        }
 <a href=#155 id=155 data-nosnippet>155</a>                        <span class="kw">let </span>word_offset = (byte_offset.bytes() / <span class="number">4</span>) <span class="kw">as </span>u32;
@@ -224,7 +224,7 @@
 <a href=#224 id=224 data-nosnippet>224</a>            <span class="string">"cannot store type {} in an untyped buffer store"</span>,
 <a href=#225 id=225 data-nosnippet>225</a>            <span class="self">self</span>.debug_type(original_type)
 <a href=#226 id=226 data-nosnippet>226</a>        ));
-<a href=#227 id=227 data-nosnippet>227</a>        <span class="kw">if </span>original_type != value.ty {
+<a href=#227 id=227 data-nosnippet>227</a>        <span class="kw">if </span><span class="macro">original_type !</span>= value.ty {
 <a href=#228 id=228 data-nosnippet>228</a>            err.note(<span class="macro">format!</span>(<span class="string">"due to containing type {}"</span>, value.ty));
 <a href=#229 id=229 data-nosnippet>229</a>        }
 <a href=#230 id=230 data-nosnippet>230</a>        <span class="prelude-val">Err</span>(err.emit())
@@ -237,7 +237,7 @@
 <a href=#237 id=237 data-nosnippet>237</a>        constant_offset: u32,
 <a href=#238 id=238 data-nosnippet>238</a>        value: SpirvValue,
 <a href=#239 id=239 data-nosnippet>239</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), ErrorGuaranteed&gt; {
-<a href=#240 id=240 data-nosnippet>240</a>        <span class="kw">let </span>actual_index = <span class="kw">if </span>constant_offset != <span class="number">0 </span>{
+<a href=#240 id=240 data-nosnippet>240</a>        <span class="kw">let </span>actual_index = <span class="kw">if </span><span class="macro">constant_offset !</span>= <span class="number">0 </span>{
 <a href=#241 id=241 data-nosnippet>241</a>            <span class="kw">let </span>const_offset_val = <span class="self">self</span>.constant_u32(DUMMY_SP, constant_offset);
 <a href=#242 id=242 data-nosnippet>242</a>            <span class="self">self</span>.add(dynamic_index, const_offset_val)
 <a href=#243 id=243 data-nosnippet>243</a>        } <span class="kw">else </span>{
@@ -278,7 +278,7 @@
 <a href=#278 id=278 data-nosnippet>278</a>            <span class="prelude-val">Some</span>(size) =&gt; size,
 <a href=#279 id=279 data-nosnippet>279</a>            <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="self">self</span>.store_err(original_type, value),
 <a href=#280 id=280 data-nosnippet>280</a>        };
-<a href=#281 id=281 data-nosnippet>281</a>        <span class="kw">if </span>!element_size_bytes.bytes().is_multiple_of(<span class="number">4</span>) {
+<a href=#281 id=281 data-nosnippet>281</a>        <span class="macro">if !</span>element_size_bytes.bytes().is_multiple_of(<span class="number">4</span>) {
 <a href=#282 id=282 data-nosnippet>282</a>            <span class="kw">return </span><span class="self">self</span>.store_err(original_type, value);
 <a href=#283 id=283 data-nosnippet>283</a>        }
 <a href=#284 id=284 data-nosnippet>284</a>        <span class="kw">let </span>element_size_words = (element_size_bytes.bytes() / <span class="number">4</span>) <span class="kw">as </span>u32;
@@ -345,7 +345,7 @@
 <a href=#345 id=345 data-nosnippet>345</a>                ..
 <a href=#346 id=346 data-nosnippet>346</a>            } =&gt; {
 <a href=#347 id=347 data-nosnippet>347</a>                <span class="kw">for </span>(index, byte_offset) <span class="kw">in </span>field_offsets.iter().enumerate() {
-<a href=#348 id=348 data-nosnippet>348</a>                    <span class="kw">if </span>!byte_offset.bytes().is_multiple_of(<span class="number">4</span>) {
+<a href=#348 id=348 data-nosnippet>348</a>                    <span class="macro">if !</span>byte_offset.bytes().is_multiple_of(<span class="number">4</span>) {
 <a href=#349 id=349 data-nosnippet>349</a>                        <span class="kw">return </span><span class="self">self</span>.store_err(original_type, value);
 <a href=#350 id=350 data-nosnippet>350</a>                    }
 <a href=#351 id=351 data-nosnippet>351</a>                    <span class="kw">let </span>word_offset = (byte_offset.bytes() / <span class="number">4</span>) <span class="kw">as </span>u32;
@@ -404,7 +404,7 @@
 <a href=#404 id=404 data-nosnippet>404</a>            <span class="kw">let </span>one_result = <span class="self">self</span>.recurse_store_type(value_one.ty, value_one, array, word_index, <span class="number">0</span>);
 <a href=#405 id=405 data-nosnippet>405</a>
 <a href=#406 id=406 data-nosnippet>406</a>            <span class="kw">let </span>size_of_one = <span class="self">self</span>.lookup_type(value_one.ty).sizeof(<span class="self">self</span>);
-<a href=#407 id=407 data-nosnippet>407</a>            <span class="kw">if </span>one_result.is_ok() &amp;&amp; size_of_one != <span class="prelude-val">Some</span>(Size::from_bytes(<span class="number">4</span>)) {
+<a href=#407 id=407 data-nosnippet>407</a>            <span class="kw">if </span>one_result.is_ok() &amp;&amp; <span class="macro">size_of_one !</span>= <span class="prelude-val">Some</span>(Size::from_bytes(<span class="number">4</span>)) {
 <a href=#408 id=408 data-nosnippet>408</a>                <span class="self">self</span>.fatal(<span class="string">"Expected PassMode::Pair first element to have size 4"</span>);
 <a href=#409 id=409 data-nosnippet>409</a>            }
 <a href=#410 id=410 data-nosnippet>410</a>
@@ -414,4 +414,5 @@
 <a href=#414 id=414 data-nosnippet>414</a>            <span class="kw">let _ </span>= <span class="self">self</span>.recurse_store_type(value.ty, value, array, word_index, <span class="number">0</span>);
 <a href=#415 id=415 data-nosnippet>415</a>        }
 <a href=#416 id=416 data-nosnippet>416</a>    }
-<a href=#417 id=417 data-nosnippet>417</a>}</code></pre></div></section></main></body></html>
+<a href=#417 id=417 data-nosnippet>417</a>}
+</code></pre></div></section></main></body></html>

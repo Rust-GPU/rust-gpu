@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_edit-0.22.27/src/encode.rs`."><title>encode.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="toml_edit" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (f34ba774c 2025-08-03)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-68b7e25d.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">toml_edit/</div>encode.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>std::borrow::Cow;
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_edit-0.22.27/src/encode.rs`."><title>encode.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="toml_edit" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (adaa83897 2025-10-27)" data-channel="nightly" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">toml_edit/</div>encode.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>std::borrow::Cow;
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span>std::fmt::{Display, Formatter, <span class="prelude-ty">Result</span>, Write};
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span>toml_datetime::Datetime;
@@ -17,7 +17,7 @@
 <a href=#17 id=17 data-nosnippet>17</a><span class="kw">use </span><span class="kw">crate</span>::DocumentMut;
 <a href=#18 id=18 data-nosnippet>18</a><span class="kw">use crate</span>::{Array, InlineTable, Item, Table, Value};
 <a href=#19 id=19 data-nosnippet>19</a>
-<a href=#20 id=20 data-nosnippet>20</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>encode_key(this: <span class="kw-2">&amp;</span>Key, buf: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write, input: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;) -&gt; <span class="prelude-ty">Result</span> {
+<a href=#20 id=20 data-nosnippet>20</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>encode_key(this: <span class="kw-2">&amp;</span>Key, buf: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write, input: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;) -&gt; <span class="prelude-ty">Result </span>{
 <a href=#21 id=21 data-nosnippet>21</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(input) = input {
 <a href=#22 id=22 data-nosnippet>22</a>        <span class="kw">let </span>repr = this
 <a href=#23 id=23 data-nosnippet>23</a>            .as_repr()
@@ -37,7 +37,7 @@
 <a href=#37 id=37 data-nosnippet>37</a>    <span class="kw-2">mut </span>buf: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write,
 <a href=#38 id=38 data-nosnippet>38</a>    input: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;,
 <a href=#39 id=39 data-nosnippet>39</a>    default_decor: (<span class="kw-2">&amp;</span>str, <span class="kw-2">&amp;</span>str),
-<a href=#40 id=40 data-nosnippet>40</a>) -&gt; <span class="prelude-ty">Result</span> {
+<a href=#40 id=40 data-nosnippet>40</a>) -&gt; <span class="prelude-ty">Result </span>{
 <a href=#41 id=41 data-nosnippet>41</a>    <span class="kw">let </span>leaf_decor = this.last().expect(<span class="string">"always at least one key"</span>).leaf_decor();
 <a href=#42 id=42 data-nosnippet>42</a>    <span class="kw">for </span>(i, key) <span class="kw">in </span>this.iter().enumerate() {
 <a href=#43 id=43 data-nosnippet>43</a>        <span class="kw">let </span>dotted_decor = key.dotted_decor();
@@ -68,7 +68,7 @@
 <a href=#68 id=68 data-nosnippet>68</a>    <span class="kw-2">mut </span>buf: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write,
 <a href=#69 id=69 data-nosnippet>69</a>    input: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;,
 <a href=#70 id=70 data-nosnippet>70</a>    default_decor: (<span class="kw-2">&amp;</span>str, <span class="kw-2">&amp;</span>str),
-<a href=#71 id=71 data-nosnippet>71</a>) -&gt; <span class="prelude-ty">Result</span> {
+<a href=#71 id=71 data-nosnippet>71</a>) -&gt; <span class="prelude-ty">Result </span>{
 <a href=#72 id=72 data-nosnippet>72</a>    <span class="kw">let </span>leaf_decor = this.last().expect(<span class="string">"always at least one key"</span>).leaf_decor();
 <a href=#73 id=73 data-nosnippet>73</a>    <span class="kw">for </span>(i, key) <span class="kw">in </span>this.iter().enumerate() {
 <a href=#74 id=74 data-nosnippet>74</a>        <span class="kw">let </span>dotted_decor = key.dotted_decor();
@@ -99,7 +99,7 @@
 <a href=#99 id=99 data-nosnippet>99</a>    buf: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write,
 <a href=#100 id=100 data-nosnippet>100</a>    input: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;,
 <a href=#101 id=101 data-nosnippet>101</a>    default_decor: (<span class="kw-2">&amp;</span>str, <span class="kw-2">&amp;</span>str),
-<a href=#102 id=102 data-nosnippet>102</a>) -&gt; <span class="prelude-ty">Result</span> {
+<a href=#102 id=102 data-nosnippet>102</a>) -&gt; <span class="prelude-ty">Result </span>{
 <a href=#103 id=103 data-nosnippet>103</a>    <span class="kw">let </span>decor = this.decor();
 <a href=#104 id=104 data-nosnippet>104</a>    decor.prefix_encode(buf, input, default_decor.<span class="number">0</span>)<span class="question-mark">?</span>;
 <a href=#105 id=105 data-nosnippet>105</a>
@@ -123,7 +123,7 @@
 <a href=#123 id=123 data-nosnippet>123</a>    <span class="kw-2">mut </span>buf: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write,
 <a href=#124 id=124 data-nosnippet>124</a>    input: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;,
 <a href=#125 id=125 data-nosnippet>125</a>    default_decor: (<span class="kw-2">&amp;</span>str, <span class="kw-2">&amp;</span>str),
-<a href=#126 id=126 data-nosnippet>126</a>) -&gt; <span class="prelude-ty">Result</span> {
+<a href=#126 id=126 data-nosnippet>126</a>) -&gt; <span class="prelude-ty">Result </span>{
 <a href=#127 id=127 data-nosnippet>127</a>    <span class="kw">let </span>decor = this.decor();
 <a href=#128 id=128 data-nosnippet>128</a>    decor.prefix_encode(buf, input, default_decor.<span class="number">0</span>)<span class="question-mark">?</span>;
 <a href=#129 id=129 data-nosnippet>129</a>    buf.open_array()<span class="question-mark">?</span>;
@@ -154,7 +154,7 @@
 <a href=#154 id=154 data-nosnippet>154</a>    <span class="kw-2">mut </span>buf: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write,
 <a href=#155 id=155 data-nosnippet>155</a>    input: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;,
 <a href=#156 id=156 data-nosnippet>156</a>    default_decor: (<span class="kw-2">&amp;</span>str, <span class="kw-2">&amp;</span>str),
-<a href=#157 id=157 data-nosnippet>157</a>) -&gt; <span class="prelude-ty">Result</span> {
+<a href=#157 id=157 data-nosnippet>157</a>) -&gt; <span class="prelude-ty">Result </span>{
 <a href=#158 id=158 data-nosnippet>158</a>    <span class="kw">let </span>decor = this.decor();
 <a href=#159 id=159 data-nosnippet>159</a>    decor.prefix_encode(buf, input, default_decor.<span class="number">0</span>)<span class="question-mark">?</span>;
 <a href=#160 id=160 data-nosnippet>160</a>    buf.open_inline_table()<span class="question-mark">?</span>;
@@ -163,7 +163,7 @@
 <a href=#163 id=163 data-nosnippet>163</a>    <span class="kw">let </span>children = this.get_values();
 <a href=#164 id=164 data-nosnippet>164</a>    <span class="kw">let </span>len = children.len();
 <a href=#165 id=165 data-nosnippet>165</a>    <span class="kw">for </span>(i, (key_path, value)) <span class="kw">in </span>children.into_iter().enumerate() {
-<a href=#166 id=166 data-nosnippet>166</a>        <span class="kw">if </span>i != <span class="number">0 </span>{
+<a href=#166 id=166 data-nosnippet>166</a>        <span class="kw">if </span><span class="macro">i !</span>= <span class="number">0 </span>{
 <a href=#167 id=167 data-nosnippet>167</a>            buf.val_sep()<span class="question-mark">?</span>;
 <a href=#168 id=168 data-nosnippet>168</a>        }
 <a href=#169 id=169 data-nosnippet>169</a>        <span class="kw">let </span>inner_decor = <span class="kw">if </span>i == len - <span class="number">1 </span>{
@@ -187,7 +187,7 @@
 <a href=#187 id=187 data-nosnippet>187</a>    buf: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write,
 <a href=#188 id=188 data-nosnippet>188</a>    input: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;,
 <a href=#189 id=189 data-nosnippet>189</a>    default_decor: (<span class="kw-2">&amp;</span>str, <span class="kw-2">&amp;</span>str),
-<a href=#190 id=190 data-nosnippet>190</a>) -&gt; <span class="prelude-ty">Result</span> {
+<a href=#190 id=190 data-nosnippet>190</a>) -&gt; <span class="prelude-ty">Result </span>{
 <a href=#191 id=191 data-nosnippet>191</a>    <span class="kw">match </span>this {
 <a href=#192 id=192 data-nosnippet>192</a>        Value::String(repr) =&gt; encode_formatted(repr, buf, input, default_decor),
 <a href=#193 id=193 data-nosnippet>193</a>        Value::Integer(repr) =&gt; encode_formatted(repr, buf, input, default_decor),
@@ -200,7 +200,7 @@
 <a href=#200 id=200 data-nosnippet>200</a>}
 <a href=#201 id=201 data-nosnippet>201</a>
 <a href=#202 id=202 data-nosnippet>202</a><span class="kw">impl </span>Display <span class="kw">for </span>DocumentMut {
-<a href=#203 id=203 data-nosnippet>203</a>    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Result</span> {
+<a href=#203 id=203 data-nosnippet>203</a>    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Result </span>{
 <a href=#204 id=204 data-nosnippet>204</a>        <span class="kw">let </span>decor = <span class="self">self</span>.decor();
 <a href=#205 id=205 data-nosnippet>205</a>        decor.prefix_encode(f, <span class="prelude-val">None</span>, DEFAULT_ROOT_DECOR.<span class="number">0</span>)<span class="question-mark">?</span>;
 <a href=#206 id=206 data-nosnippet>206</a>
@@ -231,11 +231,11 @@
 <a href=#231 id=231 data-nosnippet>231</a>    path: <span class="kw-2">&amp;mut </span>Vec&lt;Key&gt;,
 <a href=#232 id=232 data-nosnippet>232</a>    is_array_of_tables: bool,
 <a href=#233 id=233 data-nosnippet>233</a>    callback: <span class="kw-2">&amp;mut </span>F,
-<a href=#234 id=234 data-nosnippet>234</a>) -&gt; <span class="prelude-ty">Result</span>
-<a href=#235 id=235 data-nosnippet>235</a><span class="kw">where
+<a href=#234 id=234 data-nosnippet>234</a>) -&gt; <span class="prelude-ty">Result
+<a href=#235 id=235 data-nosnippet>235</a></span><span class="kw">where
 <a href=#236 id=236 data-nosnippet>236</a>    </span>F: FnMut(<span class="kw-2">&amp;</span><span class="lifetime">'t </span>Table, <span class="kw-2">&amp;</span>Vec&lt;Key&gt;, bool) -&gt; <span class="prelude-ty">Result</span>,
 <a href=#237 id=237 data-nosnippet>237</a>{
-<a href=#238 id=238 data-nosnippet>238</a>    <span class="kw">if </span>!table.is_dotted() {
+<a href=#238 id=238 data-nosnippet>238</a>    <span class="macro">if !</span>table.is_dotted() {
 <a href=#239 id=239 data-nosnippet>239</a>        callback(table, path, is_array_of_tables)<span class="question-mark">?</span>;
 <a href=#240 id=240 data-nosnippet>240</a>    }
 <a href=#241 id=241 data-nosnippet>241</a>
@@ -268,7 +268,7 @@
 <a href=#268 id=268 data-nosnippet>268</a>    path: <span class="kw-2">&amp;</span>[Key],
 <a href=#269 id=269 data-nosnippet>269</a>    is_array_of_tables: bool,
 <a href=#270 id=270 data-nosnippet>270</a>    first_table: <span class="kw-2">&amp;mut </span>bool,
-<a href=#271 id=271 data-nosnippet>271</a>) -&gt; <span class="prelude-ty">Result</span> {
+<a href=#271 id=271 data-nosnippet>271</a>) -&gt; <span class="prelude-ty">Result </span>{
 <a href=#272 id=272 data-nosnippet>272</a>    <span class="kw">let </span>children = table.get_values();
 <a href=#273 id=273 data-nosnippet>273</a>    <span class="comment">// We are intentionally hiding implicit tables without any tables nested under them (ie
 <a href=#274 id=274 data-nosnippet>274</a>    // `table.is_empty()` which is in contrast to `table.get_values().is_empty()`).  We are
@@ -283,7 +283,7 @@
 <a href=#283 id=283 data-nosnippet>283</a>
 <a href=#284 id=284 data-nosnippet>284</a>    <span class="kw">if </span>path.is_empty() {
 <a href=#285 id=285 data-nosnippet>285</a>        <span class="comment">// don't print header for the root node
-<a href=#286 id=286 data-nosnippet>286</a>        </span><span class="kw">if </span>!children.is_empty() {
+<a href=#286 id=286 data-nosnippet>286</a>        </span><span class="macro">if !</span>children.is_empty() {
 <a href=#287 id=287 data-nosnippet>287</a>            <span class="kw-2">*</span>first_table = <span class="bool-val">false</span>;
 <a href=#288 id=288 data-nosnippet>288</a>        }
 <a href=#289 id=289 data-nosnippet>289</a>    } <span class="kw">else if </span>is_array_of_tables {
@@ -407,4 +407,5 @@
 <a href=#407 id=407 data-nosnippet>407</a>            });
 <a href=#408 id=408 data-nosnippet>408</a>        }
 <a href=#409 id=409 data-nosnippet>409</a>    }
-<a href=#410 id=410 data-nosnippet>410</a>}</code></pre></div></section></main></body></html>
+<a href=#410 id=410 data-nosnippet>410</a>}
+</code></pre></div></section></main></body></html>

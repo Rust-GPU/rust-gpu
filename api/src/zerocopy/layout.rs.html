@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerocopy-0.8.38/src/layout.rs`."><title>layout.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="zerocopy" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (f34ba774c 2025-08-03)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-68b7e25d.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">zerocopy/</div>layout.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// Copyright 2024 The Fuchsia Authors
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerocopy-0.8.38/src/layout.rs`."><title>layout.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="zerocopy" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (adaa83897 2025-10-27)" data-channel="nightly" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">zerocopy/</div>layout.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// Copyright 2024 The Fuchsia Authors
 <a href=#2 id=2 data-nosnippet>2</a>//
 <a href=#3 id=3 data-nosnippet>3</a>// Licensed under the 2-Clause BSD License &lt;LICENSE-BSD or
 <a href=#4 id=4 data-nosnippet>4</a>// https://opensource.org/license/bsd-2-clause&gt;, Apache License, Version 2.0
@@ -907,7 +907,7 @@
 <a href=#907 id=907 data-nosnippet>907</a>                            SizeInfo::Sized { size: src_size },
 <a href=#908 id=908 data-nosnippet>908</a>                            SizeInfo::Sized { size: dst_size },
 <a href=#909 id=909 data-nosnippet>909</a>                        ) =&gt; {
-<a href=#910 id=910 data-nosnippet>910</a>                            <span class="kw">if </span>src_size != dst_size {
+<a href=#910 id=910 data-nosnippet>910</a>                            <span class="kw">if </span><span class="macro">src_size !</span>= dst_size {
 <a href=#911 id=911 data-nosnippet>911</a>                                <span class="kw">return </span><span class="prelude-val">None</span>;
 <a href=#912 id=912 data-nosnippet>912</a>                            }
 <a href=#913 id=913 data-nosnippet>913</a>
@@ -933,7 +933,7 @@
 <a href=#933 id=933 data-nosnippet>933</a>                            </span><span class="attr">#[allow(clippy::arithmetic_side_effects)]
 <a href=#934 id=934 data-nosnippet>934</a>                            </span><span class="kw">let </span>delta_mod_other_elem = offset_delta % dst_elem_size.get();
 <a href=#935 id=935 data-nosnippet>935</a>
-<a href=#936 id=936 data-nosnippet>936</a>                            <span class="kw">if </span>delta_mod_other_elem != <span class="number">0 </span>{
+<a href=#936 id=936 data-nosnippet>936</a>                            <span class="kw">if </span><span class="macro">delta_mod_other_elem !</span>= <span class="number">0 </span>{
 <a href=#937 id=937 data-nosnippet>937</a>                                <span class="kw">return </span><span class="prelude-val">None</span>;
 <a href=#938 id=938 data-nosnippet>938</a>                            }
 <a href=#939 id=939 data-nosnippet>939</a>
@@ -970,9 +970,9 @@
 <a href=#970 id=970 data-nosnippet>970</a>                            </span><span class="attr">#[allow(clippy::arithmetic_side_effects)]
 <a href=#971 id=971 data-nosnippet>971</a>                            </span><span class="kw">let </span>elem_remainder = src.elem_size % dst_elem_size.get();
 <a href=#972 id=972 data-nosnippet>972</a>
-<a href=#973 id=973 data-nosnippet>973</a>                            <span class="kw">if </span>delta_mod_other_elem != <span class="number">0
+<a href=#973 id=973 data-nosnippet>973</a>                            <span class="kw">if </span><span class="macro">delta_mod_other_elem !</span>= <span class="number">0
 <a href=#974 id=974 data-nosnippet>974</a>                                </span>|| src.elem_size &lt; dst.elem_size
-<a href=#975 id=975 data-nosnippet>975</a>                                || elem_remainder != <span class="number">0
+<a href=#975 id=975 data-nosnippet>975</a>                                || <span class="macro">elem_remainder !</span>= <span class="number">0
 <a href=#976 id=976 data-nosnippet>976</a>                            </span>{
 <a href=#977 id=977 data-nosnippet>977</a>                                <span class="kw">return </span><span class="prelude-val">None</span>;
 <a href=#978 id=978 data-nosnippet>978</a>                            }
@@ -1511,7 +1511,7 @@
 <a href=#1511 id=1511 data-nosnippet>1511</a>                // allowed to rely on this, but a lot of math is nicer if
 <a href=#1512 id=1512 data-nosnippet>1512</a>                // they're able to, and some callers might accidentally do that.
 <a href=#1513 id=1513 data-nosnippet>1513</a>                </span><span class="kw">let </span>sized = <span class="macro">matches!</span>(layout.size_info, SizeInfo::Sized { .. });
-<a href=#1514 id=1514 data-nosnippet>1514</a>                <span class="macro">assert!</span>(!(sized &amp;&amp; elems != <span class="number">0</span>), <span class="string">"{}"</span>, debug_str);
+<a href=#1514 id=1514 data-nosnippet>1514</a>                <span class="macro">assert!</span>(!(sized &amp;&amp; <span class="macro">elems !</span>= <span class="number">0</span>), <span class="string">"{}"</span>, debug_str);
 <a href=#1515 id=1515 data-nosnippet>1515</a>
 <a href=#1516 id=1516 data-nosnippet>1516</a>                <span class="kw">let </span>resulting_size = <span class="kw">match </span>layout.size_info {
 <a href=#1517 id=1517 data-nosnippet>1517</a>                    SizeInfo::Sized { size } =&gt; size,
@@ -1559,7 +1559,7 @@
 <a href=#1559 id=1559 data-nosnippet>1559</a>                    CastType::Prefix =&gt; <span class="number">0</span>,
 <a href=#1560 id=1560 data-nosnippet>1560</a>                    CastType::Suffix =&gt; bytes_len,
 <a href=#1561 id=1561 data-nosnippet>1561</a>                };
-<a href=#1562 id=1562 data-nosnippet>1562</a>                <span class="kw">let </span>misaligned = (base + addr) % layout.align != <span class="number">0</span>;
+<a href=#1562 id=1562 data-nosnippet>1562</a>                <span class="kw">let </span>misaligned = (base + addr) % layout.<span class="macro">align !</span>= <span class="number">0</span>;
 <a href=#1563 id=1563 data-nosnippet>1563</a>
 <a href=#1564 id=1564 data-nosnippet>1564</a>                <span class="macro">assert!</span>(insufficient_bytes || misaligned);
 <a href=#1565 id=1565 data-nosnippet>1565</a>            }
@@ -1572,7 +1572,7 @@
 <a href=#1572 id=1572 data-nosnippet>1572</a>            .map(Into::&lt;SizeInfo&gt;::into)
 <a href=#1573 id=1573 data-nosnippet>1573</a>            .chain(<span class="macro">itertools::iproduct!</span>(sizes, elem_sizes).map(Into::&lt;SizeInfo&gt;::into));
 <a href=#1574 id=1574 data-nosnippet>1574</a>        <span class="kw">let </span>layouts = <span class="macro">itertools::iproduct!</span>(size_infos, [<span class="number">1</span>, <span class="number">2</span>, <span class="number">4</span>, <span class="number">8</span>, <span class="number">16</span>, <span class="number">32</span>])
-<a href=#1575 id=1575 data-nosnippet>1575</a>                .filter(|(size_info, align)| !<span class="macro">matches!</span>(size_info, SizeInfo::Sized { size } <span class="kw">if </span>size % align != <span class="number">0</span>))
+<a href=#1575 id=1575 data-nosnippet>1575</a>                .filter(|(size_info, align)| !<span class="macro">matches!</span>(size_info, SizeInfo::Sized { size } <span class="kw">if </span>size % <span class="macro">align !</span>= <span class="number">0</span>))
 <a href=#1576 id=1576 data-nosnippet>1576</a>                .map(|(size_info, align)| layout(size_info, align));
 <a href=#1577 id=1577 data-nosnippet>1577</a>        <span class="macro">itertools::iproduct!</span>(layouts, <span class="number">0</span>..<span class="number">8</span>, <span class="number">0</span>..<span class="number">8</span>, [CastType::Prefix, CastType::Suffix])
 <a href=#1578 id=1578 data-nosnippet>1578</a>            .for_each(validate_behavior);
@@ -1654,7 +1654,7 @@
 <a href=#1654 id=1654 data-nosnippet>1654</a>                };
 <a href=#1655 id=1655 data-nosnippet>1655</a>
 <a href=#1656 id=1656 data-nosnippet>1656</a>                <span class="comment">// Avoid expensive allocation when running under Miri.
-<a href=#1657 id=1657 data-nosnippet>1657</a>                </span><span class="kw">let </span>assert_msg = <span class="kw">if </span>!<span class="macro">cfg!</span>(miri) {
+<a href=#1657 id=1657 data-nosnippet>1657</a>                </span><span class="kw">let </span>assert_msg = <span class="macro">if !cfg!</span>(miri) {
 <a href=#1658 id=1658 data-nosnippet>1658</a>                    <span class="macro">format!</span>(<span class="string">"\n{:?}\nsize:{}, align:{}"</span>, args, size, align)
 <a href=#1659 id=1659 data-nosnippet>1659</a>                } <span class="kw">else </span>{
 <a href=#1660 id=1660 data-nosnippet>1660</a>                    String::new()
@@ -1691,7 +1691,7 @@
 <a href=#1691 id=1691 data-nosnippet>1691</a>                        .validate_cast_and_convert_metadata(addr, size, CastType::Prefix)
 <a href=#1692 id=1692 data-nosnippet>1692</a>                        .unwrap();
 <a href=#1693 id=1693 data-nosnippet>1693</a>                    <span class="comment">// Avoid expensive allocation when running under Miri.
-<a href=#1694 id=1694 data-nosnippet>1694</a>                    </span><span class="kw">let </span>assert_msg = <span class="kw">if </span>!<span class="macro">cfg!</span>(miri) {
+<a href=#1694 id=1694 data-nosnippet>1694</a>                    </span><span class="kw">let </span>assert_msg = <span class="macro">if !cfg!</span>(miri) {
 <a href=#1695 id=1695 data-nosnippet>1695</a>                        <span class="macro">format!</span>(
 <a href=#1696 id=1696 data-nosnippet>1696</a>                            <span class="string">"{}\nvalidate_cast_and_convert_metadata({}, {})"</span>,
 <a href=#1697 id=1697 data-nosnippet>1697</a>                            assert_msg, addr, size,
@@ -1702,7 +1702,7 @@
 <a href=#1702 id=1702 data-nosnippet>1702</a>                    <span class="macro">assert_eq!</span>(got_split_at, size, <span class="string">"{}"</span>, assert_msg);
 <a href=#1703 id=1703 data-nosnippet>1703</a>                    <span class="kw">if </span>dst {
 <a href=#1704 id=1704 data-nosnippet>1704</a>                        <span class="macro">assert!</span>(got_elems &gt;= elems, <span class="string">"{}"</span>, assert_msg);
-<a href=#1705 id=1705 data-nosnippet>1705</a>                        <span class="kw">if </span>got_elems != elems {
+<a href=#1705 id=1705 data-nosnippet>1705</a>                        <span class="kw">if </span><span class="macro">got_elems !</span>= elems {
 <a href=#1706 id=1706 data-nosnippet>1706</a>                            <span class="comment">// If `validate_cast_and_convert_metadata`
 <a href=#1707 id=1707 data-nosnippet>1707</a>                            // returned more elements than `elems`, that
 <a href=#1708 id=1708 data-nosnippet>1708</a>                            // means that `elems` is not the maximum number
@@ -2027,7 +2027,7 @@
 <a href=#2027 id=2027 data-nosnippet>2027</a>
 <a href=#2028 id=2028 data-nosnippet>2028</a>        <span class="kw">let </span>trailing_padding = util::padding_needed_for(unpadded_size, layout.align);
 <a href=#2029 id=2029 data-nosnippet>2029</a>
-<a href=#2030 id=2030 data-nosnippet>2030</a>        <span class="kw">if </span>!layout.requires_dynamic_padding() {
+<a href=#2030 id=2030 data-nosnippet>2030</a>        <span class="macro">if !</span>layout.requires_dynamic_padding() {
 <a href=#2031 id=2031 data-nosnippet>2031</a>            <span class="macro">assert!</span>(trailing_padding == <span class="number">0</span>);
 <a href=#2032 id=2032 data-nosnippet>2032</a>        }
 <a href=#2033 id=2033 data-nosnippet>2033</a>    }
@@ -2208,4 +2208,5 @@
 <a href=#2208 id=2208 data-nosnippet>2208</a>            </span><span class="macro">assert_eq!</span>(padded.size_info, layout.size_info);
 <a href=#2209 id=2209 data-nosnippet>2209</a>        }
 <a href=#2210 id=2210 data-nosnippet>2210</a>    }
-<a href=#2211 id=2211 data-nosnippet>2211</a>}</code></pre></div></section></main></body></html>
+<a href=#2211 id=2211 data-nosnippet>2211</a>}
+</code></pre></div></section></main></body></html>

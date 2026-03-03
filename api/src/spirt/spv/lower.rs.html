@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spirt-0.4.0/src/spv/lower.rs`."><title>lower.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="spirt" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (f34ba774c 2025-08-03)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-68b7e25d.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">spirt/spv/</div>lower.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! SPIR-V to SPIR-T lowering.
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spirt-0.4.0/src/spv/lower.rs`."><title>lower.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="spirt" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (adaa83897 2025-10-27)" data-channel="nightly" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">spirt/spv/</div>lower.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! SPIR-V to SPIR-T lowering.
 <a href=#2 id=2 data-nosnippet>2</a>
 <a href=#3 id=3 data-nosnippet>3</a></span><span class="kw">use </span><span class="kw">crate</span>::spv::{<span class="self">self</span>, spec};
 <a href=#4 id=4 data-nosnippet>4</a><span class="comment">// FIXME(eddyb) import more to avoid `crate::` everywhere.
@@ -131,7 +131,7 @@
 <a href=#131 id=131 data-nosnippet>131</a>            <span class="comment">// FIXME(eddyb) maybe use this somehow? (e.g. check IDs against it)
 <a href=#132 id=132 data-nosnippet>132</a>            </span><span class="kw">let _ </span>= id_bound;
 <a href=#133 id=133 data-nosnippet>133</a>
-<a href=#134 id=134 data-nosnippet>134</a>            <span class="kw">if </span>reserved_inst_schema != <span class="number">0 </span>{
+<a href=#134 id=134 data-nosnippet>134</a>            <span class="kw">if </span><span class="macro">reserved_inst_schema !</span>= <span class="number">0 </span>{
 <a href=#135 id=135 data-nosnippet>135</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
 <a href=#136 id=136 data-nosnippet>136</a>                    <span class="string">"unknown instruction schema {reserved_inst_schema} - only 0 is supported"
 <a href=#137 id=137 data-nosnippet>137</a>                </span>)));
@@ -240,7 +240,7 @@
 <a href=#240 id=240 data-nosnippet>240</a>            </span>} <span class="kw">else </span>{
 <a href=#241 id=241 data-nosnippet>241</a>                current_block_id
 <a href=#242 id=242 data-nosnippet>242</a>            };
-<a href=#243 id=243 data-nosnippet>243</a>            <span class="kw">if </span>current_block_id != new_block_id {
+<a href=#243 id=243 data-nosnippet>243</a>            <span class="kw">if </span><span class="macro">current_block_id !</span>= new_block_id {
 <a href=#244 id=244 data-nosnippet>244</a>                current_debug_line = <span class="prelude-val">None</span>;
 <a href=#245 id=245 data-nosnippet>245</a>            }
 <a href=#246 id=246 data-nosnippet>246</a>            current_block_id = new_block_id;
@@ -261,7 +261,7 @@
 <a href=#261 id=261 data-nosnippet>261</a>            // them into attributes instead.
 <a href=#262 id=262 data-nosnippet>262</a>            </span>inst.imms.retain(|imm| <span class="kw">match </span><span class="kw-2">*</span>imm {
 <a href=#263 id=263 data-nosnippet>263</a>                spv::Imm::Short(kind, word) <span class="kw">if </span>kind == wk.FunctionControl =&gt; {
-<a href=#264 id=264 data-nosnippet>264</a>                    <span class="kw">if </span>word != <span class="number">0 </span>{
+<a href=#264 id=264 data-nosnippet>264</a>                    <span class="kw">if </span><span class="macro">word !</span>= <span class="number">0 </span>{
 <a href=#265 id=265 data-nosnippet>265</a>                        attrs.attrs.insert(Attr::SpvBitflagsOperand(<span class="kw-2">*</span>imm));
 <a href=#266 id=266 data-nosnippet>266</a>                    }
 <a href=#267 id=267 data-nosnippet>267</a>                    <span class="bool-val">false
@@ -400,7 +400,7 @@
 <a href=#400 id=400 data-nosnippet>400</a>
 <a href=#401 id=401 data-nosnippet>401</a>                        <span class="comment">// Absorb all following `OpSourceContinued` into `contents`.
 <a href=#402 id=402 data-nosnippet>402</a>                        </span><span class="kw">while let </span><span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(cont_inst)) = spv_insts.peek() {
-<a href=#403 id=403 data-nosnippet>403</a>                            <span class="kw">if </span>cont_inst.opcode != wk.OpSourceContinued {
+<a href=#403 id=403 data-nosnippet>403</a>                            <span class="kw">if </span>cont_inst.<span class="macro">opcode !</span>= wk.OpSourceContinued {
 <a href=#404 id=404 data-nosnippet>404</a>                                <span class="kw">break</span>;
 <a href=#405 id=405 data-nosnippet>405</a>                            }
 <a href=#406 id=406 data-nosnippet>406</a>                            <span class="kw">let </span>cont_inst = spv_insts.next().unwrap().unwrap();
@@ -713,7 +713,7 @@
 <a href=#713 id=713 data-nosnippet>713</a>                        invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"function type %{func_type_id} not an `OpTypeFunction`"</span>))
 <a href=#714 id=714 data-nosnippet>714</a>                    })<span class="question-mark">?</span>;
 <a href=#715 id=715 data-nosnippet>715</a>
-<a href=#716 id=716 data-nosnippet>716</a>                <span class="kw">if </span>func_ret_type != func_type_ret_type {
+<a href=#716 id=716 data-nosnippet>716</a>                <span class="kw">if </span><span class="macro">func_ret_type !</span>= func_type_ret_type {
 <a href=#717 id=717 data-nosnippet>717</a>                    <span class="comment">// FIXME(remove) embed IDs in errors by moving them to the
 <a href=#718 id=718 data-nosnippet>718</a>                    // `let invalid = |...| ...;` closure that wraps insts.
 <a href=#719 id=719 data-nosnippet>719</a>                    </span><span class="kw">return </span><span class="prelude-val">Err</span>(invalid(
@@ -799,16 +799,16 @@
 <a href=#799 id=799 data-nosnippet>799</a>            }
 <a href=#800 id=800 data-nosnippet>800</a>            seq = <span class="prelude-val">Some</span>(next_seq);
 <a href=#801 id=801 data-nosnippet>801</a>
-<a href=#802 id=802 data-nosnippet>802</a>            <span class="kw">if </span>attrs != Default::default() {
+<a href=#802 id=802 data-nosnippet>802</a>            <span class="kw">if </span><span class="macro">attrs !</span>= Default::default() {
 <a href=#803 id=803 data-nosnippet>803</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">"unused decorations / line debuginfo"</span>));
 <a href=#804 id=804 data-nosnippet>804</a>            }
 <a href=#805 id=805 data-nosnippet>805</a>        }
 <a href=#806 id=806 data-nosnippet>806</a>
-<a href=#807 id=807 data-nosnippet>807</a>        <span class="kw">if </span>!has_memory_model {
+<a href=#807 id=807 data-nosnippet>807</a>        <span class="macro">if !</span>has_memory_model {
 <a href=#808 id=808 data-nosnippet>808</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">"missing OpMemoryModel"</span>));
 <a href=#809 id=809 data-nosnippet>809</a>        }
 <a href=#810 id=810 data-nosnippet>810</a>
-<a href=#811 id=811 data-nosnippet>811</a>        <span class="kw">if </span>!pending_attrs.is_empty() {
+<a href=#811 id=811 data-nosnippet>811</a>        <span class="macro">if !</span>pending_attrs.is_empty() {
 <a href=#812 id=812 data-nosnippet>812</a>            <span class="kw">let </span>ids = pending_attrs.keys().collect::&lt;BTreeSet&lt;<span class="kw">_</span>&gt;&gt;();
 <a href=#813 id=813 data-nosnippet>813</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"decorated IDs never defined: {ids:?}"</span>)));
 <a href=#814 id=814 data-nosnippet>814</a>        }
@@ -994,7 +994,7 @@
 <a href=#994 id=994 data-nosnippet>994</a>
 <a href=#995 id=995 data-nosnippet>995</a>                            <span class="kw">if </span>opcode == wk.OpLabel {
 <a href=#996 id=996 data-nosnippet>996</a>                                <span class="comment">// HACK(eddyb) the entry block was already added.
-<a href=#997 id=997 data-nosnippet>997</a>                                </span><span class="kw">if </span>current_block != func_def_body.body {
+<a href=#997 id=997 data-nosnippet>997</a>                                </span><span class="kw">if </span><span class="macro">current_block !</span>= func_def_body.body {
 <a href=#998 id=998 data-nosnippet>998</a>                                    def_map.add_block(current_block);
 <a href=#999 id=999 data-nosnippet>999</a>                                }
 <a href=#1000 id=1000 data-nosnippet>1000</a>                                <span class="kw">continue</span>;
@@ -1247,7 +1247,7 @@
 <a href=#1247 id=1247 data-nosnippet>1247</a>                // or right away (e.g. on `OpLabel`) when there are no `OpPhi`s,
 <a href=#1248 id=1248 data-nosnippet>1248</a>                // so the easiest place to insert them is before handling the
 <a href=#1249 id=1249 data-nosnippet>1249</a>                // first instruction in the block that's not `OpLabel`/`OpPhi`.
-<a href=#1250 id=1250 data-nosnippet>1250</a>                </span><span class="kw">if </span>opcode != wk.OpPhi
+<a href=#1250 id=1250 data-nosnippet>1250</a>                </span><span class="kw">if </span><span class="macro">opcode !</span>= wk.OpPhi
 <a href=#1251 id=1251 data-nosnippet>1251</a>                    &amp;&amp; current_block.shadowed_local_id_defs.is_empty()
 <a href=#1252 id=1252 data-nosnippet>1252</a>                    &amp;&amp; !current_block.details.cfgssa_inter_block_uses.is_empty()
 <a href=#1253 id=1253 data-nosnippet>1253</a>                {
@@ -1285,7 +1285,7 @@
 <a href=#1285 id=1285 data-nosnippet>1285</a>                    };
 <a href=#1286 id=1286 data-nosnippet>1286</a>
 <a href=#1287 id=1287 data-nosnippet>1287</a>                <span class="kw">if </span>is_last_in_block {
-<a href=#1288 id=1288 data-nosnippet>1288</a>                    <span class="kw">if </span>opcode.def().category != spec::InstructionCategory::ControlFlow
+<a href=#1288 id=1288 data-nosnippet>1288</a>                    <span class="kw">if </span>opcode.def().<span class="macro">category !</span>= spec::InstructionCategory::ControlFlow
 <a href=#1289 id=1289 data-nosnippet>1289</a>                        || [wk.OpPhi, wk.OpSelectionMerge, wk.OpLoopMerge].contains(<span class="kw-2">&amp;</span>opcode)
 <a href=#1290 id=1290 data-nosnippet>1290</a>                    {
 <a href=#1291 id=1291 data-nosnippet>1291</a>                        <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(
@@ -1372,7 +1372,7 @@
 <a href=#1372 id=1372 data-nosnippet>1372</a>                    <span class="kw">for </span><span class="kw-2">&amp;</span>id <span class="kw">in </span>ids {
 <a href=#1373 id=1373 data-nosnippet>1373</a>                        <span class="kw">match </span>lookup_global_or_local_id_for_data_or_control_inst_input(id)<span class="question-mark">? </span>{
 <a href=#1374 id=1374 data-nosnippet>1374</a>                            LocalIdDef::Value(v) =&gt; {
-<a href=#1375 id=1375 data-nosnippet>1375</a>                                <span class="kw">if </span>!targets.is_empty() {
+<a href=#1375 id=1375 data-nosnippet>1375</a>                                <span class="macro">if !</span>targets.is_empty() {
 <a href=#1376 id=1376 data-nosnippet>1376</a>                                    <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(
 <a href=#1377 id=1377 data-nosnippet>1377</a>                                        <span class="string">"out of order: value operand \
 <a href=#1378 id=1378 data-nosnippet>1378</a>                                         after target label ID"</span>,
@@ -1424,7 +1424,7 @@
 <a href=#1424 id=1424 data-nosnippet>1424</a>                            target_inputs,
 <a href=#1425 id=1425 data-nosnippet>1425</a>                        });
 <a href=#1426 id=1426 data-nosnippet>1426</a>                } <span class="kw">else if </span>opcode == wk.OpPhi {
-<a href=#1427 id=1427 data-nosnippet>1427</a>                    <span class="kw">if </span>!current_block_control_region_def.children.is_empty() {
+<a href=#1427 id=1427 data-nosnippet>1427</a>                    <span class="macro">if !</span>current_block_control_region_def.children.is_empty() {
 <a href=#1428 id=1428 data-nosnippet>1428</a>                        <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(
 <a href=#1429 id=1429 data-nosnippet>1429</a>                            <span class="string">"out of order: `OpPhi`s should come before \
 <a href=#1430 id=1430 data-nosnippet>1430</a>                             the rest of the block's instructions"</span>,
@@ -1440,7 +1440,7 @@
 <a href=#1440 id=1440 data-nosnippet>1440</a>                            next_raw_inst.without_ids.opcode == wk.OpLabel
 <a href=#1441 id=1441 data-nosnippet>1441</a>                        });
 <a href=#1442 id=1442 data-nosnippet>1442</a>
-<a href=#1443 id=1443 data-nosnippet>1443</a>                    <span class="kw">if </span>!is_second_to_last_in_block {
+<a href=#1443 id=1443 data-nosnippet>1443</a>                    <span class="macro">if !</span>is_second_to_last_in_block {
 <a href=#1444 id=1444 data-nosnippet>1444</a>                        <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(
 <a href=#1445 id=1445 data-nosnippet>1445</a>                            <span class="string">"out of order: a merge instruction should be the last \
 <a href=#1446 id=1446 data-nosnippet>1446</a>                             instruction before the block's terminator"</span>,
@@ -1605,7 +1605,7 @@
 <a href=#1605 id=1605 data-nosnippet>1605</a>
 <a href=#1606 id=1606 data-nosnippet>1606</a>            <span class="comment">// FIXME(eddyb) all functions should have the appropriate number of
 <a href=#1607 id=1607 data-nosnippet>1607</a>            // `OpFunctionParameter`, even imports.
-<a href=#1608 id=1608 data-nosnippet>1608</a>            </span><span class="kw">if </span>!params.is_empty() {
+<a href=#1608 id=1608 data-nosnippet>1608</a>            </span><span class="macro">if !</span>params.is_empty() {
 <a href=#1609 id=1609 data-nosnippet>1609</a>                <span class="kw">if </span>func_decl.params.len() != params.len() {
 <a href=#1610 id=1610 data-nosnippet>1610</a>                    <span class="comment">// FIXME(remove) embed IDs in errors by moving them to the
 <a href=#1611 id=1611 data-nosnippet>1611</a>                    // `let invalid = |...| ...;` closure that wraps insts.
@@ -1622,7 +1622,7 @@
 <a href=#1622 id=1622 data-nosnippet>1622</a>                    </span>func_decl.params.iter_mut().zip(params).enumerate()
 <a href=#1623 id=1623 data-nosnippet>1623</a>                {
 <a href=#1624 id=1624 data-nosnippet>1624</a>                    func_decl_param.attrs = param.attrs;
-<a href=#1625 id=1625 data-nosnippet>1625</a>                    <span class="kw">if </span>func_decl_param.ty != param.ty {
+<a href=#1625 id=1625 data-nosnippet>1625</a>                    <span class="kw">if </span>func_decl_param.<span class="macro">ty !</span>= param.ty {
 <a href=#1626 id=1626 data-nosnippet>1626</a>                        <span class="comment">// FIXME(remove) embed IDs in errors by moving them to the
 <a href=#1627 id=1627 data-nosnippet>1627</a>                        // `let invalid = |...| ...;` closure that wraps insts.
 <a href=#1628 id=1628 data-nosnippet>1628</a>                        </span><span class="kw">return </span><span class="prelude-val">Err</span>(invalid(
@@ -1646,7 +1646,7 @@
 <a href=#1646 id=1646 data-nosnippet>1646</a>                }
 <a href=#1647 id=1647 data-nosnippet>1647</a>            }
 <a href=#1648 id=1648 data-nosnippet>1648</a>
-<a href=#1649 id=1649 data-nosnippet>1649</a>            <span class="kw">if </span>!phi_to_values.is_empty() {
+<a href=#1649 id=1649 data-nosnippet>1649</a>            <span class="macro">if !</span>phi_to_values.is_empty() {
 <a href=#1650 id=1650 data-nosnippet>1650</a>                <span class="kw">let </span><span class="kw-2">mut </span>edges = phi_to_values
 <a href=#1651 id=1651 data-nosnippet>1651</a>                    .keys()
 <a href=#1652 id=1652 data-nosnippet>1652</a>                    .map(|key| <span class="macro">format!</span>(<span class="string">"%{} -&gt; %{}"</span>, key.source_block_id, key.target_block_id))
@@ -1742,4 +1742,5 @@
 <a href=#1742 id=1742 data-nosnippet>1742</a>
 <a href=#1743 id=1743 data-nosnippet>1743</a>        <span class="prelude-val">Ok</span>(module)
 <a href=#1744 id=1744 data-nosnippet>1744</a>    }
-<a href=#1745 id=1745 data-nosnippet>1745</a>}</code></pre></div></section></main></body></html>
+<a href=#1745 id=1745 data-nosnippet>1745</a>}
+</code></pre></div></section></main></body></html>

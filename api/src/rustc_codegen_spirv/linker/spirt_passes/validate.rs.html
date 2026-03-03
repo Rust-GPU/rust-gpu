@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/linker/spirt_passes/validate.rs`."><title>validate.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (f34ba774c 2025-08-03)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../../../static.files/storage-68b7e25d.js"></script><script defer src="../../../../static.files/src-script-813739b1.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/linker/spirt_passes/</div>validate.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>rustc_data_structures::fx::{FxHashMap, FxHashSet, FxIndexSet};
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/linker/spirt_passes/validate.rs`."><title>validate.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (adaa83897 2025-10-27)" data-channel="nightly" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../../static.files/src-script-813739b1.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/linker/spirt_passes/</div>validate.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>rustc_data_structures::fx::{FxHashMap, FxHashSet, FxIndexSet};
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span>spirt::func_at::FuncAtMut;
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span>spirt::transform::{InnerInPlaceTransform, InnerTransform, Transformed, Transformer};
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span>spirt::{
@@ -40,7 +40,7 @@
 <a href=#40 id=40 data-nosnippet>40</a>    }
 <a href=#41 id=41 data-nosnippet>41</a>
 <a href=#42 id=42 data-nosnippet>42</a>    <span class="comment">// Process the queues until they're all empty.
-<a href=#43 id=43 data-nosnippet>43</a>    </span><span class="kw">while </span>!validator.global_var_queue.is_empty() || !validator.func_queue.is_empty() {
+<a href=#43 id=43 data-nosnippet>43</a>    </span><span class="macro">while !</span>validator.global_var_queue.is_empty() || !validator.func_queue.is_empty() {
 <a href=#44 id=44 data-nosnippet>44</a>        <span class="kw">while let </span><span class="prelude-val">Some</span>(gv) = validator.global_var_queue.pop_front() {
 <a href=#45 id=45 data-nosnippet>45</a>            validator.in_place_transform_global_var_decl(<span class="kw-2">&amp;mut </span>module.global_vars[gv]);
 <a href=#46 id=46 data-nosnippet>46</a>        }
@@ -212,7 +212,7 @@
 <a href=#212 id=212 data-nosnippet>212</a>                        module_version &gt;= min_version
 <a href=#213 id=213 data-nosnippet>213</a>                    })
 <a href=#214 id=214 data-nosnippet>214</a>            });
-<a href=#215 id=215 data-nosnippet>215</a>        <span class="kw">if </span>!provided_by_core_spv_or_ext {
+<a href=#215 id=215 data-nosnippet>215</a>        <span class="macro">if !</span>provided_by_core_spv_or_ext {
 <a href=#216 id=216 data-nosnippet>216</a>            <span class="kw">let </span>exts = exts_providing
 <a href=#217 id=217 data-nosnippet>217</a>                .map(|ext| <span class="macro">format!</span>(<span class="string">"`{ext}`"</span>))
 <a href=#218 id=218 data-nosnippet>218</a>                .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
@@ -255,7 +255,7 @@
 <a href=#255 id=255 data-nosnippet>255</a>                    .clone()
 <a href=#256 id=256 data-nosnippet>256</a>                    .any(|cap| elabored_module_caps.contains(<span class="kw-2">&amp;</span>cap))
 <a href=#257 id=257 data-nosnippet>257</a>            };
-<a href=#258 id=258 data-nosnippet>258</a>        <span class="kw">if </span>!enabled_by_default_or_cap {
+<a href=#258 id=258 data-nosnippet>258</a>        <span class="macro">if !</span>enabled_by_default_or_cap {
 <a href=#259 id=259 data-nosnippet>259</a>            <span class="kw">let </span>caps = caps_enabling
 <a href=#260 id=260 data-nosnippet>260</a>                .map(|cap| {
 <a href=#261 id=261 data-nosnippet>261</a>                    <span class="kw">let </span>cap_name = u16::try_from(cap)
@@ -301,7 +301,7 @@
 <a href=#301 id=301 data-nosnippet>301</a>            // (mentioning `OpCapability` seems unfortunate, for example).
 <a href=#302 id=302 data-nosnippet>302</a>            </span><span class="kw">match </span><span class="self">self</span>.spv_spec_caps.lookup(cap_name).map(u32::from) {
 <a href=#303 id=303 data-nosnippet>303</a>                <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"`{type_name}` type unsupported in SPIR-V"</span>)),
-<a href=#304 id=304 data-nosnippet>304</a>                <span class="prelude-val">Some</span>(cap) <span class="kw">if </span>!<span class="self">self</span>.module_spv_dialect.capabilities.contains(<span class="kw-2">&amp;</span>cap) =&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(
+<a href=#304 id=304 data-nosnippet>304</a>                <span class="prelude-val">Some</span>(cap) <span class="macro">if !</span><span class="self">self</span>.module_spv_dialect.capabilities.contains(<span class="kw-2">&amp;</span>cap) =&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(
 <a href=#305 id=305 data-nosnippet>305</a>                    <span class="string">"`{type_name}` type used without `OpCapability {cap_name}`"
 <a href=#306 id=306 data-nosnippet>306</a>                </span>)),
 <a href=#307 id=307 data-nosnippet>307</a>                <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(()),
@@ -310,16 +310,16 @@
 <a href=#310 id=310 data-nosnippet>310</a>        };
 <a href=#311 id=311 data-nosnippet>311</a>        <span class="kw">match </span>spv_inst.imms[..] {
 <a href=#312 id=312 data-nosnippet>312</a>            [spv::Imm::Short(<span class="kw">_</span>, width), spv::Imm::Short(<span class="kw">_</span>, signedness)]
-<a href=#313 id=313 data-nosnippet>313</a>                <span class="kw">if </span>spv_inst.opcode == <span class="self">self</span>.wk.OpTypeInt &amp;&amp; width != <span class="number">32 </span>=&gt;
+<a href=#313 id=313 data-nosnippet>313</a>                <span class="kw">if </span>spv_inst.opcode == <span class="self">self</span>.wk.OpTypeInt &amp;&amp; <span class="macro">width !</span>= <span class="number">32 </span>=&gt;
 <a href=#314 id=314 data-nosnippet>314</a>            {
-<a href=#315 id=315 data-nosnippet>315</a>                <span class="kw">let </span>signed = signedness != <span class="number">0</span>;
+<a href=#315 id=315 data-nosnippet>315</a>                <span class="kw">let </span>signed = <span class="macro">signedness !</span>= <span class="number">0</span>;
 <a href=#316 id=316 data-nosnippet>316</a>                int_or_float(
 <a href=#317 id=317 data-nosnippet>317</a>                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{}{width}"</span>, <span class="kw">if </span>signed { <span class="string">"i" </span>} <span class="kw">else </span>{ <span class="string">"u" </span>}),
 <a href=#318 id=318 data-nosnippet>318</a>                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"Int{width}"</span>),
 <a href=#319 id=319 data-nosnippet>319</a>                )<span class="question-mark">?</span>;
 <a href=#320 id=320 data-nosnippet>320</a>            }
 <a href=#321 id=321 data-nosnippet>321</a>            [spv::Imm::Short(<span class="kw">_</span>, width)]
-<a href=#322 id=322 data-nosnippet>322</a>                <span class="kw">if </span>spv_inst.opcode == <span class="self">self</span>.wk.OpTypeFloat &amp;&amp; width != <span class="number">32 </span>=&gt;
+<a href=#322 id=322 data-nosnippet>322</a>                <span class="kw">if </span>spv_inst.opcode == <span class="self">self</span>.wk.OpTypeFloat &amp;&amp; <span class="macro">width !</span>= <span class="number">32 </span>=&gt;
 <a href=#323 id=323 data-nosnippet>323</a>            {
 <a href=#324 id=324 data-nosnippet>324</a>                int_or_float(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"f{width}"</span>), <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"Float{width}"</span>))<span class="question-mark">?</span>;
 <a href=#325 id=325 data-nosnippet>325</a>            }
@@ -411,4 +411,5 @@
 <a href=#411 id=411 data-nosnippet>411</a>        <span class="string">"SPV_KHR_integer_dot_product" </span>| <span class="string">"SPV_KHR_terminate_invocation" </span>=&gt; (<span class="number">1</span>, <span class="number">6</span>),
 <a href=#412 id=412 data-nosnippet>412</a>        <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
 <a href=#413 id=413 data-nosnippet>413</a>    })
-<a href=#414 id=414 data-nosnippet>414</a>}</code></pre></div></section></main></body></html>
+<a href=#414 id=414 data-nosnippet>414</a>}
+</code></pre></div></section></main></body></html>

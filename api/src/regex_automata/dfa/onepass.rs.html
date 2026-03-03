@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-automata-0.4.14/src/dfa/onepass.rs`."><title>onepass.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (f34ba774c 2025-08-03)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-68b7e25d.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">regex_automata/dfa/</div>onepass.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/*!
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-automata-0.4.14/src/dfa/onepass.rs`."><title>onepass.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (adaa83897 2025-10-27)" data-channel="nightly" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">regex_automata/dfa/</div>onepass.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/*!
 <a href=#2 id=2 data-nosnippet>2</a>A DFA that can return spans for matching capturing groups.
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a>This module is the home of a [one-pass DFA](DFA).
@@ -522,7 +522,7 @@
 <a href=#522 id=522 data-nosnippet>522</a><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; InternalBuilder&lt;<span class="lifetime">'a</span>&gt; {
 <a href=#523 id=523 data-nosnippet>523</a>    <span class="doccomment">/// Create a new builder with an initial empty DFA.
 <a href=#524 id=524 data-nosnippet>524</a>    </span><span class="kw">fn </span>new(config: Config, nfa: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>NFA) -&gt; InternalBuilder&lt;<span class="lifetime">'a</span>&gt; {
-<a href=#525 id=525 data-nosnippet>525</a>        <span class="kw">let </span>classes = <span class="kw">if </span>!config.get_byte_classes() {
+<a href=#525 id=525 data-nosnippet>525</a>        <span class="kw">let </span>classes = <span class="macro">if !</span>config.get_byte_classes() {
 <a href=#526 id=526 data-nosnippet>526</a>            <span class="comment">// A one-pass DFA will always use the equivalence class map, but
 <a href=#527 id=527 data-nosnippet>527</a>            // enabling this option is useful for debugging. Namely, this will
 <a href=#528 id=528 data-nosnippet>528</a>            // cause all transitions to be defined over their actual bytes
@@ -743,7 +743,7 @@
 <a href=#743 id=743 data-nosnippet>743</a>            <span class="kw">let </span>id = StateID::must(i);
 <a href=#744 id=744 data-nosnippet>744</a>            <span class="kw">let </span>is_match =
 <a href=#745 id=745 data-nosnippet>745</a>                <span class="self">self</span>.dfa.pattern_epsilons(id).pattern_id().is_some();
-<a href=#746 id=746 data-nosnippet>746</a>            <span class="kw">if </span>!is_match {
+<a href=#746 id=746 data-nosnippet>746</a>            <span class="macro">if !</span>is_match {
 <a href=#747 id=747 data-nosnippet>747</a>                <span class="kw">continue</span>;
 <a href=#748 id=748 data-nosnippet>748</a>            }
 <a href=#749 id=749 data-nosnippet>749</a>            remapper.swap(<span class="kw-2">&amp;mut </span><span class="self">self</span>.dfa, next_dest, id);
@@ -788,7 +788,7 @@
 <a href=#788 id=788 data-nosnippet>788</a>            // ambiguity and thus the regex is not one-pass.
 <a href=#789 id=789 data-nosnippet>789</a>            </span><span class="kw">if </span>oldtrans.state_id() == DEAD {
 <a href=#790 id=790 data-nosnippet>790</a>                <span class="self">self</span>.dfa.set_transition(dfa_id, byte, newtrans);
-<a href=#791 id=791 data-nosnippet>791</a>            } <span class="kw">else if </span>oldtrans != newtrans {
+<a href=#791 id=791 data-nosnippet>791</a>            } <span class="kw">else if </span><span class="macro">oldtrans !</span>= newtrans {
 <a href=#792 id=792 data-nosnippet>792</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(BuildError::not_one_pass(
 <a href=#793 id=793 data-nosnippet>793</a>                    <span class="string">"conflicting transition"</span>,
 <a href=#794 id=794 data-nosnippet>794</a>                ));
@@ -845,7 +845,7 @@
 <a href=#845 id=845 data-nosnippet>845</a>        // them will likely become unreachable. And at least some of them are
 <a href=#846 id=846 data-nosnippet>846</a>        // likely to wind up being incomplete.
 <a href=#847 id=847 data-nosnippet>847</a>        </span><span class="kw">let </span>existing_dfa_id = <span class="self">self</span>.nfa_to_dfa_id[nfa_id];
-<a href=#848 id=848 data-nosnippet>848</a>        <span class="kw">if </span>existing_dfa_id != DEAD {
+<a href=#848 id=848 data-nosnippet>848</a>        <span class="kw">if </span><span class="macro">existing_dfa_id !</span>= DEAD {
 <a href=#849 id=849 data-nosnippet>849</a>            <span class="kw">return </span><span class="prelude-val">Ok</span>(existing_dfa_id);
 <a href=#850 id=850 data-nosnippet>850</a>        }
 <a href=#851 id=851 data-nosnippet>851</a>        <span class="comment">// If we don't have any DFA state yet, add it and then add the given
@@ -913,7 +913,7 @@
 <a href=#913 id=913 data-nosnippet>913</a>        // {
 <a href=#914 id=914 data-nosnippet>914</a>        // return Ok(());
 <a href=#915 id=915 data-nosnippet>915</a>        // }
-<a href=#916 id=916 data-nosnippet>916</a>        </span><span class="kw">if </span>!<span class="self">self</span>.seen.insert(nfa_id) {
+<a href=#916 id=916 data-nosnippet>916</a>        </span><span class="macro">if !</span><span class="self">self</span>.seen.insert(nfa_id) {
 <a href=#917 id=917 data-nosnippet>917</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(BuildError::not_one_pass(
 <a href=#918 id=918 data-nosnippet>918</a>                <span class="string">"multiple epsilon transitions to same state"</span>,
 <a href=#919 id=919 data-nosnippet>919</a>            ));
@@ -1977,7 +1977,7 @@
 <a href=#1977 id=1977 data-nosnippet>1977</a>        slots: <span class="kw-2">&amp;mut </span>[<span class="prelude-ty">Option</span>&lt;NonMaxUsize&gt;],
 <a href=#1978 id=1978 data-nosnippet>1978</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;PatternID&gt;, MatchError&gt; {
 <a href=#1979 id=1979 data-nosnippet>1979</a>        <span class="kw">let </span>utf8empty = <span class="self">self</span>.get_nfa().has_empty() &amp;&amp; <span class="self">self</span>.get_nfa().is_utf8();
-<a href=#1980 id=1980 data-nosnippet>1980</a>        <span class="kw">if </span>!utf8empty {
+<a href=#1980 id=1980 data-nosnippet>1980</a>        <span class="macro">if !</span>utf8empty {
 <a href=#1981 id=1981 data-nosnippet>1981</a>            <span class="kw">return </span><span class="self">self</span>.try_search_slots_imp(cache, input, slots);
 <a href=#1982 id=1982 data-nosnippet>1982</a>        }
 <a href=#1983 id=1983 data-nosnippet>1983</a>        <span class="comment">// See PikeVM::try_search_slots for why we do this.
@@ -2011,7 +2011,7 @@
 <a href=#2011 id=2011 data-nosnippet>2011</a>        <span class="kw">let </span>utf8empty = <span class="self">self</span>.get_nfa().has_empty() &amp;&amp; <span class="self">self</span>.get_nfa().is_utf8();
 <a href=#2012 id=2012 data-nosnippet>2012</a>        <span class="kw">match </span><span class="self">self</span>.search_imp(cache, input, slots)<span class="question-mark">? </span>{
 <a href=#2013 id=2013 data-nosnippet>2013</a>            <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
-<a href=#2014 id=2014 data-nosnippet>2014</a>            <span class="prelude-val">Some</span>(pid) <span class="kw">if </span>!utf8empty =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(pid)),
+<a href=#2014 id=2014 data-nosnippet>2014</a>            <span class="prelude-val">Some</span>(pid) <span class="macro">if !</span>utf8empty =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(pid)),
 <a href=#2015 id=2015 data-nosnippet>2015</a>            <span class="prelude-val">Some</span>(pid) =&gt; {
 <a href=#2016 id=2016 data-nosnippet>2016</a>                <span class="comment">// These slot indices are always correct because we know our
 <a href=#2017 id=2017 data-nosnippet>2017</a>                // 'pid' is valid and thus we know that the slot indices for it
@@ -2133,7 +2133,7 @@
 <a href=#2133 id=2133 data-nosnippet>2133</a>            Anchored::No =&gt; {
 <a href=#2134 id=2134 data-nosnippet>2134</a>                <span class="comment">// If the regex is itself always anchored, then we're fine,
 <a href=#2135 id=2135 data-nosnippet>2135</a>                // even if the search is configured to be unanchored.
-<a href=#2136 id=2136 data-nosnippet>2136</a>                </span><span class="kw">if </span>!<span class="self">self</span>.nfa.is_always_start_anchored() {
+<a href=#2136 id=2136 data-nosnippet>2136</a>                </span><span class="macro">if !</span><span class="self">self</span>.nfa.is_always_start_anchored() {
 <a href=#2137 id=2137 data-nosnippet>2137</a>                    <span class="kw">return </span><span class="prelude-val">Err</span>(MatchError::unsupported_anchored(
 <a href=#2138 id=2138 data-nosnippet>2138</a>                        Anchored::No,
 <a href=#2139 id=2139 data-nosnippet>2139</a>                    ));
@@ -2203,7 +2203,7 @@
 <a href=#2203 id=2203 data-nosnippet>2203</a>        <span class="macro">debug_assert!</span>(sid &gt;= <span class="self">self</span>.min_match_id);
 <a href=#2204 id=2204 data-nosnippet>2204</a>        <span class="kw">let </span>pateps = <span class="self">self</span>.pattern_epsilons(sid);
 <a href=#2205 id=2205 data-nosnippet>2205</a>        <span class="kw">let </span>epsilons = pateps.epsilons();
-<a href=#2206 id=2206 data-nosnippet>2206</a>        <span class="kw">if </span>!epsilons.looks().is_empty()
+<a href=#2206 id=2206 data-nosnippet>2206</a>        <span class="macro">if !</span>epsilons.looks().is_empty()
 <a href=#2207 id=2207 data-nosnippet>2207</a>            &amp;&amp; !<span class="self">self</span>.nfa.look_matcher().matches_set_inline(
 <a href=#2208 id=2208 data-nosnippet>2208</a>                epsilons.looks(),
 <a href=#2209 id=2209 data-nosnippet>2209</a>                input.haystack(),
@@ -2254,7 +2254,7 @@
 <a href=#2254 id=2254 data-nosnippet>2254</a>    /// was not enabled, then this returns an error. If the given pattern is
 <a href=#2255 id=2255 data-nosnippet>2255</a>    /// not in this DFA, then `Ok(None)` is returned.
 <a href=#2256 id=2256 data-nosnippet>2256</a>    </span><span class="kw">fn </span>start_pattern(<span class="kw-2">&amp;</span><span class="self">self</span>, pid: PatternID) -&gt; <span class="prelude-ty">Result</span>&lt;StateID, MatchError&gt; {
-<a href=#2257 id=2257 data-nosnippet>2257</a>        <span class="kw">if </span>!<span class="self">self</span>.config.get_starts_for_each_pattern() {
+<a href=#2257 id=2257 data-nosnippet>2257</a>        <span class="macro">if !</span><span class="self">self</span>.config.get_starts_for_each_pattern() {
 <a href=#2258 id=2258 data-nosnippet>2258</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(MatchError::unsupported_anchored(Anchored::Pattern(
 <a href=#2259 id=2259 data-nosnippet>2259</a>                pid,
 <a href=#2260 id=2260 data-nosnippet>2260</a>            )));
@@ -2406,7 +2406,7 @@
 <a href=#2406 id=2406 data-nosnippet>2406</a>                <span class="kw">if </span>trans.match_wins() {
 <a href=#2407 id=2407 data-nosnippet>2407</a>                    <span class="macro">write!</span>(f, <span class="string">" (MW)"</span>)<span class="question-mark">?</span>;
 <a href=#2408 id=2408 data-nosnippet>2408</a>                }
-<a href=#2409 id=2409 data-nosnippet>2409</a>                <span class="kw">if </span>!trans.epsilons().is_empty() {
+<a href=#2409 id=2409 data-nosnippet>2409</a>                <span class="macro">if !</span>trans.epsilons().is_empty() {
 <a href=#2410 id=2410 data-nosnippet>2410</a>                    <span class="macro">write!</span>(f, <span class="string">" ({:?})"</span>, trans.epsilons())<span class="question-mark">?</span>;
 <a href=#2411 id=2411 data-nosnippet>2411</a>                }
 <a href=#2412 id=2412 data-nosnippet>2412</a>            }
@@ -2425,7 +2425,7 @@
 <a href=#2425 id=2425 data-nosnippet>2425</a>                <span class="macro">write!</span>(f, <span class="string">"  "</span>)<span class="question-mark">?</span>;
 <a href=#2426 id=2426 data-nosnippet>2426</a>            }
 <a href=#2427 id=2427 data-nosnippet>2427</a>            <span class="macro">write!</span>(f, <span class="string">"{:06?}"</span>, sid.as_usize())<span class="question-mark">?</span>;
-<a href=#2428 id=2428 data-nosnippet>2428</a>            <span class="kw">if </span>!pateps.is_empty() {
+<a href=#2428 id=2428 data-nosnippet>2428</a>            <span class="macro">if !</span>pateps.is_empty() {
 <a href=#2429 id=2429 data-nosnippet>2429</a>                <span class="macro">write!</span>(f, <span class="string">" ({pateps:?})"</span>)<span class="question-mark">?</span>;
 <a href=#2430 id=2430 data-nosnippet>2430</a>            }
 <a href=#2431 id=2431 data-nosnippet>2431</a>            <span class="macro">write!</span>(f, <span class="string">": "</span>)<span class="question-mark">?</span>;
@@ -2670,7 +2670,7 @@
 <a href=#2670 id=2670 data-nosnippet>2670</a>        <span class="kw">if </span><span class="self">self</span>.match_wins() {
 <a href=#2671 id=2671 data-nosnippet>2671</a>            <span class="macro">write!</span>(f, <span class="string">"-MW"</span>)<span class="question-mark">?</span>;
 <a href=#2672 id=2672 data-nosnippet>2672</a>        }
-<a href=#2673 id=2673 data-nosnippet>2673</a>        <span class="kw">if </span>!<span class="self">self</span>.epsilons().is_empty() {
+<a href=#2673 id=2673 data-nosnippet>2673</a>        <span class="macro">if !</span><span class="self">self</span>.epsilons().is_empty() {
 <a href=#2674 id=2674 data-nosnippet>2674</a>            <span class="macro">write!</span>(f, <span class="string">"-{:?}"</span>, <span class="self">self</span>.epsilons())<span class="question-mark">?</span>;
 <a href=#2675 id=2675 data-nosnippet>2675</a>        }
 <a href=#2676 id=2676 data-nosnippet>2676</a>        <span class="prelude-val">Ok</span>(())
@@ -2773,7 +2773,7 @@
 <a href=#2773 id=2773 data-nosnippet>2773</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(pid) = <span class="self">self</span>.pattern_id() {
 <a href=#2774 id=2774 data-nosnippet>2774</a>            <span class="macro">write!</span>(f, <span class="string">"{}"</span>, pid.as_usize())<span class="question-mark">?</span>;
 <a href=#2775 id=2775 data-nosnippet>2775</a>        }
-<a href=#2776 id=2776 data-nosnippet>2776</a>        <span class="kw">if </span>!<span class="self">self</span>.epsilons().is_empty() {
+<a href=#2776 id=2776 data-nosnippet>2776</a>        <span class="macro">if !</span><span class="self">self</span>.epsilons().is_empty() {
 <a href=#2777 id=2777 data-nosnippet>2777</a>            <span class="kw">if </span><span class="self">self</span>.pattern_id().is_some() {
 <a href=#2778 id=2778 data-nosnippet>2778</a>                <span class="macro">write!</span>(f, <span class="string">"/"</span>)<span class="question-mark">?</span>;
 <a href=#2779 id=2779 data-nosnippet>2779</a>            }
@@ -2848,18 +2848,18 @@
 <a href=#2848 id=2848 data-nosnippet>2848</a><span class="kw">impl </span>core::fmt::Debug <span class="kw">for </span>Epsilons {
 <a href=#2849 id=2849 data-nosnippet>2849</a>    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
 <a href=#2850 id=2850 data-nosnippet>2850</a>        <span class="kw">let </span><span class="kw-2">mut </span>wrote = <span class="bool-val">false</span>;
-<a href=#2851 id=2851 data-nosnippet>2851</a>        <span class="kw">if </span>!<span class="self">self</span>.slots().is_empty() {
+<a href=#2851 id=2851 data-nosnippet>2851</a>        <span class="macro">if !</span><span class="self">self</span>.slots().is_empty() {
 <a href=#2852 id=2852 data-nosnippet>2852</a>            <span class="macro">write!</span>(f, <span class="string">"{:?}"</span>, <span class="self">self</span>.slots())<span class="question-mark">?</span>;
 <a href=#2853 id=2853 data-nosnippet>2853</a>            wrote = <span class="bool-val">true</span>;
 <a href=#2854 id=2854 data-nosnippet>2854</a>        }
-<a href=#2855 id=2855 data-nosnippet>2855</a>        <span class="kw">if </span>!<span class="self">self</span>.looks().is_empty() {
+<a href=#2855 id=2855 data-nosnippet>2855</a>        <span class="macro">if !</span><span class="self">self</span>.looks().is_empty() {
 <a href=#2856 id=2856 data-nosnippet>2856</a>            <span class="kw">if </span>wrote {
 <a href=#2857 id=2857 data-nosnippet>2857</a>                <span class="macro">write!</span>(f, <span class="string">"/"</span>)<span class="question-mark">?</span>;
 <a href=#2858 id=2858 data-nosnippet>2858</a>            }
 <a href=#2859 id=2859 data-nosnippet>2859</a>            <span class="macro">write!</span>(f, <span class="string">"{:?}"</span>, <span class="self">self</span>.looks())<span class="question-mark">?</span>;
 <a href=#2860 id=2860 data-nosnippet>2860</a>            wrote = <span class="bool-val">true</span>;
 <a href=#2861 id=2861 data-nosnippet>2861</a>        }
-<a href=#2862 id=2862 data-nosnippet>2862</a>        <span class="kw">if </span>!wrote {
+<a href=#2862 id=2862 data-nosnippet>2862</a>        <span class="macro">if !</span>wrote {
 <a href=#2863 id=2863 data-nosnippet>2863</a>            <span class="macro">write!</span>(f, <span class="string">"N/A"</span>)<span class="question-mark">?</span>;
 <a href=#2864 id=2864 data-nosnippet>2864</a>        }
 <a href=#2865 id=2865 data-nosnippet>2865</a>        <span class="prelude-val">Ok</span>(())
@@ -3205,4 +3205,5 @@
 <a href=#3205 id=3205 data-nosnippet>3205</a>    </span><span class="kw">fn </span>is_not_one_pass_bigger() {
 <a href=#3206 id=3206 data-nosnippet>3206</a>        <span class="macro">assert!</span>(DFA::new(<span class="string">r"\w*\s"</span>).is_err());
 <a href=#3207 id=3207 data-nosnippet>3207</a>    }
-<a href=#3208 id=3208 data-nosnippet>3208</a>}</code></pre></div></section></main></body></html>
+<a href=#3208 id=3208 data-nosnippet>3208</a>}
+</code></pre></div></section></main></body></html>

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/gimli-0.31.1/src/write/unit.rs`."><title>unit.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="gimli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (f34ba774c 2025-08-03)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-68b7e25d.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">gimli/write/</div>unit.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>alloc::vec::Vec;
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/gimli-0.31.1/src/write/unit.rs`."><title>unit.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="gimli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (adaa83897 2025-10-27)" data-channel="nightly" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">gimli/write/</div>unit.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>alloc::vec::Vec;
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span>std::ops::{Deref, DerefMut};
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span>std::slice;
 <a href=#4 id=4 data-nosnippet>4</a>
@@ -285,7 +285,7 @@
 <a href=#285 id=285 data-nosnippet>285</a>        <span class="kw">if </span><span class="self">self</span>.line_program.is_none() {
 <a href=#286 id=286 data-nosnippet>286</a>            <span class="kw">return </span><span class="bool-val">false</span>;
 <a href=#287 id=287 data-nosnippet>287</a>        }
-<a href=#288 id=288 data-nosnippet>288</a>        <span class="kw">if </span>!<span class="self">self</span>.line_program.is_empty() {
+<a href=#288 id=288 data-nosnippet>288</a>        <span class="macro">if !</span><span class="self">self</span>.line_program.is_empty() {
 <a href=#289 id=289 data-nosnippet>289</a>            <span class="kw">return </span><span class="bool-val">true</span>;
 <a href=#290 id=290 data-nosnippet>290</a>        }
 <a href=#291 id=291 data-nosnippet>291</a>
@@ -415,7 +415,7 @@
 <a href=#415 id=415 data-nosnippet>415</a>            }
 <a href=#416 id=416 data-nosnippet>416</a>        }
 <a href=#417 id=417 data-nosnippet>417</a>        <span class="kw">for </span>entry <span class="kw">in </span><span class="kw-2">&amp;</span>root.children {
-<a href=#418 id=418 data-nosnippet>418</a>            <span class="kw">if </span><span class="self">self</span>.entries[entry.index].tag != constants::DW_TAG_base_type {
+<a href=#418 id=418 data-nosnippet>418</a>            <span class="kw">if </span><span class="self">self</span>.entries[entry.index].<span class="macro">tag !</span>= constants::DW_TAG_base_type {
 <a href=#419 id=419 data-nosnippet>419</a>                root_children.push(<span class="kw-2">*</span>entry);
 <a href=#420 id=420 data-nosnippet>420</a>            }
 <a href=#421 id=421 data-nosnippet>421</a>        }
@@ -550,7 +550,7 @@
 <a href=#550 id=550 data-nosnippet>550</a>    ///
 <a href=#551 id=551 data-nosnippet>551</a>    /// Replaces any existing attribute with the same name.
 <a href=#552 id=552 data-nosnippet>552</a>    </span><span class="kw">pub fn </span>delete(<span class="kw-2">&amp;mut </span><span class="self">self</span>, name: constants::DwAt) {
-<a href=#553 id=553 data-nosnippet>553</a>        <span class="self">self</span>.attrs.retain(|x| x.name != name);
+<a href=#553 id=553 data-nosnippet>553</a>        <span class="self">self</span>.attrs.retain(|x| x.<span class="macro">name !</span>= name);
 <a href=#554 id=554 data-nosnippet>554</a>    }
 <a href=#555 id=555 data-nosnippet>555</a>
 <a href=#556 id=556 data-nosnippet>556</a>    <span class="doccomment">/// Iterate over the children of this entry.
@@ -563,7 +563,7 @@
 <a href=#563 id=563 data-nosnippet>563</a>
 <a href=#564 id=564 data-nosnippet>564</a>    <span class="doccomment">/// Delete a child entry and all of its children.
 <a href=#565 id=565 data-nosnippet>565</a>    </span><span class="kw">pub fn </span>delete_child(<span class="kw-2">&amp;mut </span><span class="self">self</span>, id: UnitEntryId) {
-<a href=#566 id=566 data-nosnippet>566</a>        <span class="self">self</span>.children.retain(|<span class="kw-2">&amp;</span>child| child != id);
+<a href=#566 id=566 data-nosnippet>566</a>        <span class="self">self</span>.children.retain(|<span class="kw-2">&amp;</span>child| <span class="macro">child !</span>= id);
 <a href=#567 id=567 data-nosnippet>567</a>    }
 <a href=#568 id=568 data-nosnippet>568</a>
 <a href=#569 id=569 data-nosnippet>569</a>    <span class="doccomment">/// Return the type abbreviation for this DIE.
@@ -599,7 +599,7 @@
 <a href=#599 id=599 data-nosnippet>599</a>        offsets.entries[<span class="self">self</span>.id.index].offset = DebugInfoOffset(<span class="kw-2">*</span>offset);
 <a href=#600 id=600 data-nosnippet>600</a>        offsets.entries[<span class="self">self</span>.id.index].abbrev = abbrevs.add(<span class="self">self</span>.abbreviation(unit.encoding())<span class="question-mark">?</span>);
 <a href=#601 id=601 data-nosnippet>601</a>        <span class="kw-2">*</span>offset += <span class="self">self</span>.size(unit, offsets);
-<a href=#602 id=602 data-nosnippet>602</a>        <span class="kw">if </span>!<span class="self">self</span>.children.is_empty() {
+<a href=#602 id=602 data-nosnippet>602</a>        <span class="macro">if !</span><span class="self">self</span>.children.is_empty() {
 <a href=#603 id=603 data-nosnippet>603</a>            <span class="kw">for </span>child <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.children {
 <a href=#604 id=604 data-nosnippet>604</a>                unit.entries[child.index].calculate_offsets(unit, offset, offsets, abbrevs)<span class="question-mark">?</span>;
 <a href=#605 id=605 data-nosnippet>605</a>            }
@@ -660,7 +660,7 @@
 <a href=#660 id=660 data-nosnippet>660</a>            )<span class="question-mark">?</span>;
 <a href=#661 id=661 data-nosnippet>661</a>        }
 <a href=#662 id=662 data-nosnippet>662</a>
-<a href=#663 id=663 data-nosnippet>663</a>        <span class="kw">if </span>!<span class="self">self</span>.children.is_empty() {
+<a href=#663 id=663 data-nosnippet>663</a>        <span class="macro">if !</span><span class="self">self</span>.children.is_empty() {
 <a href=#664 id=664 data-nosnippet>664</a>            <span class="kw">for </span>child <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.children {
 <a href=#665 id=665 data-nosnippet>665</a>                unit.entries[child.index].write(
 <a href=#666 id=666 data-nosnippet>666</a>                    w,
@@ -1775,7 +1775,7 @@
 <a href=#1775 id=1775 data-nosnippet>1775</a>                    }
 <a href=#1776 id=1776 data-nosnippet>1776</a>                }
 <a href=#1777 id=1777 data-nosnippet>1777</a>                read::AttributeValue::UnitRef(val) =&gt; {
-<a href=#1778 id=1778 data-nosnippet>1778</a>                    <span class="kw">if </span>!context.unit.header.is_valid_offset(val) {
+<a href=#1778 id=1778 data-nosnippet>1778</a>                    <span class="macro">if !</span>context.unit.header.is_valid_offset(val) {
 <a href=#1779 id=1779 data-nosnippet>1779</a>                        <span class="kw">return </span><span class="prelude-val">Err</span>(ConvertError::InvalidUnitRef);
 <a href=#1780 id=1780 data-nosnippet>1780</a>                    }
 <a href=#1781 id=1781 data-nosnippet>1781</a>                    <span class="kw">let </span>id = context
@@ -3031,4 +3031,5 @@
 <a href=#3031 id=3031 data-nosnippet>3031</a>        <span class="comment">// There should be no more entries
 <a href=#3032 id=3032 data-nosnippet>3032</a>        </span><span class="macro">assert!</span>(entries.next_dfs().unwrap().is_none());
 <a href=#3033 id=3033 data-nosnippet>3033</a>    }
-<a href=#3034 id=3034 data-nosnippet>3034</a>}</code></pre></div></section></main></body></html>
+<a href=#3034 id=3034 data-nosnippet>3034</a>}
+</code></pre></div></section></main></body></html>

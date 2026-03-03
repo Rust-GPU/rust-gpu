@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-automata-0.4.14/src/hybrid/dfa.rs`."><title>dfa.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (f34ba774c 2025-08-03)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-68b7e25d.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">regex_automata/hybrid/</div>dfa.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/*!
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-automata-0.4.14/src/hybrid/dfa.rs`."><title>dfa.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (adaa83897 2025-10-27)" data-channel="nightly" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">regex_automata/hybrid/</div>dfa.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/*!
 <a href=#2 id=2 data-nosnippet>2</a>Types and routines specific to lazy DFAs.
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a>This module is the home of [`hybrid::dfa::DFA`](DFA).
@@ -594,7 +594,7 @@
 <a href=#594 id=594 data-nosnippet>594</a>        <span class="kw">let </span>utf8empty = <span class="self">self</span>.get_nfa().has_empty() &amp;&amp; <span class="self">self</span>.get_nfa().is_utf8();
 <a href=#595 id=595 data-nosnippet>595</a>        <span class="kw">let </span>hm = <span class="kw">match </span>search::find_fwd(<span class="self">self</span>, cache, input)<span class="question-mark">? </span>{
 <a href=#596 id=596 data-nosnippet>596</a>            <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
-<a href=#597 id=597 data-nosnippet>597</a>            <span class="prelude-val">Some</span>(hm) <span class="kw">if </span>!utf8empty =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(hm)),
+<a href=#597 id=597 data-nosnippet>597</a>            <span class="prelude-val">Some</span>(hm) <span class="macro">if !</span>utf8empty =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(hm)),
 <a href=#598 id=598 data-nosnippet>598</a>            <span class="prelude-val">Some</span>(hm) =&gt; hm,
 <a href=#599 id=599 data-nosnippet>599</a>        };
 <a href=#600 id=600 data-nosnippet>600</a>        <span class="comment">// We get to this point when we know our DFA can match the empty string
@@ -795,7 +795,7 @@
 <a href=#795 id=795 data-nosnippet>795</a>        <span class="kw">let </span>utf8empty = <span class="self">self</span>.get_nfa().has_empty() &amp;&amp; <span class="self">self</span>.get_nfa().is_utf8();
 <a href=#796 id=796 data-nosnippet>796</a>        <span class="kw">let </span>hm = <span class="kw">match </span>search::find_rev(<span class="self">self</span>, cache, input)<span class="question-mark">? </span>{
 <a href=#797 id=797 data-nosnippet>797</a>            <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
-<a href=#798 id=798 data-nosnippet>798</a>            <span class="prelude-val">Some</span>(hm) <span class="kw">if </span>!utf8empty =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(hm)),
+<a href=#798 id=798 data-nosnippet>798</a>            <span class="prelude-val">Some</span>(hm) <span class="macro">if !</span>utf8empty =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(hm)),
 <a href=#799 id=799 data-nosnippet>799</a>            <span class="prelude-val">Some</span>(hm) =&gt; hm,
 <a href=#800 id=800 data-nosnippet>800</a>        };
 <a href=#801 id=801 data-nosnippet>801</a>        empty::skip_splits_rev(input, hm, hm.offset(), |input| {
@@ -903,7 +903,7 @@
 <a href=#903 id=903 data-nosnippet>903</a>        search::find_overlapping_fwd(<span class="self">self</span>, cache, input, state)<span class="question-mark">?</span>;
 <a href=#904 id=904 data-nosnippet>904</a>        <span class="kw">match </span>state.get_match() {
 <a href=#905 id=905 data-nosnippet>905</a>            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(()),
-<a href=#906 id=906 data-nosnippet>906</a>            <span class="prelude-val">Some</span>(<span class="kw">_</span>) <span class="kw">if </span>!utf8empty =&gt; <span class="prelude-val">Ok</span>(()),
+<a href=#906 id=906 data-nosnippet>906</a>            <span class="prelude-val">Some</span>(<span class="kw">_</span>) <span class="macro">if !</span>utf8empty =&gt; <span class="prelude-val">Ok</span>(()),
 <a href=#907 id=907 data-nosnippet>907</a>            <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; skip_empty_utf8_splits_overlapping(
 <a href=#908 id=908 data-nosnippet>908</a>                input,
 <a href=#909 id=909 data-nosnippet>909</a>                state,
@@ -1047,7 +1047,7 @@
 <a href=#1047 id=1047 data-nosnippet>1047</a>        search::find_overlapping_rev(<span class="self">self</span>, cache, input, state)<span class="question-mark">?</span>;
 <a href=#1048 id=1048 data-nosnippet>1048</a>        <span class="kw">match </span>state.get_match() {
 <a href=#1049 id=1049 data-nosnippet>1049</a>            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(()),
-<a href=#1050 id=1050 data-nosnippet>1050</a>            <span class="prelude-val">Some</span>(<span class="kw">_</span>) <span class="kw">if </span>!utf8empty =&gt; <span class="prelude-val">Ok</span>(()),
+<a href=#1050 id=1050 data-nosnippet>1050</a>            <span class="prelude-val">Some</span>(<span class="kw">_</span>) <span class="macro">if !</span>utf8empty =&gt; <span class="prelude-val">Ok</span>(()),
 <a href=#1051 id=1051 data-nosnippet>1051</a>            <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; skip_empty_utf8_splits_overlapping(
 <a href=#1052 id=1052 data-nosnippet>1052</a>                input,
 <a href=#1053 id=1053 data-nosnippet>1053</a>                state,
@@ -1221,7 +1221,7 @@
 <a href=#1221 id=1221 data-nosnippet>1221</a>        <span class="kw">let </span>class = usize::from(<span class="self">self</span>.classes.get(input));
 <a href=#1222 id=1222 data-nosnippet>1222</a>        <span class="kw">let </span>offset = current.as_usize_untagged() + class;
 <a href=#1223 id=1223 data-nosnippet>1223</a>        <span class="kw">let </span>sid = cache.trans[offset];
-<a href=#1224 id=1224 data-nosnippet>1224</a>        <span class="kw">if </span>!sid.is_unknown() {
+<a href=#1224 id=1224 data-nosnippet>1224</a>        <span class="macro">if !</span>sid.is_unknown() {
 <a href=#1225 id=1225 data-nosnippet>1225</a>            <span class="kw">return </span><span class="prelude-val">Ok</span>(sid);
 <a href=#1226 id=1226 data-nosnippet>1226</a>        }
 <a href=#1227 id=1227 data-nosnippet>1227</a>        <span class="kw">let </span>unit = alphabet::Unit::u8(input);
@@ -1511,7 +1511,7 @@
 <a href=#1511 id=1511 data-nosnippet>1511</a>        <span class="kw">let </span>eoi = <span class="self">self</span>.classes.eoi().as_usize();
 <a href=#1512 id=1512 data-nosnippet>1512</a>        <span class="kw">let </span>offset = current.as_usize_untagged() + eoi;
 <a href=#1513 id=1513 data-nosnippet>1513</a>        <span class="kw">let </span>sid = cache.trans[offset];
-<a href=#1514 id=1514 data-nosnippet>1514</a>        <span class="kw">if </span>!sid.is_unknown() {
+<a href=#1514 id=1514 data-nosnippet>1514</a>        <span class="macro">if !</span>sid.is_unknown() {
 <a href=#1515 id=1515 data-nosnippet>1515</a>            <span class="kw">return </span><span class="prelude-val">Ok</span>(sid);
 <a href=#1516 id=1516 data-nosnippet>1516</a>        }
 <a href=#1517 id=1517 data-nosnippet>1517</a>        <span class="kw">let </span>unit = <span class="self">self</span>.classes.eoi();
@@ -1561,14 +1561,14 @@
 <a href=#1561 id=1561 data-nosnippet>1561</a>        <span class="kw">let </span>start = <span class="kw">match </span>config.get_look_behind() {
 <a href=#1562 id=1562 data-nosnippet>1562</a>            <span class="prelude-val">None </span>=&gt; Start::Text,
 <a href=#1563 id=1563 data-nosnippet>1563</a>            <span class="prelude-val">Some</span>(byte) =&gt; {
-<a href=#1564 id=1564 data-nosnippet>1564</a>                <span class="kw">if </span>!<span class="self">self</span>.quitset.is_empty() &amp;&amp; <span class="self">self</span>.quitset.contains(byte) {
+<a href=#1564 id=1564 data-nosnippet>1564</a>                <span class="macro">if !</span><span class="self">self</span>.quitset.is_empty() &amp;&amp; <span class="self">self</span>.quitset.contains(byte) {
 <a href=#1565 id=1565 data-nosnippet>1565</a>                    <span class="kw">return </span><span class="prelude-val">Err</span>(StartError::quit(byte));
 <a href=#1566 id=1566 data-nosnippet>1566</a>                }
 <a href=#1567 id=1567 data-nosnippet>1567</a>                <span class="self">self</span>.start_map.get(byte)
 <a href=#1568 id=1568 data-nosnippet>1568</a>            }
 <a href=#1569 id=1569 data-nosnippet>1569</a>        };
 <a href=#1570 id=1570 data-nosnippet>1570</a>        <span class="kw">let </span>start_id = lazy.get_cached_start_id(anchored, start)<span class="question-mark">?</span>;
-<a href=#1571 id=1571 data-nosnippet>1571</a>        <span class="kw">if </span>!start_id.is_unknown() {
+<a href=#1571 id=1571 data-nosnippet>1571</a>        <span class="macro">if !</span>start_id.is_unknown() {
 <a href=#1572 id=1572 data-nosnippet>1572</a>            <span class="kw">return </span><span class="prelude-val">Ok</span>(start_id);
 <a href=#1573 id=1573 data-nosnippet>1573</a>        }
 <a href=#1574 id=1574 data-nosnippet>1574</a>        Lazy::new(<span class="self">self</span>, cache).cache_start_group(anchored, start)
@@ -2180,7 +2180,7 @@
 <a href=#2180 id=2180 data-nosnippet>2180</a>            Anchored::No =&gt; <span class="self">self</span>.dfa.get_nfa().start_unanchored(),
 <a href=#2181 id=2181 data-nosnippet>2181</a>            Anchored::Yes =&gt; <span class="self">self</span>.dfa.get_nfa().start_anchored(),
 <a href=#2182 id=2182 data-nosnippet>2182</a>            Anchored::Pattern(pid) =&gt; {
-<a href=#2183 id=2183 data-nosnippet>2183</a>                <span class="kw">if </span>!<span class="self">self</span>.dfa.get_config().get_starts_for_each_pattern() {
+<a href=#2183 id=2183 data-nosnippet>2183</a>                <span class="macro">if !</span><span class="self">self</span>.dfa.get_config().get_starts_for_each_pattern() {
 <a href=#2184 id=2184 data-nosnippet>2184</a>                    <span class="kw">return </span><span class="prelude-val">Err</span>(StartError::unsupported_anchored(anchored));
 <a href=#2185 id=2185 data-nosnippet>2185</a>                }
 <a href=#2186 id=2186 data-nosnippet>2186</a>                <span class="kw">match </span><span class="self">self</span>.dfa.get_nfa().start_pattern(pid) {
@@ -2287,7 +2287,7 @@
 <a href=#2287 id=2287 data-nosnippet>2287</a>        state: State,
 <a href=#2288 id=2288 data-nosnippet>2288</a>        idmap: <span class="kw">impl </span>Fn(LazyStateID) -&gt; LazyStateID,
 <a href=#2289 id=2289 data-nosnippet>2289</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;LazyStateID, CacheError&gt; {
-<a href=#2290 id=2290 data-nosnippet>2290</a>        <span class="kw">if </span>!<span class="self">self</span>.as_ref().state_fits_in_cache(<span class="kw-2">&amp;</span>state) {
+<a href=#2290 id=2290 data-nosnippet>2290</a>        <span class="macro">if !</span><span class="self">self</span>.as_ref().state_fits_in_cache(<span class="kw-2">&amp;</span>state) {
 <a href=#2291 id=2291 data-nosnippet>2291</a>            <span class="self">self</span>.try_clear_cache()<span class="question-mark">?</span>;
 <a href=#2292 id=2292 data-nosnippet>2292</a>        }
 <a href=#2293 id=2293 data-nosnippet>2293</a>        <span class="comment">// It's important for this to come second, since the above may clear
@@ -2310,7 +2310,7 @@
 <a href=#2310 id=2310 data-nosnippet>2310</a>        // this will try to call 'set_transition' on a state ID that doesn't
 <a href=#2311 id=2311 data-nosnippet>2311</a>        // actually exist yet, which isn't allowed. So we just skip doing so
 <a href=#2312 id=2312 data-nosnippet>2312</a>        // entirely.
-<a href=#2313 id=2313 data-nosnippet>2313</a>        </span><span class="kw">if </span>!<span class="self">self</span>.dfa.quitset.is_empty() &amp;&amp; !<span class="self">self</span>.as_ref().is_sentinel(id) {
+<a href=#2313 id=2313 data-nosnippet>2313</a>        </span><span class="macro">if !</span><span class="self">self</span>.dfa.quitset.is_empty() &amp;&amp; !<span class="self">self</span>.as_ref().is_sentinel(id) {
 <a href=#2314 id=2314 data-nosnippet>2314</a>            <span class="kw">let </span>quit_id = <span class="self">self</span>.as_ref().quit_id();
 <a href=#2315 id=2315 data-nosnippet>2315</a>            <span class="kw">for </span>b <span class="kw">in </span><span class="self">self</span>.dfa.quitset.iter() {
 <a href=#2316 id=2316 data-nosnippet>2316</a>                <span class="self">self</span>.set_transition(id, alphabet::Unit::u8(b), quit_id);
@@ -2700,7 +2700,7 @@
 <a href=#2700 id=2700 data-nosnippet>2700</a>            Anchored::No =&gt; start_index,
 <a href=#2701 id=2701 data-nosnippet>2701</a>            Anchored::Yes =&gt; Start::len() + start_index,
 <a href=#2702 id=2702 data-nosnippet>2702</a>            Anchored::Pattern(pid) =&gt; {
-<a href=#2703 id=2703 data-nosnippet>2703</a>                <span class="kw">if </span>!<span class="self">self</span>.dfa.get_config().get_starts_for_each_pattern() {
+<a href=#2703 id=2703 data-nosnippet>2703</a>                <span class="macro">if !</span><span class="self">self</span>.dfa.get_config().get_starts_for_each_pattern() {
 <a href=#2704 id=2704 data-nosnippet>2704</a>                    <span class="kw">return </span><span class="prelude-val">Err</span>(StartError::unsupported_anchored(anchored));
 <a href=#2705 id=2705 data-nosnippet>2705</a>                }
 <a href=#2706 id=2706 data-nosnippet>2706</a>                <span class="kw">if </span>pid.as_usize() &gt;= <span class="self">self</span>.dfa.pattern_len() {
@@ -3834,7 +3834,7 @@
 <a href=#3834 id=3834 data-nosnippet>3834</a>        nfa: <span class="kw-2">&amp;</span>thompson::NFA,
 <a href=#3835 id=3835 data-nosnippet>3835</a>        quit: <span class="kw-2">&amp;</span>ByteSet,
 <a href=#3836 id=3836 data-nosnippet>3836</a>    ) -&gt; ByteClasses {
-<a href=#3837 id=3837 data-nosnippet>3837</a>        <span class="kw">if </span>!<span class="self">self</span>.get_byte_classes() {
+<a href=#3837 id=3837 data-nosnippet>3837</a>        <span class="macro">if !</span><span class="self">self</span>.get_byte_classes() {
 <a href=#3838 id=3838 data-nosnippet>3838</a>            <span class="comment">// The lazy DFA will always use the equivalence class map, but
 <a href=#3839 id=3839 data-nosnippet>3839</a>            // enabling this option is useful for debugging. Namely, this will
 <a href=#3840 id=3840 data-nosnippet>3840</a>            // cause all transitions to be defined over their actual bytes
@@ -3851,7 +3851,7 @@
 <a href=#3851 id=3851 data-nosnippet>3851</a>            //
 <a href=#3852 id=3852 data-nosnippet>3852</a>            //   regex-cli find match hybrid --unicode-word-boundary \
 <a href=#3853 id=3853 data-nosnippet>3853</a>            //     -p '^#' -p '\b10\.55\.182\.100\b' -y @conn.json.1000x.log
-<a href=#3854 id=3854 data-nosnippet>3854</a>            </span><span class="kw">if </span>!quit.is_empty() {
+<a href=#3854 id=3854 data-nosnippet>3854</a>            </span><span class="macro">if !</span>quit.is_empty() {
 <a href=#3855 id=3855 data-nosnippet>3855</a>                set.add_set(<span class="kw-2">&amp;</span>quit);
 <a href=#3856 id=3856 data-nosnippet>3856</a>            }
 <a href=#3857 id=3857 data-nosnippet>3857</a>            set.byte_classes()
@@ -3879,7 +3879,7 @@
 <a href=#3879 id=3879 data-nosnippet>3879</a>                // If the caller set their quit bytes in a way that causes the
 <a href=#3880 id=3880 data-nosnippet>3880</a>                // DFA to quit on at least all non-ASCII bytes, then that's all
 <a href=#3881 id=3881 data-nosnippet>3881</a>                // we need for heuristic support to work.
-<a href=#3882 id=3882 data-nosnippet>3882</a>                </span><span class="kw">if </span>!quit.contains_range(<span class="number">0x80</span>, <span class="number">0xFF</span>) {
+<a href=#3882 id=3882 data-nosnippet>3882</a>                </span><span class="macro">if !</span>quit.contains_range(<span class="number">0x80</span>, <span class="number">0xFF</span>) {
 <a href=#3883 id=3883 data-nosnippet>3883</a>                    <span class="kw">return </span><span class="prelude-val">Err</span>(
 <a href=#3884 id=3884 data-nosnippet>3884</a>                        BuildError::unsupported_dfa_word_boundary_unicode(),
 <a href=#3885 id=3885 data-nosnippet>3885</a>                    );
@@ -4277,12 +4277,12 @@
 <a href=#4277 id=4277 data-nosnippet>4277</a>        <span class="prelude-val">Some</span>(hm) =&gt; hm,
 <a href=#4278 id=4278 data-nosnippet>4278</a>    };
 <a href=#4279 id=4279 data-nosnippet>4279</a>    <span class="kw">if </span>input.get_anchored().is_anchored() {
-<a href=#4280 id=4280 data-nosnippet>4280</a>        <span class="kw">if </span>!input.is_char_boundary(hm.offset()) {
+<a href=#4280 id=4280 data-nosnippet>4280</a>        <span class="macro">if !</span>input.is_char_boundary(hm.offset()) {
 <a href=#4281 id=4281 data-nosnippet>4281</a>            state.mat = <span class="prelude-val">None</span>;
 <a href=#4282 id=4282 data-nosnippet>4282</a>        }
 <a href=#4283 id=4283 data-nosnippet>4283</a>        <span class="kw">return </span><span class="prelude-val">Ok</span>(());
 <a href=#4284 id=4284 data-nosnippet>4284</a>    }
-<a href=#4285 id=4285 data-nosnippet>4285</a>    <span class="kw">while </span>!input.is_char_boundary(hm.offset()) {
+<a href=#4285 id=4285 data-nosnippet>4285</a>    <span class="macro">while !</span>input.is_char_boundary(hm.offset()) {
 <a href=#4286 id=4286 data-nosnippet>4286</a>        search(input, state)<span class="question-mark">?</span>;
 <a href=#4287 id=4287 data-nosnippet>4287</a>        hm = <span class="kw">match </span>state.get_match() {
 <a href=#4288 id=4288 data-nosnippet>4288</a>            <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(()),
@@ -4431,4 +4431,5 @@
 <a href=#4431 id=4431 data-nosnippet>4431</a>        <span class="kw">let </span>got = dfa.try_search_rev(<span class="kw-2">&amp;mut </span>cache, <span class="kw-2">&amp;</span>input);
 <a href=#4432 id=4432 data-nosnippet>4432</a>        <span class="macro">assert_eq!</span>(<span class="prelude-val">Err</span>(expected), got);
 <a href=#4433 id=4433 data-nosnippet>4433</a>    }
-<a href=#4434 id=4434 data-nosnippet>4434</a>}</code></pre></div></section></main></body></html>
+<a href=#4434 id=4434 data-nosnippet>4434</a>}
+</code></pre></div></section></main></body></html>

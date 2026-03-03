@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/object-0.37.3/src/read/macho/dyld_cache.rs`."><title>dyld_cache.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="object" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (f34ba774c 2025-08-03)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../../../static.files/storage-68b7e25d.js"></script><script defer src="../../../../static.files/src-script-813739b1.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">object/read/macho/</div>dyld_cache.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>alloc::string::{String, ToString};
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/object-0.37.3/src/read/macho/dyld_cache.rs`."><title>dyld_cache.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="object" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (adaa83897 2025-10-27)" data-channel="nightly" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../../static.files/src-script-813739b1.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">object/read/macho/</div>dyld_cache.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>alloc::string::{String, ToString};
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span>alloc::vec::Vec;
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span>core::fmt::{<span class="self">self</span>, Debug};
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span>core::{mem, slice};
@@ -121,7 +121,7 @@
 <a href=#121 id=121 data-nosnippet>121</a>            <span class="kw">let </span>uuids = v1.iter().map(|e| <span class="kw-2">&amp;</span>e.uuid).chain(v2.iter().map(|e| <span class="kw-2">&amp;</span>e.uuid));
 <a href=#122 id=122 data-nosnippet>122</a>            <span class="kw">for </span>(<span class="kw-2">&amp;</span>data, uuid) <span class="kw">in </span>subcache_data.iter().zip(uuids) {
 <a href=#123 id=123 data-nosnippet>123</a>                <span class="kw">let </span>header = macho::DyldCacheHeader::&lt;E&gt;::parse(data)<span class="question-mark">?</span>;
-<a href=#124 id=124 data-nosnippet>124</a>                <span class="kw">if </span><span class="kw-2">&amp;</span>header.uuid != uuid {
+<a href=#124 id=124 data-nosnippet>124</a>                <span class="kw">if </span><span class="kw-2">&amp;</span>header.<span class="macro">uuid !</span>= uuid {
 <a href=#125 id=125 data-nosnippet>125</a>                    <span class="kw">return </span><span class="prelude-val">Err</span>(Error(<span class="string">"Unexpected SubCache UUID"</span>));
 <a href=#126 id=126 data-nosnippet>126</a>                }
 <a href=#127 id=127 data-nosnippet>127</a>                <span class="kw">let </span>mappings = header.mappings(endian, data)<span class="question-mark">?</span>;
@@ -134,7 +134,7 @@
 <a href=#134 id=134 data-nosnippet>134</a>        </span><span class="kw">let </span>_symbols_subcache = <span class="kw">match </span>symbols_subcache_data_and_uuid {
 <a href=#135 id=135 data-nosnippet>135</a>            <span class="prelude-val">Some</span>((data, uuid)) =&gt; {
 <a href=#136 id=136 data-nosnippet>136</a>                <span class="kw">let </span>header = macho::DyldCacheHeader::&lt;E&gt;::parse(data)<span class="question-mark">?</span>;
-<a href=#137 id=137 data-nosnippet>137</a>                <span class="kw">if </span>header.uuid != uuid {
+<a href=#137 id=137 data-nosnippet>137</a>                <span class="kw">if </span>header.<span class="macro">uuid !</span>= uuid {
 <a href=#138 id=138 data-nosnippet>138</a>                    <span class="kw">return </span><span class="prelude-val">Err</span>(Error(<span class="string">"Unexpected .symbols SubCache UUID"</span>));
 <a href=#139 id=139 data-nosnippet>139</a>                }
 <a href=#140 id=140 data-nosnippet>140</a>                <span class="kw">let </span>mappings = header.mappings(endian, data)<span class="question-mark">?</span>;
@@ -644,9 +644,9 @@
 <a href=#644 id=644 data-nosnippet>644</a>                    <span class="self">self</span>.start_index += <span class="number">1</span>;
 <a href=#645 id=645 data-nosnippet>645</a>
 <a href=#646 id=646 data-nosnippet>646</a>                    <span class="kw">let </span>page_start = page_start.get(<span class="self">self</span>.endian);
-<a href=#647 id=647 data-nosnippet>647</a>                    <span class="kw">if </span>page_start &amp; macho::DYLD_CACHE_SLIDE_PAGE_ATTR_NO_REBASE != <span class="number">0 </span>{
+<a href=#647 id=647 data-nosnippet>647</a>                    <span class="kw">if </span>page_start &amp; <span class="macro">macho::DYLD_CACHE_SLIDE_PAGE_ATTR_NO_REBASE !</span>= <span class="number">0 </span>{
 <a href=#648 id=648 data-nosnippet>648</a>                        <span class="self">self</span>.state = RelocationStateV2::Start;
-<a href=#649 id=649 data-nosnippet>649</a>                    } <span class="kw">else if </span>page_start &amp; macho::DYLD_CACHE_SLIDE_PAGE_ATTR_EXTRA != <span class="number">0 </span>{
+<a href=#649 id=649 data-nosnippet>649</a>                    } <span class="kw">else if </span>page_start &amp; <span class="macro">macho::DYLD_CACHE_SLIDE_PAGE_ATTR_EXTRA !</span>= <span class="number">0 </span>{
 <a href=#650 id=650 data-nosnippet>650</a>                        <span class="self">self</span>.state = RelocationStateV2::Extra;
 <a href=#651 id=651 data-nosnippet>651</a>                        <span class="self">self</span>.extra_index =
 <a href=#652 id=652 data-nosnippet>652</a>                            usize::from(page_start &amp; !macho::DYLD_CACHE_SLIDE_PAGE_ATTRS);
@@ -664,7 +664,7 @@
 <a href=#664 id=664 data-nosnippet>664</a>
 <a href=#665 id=665 data-nosnippet>665</a>                    <span class="kw">let </span>page_extra = page_extra.get(<span class="self">self</span>.endian);
 <a href=#666 id=666 data-nosnippet>666</a>                    <span class="self">self</span>.offset = u64::from(page_extra &amp; !macho::DYLD_CACHE_SLIDE_PAGE_ATTRS) * <span class="number">4</span>;
-<a href=#667 id=667 data-nosnippet>667</a>                    <span class="kw">if </span>page_extra &amp; macho::DYLD_CACHE_SLIDE_PAGE_ATTR_END != <span class="number">0 </span>{
+<a href=#667 id=667 data-nosnippet>667</a>                    <span class="kw">if </span>page_extra &amp; <span class="macro">macho::DYLD_CACHE_SLIDE_PAGE_ATTR_END !</span>= <span class="number">0 </span>{
 <a href=#668 id=668 data-nosnippet>668</a>                        <span class="self">self</span>.state = RelocationStateV2::Page;
 <a href=#669 id=669 data-nosnippet>669</a>                    } <span class="kw">else </span>{
 <a href=#670 id=670 data-nosnippet>670</a>                        <span class="self">self</span>.state = RelocationStateV2::PageExtra;
@@ -690,7 +690,7 @@
 <a href=#690 id=690 data-nosnippet>690</a>                    };
 <a href=#691 id=691 data-nosnippet>691</a>
 <a href=#692 id=692 data-nosnippet>692</a>                    <span class="kw">let </span>value = pointer &amp; !<span class="self">self</span>.delta_mask;
-<a href=#693 id=693 data-nosnippet>693</a>                    <span class="kw">if </span>value != <span class="number">0 </span>{
+<a href=#693 id=693 data-nosnippet>693</a>                    <span class="kw">if </span><span class="macro">value !</span>= <span class="number">0 </span>{
 <a href=#694 id=694 data-nosnippet>694</a>                        <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(DyldRelocation {
 <a href=#695 id=695 data-nosnippet>695</a>                            offset,
 <a href=#696 id=696 data-nosnippet>696</a>                            value: value + <span class="self">self</span>.value_add,
@@ -1025,7 +1025,7 @@
 <a href=#1025 id=1025 data-nosnippet>1025</a>    </span><span class="kw">pub fn </span>symbols_subcache_uuid(<span class="kw-2">&amp;</span><span class="self">self</span>, endian: E) -&gt; <span class="prelude-ty">Option</span>&lt;[u8; <span class="number">16</span>]&gt; {
 <a href=#1026 id=1026 data-nosnippet>1026</a>        <span class="kw">if </span><span class="self">self</span>.mapping_offset.get(endian) &gt;= MIN_HEADER_SIZE_SUBCACHES_V1 {
 <a href=#1027 id=1027 data-nosnippet>1027</a>            <span class="kw">let </span>uuid = <span class="self">self</span>.symbol_file_uuid;
-<a href=#1028 id=1028 data-nosnippet>1028</a>            <span class="kw">if </span>uuid != [<span class="number">0</span>; <span class="number">16</span>] {
+<a href=#1028 id=1028 data-nosnippet>1028</a>            <span class="kw">if </span><span class="macro">uuid !</span>= [<span class="number">0</span>; <span class="number">16</span>] {
 <a href=#1029 id=1029 data-nosnippet>1029</a>                <span class="kw">return </span><span class="prelude-val">Some</span>(uuid);
 <a href=#1030 id=1030 data-nosnippet>1030</a>            }
 <a href=#1031 id=1031 data-nosnippet>1031</a>        }
@@ -1145,4 +1145,5 @@
 <a href=#1145 id=1145 data-nosnippet>1145</a>            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error(<span class="string">"Unsupported dyld cache slide info version"</span>)),
 <a href=#1146 id=1146 data-nosnippet>1146</a>        }
 <a href=#1147 id=1147 data-nosnippet>1147</a>    }
-<a href=#1148 id=1148 data-nosnippet>1148</a>}</code></pre></div></section></main></body></html>
+<a href=#1148 id=1148 data-nosnippet>1148</a>}
+</code></pre></div></section></main></body></html>

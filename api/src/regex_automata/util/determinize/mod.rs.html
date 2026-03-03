@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-automata-0.4.14/src/util/determinize/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (f34ba774c 2025-08-03)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../../../static.files/storage-68b7e25d.js"></script><script defer src="../../../../static.files/src-script-813739b1.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">regex_automata/util/determinize/</div>mod.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/*!
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-automata-0.4.14/src/util/determinize/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (adaa83897 2025-10-27)" data-channel="nightly" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../../static.files/src-script-813739b1.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">regex_automata/util/determinize/</div>mod.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/*!
 <a href=#2 id=2 data-nosnippet>2</a>This module contains types and routines for implementing determinization.
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a>In this crate, there are at least two places where we implement
@@ -128,13 +128,13 @@
 <a href=#128 id=128 data-nosnippet>128</a>    // (but only if necessary). Notably, when we build a DFA state initially,
 <a href=#129 id=129 data-nosnippet>129</a>    // we don't enable any look-ahead assertions because we don't know whether
 <a href=#130 id=130 data-nosnippet>130</a>    // they're true or not at that point.
-<a href=#131 id=131 data-nosnippet>131</a>    </span><span class="kw">if </span>!state.look_need().is_empty() {
+<a href=#131 id=131 data-nosnippet>131</a>    </span><span class="macro">if !</span>state.look_need().is_empty() {
 <a href=#132 id=132 data-nosnippet>132</a>        <span class="comment">// Add look-ahead assertions that are now true based on the current
 <a href=#133 id=133 data-nosnippet>133</a>        // input unit.
 <a href=#134 id=134 data-nosnippet>134</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>look_have = state.look_have();
 <a href=#135 id=135 data-nosnippet>135</a>        <span class="kw">match </span>unit.as_u8() {
 <a href=#136 id=136 data-nosnippet>136</a>            <span class="prelude-val">Some</span>(<span class="string">b'\r'</span>) =&gt; {
-<a href=#137 id=137 data-nosnippet>137</a>                <span class="kw">if </span>!rev || !state.is_half_crlf() {
+<a href=#137 id=137 data-nosnippet>137</a>                <span class="macro">if !</span>rev || !state.is_half_crlf() {
 <a href=#138 id=138 data-nosnippet>138</a>                    look_have = look_have.insert(Look::EndCRLF);
 <a href=#139 id=139 data-nosnippet>139</a>                }
 <a href=#140 id=140 data-nosnippet>140</a>            }
@@ -168,7 +168,7 @@
 <a href=#168 id=168 data-nosnippet>168</a>            look_have =
 <a href=#169 id=169 data-nosnippet>169</a>                look_have.insert(Look::WordAscii).insert(Look::WordUnicode);
 <a href=#170 id=170 data-nosnippet>170</a>        }
-<a href=#171 id=171 data-nosnippet>171</a>        <span class="kw">if </span>!unit.is_word_byte() {
+<a href=#171 id=171 data-nosnippet>171</a>        <span class="macro">if !</span>unit.is_word_byte() {
 <a href=#172 id=172 data-nosnippet>172</a>            look_have = look_have
 <a href=#173 id=173 data-nosnippet>173</a>                .insert(Look::WordEndHalfAscii)
 <a href=#174 id=174 data-nosnippet>174</a>                .insert(Look::WordEndHalfUnicode);
@@ -177,7 +177,7 @@
 <a href=#177 id=177 data-nosnippet>177</a>            look_have = look_have
 <a href=#178 id=178 data-nosnippet>178</a>                .insert(Look::WordEndAscii)
 <a href=#179 id=179 data-nosnippet>179</a>                .insert(Look::WordEndUnicode);
-<a href=#180 id=180 data-nosnippet>180</a>        } <span class="kw">else if </span>!state.is_from_word() &amp;&amp; unit.is_word_byte() {
+<a href=#180 id=180 data-nosnippet>180</a>        } <span class="kw">else </span><span class="macro">if !</span>state.is_from_word() &amp;&amp; unit.is_word_byte() {
 <a href=#181 id=181 data-nosnippet>181</a>            look_have = look_have
 <a href=#182 id=182 data-nosnippet>182</a>                .insert(Look::WordStartAscii)
 <a href=#183 id=183 data-nosnippet>183</a>                .insert(Look::WordStartUnicode);
@@ -192,7 +192,7 @@
 <a href=#192 id=192 data-nosnippet>192</a>        // transitions, this check is necessary for correctness. If we re-did
 <a href=#193 id=193 data-nosnippet>193</a>        // the epsilon closure below needlessly, it could change based on the
 <a href=#194 id=194 data-nosnippet>194</a>        // fact that we omitted epsilon states originally.
-<a href=#195 id=195 data-nosnippet>195</a>        </span><span class="kw">if </span>!look_have
+<a href=#195 id=195 data-nosnippet>195</a>        </span><span class="macro">if !</span>look_have
 <a href=#196 id=196 data-nosnippet>196</a>            .subtract(state.look_have())
 <a href=#197 id=197 data-nosnippet>197</a>            .intersect(state.look_need())
 <a href=#198 id=198 data-nosnippet>198</a>            .is_empty()
@@ -281,7 +281,7 @@
 <a href=#281 id=281 data-nosnippet>281</a>                // transition is necessary to report matches found at the end
 <a href=#282 id=282 data-nosnippet>282</a>                // of a haystack.
 <a href=#283 id=283 data-nosnippet>283</a>                </span>builder.add_match_pattern_id(pattern_id);
-<a href=#284 id=284 data-nosnippet>284</a>                <span class="kw">if </span>!match_kind.continue_past_first_match() {
+<a href=#284 id=284 data-nosnippet>284</a>                <span class="macro">if !</span>match_kind.continue_past_first_match() {
 <a href=#285 id=285 data-nosnippet>285</a>                    <span class="kw">break</span>;
 <a href=#286 id=286 data-nosnippet>286</a>                }
 <a href=#287 id=287 data-nosnippet>287</a>            }
@@ -337,7 +337,7 @@
 <a href=#337 id=337 data-nosnippet>337</a>    // if one was detected once it enters a quit state (and indeed, the search
 <a href=#338 id=338 data-nosnippet>338</a>    // routines in this crate do just that), but it seems better to prevent
 <a href=#339 id=339 data-nosnippet>339</a>    // these things by construction if possible.)
-<a href=#340 id=340 data-nosnippet>340</a>    </span><span class="kw">if </span>!sparses.set2.is_empty() {
+<a href=#340 id=340 data-nosnippet>340</a>    </span><span class="macro">if !</span>sparses.set2.is_empty() {
 <a href=#341 id=341 data-nosnippet>341</a>        <span class="kw">if </span>nfa.look_set_any().contains_word() &amp;&amp; unit.is_word_byte() {
 <a href=#342 id=342 data-nosnippet>342</a>            builder.set_is_from_word();
 <a href=#343 id=343 data-nosnippet>343</a>        }
@@ -376,7 +376,7 @@
 <a href=#376 id=376 data-nosnippet>376</a>    <span class="macro">assert!</span>(stack.is_empty());
 <a href=#377 id=377 data-nosnippet>377</a>    <span class="comment">// If this isn't an epsilon state, then the epsilon closure is always just
 <a href=#378 id=378 data-nosnippet>378</a>    // itself, so there's no need to spin up the machinery below to handle it.
-<a href=#379 id=379 data-nosnippet>379</a>    </span><span class="kw">if </span>!nfa.state(start_nfa_id).is_epsilon() {
+<a href=#379 id=379 data-nosnippet>379</a>    </span><span class="macro">if !</span>nfa.state(start_nfa_id).is_epsilon() {
 <a href=#380 id=380 data-nosnippet>380</a>        set.insert(start_nfa_id);
 <a href=#381 id=381 data-nosnippet>381</a>        <span class="kw">return</span>;
 <a href=#382 id=382 data-nosnippet>382</a>    }
@@ -390,7 +390,7 @@
 <a href=#390 id=390 data-nosnippet>390</a>        </span><span class="kw">loop </span>{
 <a href=#391 id=391 data-nosnippet>391</a>            <span class="comment">// Insert this NFA state, and if it's already in the set and thus
 <a href=#392 id=392 data-nosnippet>392</a>            // already visited, then we can move on to the next one.
-<a href=#393 id=393 data-nosnippet>393</a>            </span><span class="kw">if </span>!set.insert(id) {
+<a href=#393 id=393 data-nosnippet>393</a>            </span><span class="macro">if !</span>set.insert(id) {
 <a href=#394 id=394 data-nosnippet>394</a>                <span class="kw">break</span>;
 <a href=#395 id=395 data-nosnippet>395</a>            }
 <a href=#396 id=396 data-nosnippet>396</a>            <span class="kw">match </span><span class="kw-2">*</span>nfa.state(id) {
@@ -400,7 +400,7 @@
 <a href=#400 id=400 data-nosnippet>400</a>                | thompson::State::Fail
 <a href=#401 id=401 data-nosnippet>401</a>                | thompson::State::Match { .. } =&gt; <span class="kw">break</span>,
 <a href=#402 id=402 data-nosnippet>402</a>                thompson::State::Look { look, next } =&gt; {
-<a href=#403 id=403 data-nosnippet>403</a>                    <span class="kw">if </span>!look_have.contains(look) {
+<a href=#403 id=403 data-nosnippet>403</a>                    <span class="macro">if !</span>look_have.contains(look) {
 <a href=#404 id=404 data-nosnippet>404</a>                        <span class="kw">break</span>;
 <a href=#405 id=405 data-nosnippet>405</a>                    }
 <a href=#406 id=406 data-nosnippet>406</a>                    id = next;
@@ -679,4 +679,5 @@
 <a href=#679 id=679 data-nosnippet>679</a>            }
 <a href=#680 id=680 data-nosnippet>680</a>        }
 <a href=#681 id=681 data-nosnippet>681</a>    }
-<a href=#682 id=682 data-nosnippet>682</a>}</code></pre></div></section></main></body></html>
+<a href=#682 id=682 data-nosnippet>682</a>}
+</code></pre></div></section></main></body></html>

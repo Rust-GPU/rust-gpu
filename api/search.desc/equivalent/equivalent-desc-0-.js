@@ -1,1 +1,0 @@
-searchState.loadedDescShard("equivalent", 0, "<code>Equivalent</code> and <code>Comparable</code> are traits for key comparison in …\nKey ordering trait.\nKey equivalence trait.\nCompare self to <code>key</code> and return their ordering.\nCompare self to <code>key</code> and return <code>true</code> if they are equal.")

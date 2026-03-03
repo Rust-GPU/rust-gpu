@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/gimli-0.31.1/src/write/cfi.rs`."><title>cfi.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="gimli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (f34ba774c 2025-08-03)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-68b7e25d.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">gimli/write/</div>cfi.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>alloc::vec::Vec;
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/gimli-0.31.1/src/write/cfi.rs`."><title>cfi.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="gimli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (adaa83897 2025-10-27)" data-channel="nightly" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">gimli/write/</div>cfi.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>alloc::vec::Vec;
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span>indexmap::IndexSet;
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span>std::ops::{Deref, DerefMut};
 <a href=#4 id=4 data-nosnippet>4</a>
@@ -160,7 +160,7 @@
 <a href=#160 id=160 data-nosnippet>160</a>        <span class="self">self</span>.personality.is_some()
 <a href=#161 id=161 data-nosnippet>161</a>            || <span class="self">self</span>.lsda_encoding.is_some()
 <a href=#162 id=162 data-nosnippet>162</a>            || <span class="self">self</span>.signal_trampoline
-<a href=#163 id=163 data-nosnippet>163</a>            || <span class="self">self</span>.fde_address_encoding != constants::DW_EH_PE_absptr
+<a href=#163 id=163 data-nosnippet>163</a>            || <span class="self">self</span>.<span class="macro">fde_address_encoding !</span>= constants::DW_EH_PE_absptr
 <a href=#164 id=164 data-nosnippet>164</a>    }
 <a href=#165 id=165 data-nosnippet>165</a>
 <a href=#166 id=166 data-nosnippet>166</a>    <span class="doccomment">/// Returns the section offset of the CIE.
@@ -181,7 +181,7 @@
 <a href=#181 id=181 data-nosnippet>181</a>        }
 <a href=#182 id=182 data-nosnippet>182</a>
 <a href=#183 id=183 data-nosnippet>183</a>        <span class="kw">if </span>eh_frame {
-<a href=#184 id=184 data-nosnippet>184</a>            <span class="kw">if </span>encoding.version != <span class="number">1 </span>{
+<a href=#184 id=184 data-nosnippet>184</a>            <span class="kw">if </span>encoding.<span class="macro">version !</span>= <span class="number">1 </span>{
 <a href=#185 id=185 data-nosnippet>185</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(Error::UnsupportedVersion(encoding.version));
 <a href=#186 id=186 data-nosnippet>186</a>            };
 <a href=#187 id=187 data-nosnippet>187</a>        } <span class="kw">else </span>{
@@ -201,7 +201,7 @@
 <a href=#201 id=201 data-nosnippet>201</a>            <span class="kw">if </span><span class="self">self</span>.personality.is_some() {
 <a href=#202 id=202 data-nosnippet>202</a>                w.write_u8(<span class="string">b'P'</span>)<span class="question-mark">?</span>;
 <a href=#203 id=203 data-nosnippet>203</a>            }
-<a href=#204 id=204 data-nosnippet>204</a>            <span class="kw">if </span><span class="self">self</span>.fde_address_encoding != constants::DW_EH_PE_absptr {
+<a href=#204 id=204 data-nosnippet>204</a>            <span class="kw">if </span><span class="self">self</span>.<span class="macro">fde_address_encoding !</span>= constants::DW_EH_PE_absptr {
 <a href=#205 id=205 data-nosnippet>205</a>                w.write_u8(<span class="string">b'R'</span>)<span class="question-mark">?</span>;
 <a href=#206 id=206 data-nosnippet>206</a>            }
 <a href=#207 id=207 data-nosnippet>207</a>            <span class="kw">if </span><span class="self">self</span>.signal_trampoline {
@@ -218,7 +218,7 @@
 <a href=#218 id=218 data-nosnippet>218</a>        w.write_uleb128(<span class="self">self</span>.code_alignment_factor.into())<span class="question-mark">?</span>;
 <a href=#219 id=219 data-nosnippet>219</a>        w.write_sleb128(<span class="self">self</span>.data_alignment_factor.into())<span class="question-mark">?</span>;
 <a href=#220 id=220 data-nosnippet>220</a>
-<a href=#221 id=221 data-nosnippet>221</a>        <span class="kw">if </span>!eh_frame &amp;&amp; encoding.version == <span class="number">1 </span>{
+<a href=#221 id=221 data-nosnippet>221</a>        <span class="macro">if !</span>eh_frame &amp;&amp; encoding.version == <span class="number">1 </span>{
 <a href=#222 id=222 data-nosnippet>222</a>            <span class="kw">let </span>register = <span class="self">self</span>.return_address_register.<span class="number">0 </span><span class="kw">as </span>u8;
 <a href=#223 id=223 data-nosnippet>223</a>            <span class="kw">if </span>u16::from(register) != <span class="self">self</span>.return_address_register.<span class="number">0 </span>{
 <a href=#224 id=224 data-nosnippet>224</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(Error::ValueTooLarge);
@@ -240,7 +240,7 @@
 <a href=#240 id=240 data-nosnippet>240</a>                w.write_u8(eh_pe.<span class="number">0</span>)<span class="question-mark">?</span>;
 <a href=#241 id=241 data-nosnippet>241</a>                w.write_eh_pointer(address, eh_pe, encoding.address_size)<span class="question-mark">?</span>;
 <a href=#242 id=242 data-nosnippet>242</a>            }
-<a href=#243 id=243 data-nosnippet>243</a>            <span class="kw">if </span><span class="self">self</span>.fde_address_encoding != constants::DW_EH_PE_absptr {
+<a href=#243 id=243 data-nosnippet>243</a>            <span class="kw">if </span><span class="self">self</span>.<span class="macro">fde_address_encoding !</span>= constants::DW_EH_PE_absptr {
 <a href=#244 id=244 data-nosnippet>244</a>                w.write_u8(<span class="self">self</span>.fde_address_encoding.<span class="number">0</span>)<span class="question-mark">?</span>;
 <a href=#245 id=245 data-nosnippet>245</a>            }
 <a href=#246 id=246 data-nosnippet>246</a>
@@ -323,7 +323,7 @@
 <a href=#323 id=323 data-nosnippet>323</a>            )<span class="question-mark">?</span>;
 <a href=#324 id=324 data-nosnippet>324</a>        }
 <a href=#325 id=325 data-nosnippet>325</a>
-<a href=#326 id=326 data-nosnippet>326</a>        <span class="kw">if </span>cie.fde_address_encoding != constants::DW_EH_PE_absptr {
+<a href=#326 id=326 data-nosnippet>326</a>        <span class="kw">if </span>cie.<span class="macro">fde_address_encoding !</span>= constants::DW_EH_PE_absptr {
 <a href=#327 id=327 data-nosnippet>327</a>            w.write_eh_pointer(
 <a href=#328 id=328 data-nosnippet>328</a>                <span class="self">self</span>.address,
 <a href=#329 id=329 data-nosnippet>329</a>                cie.fde_address_encoding,
@@ -577,7 +577,7 @@
 <a href=#577 id=577 data-nosnippet>577</a>    <span class="kw">let </span>delta = offset - prev_offset;
 <a href=#578 id=578 data-nosnippet>578</a>    <span class="kw">let </span>factor = u32::from(factor);
 <a href=#579 id=579 data-nosnippet>579</a>    <span class="kw">let </span>factored_delta = delta / factor;
-<a href=#580 id=580 data-nosnippet>580</a>    <span class="kw">if </span>delta != factored_delta * factor {
+<a href=#580 id=580 data-nosnippet>580</a>    <span class="kw">if </span><span class="macro">delta !</span>= factored_delta * factor {
 <a href=#581 id=581 data-nosnippet>581</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(Error::InvalidFrameCodeOffset(offset));
 <a href=#582 id=582 data-nosnippet>582</a>    }
 <a href=#583 id=583 data-nosnippet>583</a>    <span class="prelude-val">Ok</span>(factored_delta)
@@ -586,7 +586,7 @@
 <a href=#586 id=586 data-nosnippet>586</a><span class="kw">fn </span>factored_data_offset(offset: i32, factor: i8) -&gt; <span class="prelude-ty">Result</span>&lt;i32&gt; {
 <a href=#587 id=587 data-nosnippet>587</a>    <span class="kw">let </span>factor = i32::from(factor);
 <a href=#588 id=588 data-nosnippet>588</a>    <span class="kw">let </span>factored_offset = offset / factor;
-<a href=#589 id=589 data-nosnippet>589</a>    <span class="kw">if </span>offset != factored_offset * factor {
+<a href=#589 id=589 data-nosnippet>589</a>    <span class="kw">if </span><span class="macro">offset !</span>= factored_offset * factor {
 <a href=#590 id=590 data-nosnippet>590</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(Error::InvalidFrameDataOffset(offset));
 <a href=#591 id=591 data-nosnippet>591</a>    }
 <a href=#592 id=592 data-nosnippet>592</a>    <span class="prelude-val">Ok</span>(factored_offset)
@@ -1067,4 +1067,5 @@
 <a href=#1067 id=1067 data-nosnippet>1067</a>            }
 <a href=#1068 id=1068 data-nosnippet>1068</a>        }
 <a href=#1069 id=1069 data-nosnippet>1069</a>    }
-<a href=#1070 id=1070 data-nosnippet>1070</a>}</code></pre></div></section></main></body></html>
+<a href=#1070 id=1070 data-nosnippet>1070</a>}
+</code></pre></div></section></main></body></html>

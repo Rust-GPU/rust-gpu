@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/abi.rs`."><title>abi.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (f34ba774c 2025-08-03)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-68b7e25d.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/</div>abi.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! This file is responsible for translation from rustc tys (`TyAndLayout`) to spir-v types. It's
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/abi.rs`."><title>abi.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (adaa83897 2025-10-27)" data-channel="nightly" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/</div>abi.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! This file is responsible for translation from rustc tys (`TyAndLayout`) to spir-v types. It's
 <a href=#2 id=2 data-nosnippet>2</a>//! surprisingly difficult.
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a></span><span class="kw">use </span><span class="kw">crate</span>::attr::{AggregatedSpirvAttributes, IntrinsicType};
@@ -517,7 +517,7 @@
 <a href=#517 id=517 data-nosnippet>517</a>        <span class="kw">if </span>(field_offset..field_offset + field.size).contains(<span class="kw-2">&amp;</span>offset) {
 <a href=#518 id=518 data-nosnippet>518</a>            <span class="kw">let </span>new_pointee = dig_scalar_pointee(cx, field, offset - field_offset);
 <a href=#519 id=519 data-nosnippet>519</a>            <span class="kw">match </span>pointee {
-<a href=#520 id=520 data-nosnippet>520</a>                <span class="prelude-val">Some</span>(old_pointee) <span class="kw">if </span>old_pointee != new_pointee =&gt; {
+<a href=#520 id=520 data-nosnippet>520</a>                <span class="prelude-val">Some</span>(old_pointee) <span class="kw">if </span><span class="macro">old_pointee !</span>= new_pointee =&gt; {
 <a href=#521 id=521 data-nosnippet>521</a>                    cx.tcx.dcx().fatal(<span class="macro">format!</span>(
 <a href=#522 id=522 data-nosnippet>522</a>                        <span class="string">"dig_scalar_pointee: unsupported Pointer with different \
 <a href=#523 id=523 data-nosnippet>523</a>                         pointee types ({old_pointee:?} vs {new_pointee:?}) at offset {offset:?} in {layout:#?}"
@@ -570,7 +570,7 @@
 <a href=#570 id=570 data-nosnippet>570</a>                .max_by_key(|(<span class="kw">_</span>, case)| case.size);
 <a href=#571 id=571 data-nosnippet>571</a>
 <a href=#572 id=572 data-nosnippet>572</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>((case_idx, case)) = largest_case {
-<a href=#573 id=573 data-nosnippet>573</a>                <span class="kw">if </span>ty.align != case.align {
+<a href=#573 id=573 data-nosnippet>573</a>                <span class="kw">if </span>ty.<span class="macro">align !</span>= case.align {
 <a href=#574 id=574 data-nosnippet>574</a>                    <span class="comment">// HACK(eddyb) mismatched alignment requires a wrapper `struct`.
 <a href=#575 id=575 data-nosnippet>575</a>                    </span>trans_struct_or_union(cx, span, ty, <span class="prelude-val">Some</span>(case_idx))
 <a href=#576 id=576 data-nosnippet>576</a>                } <span class="kw">else </span>{
@@ -666,7 +666,7 @@
 <a href=#666 id=666 data-nosnippet>666</a>    <span class="kw">let </span><span class="kw-2">mut </span>field_names = Vec::new();
 <a href=#667 id=667 data-nosnippet>667</a>    <span class="kw">for </span>i <span class="kw">in </span>ty.fields.index_by_increasing_offset() {
 <a href=#668 id=668 data-nosnippet>668</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(expected_field_idx) = union_case
-<a href=#669 id=669 data-nosnippet>669</a>            &amp;&amp; i != expected_field_idx.as_usize()
+<a href=#669 id=669 data-nosnippet>669</a>            &amp;&amp; <span class="macro">i !</span>= expected_field_idx.as_usize()
 <a href=#670 id=670 data-nosnippet>670</a>        {
 <a href=#671 id=671 data-nosnippet>671</a>            <span class="kw">continue</span>;
 <a href=#672 id=672 data-nosnippet>672</a>        }
@@ -769,7 +769,7 @@
 <a href=#769 id=769 data-nosnippet>769</a>    <span class="kw">match </span>intrinsic_type_attr {
 <a href=#770 id=770 data-nosnippet>770</a>        IntrinsicType::GenericImageType =&gt; {
 <a href=#771 id=771 data-nosnippet>771</a>            <span class="comment">// see SpirvType::sizeof
-<a href=#772 id=772 data-nosnippet>772</a>            </span><span class="kw">if </span>ty.size != Size::from_bytes(<span class="number">4</span>) {
+<a href=#772 id=772 data-nosnippet>772</a>            </span><span class="kw">if </span>ty.<span class="macro">size !</span>= Size::from_bytes(<span class="number">4</span>) {
 <a href=#773 id=773 data-nosnippet>773</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(cx
 <a href=#774 id=774 data-nosnippet>774</a>                    .tcx
 <a href=#775 id=775 data-nosnippet>775</a>                    .dcx()
@@ -890,7 +890,7 @@
 <a href=#890 id=890 data-nosnippet>890</a>        }
 <a href=#891 id=891 data-nosnippet>891</a>        IntrinsicType::Sampler =&gt; {
 <a href=#892 id=892 data-nosnippet>892</a>            <span class="comment">// see SpirvType::sizeof
-<a href=#893 id=893 data-nosnippet>893</a>            </span><span class="kw">if </span>ty.size != Size::from_bytes(<span class="number">4</span>) {
+<a href=#893 id=893 data-nosnippet>893</a>            </span><span class="kw">if </span>ty.<span class="macro">size !</span>= Size::from_bytes(<span class="number">4</span>) {
 <a href=#894 id=894 data-nosnippet>894</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(cx.tcx.dcx().err(<span class="string">"#[spirv(sampler)] type must have size 4"</span>));
 <a href=#895 id=895 data-nosnippet>895</a>            }
 <a href=#896 id=896 data-nosnippet>896</a>            <span class="prelude-val">Ok</span>(SpirvType::Sampler.def(span, cx))
@@ -901,7 +901,7 @@
 <a href=#901 id=901 data-nosnippet>901</a>        IntrinsicType::RayQueryKhr =&gt; <span class="prelude-val">Ok</span>(SpirvType::RayQueryKhr.def(span, cx)),
 <a href=#902 id=902 data-nosnippet>902</a>        IntrinsicType::SampledImage =&gt; {
 <a href=#903 id=903 data-nosnippet>903</a>            <span class="comment">// see SpirvType::sizeof
-<a href=#904 id=904 data-nosnippet>904</a>            </span><span class="kw">if </span>ty.size != Size::from_bytes(<span class="number">4</span>) {
+<a href=#904 id=904 data-nosnippet>904</a>            </span><span class="kw">if </span>ty.<span class="macro">size !</span>= Size::from_bytes(<span class="number">4</span>) {
 <a href=#905 id=905 data-nosnippet>905</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(cx
 <a href=#906 id=906 data-nosnippet>906</a>                    .tcx
 <a href=#907 id=907 data-nosnippet>907</a>                    .dcx()
@@ -922,7 +922,7 @@
 <a href=#922 id=922 data-nosnippet>922</a>            }
 <a href=#923 id=923 data-nosnippet>923</a>        }
 <a href=#924 id=924 data-nosnippet>924</a>        IntrinsicType::RuntimeArray =&gt; {
-<a href=#925 id=925 data-nosnippet>925</a>            <span class="kw">if </span>ty.size != Size::from_bytes(<span class="number">4</span>) {
+<a href=#925 id=925 data-nosnippet>925</a>            <span class="kw">if </span>ty.<span class="macro">size !</span>= Size::from_bytes(<span class="number">4</span>) {
 <a href=#926 id=926 data-nosnippet>926</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(cx
 <a href=#927 id=927 data-nosnippet>927</a>                    .tcx
 <a href=#928 id=928 data-nosnippet>928</a>                    .dcx()
@@ -944,7 +944,7 @@
 <a href=#944 id=944 data-nosnippet>944</a>            }
 <a href=#945 id=945 data-nosnippet>945</a>        }
 <a href=#946 id=946 data-nosnippet>946</a>        IntrinsicType::TypedBuffer =&gt; {
-<a href=#947 id=947 data-nosnippet>947</a>            <span class="kw">if </span>ty.size != Size::from_bytes(<span class="number">4</span>) {
+<a href=#947 id=947 data-nosnippet>947</a>            <span class="kw">if </span>ty.<span class="macro">size !</span>= Size::from_bytes(<span class="number">4</span>) {
 <a href=#948 id=948 data-nosnippet>948</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(cx
 <a href=#949 id=949 data-nosnippet>949</a>                    .tcx
 <a href=#950 id=950 data-nosnippet>950</a>                    .sess
@@ -1062,7 +1062,7 @@
 <a href=#1062 id=1062 data-nosnippet>1062</a>        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..ty.fields.count() {
 <a href=#1063 id=1063 data-nosnippet>1063</a>            <span class="kw">let </span>expected = element.size.checked_mul(i <span class="kw">as </span>u64, cx).unwrap();
 <a href=#1064 id=1064 data-nosnippet>1064</a>            <span class="kw">let </span>actual = ty.fields.offset(i);
-<a href=#1065 id=1065 data-nosnippet>1065</a>            <span class="kw">if </span>actual != expected {
+<a href=#1065 id=1065 data-nosnippet>1065</a>            <span class="kw">if </span><span class="macro">actual !</span>= expected {
 <a href=#1066 id=1066 data-nosnippet>1066</a>                <span class="kw">let </span>name: <span class="kw-2">&amp;</span>str = adt
 <a href=#1067 id=1067 data-nosnippet>1067</a>                    .non_enum_variant()
 <a href=#1068 id=1068 data-nosnippet>1068</a>                    .fields
@@ -1086,4 +1086,5 @@
 <a href=#1086 id=1086 data-nosnippet>1086</a>            .dcx()
 <a href=#1087 id=1087 data-nosnippet>1087</a>            .span_err(span, <span class="macro">format!</span>(<span class="string">"{err_attr_name} type must be a struct"</span>)))
 <a href=#1088 id=1088 data-nosnippet>1088</a>    }
-<a href=#1089 id=1089 data-nosnippet>1089</a>}</code></pre></div></section></main></body></html>
+<a href=#1089 id=1089 data-nosnippet>1089</a>}
+</code></pre></div></section></main></body></html>

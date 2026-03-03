@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-impl-2.0.18/src/fmt.rs`."><title>fmt.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="thiserror_impl" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (f34ba774c 2025-08-03)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-68b7e25d.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">thiserror_impl/</div>fmt.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span><span class="kw">crate</span>::ast::{ContainerKind, Field};
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thiserror-impl-2.0.18/src/fmt.rs`."><title>fmt.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="thiserror_impl" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (adaa83897 2025-10-27)" data-channel="nightly" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">thiserror_impl/</div>fmt.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span><span class="kw">crate</span>::ast::{ContainerKind, Field};
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span><span class="kw">crate</span>::attr::{Display, Trait};
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span><span class="kw">crate</span>::private;
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span><span class="kw">crate</span>::scan_expr::scan_expr;
@@ -55,7 +55,7 @@
 <a href=#55 id=55 data-nosnippet>55</a>            <span class="kw">let </span>member = <span class="kw">match </span>next {
 <a href=#56 id=56 data-nosnippet>56</a>                <span class="string">'0'</span>..=<span class="string">'9' </span>=&gt; {
 <a href=#57 id=57 data-nosnippet>57</a>                    <span class="kw">let </span>int = take_int(<span class="kw-2">&amp;mut </span>read);
-<a href=#58 id=58 data-nosnippet>58</a>                    <span class="kw">if </span>!extra_positional_arguments_allowed {
+<a href=#58 id=58 data-nosnippet>58</a>                    <span class="macro">if !</span>extra_positional_arguments_allowed {
 <a href=#59 id=59 data-nosnippet>59</a>                        <span class="kw">if let </span><span class="prelude-val">Some</span>(first_unnamed) = <span class="kw-2">&amp;</span>first_unnamed {
 <a href=#60 id=60 data-nosnippet>60</a>                            <span class="kw">let </span>msg = <span class="macro">format!</span>(<span class="string">"ambiguous reference to positional arguments by number in a {container}; change this to a named argument"</span>);
 <a href=#61 id=61 data-nosnippet>61</a>                            <span class="kw">return </span><span class="prelude-val">Err</span>(Error::new_spanned(first_unnamed, msg));
@@ -134,7 +134,7 @@
 <a href=#134 id=134 data-nosnippet>134</a>            }
 <a href=#135 id=135 data-nosnippet>135</a>            formatvar.set_span(span);
 <a href=#136 id=136 data-nosnippet>136</a>            out += <span class="kw-2">&amp;</span>formatvar.to_string();
-<a href=#137 id=137 data-nosnippet>137</a>            <span class="kw">if </span>!macro_named_args.insert(formatvar.clone()) {
+<a href=#137 id=137 data-nosnippet>137</a>            <span class="macro">if !</span>macro_named_args.insert(formatvar.clone()) {
 <a href=#138 id=138 data-nosnippet>138</a>                <span class="comment">// Already added to bindings by a previous use.
 <a href=#139 id=139 data-nosnippet>139</a>                </span><span class="kw">continue</span>;
 <a href=#140 id=140 data-nosnippet>140</a>            }
@@ -196,7 +196,7 @@
 <a href=#196 id=196 data-nosnippet>196</a>        first_unnamed: <span class="prelude-val">None</span>,
 <a href=#197 id=197 data-nosnippet>197</a>    };
 <a href=#198 id=198 data-nosnippet>198</a>
-<a href=#199 id=199 data-nosnippet>199</a>    <span class="kw">while </span>!input.is_empty() {
+<a href=#199 id=199 data-nosnippet>199</a>    <span class="macro">while !</span>input.is_empty() {
 <a href=#200 id=200 data-nosnippet>200</a>        input.parse::&lt;<span class="macro">Token!</span>[,]&gt;()<span class="question-mark">?</span>;
 <a href=#201 id=201 data-nosnippet>201</a>        <span class="kw">if </span>input.is_empty() {
 <a href=#202 id=202 data-nosnippet>202</a>            <span class="kw">break</span>;
@@ -234,7 +234,7 @@
 <a href=#234 id=234 data-nosnippet>234</a>        first_unnamed: <span class="prelude-val">None</span>,
 <a href=#235 id=235 data-nosnippet>235</a>    };
 <a href=#236 id=236 data-nosnippet>236</a>
-<a href=#237 id=237 data-nosnippet>237</a>    <span class="kw">while </span>!input.is_empty() {
+<a href=#237 id=237 data-nosnippet>237</a>    <span class="macro">while !</span>input.is_empty() {
 <a href=#238 id=238 data-nosnippet>238</a>        <span class="kw">if </span>input.peek(<span class="macro">Token!</span>[,])
 <a href=#239 id=239 data-nosnippet>239</a>            &amp;&amp; input.peek2(Ident::peek_any)
 <a href=#240 id=240 data-nosnippet>240</a>            &amp;&amp; input.peek3(<span class="macro">Token!</span>[=])
@@ -320,4 +320,5 @@
 <a href=#320 id=320 data-nosnippet>320</a>    }
 <a href=#321 id=321 data-nosnippet>321</a>
 <a href=#322 id=322 data-nosnippet>322</a>    tokens
-<a href=#323 id=323 data-nosnippet>323</a>}</code></pre></div></section></main></body></html>
+<a href=#323 id=323 data-nosnippet>323</a>}
+</code></pre></div></section></main></body></html>

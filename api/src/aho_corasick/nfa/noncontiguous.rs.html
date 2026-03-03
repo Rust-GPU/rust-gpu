@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aho-corasick-1.1.4/src/nfa/noncontiguous.rs`."><title>noncontiguous.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aho_corasick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (f34ba774c 2025-08-03)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-68b7e25d.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aho_corasick/nfa/</div>noncontiguous.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/*!
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aho-corasick-1.1.4/src/nfa/noncontiguous.rs`."><title>noncontiguous.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aho_corasick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (adaa83897 2025-10-27)" data-channel="nightly" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aho_corasick/nfa/</div>noncontiguous.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/*!
 <a href=#2 id=2 data-nosnippet>2</a>Provides a noncontiguous NFA implementation of Aho-Corasick.
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a>This is a low-level API that generally only needs to be used in niche
@@ -263,12 +263,12 @@
 <a href=#263 id=263 data-nosnippet>263</a>        <span class="kw">for </span>state <span class="kw">in </span><span class="self">self</span>.states.iter_mut() {
 <a href=#264 id=264 data-nosnippet>264</a>            state.fail = map(state.fail);
 <a href=#265 id=265 data-nosnippet>265</a>            <span class="kw">let </span><span class="kw-2">mut </span>link = state.sparse;
-<a href=#266 id=266 data-nosnippet>266</a>            <span class="kw">while </span>link != StateID::ZERO {
+<a href=#266 id=266 data-nosnippet>266</a>            <span class="kw">while </span><span class="macro">link !</span>= StateID::ZERO {
 <a href=#267 id=267 data-nosnippet>267</a>                <span class="kw">let </span>t = <span class="kw-2">&amp;mut </span><span class="self">self</span>.sparse[link];
 <a href=#268 id=268 data-nosnippet>268</a>                t.next = map(t.next);
 <a href=#269 id=269 data-nosnippet>269</a>                link = t.link;
 <a href=#270 id=270 data-nosnippet>270</a>            }
-<a href=#271 id=271 data-nosnippet>271</a>            <span class="kw">if </span>state.dense != StateID::ZERO {
+<a href=#271 id=271 data-nosnippet>271</a>            <span class="kw">if </span>state.<span class="macro">dense !</span>= StateID::ZERO {
 <a href=#272 id=272 data-nosnippet>272</a>                <span class="kw">let </span>start = state.dense.as_usize();
 <a href=#273 id=273 data-nosnippet>273</a>                <span class="kw">for </span>next <span class="kw">in </span><span class="self">self</span>.dense[start..][..alphabet_len].iter_mut() {
 <a href=#274 id=274 data-nosnippet>274</a>                    <span class="kw-2">*</span>next = map(<span class="kw-2">*</span>next);
@@ -384,7 +384,7 @@
 <a href=#384 id=384 data-nosnippet>384</a>        byte: u8,
 <a href=#385 id=385 data-nosnippet>385</a>        next: StateID,
 <a href=#386 id=386 data-nosnippet>386</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), BuildError&gt; {
-<a href=#387 id=387 data-nosnippet>387</a>        <span class="kw">if </span><span class="self">self</span>.states[prev].dense != StateID::ZERO {
+<a href=#387 id=387 data-nosnippet>387</a>        <span class="kw">if </span><span class="self">self</span>.states[prev].<span class="macro">dense !</span>= StateID::ZERO {
 <a href=#388 id=388 data-nosnippet>388</a>            <span class="kw">let </span>dense = <span class="self">self</span>.states[prev].dense;
 <a href=#389 id=389 data-nosnippet>389</a>            <span class="kw">let </span>class = usize::from(<span class="self">self</span>.byte_classes.get(byte));
 <a href=#390 id=390 data-nosnippet>390</a>            <span class="self">self</span>.dense[dense.as_usize() + class] = next;
@@ -406,7 +406,7 @@
 <a href=#406 id=406 data-nosnippet>406</a>        // at least one entry in the transition chain and the byte for that
 <a href=#407 id=407 data-nosnippet>407</a>        // transition is less than the byte for the transition we're adding.
 <a href=#408 id=408 data-nosnippet>408</a>        </span><span class="kw">let </span>(<span class="kw-2">mut </span>link_prev, <span class="kw-2">mut </span>link_next) = (head, <span class="self">self</span>.sparse[head].link);
-<a href=#409 id=409 data-nosnippet>409</a>        <span class="kw">while </span>link_next != StateID::ZERO &amp;&amp; byte &gt; <span class="self">self</span>.sparse[link_next].byte
+<a href=#409 id=409 data-nosnippet>409</a>        <span class="kw">while </span><span class="macro">link_next !</span>= StateID::ZERO &amp;&amp; byte &gt; <span class="self">self</span>.sparse[link_next].byte
 <a href=#410 id=410 data-nosnippet>410</a>        {
 <a href=#411 id=411 data-nosnippet>411</a>            link_prev = link_next;
 <a href=#412 id=412 data-nosnippet>412</a>            link_next = <span class="self">self</span>.sparse[link_next].link;
@@ -470,7 +470,7 @@
 <a href=#470 id=470 data-nosnippet>470</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), BuildError&gt; {
 <a href=#471 id=471 data-nosnippet>471</a>        <span class="kw">let </span>head = <span class="self">self</span>.states[sid].matches;
 <a href=#472 id=472 data-nosnippet>472</a>        <span class="kw">let </span><span class="kw-2">mut </span>link = head;
-<a href=#473 id=473 data-nosnippet>473</a>        <span class="kw">while </span><span class="self">self</span>.matches[link].link != StateID::ZERO {
+<a href=#473 id=473 data-nosnippet>473</a>        <span class="kw">while </span><span class="self">self</span>.matches[link].<span class="macro">link !</span>= StateID::ZERO {
 <a href=#474 id=474 data-nosnippet>474</a>            link = <span class="self">self</span>.matches[link].link;
 <a href=#475 id=475 data-nosnippet>475</a>        }
 <a href=#476 id=476 data-nosnippet>476</a>        <span class="kw">let </span>new_match_link = <span class="self">self</span>.alloc_match()<span class="question-mark">?</span>;
@@ -494,11 +494,11 @@
 <a href=#494 id=494 data-nosnippet>494</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), BuildError&gt; {
 <a href=#495 id=495 data-nosnippet>495</a>        <span class="kw">let </span>head_dst = <span class="self">self</span>.states[dst].matches;
 <a href=#496 id=496 data-nosnippet>496</a>        <span class="kw">let </span><span class="kw-2">mut </span>link_dst = head_dst;
-<a href=#497 id=497 data-nosnippet>497</a>        <span class="kw">while </span><span class="self">self</span>.matches[link_dst].link != StateID::ZERO {
+<a href=#497 id=497 data-nosnippet>497</a>        <span class="kw">while </span><span class="self">self</span>.matches[link_dst].<span class="macro">link !</span>= StateID::ZERO {
 <a href=#498 id=498 data-nosnippet>498</a>            link_dst = <span class="self">self</span>.matches[link_dst].link;
 <a href=#499 id=499 data-nosnippet>499</a>        }
 <a href=#500 id=500 data-nosnippet>500</a>        <span class="kw">let </span><span class="kw-2">mut </span>link_src = <span class="self">self</span>.states[src].matches;
-<a href=#501 id=501 data-nosnippet>501</a>        <span class="kw">while </span>link_src != StateID::ZERO {
+<a href=#501 id=501 data-nosnippet>501</a>        <span class="kw">while </span><span class="macro">link_src !</span>= StateID::ZERO {
 <a href=#502 id=502 data-nosnippet>502</a>            <span class="kw">let </span>new_match_link =
 <a href=#503 id=503 data-nosnippet>503</a>                StateID::new(<span class="self">self</span>.matches.len()).map_err(|e| {
 <a href=#504 id=504 data-nosnippet>504</a>                    BuildError::state_id_overflow(
@@ -611,7 +611,7 @@
 <a href=#611 id=611 data-nosnippet>611</a>        // 3. The start state has no transitions to the FAIL state.
 <a href=#612 id=612 data-nosnippet>612</a>        </span><span class="kw">loop </span>{
 <a href=#613 id=613 data-nosnippet>613</a>            <span class="kw">let </span>next = <span class="self">self</span>.follow_transition(sid, byte);
-<a href=#614 id=614 data-nosnippet>614</a>            <span class="kw">if </span>next != NFA::FAIL {
+<a href=#614 id=614 data-nosnippet>614</a>            <span class="kw">if </span><span class="macro">next !</span>= NFA::FAIL {
 <a href=#615 id=615 data-nosnippet>615</a>                <span class="kw">return </span>next;
 <a href=#616 id=616 data-nosnippet>616</a>            }
 <a href=#617 id=617 data-nosnippet>617</a>            <span class="comment">// For an anchored search, we never follow failure transitions
@@ -750,7 +750,7 @@
 <a href=#750 id=750 data-nosnippet>750</a><span class="kw">impl </span>State {
 <a href=#751 id=751 data-nosnippet>751</a>    <span class="doccomment">/// Return true if and only if this state is a match state.
 <a href=#752 id=752 data-nosnippet>752</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_match(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-<a href=#753 id=753 data-nosnippet>753</a>        <span class="self">self</span>.matches != StateID::ZERO
+<a href=#753 id=753 data-nosnippet>753</a>        <span class="self">self</span>.<span class="macro">matches !</span>= StateID::ZERO
 <a href=#754 id=754 data-nosnippet>754</a>    }
 <a href=#755 id=755 data-nosnippet>755</a>
 <a href=#756 id=756 data-nosnippet>756</a>    <span class="doccomment">/// Returns the failure transition for this state.
@@ -1130,7 +1130,7 @@
 <a href=#1130 id=1130 data-nosnippet>1130</a>                // faster. Other states use a sparse representation that uses
 <a href=#1131 id=1131 data-nosnippet>1131</a>                // less memory but is slower.
 <a href=#1132 id=1132 data-nosnippet>1132</a>                </span><span class="kw">let </span>next = <span class="self">self</span>.nfa.follow_transition(prev, b);
-<a href=#1133 id=1133 data-nosnippet>1133</a>                <span class="kw">if </span>next != NFA::FAIL {
+<a href=#1133 id=1133 data-nosnippet>1133</a>                <span class="kw">if </span><span class="macro">next !</span>= NFA::FAIL {
 <a href=#1134 id=1134 data-nosnippet>1134</a>                    prev = next;
 <a href=#1135 id=1135 data-nosnippet>1135</a>                } <span class="kw">else </span>{
 <a href=#1136 id=1136 data-nosnippet>1136</a>                    <span class="kw">let </span>next = <span class="self">self</span>.nfa.alloc_state(depth)<span class="question-mark">?</span>;
@@ -1365,7 +1365,7 @@
 <a href=#1365 id=1365 data-nosnippet>1365</a>            // in addition to its own. For the non-overlapping case, such
 <a href=#1366 id=1366 data-nosnippet>1366</a>            // states only report the first match, which is never empty since
 <a href=#1367 id=1367 data-nosnippet>1367</a>            // it isn't a start state.
-<a href=#1368 id=1368 data-nosnippet>1368</a>            </span><span class="kw">if </span>!is_leftmost {
+<a href=#1368 id=1368 data-nosnippet>1368</a>            </span><span class="macro">if !</span>is_leftmost {
 <a href=#1369 id=1369 data-nosnippet>1369</a>                <span class="self">self</span>.nfa
 <a href=#1370 id=1370 data-nosnippet>1370</a>                    .copy_matches(<span class="self">self</span>.nfa.special.start_unanchored_id, id)<span class="question-mark">?</span>;
 <a href=#1371 id=1371 data-nosnippet>1371</a>            }
@@ -1421,7 +1421,7 @@
 <a href=#1421 id=1421 data-nosnippet>1421</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>next_avail = StateID::from(<span class="number">4u8</span>);
 <a href=#1422 id=1422 data-nosnippet>1422</a>        <span class="kw">for </span>i <span class="kw">in </span>next_avail.as_usize()..<span class="self">self</span>.nfa.states.len() {
 <a href=#1423 id=1423 data-nosnippet>1423</a>            <span class="kw">let </span>sid = StateID::new(i).unwrap();
-<a href=#1424 id=1424 data-nosnippet>1424</a>            <span class="kw">if </span>!<span class="self">self</span>.nfa.states[sid].is_match() {
+<a href=#1424 id=1424 data-nosnippet>1424</a>            <span class="macro">if !</span><span class="self">self</span>.nfa.states[sid].is_match() {
 <a href=#1425 id=1425 data-nosnippet>1425</a>                <span class="kw">continue</span>;
 <a href=#1426 id=1426 data-nosnippet>1426</a>            }
 <a href=#1427 id=1427 data-nosnippet>1427</a>            remapper.swap(<span class="kw-2">&amp;mut </span><span class="self">self</span>.nfa, sid, next_avail);
@@ -1627,7 +1627,7 @@
 <a href=#1627 id=1627 data-nosnippet>1627</a>                prev_link = <span class="prelude-val">Some</span>(link);
 <a href=#1628 id=1628 data-nosnippet>1628</a>                <span class="kw">if </span><span class="self">self</span>.nfa.sparse[link].next() == start_uid {
 <a href=#1629 id=1629 data-nosnippet>1629</a>                    <span class="self">self</span>.nfa.sparse[link].next = NFA::DEAD;
-<a href=#1630 id=1630 data-nosnippet>1630</a>                    <span class="kw">if </span>dense != StateID::ZERO {
+<a href=#1630 id=1630 data-nosnippet>1630</a>                    <span class="kw">if </span><span class="macro">dense !</span>= StateID::ZERO {
 <a href=#1631 id=1631 data-nosnippet>1631</a>                        <span class="kw">let </span>b = <span class="self">self</span>.nfa.sparse[link].byte;
 <a href=#1632 id=1632 data-nosnippet>1632</a>                        <span class="kw">let </span>class = usize::from(<span class="self">self</span>.nfa.byte_classes.get(b));
 <a href=#1633 id=1633 data-nosnippet>1633</a>                        <span class="self">self</span>.nfa.dense[dense.as_usize() + class] = NFA::DEAD;
@@ -1759,4 +1759,5 @@
 <a href=#1759 id=1759 data-nosnippet>1759</a>        <span class="macro">writeln!</span>(f, <span class="string">")"</span>)<span class="question-mark">?</span>;
 <a href=#1760 id=1760 data-nosnippet>1760</a>        <span class="prelude-val">Ok</span>(())
 <a href=#1761 id=1761 data-nosnippet>1761</a>    }
-<a href=#1762 id=1762 data-nosnippet>1762</a>}</code></pre></div></section></main></body></html>
+<a href=#1762 id=1762 data-nosnippet>1762</a>}
+</code></pre></div></section></main></body></html>

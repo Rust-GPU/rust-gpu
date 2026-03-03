@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_derive-1.0.228/src/internals/attr.rs`."><title>attr.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="serde_derive" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (f34ba774c 2025-08-03)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-68b7e25d.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">serde_derive/internals/</div>attr.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span><span class="kw">crate</span>::internals::name::{MultiName, Name};
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_derive-1.0.228/src/internals/attr.rs`."><title>attr.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="serde_derive" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (adaa83897 2025-10-27)" data-channel="nightly" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">serde_derive/internals/</div>attr.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span><span class="kw">crate</span>::internals::name::{MultiName, Name};
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span><span class="kw">crate</span>::internals::symbol::<span class="kw-2">*</span>;
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span><span class="kw">crate</span>::internals::{ungroup, Ctxt};
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span>proc_macro2::{Spacing, Span, TokenStream, TokenTree};
@@ -294,7 +294,7 @@
 <a href=#294 id=294 data-nosnippet>294</a>                        <span class="kw">match </span>RenameRule::from_str(<span class="kw-2">&amp;</span>de.value()) {
 <a href=#295 id=295 data-nosnippet>295</a>                            <span class="prelude-val">Ok</span>(rename_rule) =&gt; rename_all_de_rule.set(<span class="kw-2">&amp;</span>meta.path, rename_rule),
 <a href=#296 id=296 data-nosnippet>296</a>                            <span class="prelude-val">Err</span>(err) =&gt; {
-<a href=#297 id=297 data-nosnippet>297</a>                                <span class="kw">if </span>!one_name {
+<a href=#297 id=297 data-nosnippet>297</a>                                <span class="macro">if !</span>one_name {
 <a href=#298 id=298 data-nosnippet>298</a>                                    cx.error_spanned_by(de, err);
 <a href=#299 id=299 data-nosnippet>299</a>                                }
 <a href=#300 id=300 data-nosnippet>300</a>                            }
@@ -322,7 +322,7 @@
 <a href=#322 id=322 data-nosnippet>322</a>                                        rename_all_fields_de_rule.set(<span class="kw-2">&amp;</span>meta.path, rename_rule);
 <a href=#323 id=323 data-nosnippet>323</a>                                    }
 <a href=#324 id=324 data-nosnippet>324</a>                                    <span class="prelude-val">Err</span>(err) =&gt; {
-<a href=#325 id=325 data-nosnippet>325</a>                                        <span class="kw">if </span>!one_name {
+<a href=#325 id=325 data-nosnippet>325</a>                                        <span class="macro">if !</span>one_name {
 <a href=#326 id=326 data-nosnippet>326</a>                                            cx.error_spanned_by(de, err);
 <a href=#327 id=327 data-nosnippet>327</a>                                        }
 <a href=#328 id=328 data-nosnippet>328</a>                                    }
@@ -802,7 +802,7 @@
 <a href=#802 id=802 data-nosnippet>802</a>                        <span class="kw">match </span>RenameRule::from_str(<span class="kw-2">&amp;</span>de.value()) {
 <a href=#803 id=803 data-nosnippet>803</a>                            <span class="prelude-val">Ok</span>(rename_rule) =&gt; rename_all_de_rule.set(<span class="kw-2">&amp;</span>meta.path, rename_rule),
 <a href=#804 id=804 data-nosnippet>804</a>                            <span class="prelude-val">Err</span>(err) =&gt; {
-<a href=#805 id=805 data-nosnippet>805</a>                                <span class="kw">if </span>!one_name {
+<a href=#805 id=805 data-nosnippet>805</a>                                <span class="macro">if !</span>one_name {
 <a href=#806 id=806 data-nosnippet>806</a>                                    cx.error_spanned_by(de, err);
 <a href=#807 id=807 data-nosnippet>807</a>                                }
 <a href=#808 id=808 data-nosnippet>808</a>                            }
@@ -923,11 +923,11 @@
 <a href=#923 id=923 data-nosnippet>923</a>    }
 <a href=#924 id=924 data-nosnippet>924</a>
 <a href=#925 id=925 data-nosnippet>925</a>    <span class="kw">pub fn </span>rename_by_rules(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rules: RenameAllRules) {
-<a href=#926 id=926 data-nosnippet>926</a>        <span class="kw">if </span>!<span class="self">self</span>.name.serialize_renamed {
+<a href=#926 id=926 data-nosnippet>926</a>        <span class="macro">if !</span><span class="self">self</span>.name.serialize_renamed {
 <a href=#927 id=927 data-nosnippet>927</a>            <span class="self">self</span>.name.serialize.value =
 <a href=#928 id=928 data-nosnippet>928</a>                rules.serialize.apply_to_variant(<span class="kw-2">&amp;</span><span class="self">self</span>.name.serialize.value);
 <a href=#929 id=929 data-nosnippet>929</a>        }
-<a href=#930 id=930 data-nosnippet>930</a>        <span class="kw">if </span>!<span class="self">self</span>.name.deserialize_renamed {
+<a href=#930 id=930 data-nosnippet>930</a>        <span class="macro">if !</span><span class="self">self</span>.name.deserialize_renamed {
 <a href=#931 id=931 data-nosnippet>931</a>            <span class="self">self</span>.name.deserialize.value = rules
 <a href=#932 id=932 data-nosnippet>932</a>                .deserialize
 <a href=#933 id=933 data-nosnippet>933</a>                .apply_to_variant(<span class="kw-2">&amp;</span><span class="self">self</span>.name.deserialize.value);
@@ -1047,7 +1047,7 @@
 <a href=#1047 id=1047 data-nosnippet>1047</a>            <span class="kw">if let </span><span class="prelude-val">Ok</span>(borrowable) = borrowable_lifetimes(cx, <span class="kw-2">&amp;</span>ident, field) {
 <a href=#1048 id=1048 data-nosnippet>1048</a>                <span class="kw">if let </span><span class="prelude-val">Some</span>(lifetimes) = <span class="kw-2">&amp;</span>borrow_attribute.lifetimes {
 <a href=#1049 id=1049 data-nosnippet>1049</a>                    <span class="kw">for </span>lifetime <span class="kw">in </span>lifetimes {
-<a href=#1050 id=1050 data-nosnippet>1050</a>                        <span class="kw">if </span>!borrowable.contains(lifetime) {
+<a href=#1050 id=1050 data-nosnippet>1050</a>                        <span class="macro">if !</span>borrowable.contains(lifetime) {
 <a href=#1051 id=1051 data-nosnippet>1051</a>                            <span class="kw">let </span>msg =
 <a href=#1052 id=1052 data-nosnippet>1052</a>                                <span class="macro">format!</span>(<span class="string">"field `{}` does not have lifetime {}"</span>, ident, lifetime);
 <a href=#1053 id=1053 data-nosnippet>1053</a>                            cx.error_spanned_by(field, msg);
@@ -1149,7 +1149,7 @@
 <a href=#1149 id=1149 data-nosnippet>1149</a>                        </span><span class="kw">let </span>lifetimes = parse_lit_into_lifetimes(cx, <span class="kw-2">&amp;</span>meta)<span class="question-mark">?</span>;
 <a href=#1150 id=1150 data-nosnippet>1150</a>                        <span class="kw">if let </span><span class="prelude-val">Ok</span>(borrowable) = borrowable_lifetimes(cx, <span class="kw-2">&amp;</span>ident, field) {
 <a href=#1151 id=1151 data-nosnippet>1151</a>                            <span class="kw">for </span>lifetime <span class="kw">in </span><span class="kw-2">&amp;</span>lifetimes {
-<a href=#1152 id=1152 data-nosnippet>1152</a>                                <span class="kw">if </span>!borrowable.contains(lifetime) {
+<a href=#1152 id=1152 data-nosnippet>1152</a>                                <span class="macro">if !</span>borrowable.contains(lifetime) {
 <a href=#1153 id=1153 data-nosnippet>1153</a>                                    <span class="kw">let </span>msg = <span class="macro">format!</span>(
 <a href=#1154 id=1154 data-nosnippet>1154</a>                                        <span class="string">"field `{}` does not have lifetime {}"</span>,
 <a href=#1155 id=1155 data-nosnippet>1155</a>                                        ident, lifetime,
@@ -1195,7 +1195,7 @@
 <a href=#1195 id=1195 data-nosnippet>1195</a>        }
 <a href=#1196 id=1196 data-nosnippet>1196</a>
 <a href=#1197 id=1197 data-nosnippet>1197</a>        <span class="kw">let </span><span class="kw-2">mut </span>borrowed_lifetimes = borrowed_lifetimes.get().unwrap_or_default();
-<a href=#1198 id=1198 data-nosnippet>1198</a>        <span class="kw">if </span>!borrowed_lifetimes.is_empty() {
+<a href=#1198 id=1198 data-nosnippet>1198</a>        <span class="macro">if !</span>borrowed_lifetimes.is_empty() {
 <a href=#1199 id=1199 data-nosnippet>1199</a>            <span class="comment">// Cow&lt;str&gt; and Cow&lt;[u8]&gt; never borrow by default:
 <a href=#1200 id=1200 data-nosnippet>1200</a>            //
 <a href=#1201 id=1201 data-nosnippet>1201</a>            //     impl&lt;'de, 'a, T: ?Sized&gt; Deserialize&lt;'de&gt; for Cow&lt;'a, T&gt;
@@ -1272,10 +1272,10 @@
 <a href=#1272 id=1272 data-nosnippet>1272</a>    }
 <a href=#1273 id=1273 data-nosnippet>1273</a>
 <a href=#1274 id=1274 data-nosnippet>1274</a>    <span class="kw">pub fn </span>rename_by_rules(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rules: RenameAllRules) {
-<a href=#1275 id=1275 data-nosnippet>1275</a>        <span class="kw">if </span>!<span class="self">self</span>.name.serialize_renamed {
+<a href=#1275 id=1275 data-nosnippet>1275</a>        <span class="macro">if !</span><span class="self">self</span>.name.serialize_renamed {
 <a href=#1276 id=1276 data-nosnippet>1276</a>            <span class="self">self</span>.name.serialize.value = rules.serialize.apply_to_field(<span class="kw-2">&amp;</span><span class="self">self</span>.name.serialize.value);
 <a href=#1277 id=1277 data-nosnippet>1277</a>        }
-<a href=#1278 id=1278 data-nosnippet>1278</a>        <span class="kw">if </span>!<span class="self">self</span>.name.deserialize_renamed {
+<a href=#1278 id=1278 data-nosnippet>1278</a>        <span class="macro">if !</span><span class="self">self</span>.name.deserialize_renamed {
 <a href=#1279 id=1279 data-nosnippet>1279</a>            <span class="self">self</span>.name.deserialize.value = rules
 <a href=#1280 id=1280 data-nosnippet>1280</a>                .deserialize
 <a href=#1281 id=1281 data-nosnippet>1281</a>                .apply_to_field(<span class="kw-2">&amp;</span><span class="self">self</span>.name.deserialize.value);
@@ -1435,7 +1435,7 @@
 <a href=#1435 id=1435 data-nosnippet>1435</a>    }) = value
 <a href=#1436 id=1436 data-nosnippet>1436</a>    {
 <a href=#1437 id=1437 data-nosnippet>1437</a>        <span class="kw">let </span>suffix = lit.suffix();
-<a href=#1438 id=1438 data-nosnippet>1438</a>        <span class="kw">if </span>!suffix.is_empty() {
+<a href=#1438 id=1438 data-nosnippet>1438</a>        <span class="macro">if !</span>suffix.is_empty() {
 <a href=#1439 id=1439 data-nosnippet>1439</a>            cx.error_spanned_by(
 <a href=#1440 id=1440 data-nosnippet>1440</a>                lit,
 <a href=#1441 id=1441 data-nosnippet>1441</a>                <span class="macro">format!</span>(<span class="string">"unexpected suffix `{}` on string literal"</span>, suffix),
@@ -1555,9 +1555,9 @@
 <a href=#1555 id=1555 data-nosnippet>1555</a>
 <a href=#1556 id=1556 data-nosnippet>1556</a>    <span class="kw">if let </span><span class="prelude-val">Ok</span>(lifetimes) = string.parse_with(|input: ParseStream| {
 <a href=#1557 id=1557 data-nosnippet>1557</a>        <span class="kw">let </span><span class="kw-2">mut </span>set = BTreeSet::new();
-<a href=#1558 id=1558 data-nosnippet>1558</a>        <span class="kw">while </span>!input.is_empty() {
+<a href=#1558 id=1558 data-nosnippet>1558</a>        <span class="macro">while !</span>input.is_empty() {
 <a href=#1559 id=1559 data-nosnippet>1559</a>            <span class="kw">let </span>lifetime: Lifetime = input.parse()<span class="question-mark">?</span>;
-<a href=#1560 id=1560 data-nosnippet>1560</a>            <span class="kw">if </span>!set.insert(lifetime.clone()) {
+<a href=#1560 id=1560 data-nosnippet>1560</a>            <span class="macro">if !</span>set.insert(lifetime.clone()) {
 <a href=#1561 id=1561 data-nosnippet>1561</a>                cx.error_spanned_by(
 <a href=#1562 id=1562 data-nosnippet>1562</a>                    <span class="kw-2">&amp;</span>string,
 <a href=#1563 id=1563 data-nosnippet>1563</a>                    <span class="macro">format!</span>(<span class="string">"duplicate borrowed lifetime `{}`"</span>, lifetime),
@@ -1828,4 +1828,5 @@
 <a href=#1828 id=1828 data-nosnippet>1828</a>            <span class="kw">_ </span>=&gt; {}
 <a href=#1829 id=1829 data-nosnippet>1829</a>        }
 <a href=#1830 id=1830 data-nosnippet>1830</a>    }
-<a href=#1831 id=1831 data-nosnippet>1831</a>}</code></pre></div></section></main></body></html>
+<a href=#1831 id=1831 data-nosnippet>1831</a>}
+</code></pre></div></section></main></body></html>

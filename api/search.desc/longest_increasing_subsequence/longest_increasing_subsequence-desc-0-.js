@@ -1,1 +1,0 @@
-searchState.loadedDescShard("longest_increasing_subsequence", 0, "   Build Status\nThe high-level, easy-to-use function for finding a longest …\nThe low-level function for finding a longest increasing …")

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spirt-0.4.0/src/cfg.rs`."><title>cfg.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="spirt" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (f34ba774c 2025-08-03)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-68b7e25d.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">spirt/</div>cfg.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! Control-flow graph (CFG) abstractions and utilities.
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spirt-0.4.0/src/cfg.rs`."><title>cfg.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="spirt" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (adaa83897 2025-10-27)" data-channel="nightly" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">spirt/</div>cfg.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! Control-flow graph (CFG) abstractions and utilities.
 <a href=#2 id=2 data-nosnippet>2</a>
 <a href=#3 id=3 data-nosnippet>3</a></span><span class="kw">use </span><span class="kw">crate</span>::transform::{InnerInPlaceTransform <span class="kw">as _</span>, Transformer};
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use crate</span>::{
@@ -551,7 +551,7 @@
 <a href=#551 id=551 data-nosnippet>551</a>                    <span class="prelude-val">None </span>=&gt; <span class="kw">break</span>,
 <a href=#552 id=552 data-nosnippet>552</a>                }
 <a href=#553 id=553 data-nosnippet>553</a>            }
-<a href=#554 id=554 data-nosnippet>554</a>            (v != new_v).then_some(new_v)
+<a href=#554 id=554 data-nosnippet>554</a>            (<span class="macro">v !</span>= new_v).then_some(new_v)
 <a href=#555 id=555 data-nosnippet>555</a>        })
 <a href=#556 id=556 data-nosnippet>556</a>    }
 <a href=#557 id=557 data-nosnippet>557</a>}
@@ -1215,7 +1215,7 @@
 <a href=#1215 id=1215 data-nosnippet>1215</a>        };
 <a href=#1216 id=1216 data-nosnippet>1216</a>
 <a href=#1217 id=1217 data-nosnippet>1217</a>        <span class="kw">let </span><span class="kw-2">mut </span>backedge = <span class="prelude-val">None</span>;
-<a href=#1218 id=1218 data-nosnippet>1218</a>        <span class="kw">if </span>backedge_count != IncomingEdgeCount::default() {
+<a href=#1218 id=1218 data-nosnippet>1218</a>        <span class="kw">if </span><span class="macro">backedge_count !</span>= IncomingEdgeCount::default() {
 <a href=#1219 id=1219 data-nosnippet>1219</a>            (backedge, deferred_edges) =
 <a href=#1220 id=1220 data-nosnippet>1220</a>                deferred_edges.split_out_target(DeferredTarget::Region(target));
 <a href=#1221 id=1221 data-nosnippet>1221</a>        }
@@ -1549,7 +1549,7 @@
 <a href=#1549 id=1549 data-nosnippet>1549</a>                accumulated_backedge_count,
 <a href=#1550 id=1550 data-nosnippet>1550</a>                region_deferred_edges: deferred_edges,
 <a href=#1551 id=1551 data-nosnippet>1551</a>            });
-<a href=#1552 id=1552 data-nosnippet>1552</a>        <span class="kw">if </span>!<span class="macro">matches!</span>(old_state, <span class="prelude-val">Some</span>(StructurizeRegionState::InProgress)) {
+<a href=#1552 id=1552 data-nosnippet>1552</a>        <span class="macro">if !matches!</span>(old_state, <span class="prelude-val">Some</span>(StructurizeRegionState::InProgress)) {
 <a href=#1553 id=1553 data-nosnippet>1553</a>            <span class="macro">unreachable!</span>(
 <a href=#1554 id=1554 data-nosnippet>1554</a>                <span class="string">"cfg::Structurizer::structurize_region: \
 <a href=#1555 id=1555 data-nosnippet>1555</a>                 already {}, when attempting to store structurization result"</span>,
@@ -1864,7 +1864,7 @@
 <a href=#1864 id=1864 data-nosnippet>1864</a>        </span><span class="attr">#[allow(clippy::manual_flatten)]
 <a href=#1865 id=1865 data-nosnippet>1865</a>        </span><span class="kw">for </span>case <span class="kw">in </span>cases {
 <a href=#1866 id=1866 data-nosnippet>1866</a>            <span class="kw">if let </span><span class="prelude-val">Ok</span>(ClaimedRegion { structured_body, structured_body_inputs, .. }) = case {
-<a href=#1867 id=1867 data-nosnippet>1867</a>                <span class="kw">if </span>!structured_body_inputs.is_empty() {
+<a href=#1867 id=1867 data-nosnippet>1867</a>                <span class="macro">if !</span>structured_body_inputs.is_empty() {
 <a href=#1868 id=1868 data-nosnippet>1868</a>                    <span class="self">self</span>.control_region_input_rewrites.insert(
 <a href=#1869 id=1869 data-nosnippet>1869</a>                        structured_body,
 <a href=#1870 id=1870 data-nosnippet>1870</a>                        ControlRegionInputRewrites::ReplaceWith(structured_body_inputs),
@@ -1957,7 +1957,7 @@
 <a href=#1957 id=1957 data-nosnippet>1957</a>    ) -&gt; DeferredEdgeBundleSet {
 <a href=#1958 id=1958 data-nosnippet>1958</a>        <span class="kw">match </span>maybe_claimed_region {
 <a href=#1959 id=1959 data-nosnippet>1959</a>            <span class="prelude-val">Ok</span>(ClaimedRegion { structured_body, structured_body_inputs, deferred_edges }) =&gt; {
-<a href=#1960 id=1960 data-nosnippet>1960</a>                <span class="kw">if </span>!structured_body_inputs.is_empty() {
+<a href=#1960 id=1960 data-nosnippet>1960</a>                <span class="macro">if !</span>structured_body_inputs.is_empty() {
 <a href=#1961 id=1961 data-nosnippet>1961</a>                    <span class="self">self</span>.control_region_input_rewrites.insert(
 <a href=#1962 id=1962 data-nosnippet>1962</a>                        structured_body,
 <a href=#1963 id=1963 data-nosnippet>1963</a>                        ControlRegionInputRewrites::ReplaceWith(structured_body_inputs),
@@ -2121,4 +2121,5 @@
 <a href=#2121 id=2121 data-nosnippet>2121</a>            },
 <a href=#2122 id=2122 data-nosnippet>2122</a>        })
 <a href=#2123 id=2123 data-nosnippet>2123</a>    }
-<a href=#2124 id=2124 data-nosnippet>2124</a>}</code></pre></div></section></main></body></html>
+<a href=#2124 id=2124 data-nosnippet>2124</a>}
+</code></pre></div></section></main></body></html>

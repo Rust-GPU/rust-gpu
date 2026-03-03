@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/codegen_cx/entry.rs`."><title>entry.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (f34ba774c 2025-08-03)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-68b7e25d.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/codegen_cx/</div>entry.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/codegen_cx/entry.rs`."><title>entry.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (adaa83897 2025-10-27)" data-channel="nightly" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/codegen_cx/</div>entry.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
 <a href=#2 id=2 data-nosnippet>2</a></span><span class="kw">use </span><span class="kw">crate</span>::maybe_pqp_cg_ssa <span class="kw">as </span>rustc_codegen_ssa;
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span><span class="kw">super</span>::CodegenCx;
@@ -92,7 +92,7 @@
 <a href=#92 id=92 data-nosnippet>92</a>                    <span class="comment">// FIXME(eddyb) implement `ScalarPair` `Input`s, or change
 <a href=#93 id=93 data-nosnippet>93</a>                    // the `FnAbi` readjustment to only use `PassMode::Pair` for
 <a href=#94 id=94 data-nosnippet>94</a>                    // pointers to `!Sized` types, but not other `ScalarPair`s.
-<a href=#95 id=95 data-nosnippet>95</a>                    </span><span class="kw">if </span>!<span class="macro">matches!</span>(arg_abi.layout.ty.kind(), ty::Ref(..)) {
+<a href=#95 id=95 data-nosnippet>95</a>                    </span><span class="macro">if !matches!</span>(arg_abi.layout.ty.kind(), ty::Ref(..)) {
 <a href=#96 id=96 data-nosnippet>96</a>                        <span class="self">self</span>.tcx.dcx().span_err(
 <a href=#97 id=97 data-nosnippet>97</a>                            hir_param.ty_span,
 <a href=#98 id=98 data-nosnippet>98</a>                            <span class="macro">format!</span>(
@@ -285,7 +285,7 @@
 <a href=#285 id=285 data-nosnippet>285</a>        </span><span class="kw">let </span>attr_storage_class = attrs.storage_class.map(|storage_class_attr| {
 <a href=#286 id=286 data-nosnippet>286</a>            <span class="kw">let </span>storage_class = storage_class_attr.value;
 <a href=#287 id=287 data-nosnippet>287</a>
-<a href=#288 id=288 data-nosnippet>288</a>            <span class="kw">if </span>!is_ref {
+<a href=#288 id=288 data-nosnippet>288</a>            <span class="macro">if !</span>is_ref {
 <a href=#289 id=289 data-nosnippet>289</a>                <span class="self">self</span>.tcx.dcx().span_fatal(
 <a href=#290 id=290 data-nosnippet>290</a>                    hir_param.ty_span,
 <a href=#291 id=291 data-nosnippet>291</a>                    <span class="macro">format!</span>(
@@ -346,7 +346,7 @@
 <a href=#346 id=346 data-nosnippet>346</a>            </span><span class="kw">let </span>ref_is_read_only = read_only;
 <a href=#347 id=347 data-nosnippet>347</a>            <span class="kw">let </span>storage_class_requires_read_only =
 <a href=#348 id=348 data-nosnippet>348</a>                expected_mutbl_for(storage_class) == hir::Mutability::Not;
-<a href=#349 id=349 data-nosnippet>349</a>            <span class="kw">if </span>!ref_is_read_only &amp;&amp; storage_class_requires_read_only {
+<a href=#349 id=349 data-nosnippet>349</a>            <span class="macro">if !</span>ref_is_read_only &amp;&amp; storage_class_requires_read_only {
 <a href=#350 id=350 data-nosnippet>350</a>                <span class="kw">let </span><span class="kw-2">mut </span>err = <span class="self">self</span>.tcx.dcx().struct_span_err(
 <a href=#351 id=351 data-nosnippet>351</a>                    hir_param.ty_span,
 <a href=#352 id=352 data-nosnippet>352</a>                    <span class="macro">format!</span>(
@@ -850,7 +850,7 @@
 <a href=#850 id=850 data-nosnippet>850</a>                    <span class="string">"`#[spirv(location = ...)]` cannot be combined with `#[spirv(binding = ...)]`"</span>,
 <a href=#851 id=851 data-nosnippet>851</a>                );
 <a href=#852 id=852 data-nosnippet>852</a>            }
-<a href=#853 id=853 data-nosnippet>853</a>            <span class="kw">if </span>!has_location {
+<a href=#853 id=853 data-nosnippet>853</a>            <span class="macro">if !</span>has_location {
 <a href=#854 id=854 data-nosnippet>854</a>                <span class="self">self</span>.tcx.dcx().span_fatal(
 <a href=#855 id=855 data-nosnippet>855</a>                    location.span,
 <a href=#856 id=856 data-nosnippet>856</a>                    <span class="string">"`#[spirv(location = ...)]` can only be used on Inputs (declared as plain values, eg. `Vec4`) \
@@ -871,7 +871,7 @@
 <a href=#871 id=871 data-nosnippet>871</a>                .decorate(var_id.unwrap(), Decoration::Flat, std::iter::empty());
 <a href=#872 id=872 data-nosnippet>872</a>        }
 <a href=#873 id=873 data-nosnippet>873</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(invariant) = attrs.invariant {
-<a href=#874 id=874 data-nosnippet>874</a>            <span class="kw">if </span>storage_class != <span class="prelude-val">Ok</span>(StorageClass::Output) {
+<a href=#874 id=874 data-nosnippet>874</a>            <span class="kw">if </span><span class="macro">storage_class !</span>= <span class="prelude-val">Ok</span>(StorageClass::Output) {
 <a href=#875 id=875 data-nosnippet>875</a>                <span class="self">self</span>.tcx.dcx().span_fatal(
 <a href=#876 id=876 data-nosnippet>876</a>                    invariant.span,
 <a href=#877 id=877 data-nosnippet>877</a>                    <span class="string">"`#[spirv(invariant)]` is only valid on Output variables"</span>,
@@ -883,7 +883,7 @@
 <a href=#883 id=883 data-nosnippet>883</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(per_primitive_ext) = attrs.per_primitive_ext {
 <a href=#884 id=884 data-nosnippet>884</a>            <span class="kw">match </span>execution_model {
 <a href=#885 id=885 data-nosnippet>885</a>                ExecutionModel::Fragment =&gt; {
-<a href=#886 id=886 data-nosnippet>886</a>                    <span class="kw">if </span>storage_class != <span class="prelude-val">Ok</span>(StorageClass::Input) {
+<a href=#886 id=886 data-nosnippet>886</a>                    <span class="kw">if </span><span class="macro">storage_class !</span>= <span class="prelude-val">Ok</span>(StorageClass::Input) {
 <a href=#887 id=887 data-nosnippet>887</a>                        <span class="self">self</span>.tcx.dcx().span_fatal(
 <a href=#888 id=888 data-nosnippet>888</a>                            per_primitive_ext.span,
 <a href=#889 id=889 data-nosnippet>889</a>                            <span class="string">"`#[spirv(per_primitive_ext)]` in fragment shaders is only valid on Input variables"</span>,
@@ -891,7 +891,7 @@
 <a href=#891 id=891 data-nosnippet>891</a>                    }
 <a href=#892 id=892 data-nosnippet>892</a>                }
 <a href=#893 id=893 data-nosnippet>893</a>                ExecutionModel::MeshNV | ExecutionModel::MeshEXT =&gt; {
-<a href=#894 id=894 data-nosnippet>894</a>                    <span class="kw">if </span>storage_class != <span class="prelude-val">Ok</span>(StorageClass::Output) {
+<a href=#894 id=894 data-nosnippet>894</a>                    <span class="kw">if </span><span class="macro">storage_class !</span>= <span class="prelude-val">Ok</span>(StorageClass::Output) {
 <a href=#895 id=895 data-nosnippet>895</a>                        <span class="self">self</span>.tcx.dcx().span_fatal(
 <a href=#896 id=896 data-nosnippet>896</a>                            per_primitive_ext.span,
 <a href=#897 id=897 data-nosnippet>897</a>                            <span class="string">"`#[spirv(per_primitive_ext)]` in mesh shaders is only valid on Output variables"</span>,
@@ -975,7 +975,7 @@
 <a href=#975 id=975 data-nosnippet>975</a>        // individually.
 <a href=#976 id=976 data-nosnippet>976</a>        // TODO: Is this right for UniformConstant? Do they share locations with
 <a href=#977 id=977 data-nosnippet>977</a>        // input/outpus?
-<a href=#978 id=978 data-nosnippet>978</a>        </span><span class="kw">if </span>!decoration_supersedes_location &amp;&amp; has_location {
+<a href=#978 id=978 data-nosnippet>978</a>        </span><span class="macro">if !</span>decoration_supersedes_location &amp;&amp; has_location {
 <a href=#979 id=979 data-nosnippet>979</a>            assign_location(var_id, <span class="prelude-val">None</span>);
 <a href=#980 id=980 data-nosnippet>980</a>        }
 <a href=#981 id=981 data-nosnippet>981</a>
@@ -1131,11 +1131,12 @@
 <a href=#1131 id=1131 data-nosnippet>1131</a>    <span class="doccomment">/// Check that builtin variables have the correct type.
 <a href=#1132 id=1132 data-nosnippet>1132</a>    </span><span class="kw">fn </span>check_builtin_type(<span class="kw-2">&amp;</span><span class="self">self</span>, span: Span, rust_ty: Ty&lt;<span class="lifetime">'tcx</span>&gt;, builtin: Spanned&lt;BuiltIn&gt;) {
 <a href=#1133 id=1133 data-nosnippet>1133</a>        <span class="comment">// LocalInvocationIndex must be a u32.
-<a href=#1134 id=1134 data-nosnippet>1134</a>        </span><span class="kw">if </span>builtin.value == BuiltIn::LocalInvocationIndex &amp;&amp; rust_ty != <span class="self">self</span>.tcx.types.u32 {
+<a href=#1134 id=1134 data-nosnippet>1134</a>        </span><span class="kw">if </span>builtin.value == BuiltIn::LocalInvocationIndex &amp;&amp; <span class="macro">rust_ty !</span>= <span class="self">self</span>.tcx.types.u32 {
 <a href=#1135 id=1135 data-nosnippet>1135</a>            <span class="self">self</span>.tcx.dcx().span_err(
 <a href=#1136 id=1136 data-nosnippet>1136</a>                span,
 <a href=#1137 id=1137 data-nosnippet>1137</a>                <span class="macro">format!</span>(<span class="string">"`#[spirv(local_invocation_index)]` must be a `u32`, not `{rust_ty}`"</span>),
 <a href=#1138 id=1138 data-nosnippet>1138</a>            );
 <a href=#1139 id=1139 data-nosnippet>1139</a>        }
 <a href=#1140 id=1140 data-nosnippet>1140</a>    }
-<a href=#1141 id=1141 data-nosnippet>1141</a>}</code></pre></div></section></main></body></html>
+<a href=#1141 id=1141 data-nosnippet>1141</a>}
+</code></pre></div></section></main></body></html>

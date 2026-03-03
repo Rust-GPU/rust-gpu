@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-automata-0.4.14/src/dfa/automaton.rs`."><title>automaton.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (f34ba774c 2025-08-03)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-68b7e25d.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">regex_automata/dfa/</div>automaton.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-automata-0.4.14/src/dfa/automaton.rs`."><title>automaton.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (adaa83897 2025-10-27)" data-channel="nightly" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">regex_automata/dfa/</div>automaton.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
 <a href=#2 id=2 data-nosnippet>2</a></span><span class="kw">use </span><span class="kw">crate</span>::util::search::PatternSet;
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use crate</span>::{
 <a href=#4 id=4 data-nosnippet>4</a>    dfa::search,
@@ -1301,7 +1301,7 @@
 <a href=#1301 id=1301 data-nosnippet>1301</a>        <span class="kw">let </span>utf8empty = <span class="self">self</span>.has_empty() &amp;&amp; <span class="self">self</span>.is_utf8();
 <a href=#1302 id=1302 data-nosnippet>1302</a>        <span class="kw">let </span>hm = <span class="kw">match </span>search::find_fwd(<span class="kw-2">&amp;</span><span class="self">self</span>, input)<span class="question-mark">? </span>{
 <a href=#1303 id=1303 data-nosnippet>1303</a>            <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
-<a href=#1304 id=1304 data-nosnippet>1304</a>            <span class="prelude-val">Some</span>(hm) <span class="kw">if </span>!utf8empty =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(hm)),
+<a href=#1304 id=1304 data-nosnippet>1304</a>            <span class="prelude-val">Some</span>(hm) <span class="macro">if !</span>utf8empty =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(hm)),
 <a href=#1305 id=1305 data-nosnippet>1305</a>            <span class="prelude-val">Some</span>(hm) =&gt; hm,
 <a href=#1306 id=1306 data-nosnippet>1306</a>        };
 <a href=#1307 id=1307 data-nosnippet>1307</a>        <span class="comment">// We get to this point when we know our DFA can match the empty string
@@ -1490,7 +1490,7 @@
 <a href=#1490 id=1490 data-nosnippet>1490</a>        <span class="kw">let </span>utf8empty = <span class="self">self</span>.has_empty() &amp;&amp; <span class="self">self</span>.is_utf8();
 <a href=#1491 id=1491 data-nosnippet>1491</a>        <span class="kw">let </span>hm = <span class="kw">match </span>search::find_rev(<span class="self">self</span>, input)<span class="question-mark">? </span>{
 <a href=#1492 id=1492 data-nosnippet>1492</a>            <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
-<a href=#1493 id=1493 data-nosnippet>1493</a>            <span class="prelude-val">Some</span>(hm) <span class="kw">if </span>!utf8empty =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(hm)),
+<a href=#1493 id=1493 data-nosnippet>1493</a>            <span class="prelude-val">Some</span>(hm) <span class="macro">if !</span>utf8empty =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(hm)),
 <a href=#1494 id=1494 data-nosnippet>1494</a>            <span class="prelude-val">Some</span>(hm) =&gt; hm,
 <a href=#1495 id=1495 data-nosnippet>1495</a>        };
 <a href=#1496 id=1496 data-nosnippet>1496</a>        empty::skip_splits_rev(input, hm, hm.offset(), |input| {
@@ -1588,7 +1588,7 @@
 <a href=#1588 id=1588 data-nosnippet>1588</a>        search::find_overlapping_fwd(<span class="self">self</span>, input, state)<span class="question-mark">?</span>;
 <a href=#1589 id=1589 data-nosnippet>1589</a>        <span class="kw">match </span>state.get_match() {
 <a href=#1590 id=1590 data-nosnippet>1590</a>            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(()),
-<a href=#1591 id=1591 data-nosnippet>1591</a>            <span class="prelude-val">Some</span>(<span class="kw">_</span>) <span class="kw">if </span>!utf8empty =&gt; <span class="prelude-val">Ok</span>(()),
+<a href=#1591 id=1591 data-nosnippet>1591</a>            <span class="prelude-val">Some</span>(<span class="kw">_</span>) <span class="macro">if !</span>utf8empty =&gt; <span class="prelude-val">Ok</span>(()),
 <a href=#1592 id=1592 data-nosnippet>1592</a>            <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; skip_empty_utf8_splits_overlapping(
 <a href=#1593 id=1593 data-nosnippet>1593</a>                input,
 <a href=#1594 id=1594 data-nosnippet>1594</a>                state,
@@ -1725,7 +1725,7 @@
 <a href=#1725 id=1725 data-nosnippet>1725</a>        search::find_overlapping_rev(<span class="self">self</span>, input, state)<span class="question-mark">?</span>;
 <a href=#1726 id=1726 data-nosnippet>1726</a>        <span class="kw">match </span>state.get_match() {
 <a href=#1727 id=1727 data-nosnippet>1727</a>            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(()),
-<a href=#1728 id=1728 data-nosnippet>1728</a>            <span class="prelude-val">Some</span>(<span class="kw">_</span>) <span class="kw">if </span>!utf8empty =&gt; <span class="prelude-val">Ok</span>(()),
+<a href=#1728 id=1728 data-nosnippet>1728</a>            <span class="prelude-val">Some</span>(<span class="kw">_</span>) <span class="macro">if !</span>utf8empty =&gt; <span class="prelude-val">Ok</span>(()),
 <a href=#1729 id=1729 data-nosnippet>1729</a>            <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; skip_empty_utf8_splits_overlapping(
 <a href=#1730 id=1730 data-nosnippet>1730</a>                input,
 <a href=#1731 id=1731 data-nosnippet>1731</a>                state,
@@ -2183,12 +2183,12 @@
 <a href=#2183 id=2183 data-nosnippet>2183</a>        <span class="prelude-val">Some</span>(hm) =&gt; hm,
 <a href=#2184 id=2184 data-nosnippet>2184</a>    };
 <a href=#2185 id=2185 data-nosnippet>2185</a>    <span class="kw">if </span>input.get_anchored().is_anchored() {
-<a href=#2186 id=2186 data-nosnippet>2186</a>        <span class="kw">if </span>!input.is_char_boundary(hm.offset()) {
+<a href=#2186 id=2186 data-nosnippet>2186</a>        <span class="macro">if !</span>input.is_char_boundary(hm.offset()) {
 <a href=#2187 id=2187 data-nosnippet>2187</a>            state.mat = <span class="prelude-val">None</span>;
 <a href=#2188 id=2188 data-nosnippet>2188</a>        }
 <a href=#2189 id=2189 data-nosnippet>2189</a>        <span class="kw">return </span><span class="prelude-val">Ok</span>(());
 <a href=#2190 id=2190 data-nosnippet>2190</a>    }
-<a href=#2191 id=2191 data-nosnippet>2191</a>    <span class="kw">while </span>!input.is_char_boundary(hm.offset()) {
+<a href=#2191 id=2191 data-nosnippet>2191</a>    <span class="macro">while !</span>input.is_char_boundary(hm.offset()) {
 <a href=#2192 id=2192 data-nosnippet>2192</a>        search(input, state)<span class="question-mark">?</span>;
 <a href=#2193 id=2193 data-nosnippet>2193</a>        hm = <span class="kw">match </span>state.get_match() {
 <a href=#2194 id=2194 data-nosnippet>2194</a>            <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(()),
@@ -2257,4 +2257,5 @@
 <a href=#2257 id=2257 data-nosnippet>2257</a>            dfa.try_search_fwd(<span class="kw-2">&amp;</span>Input::new(<span class="string">b"xyzabcxyz"</span>)),
 <a href=#2258 id=2258 data-nosnippet>2258</a>        );
 <a href=#2259 id=2259 data-nosnippet>2259</a>    }
-<a href=#2260 id=2260 data-nosnippet>2260</a>}</code></pre></div></section></main></body></html>
+<a href=#2260 id=2260 data-nosnippet>2260</a>}
+</code></pre></div></section></main></body></html>

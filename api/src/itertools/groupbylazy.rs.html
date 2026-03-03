@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/itertools-0.14.0/src/groupbylazy.rs`."><title>groupbylazy.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="itertools" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (f34ba774c 2025-08-03)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-68b7e25d.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">itertools/</div>groupbylazy.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>alloc::vec::{<span class="self">self</span>, Vec};
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/itertools-0.14.0/src/groupbylazy.rs`."><title>groupbylazy.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="itertools" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (adaa83897 2025-10-27)" data-channel="nightly" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">itertools/</div>groupbylazy.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>alloc::vec::{<span class="self">self</span>, Vec};
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span>std::cell::{Cell, RefCell};
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a><span class="doccomment">/// A trait to unify `FnMut` for `ChunkBy` with the chunk key in `IntoChunks`
@@ -167,7 +167,7 @@
 <a href=#167 id=167 data-nosnippet>167</a>        <span class="kw">let </span><span class="kw-2">mut </span>group = Vec::new();
 <a href=#168 id=168 data-nosnippet>168</a>
 <a href=#169 id=169 data-nosnippet>169</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(elt) = <span class="self">self</span>.current_elt.take() {
-<a href=#170 id=170 data-nosnippet>170</a>            <span class="kw">if </span><span class="self">self</span>.top_group != <span class="self">self</span>.dropped_group {
+<a href=#170 id=170 data-nosnippet>170</a>            <span class="kw">if </span><span class="self">self</span>.<span class="macro">top_group !</span>= <span class="self">self</span>.dropped_group {
 <a href=#171 id=171 data-nosnippet>171</a>                group.push(elt);
 <a href=#172 id=172 data-nosnippet>172</a>            }
 <a href=#173 id=173 data-nosnippet>173</a>        }
@@ -178,7 +178,7 @@
 <a href=#178 id=178 data-nosnippet>178</a>            <span class="kw">match </span><span class="self">self</span>.current_key.take() {
 <a href=#179 id=179 data-nosnippet>179</a>                <span class="prelude-val">None </span>=&gt; {}
 <a href=#180 id=180 data-nosnippet>180</a>                <span class="prelude-val">Some</span>(old_key) =&gt; {
-<a href=#181 id=181 data-nosnippet>181</a>                    <span class="kw">if </span>old_key != key {
+<a href=#181 id=181 data-nosnippet>181</a>                    <span class="kw">if </span><span class="macro">old_key !</span>= key {
 <a href=#182 id=182 data-nosnippet>182</a>                        <span class="self">self</span>.current_key = <span class="prelude-val">Some</span>(key);
 <a href=#183 id=183 data-nosnippet>183</a>                        first_elt = <span class="prelude-val">Some</span>(elt);
 <a href=#184 id=184 data-nosnippet>184</a>                        <span class="kw">break</span>;
@@ -186,12 +186,12 @@
 <a href=#186 id=186 data-nosnippet>186</a>                }
 <a href=#187 id=187 data-nosnippet>187</a>            }
 <a href=#188 id=188 data-nosnippet>188</a>            <span class="self">self</span>.current_key = <span class="prelude-val">Some</span>(key);
-<a href=#189 id=189 data-nosnippet>189</a>            <span class="kw">if </span><span class="self">self</span>.top_group != <span class="self">self</span>.dropped_group {
+<a href=#189 id=189 data-nosnippet>189</a>            <span class="kw">if </span><span class="self">self</span>.<span class="macro">top_group !</span>= <span class="self">self</span>.dropped_group {
 <a href=#190 id=190 data-nosnippet>190</a>                group.push(elt);
 <a href=#191 id=191 data-nosnippet>191</a>            }
 <a href=#192 id=192 data-nosnippet>192</a>        }
 <a href=#193 id=193 data-nosnippet>193</a>
-<a href=#194 id=194 data-nosnippet>194</a>        <span class="kw">if </span><span class="self">self</span>.top_group != <span class="self">self</span>.dropped_group {
+<a href=#194 id=194 data-nosnippet>194</a>        <span class="kw">if </span><span class="self">self</span>.<span class="macro">top_group !</span>= <span class="self">self</span>.dropped_group {
 <a href=#195 id=195 data-nosnippet>195</a>            <span class="self">self</span>.push_next_group(group);
 <a href=#196 id=196 data-nosnippet>196</a>        }
 <a href=#197 id=197 data-nosnippet>197</a>        <span class="kw">if </span>first_elt.is_some() {
@@ -229,7 +229,7 @@
 <a href=#229 id=229 data-nosnippet>229</a>                <span class="kw">match </span><span class="self">self</span>.current_key.take() {
 <a href=#230 id=230 data-nosnippet>230</a>                    <span class="prelude-val">None </span>=&gt; {}
 <a href=#231 id=231 data-nosnippet>231</a>                    <span class="prelude-val">Some</span>(old_key) =&gt; {
-<a href=#232 id=232 data-nosnippet>232</a>                        <span class="kw">if </span>old_key != key {
+<a href=#232 id=232 data-nosnippet>232</a>                        <span class="kw">if </span><span class="macro">old_key !</span>= key {
 <a href=#233 id=233 data-nosnippet>233</a>                            <span class="self">self</span>.current_key = <span class="prelude-val">Some</span>(key);
 <a href=#234 id=234 data-nosnippet>234</a>                            <span class="self">self</span>.current_elt = <span class="prelude-val">Some</span>(elt);
 <a href=#235 id=235 data-nosnippet>235</a>                            <span class="self">self</span>.top_group += <span class="number">1</span>;
@@ -260,7 +260,7 @@
 <a href=#260 id=260 data-nosnippet>260</a>        <span class="kw">let </span>old_key = <span class="self">self</span>.current_key.take().unwrap();
 <a href=#261 id=261 data-nosnippet>261</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(elt) = <span class="self">self</span>.next_element() {
 <a href=#262 id=262 data-nosnippet>262</a>            <span class="kw">let </span>key = <span class="self">self</span>.key.call_mut(<span class="kw-2">&amp;</span>elt);
-<a href=#263 id=263 data-nosnippet>263</a>            <span class="kw">if </span>old_key != key {
+<a href=#263 id=263 data-nosnippet>263</a>            <span class="kw">if </span><span class="macro">old_key !</span>= key {
 <a href=#264 id=264 data-nosnippet>264</a>                <span class="self">self</span>.top_group += <span class="number">1</span>;
 <a href=#265 id=265 data-nosnippet>265</a>            }
 <a href=#266 id=266 data-nosnippet>266</a>            <span class="self">self</span>.current_key = <span class="prelude-val">Some</span>(key);
@@ -328,7 +328,7 @@
 <a href=#328 id=328 data-nosnippet>328</a>            oldest_buffered_group: <span class="number">0</span>,
 <a href=#329 id=329 data-nosnippet>329</a>            bottom_group: <span class="number">0</span>,
 <a href=#330 id=330 data-nosnippet>330</a>            buffer: Vec::new(),
-<a href=#331 id=331 data-nosnippet>331</a>            dropped_group: !<span class="number">0</span>,
+<a href=#331 id=331 data-nosnippet>331</a>            <span class="macro">dropped_group: !</span><span class="number">0</span>,
 <a href=#332 id=332 data-nosnippet>332</a>        }),
 <a href=#333 id=333 data-nosnippet>333</a>        index: Cell::new(<span class="number">0</span>),
 <a href=#334 id=334 data-nosnippet>334</a>    }
@@ -473,7 +473,7 @@
 <a href=#473 id=473 data-nosnippet>473</a>            oldest_buffered_group: <span class="number">0</span>,
 <a href=#474 id=474 data-nosnippet>474</a>            bottom_group: <span class="number">0</span>,
 <a href=#475 id=475 data-nosnippet>475</a>            buffer: Vec::new(),
-<a href=#476 id=476 data-nosnippet>476</a>            dropped_group: !<span class="number">0</span>,
+<a href=#476 id=476 data-nosnippet>476</a>            <span class="macro">dropped_group: !</span><span class="number">0</span>,
 <a href=#477 id=477 data-nosnippet>477</a>        }),
 <a href=#478 id=478 data-nosnippet>478</a>        index: Cell::new(<span class="number">0</span>),
 <a href=#479 id=479 data-nosnippet>479</a>    }
@@ -610,4 +610,5 @@
 <a href=#610 id=610 data-nosnippet>610</a>        }
 <a href=#611 id=611 data-nosnippet>611</a>        <span class="self">self</span>.parent.step(<span class="self">self</span>.index)
 <a href=#612 id=612 data-nosnippet>612</a>    }
-<a href=#613 id=613 data-nosnippet>613</a>}</code></pre></div></section></main></body></html>
+<a href=#613 id=613 data-nosnippet>613</a>}
+</code></pre></div></section></main></body></html>

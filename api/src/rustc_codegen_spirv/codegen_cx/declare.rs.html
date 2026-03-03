@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/codegen_cx/declare.rs`."><title>declare.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (f34ba774c 2025-08-03)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-68b7e25d.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/codegen_cx/</div>declare.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/codegen_cx/declare.rs`."><title>declare.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (adaa83897 2025-10-27)" data-channel="nightly" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/codegen_cx/</div>declare.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
 <a href=#2 id=2 data-nosnippet>2</a></span><span class="kw">use </span><span class="kw">crate</span>::maybe_pqp_cg_ssa <span class="kw">as </span>rustc_codegen_ssa;
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span><span class="kw">super</span>::CodegenCx;
@@ -11,10 +11,10 @@
 <a href=#11 id=11 data-nosnippet>11</a><span class="kw">use </span>rspirv::spirv::{FunctionControl, LinkageType, StorageClass, Word};
 <a href=#12 id=12 data-nosnippet>12</a><span class="kw">use </span>rustc_abi::Align;
 <a href=#13 id=13 data-nosnippet>13</a><span class="kw">use </span>rustc_codegen_ssa::traits::{PreDefineCodegenMethods, StaticCodegenMethods};
-<a href=#14 id=14 data-nosnippet>14</a><span class="kw">use </span>rustc_hir::attrs::InlineAttr;
+<a href=#14 id=14 data-nosnippet>14</a><span class="kw">use </span>rustc_hir::attrs::{InlineAttr, Linkage};
 <a href=#15 id=15 data-nosnippet>15</a><span class="kw">use </span>rustc_middle::bug;
 <a href=#16 id=16 data-nosnippet>16</a><span class="kw">use </span>rustc_middle::middle::codegen_fn_attrs::{CodegenFnAttrFlags, CodegenFnAttrs};
-<a href=#17 id=17 data-nosnippet>17</a><span class="kw">use </span>rustc_middle::mir::mono::{Linkage, MonoItem, Visibility};
+<a href=#17 id=17 data-nosnippet>17</a><span class="kw">use </span>rustc_middle::mir::mono::{MonoItem, Visibility};
 <a href=#18 id=18 data-nosnippet>18</a><span class="kw">use </span>rustc_middle::ty::layout::{FnAbiOf, LayoutOf};
 <a href=#19 id=19 data-nosnippet>19</a><span class="kw">use </span>rustc_middle::ty::{<span class="self">self</span>, Instance, TypeVisitableExt, TypingEnv};
 <a href=#20 id=20 data-nosnippet>20</a><span class="kw">use </span>rustc_span::Span;
@@ -90,7 +90,7 @@
 <a href=#90 id=90 data-nosnippet>90</a>
 <a href=#91 id=91 data-nosnippet>91</a>            <span class="comment">// FIXME(eddyb) omitting `OpFunctionParameter` on imports might be
 <a href=#92 id=92 data-nosnippet>92</a>            // illegal, this probably shouldn't be conditional at all.
-<a href=#93 id=93 data-nosnippet>93</a>            </span><span class="kw">if </span>linkage != <span class="prelude-val">Some</span>(LinkageType::Import) {
+<a href=#93 id=93 data-nosnippet>93</a>            </span><span class="kw">if </span><span class="macro">linkage !</span>= <span class="prelude-val">Some</span>(LinkageType::Import) {
 <a href=#94 id=94 data-nosnippet>94</a>                <span class="kw">for </span><span class="kw-2">&amp;</span>ty <span class="kw">in </span>argument_types {
 <a href=#95 id=95 data-nosnippet>95</a>                    emit.function_parameter(ty).unwrap();
 <a href=#96 id=96 data-nosnippet>96</a>                }
@@ -178,7 +178,7 @@
 <a href=#178 id=178 data-nosnippet>178</a>
 <a href=#179 id=179 data-nosnippet>179</a>        <span class="comment">// Check if this is a From trait implementation
 <a href=#180 id=180 data-nosnippet>180</a>        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(impl_def_id) = <span class="self">self</span>.tcx.impl_of_assoc(def_id)
-<a href=#181 id=181 data-nosnippet>181</a>            &amp;&amp; <span class="kw">let </span><span class="prelude-val">Some</span>(trait_ref) = <span class="self">self</span>.tcx.impl_trait_ref(impl_def_id)
+<a href=#181 id=181 data-nosnippet>181</a>            &amp;&amp; <span class="kw">let </span><span class="prelude-val">Some</span>(trait_ref) = <span class="self">self</span>.tcx.impl_opt_trait_ref(impl_def_id)
 <a href=#182 id=182 data-nosnippet>182</a>        {
 <a href=#183 id=183 data-nosnippet>183</a>            <span class="kw">let </span>trait_def_id = trait_ref.skip_binder().def_id;
 <a href=#184 id=184 data-nosnippet>184</a>
@@ -401,7 +401,7 @@
 <a href=#401 id=401 data-nosnippet>401</a>
 <a href=#402 id=402 data-nosnippet>402</a>        <span class="kw">let </span>alloc = alloc.inner();
 <a href=#403 id=403 data-nosnippet>403</a>        <span class="kw">let </span>align_override =
-<a href=#404 id=404 data-nosnippet>404</a>            <span class="prelude-val">Some</span>(alloc.align).filter(|<span class="kw-2">&amp;</span>align| align != <span class="self">self</span>.lookup_type(value_ty).alignof(<span class="self">self</span>));
+<a href=#404 id=404 data-nosnippet>404</a>            <span class="prelude-val">Some</span>(alloc.align).filter(|<span class="kw-2">&amp;</span>align| <span class="macro">align !</span>= <span class="self">self</span>.lookup_type(value_ty).alignof(<span class="self">self</span>));
 <a href=#405 id=405 data-nosnippet>405</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(_align) = align_override {
 <a href=#406 id=406 data-nosnippet>406</a>            <span class="comment">// FIXME(eddyb) implement, or at least error.
 <a href=#407 id=407 data-nosnippet>407</a>        </span>}
@@ -461,4 +461,5 @@
 <a href=#461 id=461 data-nosnippet>461</a>        <span class="comment">// TODO: Ignore for now.
 <a href=#462 id=462 data-nosnippet>462</a>        </span><span class="kw">let </span>_unused = (<span class="self">self</span>, global);
 <a href=#463 id=463 data-nosnippet>463</a>    }
-<a href=#464 id=464 data-nosnippet>464</a>}</code></pre></div></section></main></body></html>
+<a href=#464 id=464 data-nosnippet>464</a>}
+</code></pre></div></section></main></body></html>

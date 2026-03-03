@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/codegen_cx/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (f34ba774c 2025-08-03)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-68b7e25d.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/codegen_cx/</div>mod.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">mod </span>constant;
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/codegen_cx/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (adaa83897 2025-10-27)" data-channel="nightly" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/codegen_cx/</div>mod.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">mod </span>constant;
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">mod </span>declare;
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">mod </span>entry;
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">mod </span>type_;
@@ -102,7 +102,7 @@
 <a href=#102 id=102 data-nosnippet>102</a>        <span class="comment">// Validate the target spec, as the backend doesn't control `--target`.
 <a href=#103 id=103 data-nosnippet>103</a>        </span><span class="kw">let </span>target_tuple = tcx.sess.opts.target_triple.tuple();
 <a href=#104 id=104 data-nosnippet>104</a>        <span class="kw">let </span>target: SpirvTarget = target_tuple.parse().unwrap_or_else(|<span class="kw">_</span>| {
-<a href=#105 id=105 data-nosnippet>105</a>            <span class="kw">let </span>qualifier = <span class="kw">if </span>!target_tuple.starts_with(<span class="string">"spirv-"</span>) {
+<a href=#105 id=105 data-nosnippet>105</a>            <span class="kw">let </span>qualifier = <span class="macro">if !</span>target_tuple.starts_with(<span class="string">"spirv-"</span>) {
 <a href=#106 id=106 data-nosnippet>106</a>                <span class="string">"non-SPIR-V "
 <a href=#107 id=107 data-nosnippet>107</a>            </span>} <span class="kw">else </span>{
 <a href=#108 id=108 data-nosnippet>108</a>                <span class="string">""
@@ -128,12 +128,12 @@
 <a href=#128 id=128 data-nosnippet>128</a>                </span>TargetTuple::TargetTuple(<span class="kw">_</span>) =&gt; {
 <a href=#129 id=129 data-nosnippet>129</a>                    <span class="comment">// FIXME(eddyb) this case should be impossible as upstream
 <a href=#130 id=130 data-nosnippet>130</a>                    // `rustc` doesn't support `spirv-*` targets!
-<a href=#131 id=131 data-nosnippet>131</a>                    </span>(expected != found).then(|| [expected, found].map(|spec| spec.to_json()))
+<a href=#131 id=131 data-nosnippet>131</a>                    </span>(<span class="macro">expected !</span>= found).then(|| [expected, found].map(|spec| spec.to_json()))
 <a href=#132 id=132 data-nosnippet>132</a>                }
 <a href=#133 id=133 data-nosnippet>133</a>                TargetTuple::TargetJson { contents, .. } =&gt; {
 <a href=#134 id=134 data-nosnippet>134</a>                    <span class="kw">let </span>expected = expected.to_json();
 <a href=#135 id=135 data-nosnippet>135</a>                    <span class="kw">let </span>found = serde_json::from_str(contents).unwrap();
-<a href=#136 id=136 data-nosnippet>136</a>                    (expected != found).then_some([expected, found])
+<a href=#136 id=136 data-nosnippet>136</a>                    (<span class="macro">expected !</span>= found).then_some([expected, found])
 <a href=#137 id=137 data-nosnippet>137</a>                }
 <a href=#138 id=138 data-nosnippet>138</a>            }
 <a href=#139 id=139 data-nosnippet>139</a>        };
@@ -154,7 +154,7 @@
 <a href=#154 id=154 data-nosnippet>154</a>                        path_for_rustdoc,
 <a href=#155 id=155 data-nosnippet>155</a>                        contents,
 <a href=#156 id=156 data-nosnippet>156</a>                        ..
-<a href=#157 id=157 data-nosnippet>157</a>                    } <span class="kw">if </span>!path_for_rustdoc.as_os_str().is_empty() =&gt; {
+<a href=#157 id=157 data-nosnippet>157</a>                    } <span class="macro">if !</span>path_for_rustdoc.as_os_str().is_empty() =&gt; {
 <a href=#158 id=158 data-nosnippet>158</a>                        <span class="macro">format!</span>(<span class="string">"found (`{}`):\n{contents}"</span>, path_for_rustdoc.display())
 <a href=#159 id=159 data-nosnippet>159</a>                    }
 <a href=#160 id=160 data-nosnippet>160</a>                    <span class="kw">_ </span>=&gt; <span class="macro">format!</span>(<span class="string">"found:\n{found:#}"</span>),
@@ -515,7 +515,7 @@
 <a href=#515 id=515 data-nosnippet>515</a>            .iter()
 <a href=#516 id=516 data-nosnippet>516</a>            .flat_map(|<span class="kw-2">&amp;</span>name| matches.opt_positions(name))
 <a href=#517 id=517 data-nosnippet>517</a>            .collect();
-<a href=#518 id=518 data-nosnippet>518</a>        <span class="kw">if </span>!help_flag_positions.is_empty() {
+<a href=#518 id=518 data-nosnippet>518</a>        <span class="macro">if !</span>help_flag_positions.is_empty() {
 <a href=#519 id=519 data-nosnippet>519</a>            <span class="comment">// HACK(eddyb) this tries to be a bit nicer to end-users, when they
 <a href=#520 id=520 data-nosnippet>520</a>            // use `spirv-builder` (and so the `RUSTGPU_CODEGEN_ARGS` env var,
 <a href=#521 id=521 data-nosnippet>521</a>            // to set codegen args), as mentioning `-Cllvm-args` is suboptimal.
@@ -601,10 +601,10 @@
 <a href=#601 id=601 data-nosnippet>601</a>        <span class="comment">// FIXME(eddyb) should these be handled as `-C linker-args="..."` instead?
 <a href=#602 id=602 data-nosnippet>602</a>        </span><span class="kw">let </span>linker_opts = <span class="kw">crate</span>::linker::Options {
 <a href=#603 id=603 data-nosnippet>603</a>            <span class="comment">// FIXME(eddyb) clean up this `no-` "negation prefix" situation.
-<a href=#604 id=604 data-nosnippet>604</a>            </span>compact_ids: !matches.opt_present(<span class="string">"no-compact-ids"</span>),
-<a href=#605 id=605 data-nosnippet>605</a>            early_report_zombies: !matches.opt_present(<span class="string">"no-early-report-zombies"</span>),
-<a href=#606 id=606 data-nosnippet>606</a>            infer_storage_classes: !matches.opt_present(<span class="string">"no-infer-storage-classes"</span>),
-<a href=#607 id=607 data-nosnippet>607</a>            structurize: !matches.opt_present(<span class="string">"no-structurize"</span>),
+<a href=#604 id=604 data-nosnippet>604</a>            </span><span class="macro">compact_ids: !</span>matches.opt_present(<span class="string">"no-compact-ids"</span>),
+<a href=#605 id=605 data-nosnippet>605</a>            <span class="macro">early_report_zombies: !</span>matches.opt_present(<span class="string">"no-early-report-zombies"</span>),
+<a href=#606 id=606 data-nosnippet>606</a>            <span class="macro">infer_storage_classes: !</span>matches.opt_present(<span class="string">"no-infer-storage-classes"</span>),
+<a href=#607 id=607 data-nosnippet>607</a>            <span class="macro">structurize: !</span>matches.opt_present(<span class="string">"no-structurize"</span>),
 <a href=#608 id=608 data-nosnippet>608</a>            preserve_bindings: matches.opt_present(<span class="string">"preserve-bindings"</span>),
 <a href=#609 id=609 data-nosnippet>609</a>            spirt_passes: matches
 <a href=#610 id=610 data-nosnippet>610</a>                .opt_strs(<span class="string">"spirt-passes"</span>)
@@ -954,4 +954,5 @@
 <a href=#954 id=954 data-nosnippet>954</a>            <span class="string">"[Rust-GPU] `#[naked] fn` not yet supported"</span>,
 <a href=#955 id=955 data-nosnippet>955</a>        )
 <a href=#956 id=956 data-nosnippet>956</a>    }
-<a href=#957 id=957 data-nosnippet>957</a>}</code></pre></div></section></main></body></html>
+<a href=#957 id=957 data-nosnippet>957</a>}
+</code></pre></div></section></main></body></html>

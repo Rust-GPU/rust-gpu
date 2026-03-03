@@ -1,1 +1,0 @@
-searchState.loadedDescShard("serde_derive", 0, "This crate provides Serde’s two derive macros.")

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/gimli-0.31.1/src/read/op.rs`."><title>op.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="gimli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (f34ba774c 2025-08-03)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-68b7e25d.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">gimli/read/</div>op.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! Functions for parsing and evaluating DWARF expressions.
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/gimli-0.31.1/src/read/op.rs`."><title>op.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="gimli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (adaa83897 2025-10-27)" data-channel="nightly" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">gimli/read/</div>op.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! Functions for parsing and evaluating DWARF expressions.
 <a href=#2 id=2 data-nosnippet>2</a>
 <a href=#3 id=3 data-nosnippet>3</a></span><span class="attr">#[cfg(feature = <span class="string">"read"</span>)]
 <a href=#4 id=4 data-nosnippet>4</a></span><span class="kw">use </span>alloc::vec::Vec;
@@ -1054,7 +1054,7 @@
 <a href=#1054 id=1054 data-nosnippet>1054</a></span><span class="kw">impl</span>&lt;R: Reader&gt; EvaluationStorage&lt;R&gt; <span class="kw">for </span>StoreOnHeap {
 <a href=#1055 id=1055 data-nosnippet>1055</a>    <span class="kw">type </span>Stack = Vec&lt;Value&gt;;
 <a href=#1056 id=1056 data-nosnippet>1056</a>    <span class="kw">type </span>ExpressionStack = Vec&lt;(R, R)&gt;;
-<a href=#1057 id=1057 data-nosnippet>1057</a>    <span class="kw">type </span><span class="prelude-ty">Result</span> = Vec&lt;Piece&lt;R&gt;&gt;;
+<a href=#1057 id=1057 data-nosnippet>1057</a>    <span class="kw">type </span><span class="prelude-ty">Result </span>= Vec&lt;Piece&lt;R&gt;&gt;;
 <a href=#1058 id=1058 data-nosnippet>1058</a>}
 <a href=#1059 id=1059 data-nosnippet>1059</a>
 <a href=#1060 id=1060 data-nosnippet>1060</a><span class="doccomment">/// A DWARF expression evaluator.
@@ -1384,7 +1384,7 @@
 <a href=#1384 id=1384 data-nosnippet>1384</a>            Operation::Bra { target } =&gt; {
 <a href=#1385 id=1385 data-nosnippet>1385</a>                <span class="kw">let </span>entry = <span class="self">self</span>.pop()<span class="question-mark">?</span>;
 <a href=#1386 id=1386 data-nosnippet>1386</a>                <span class="kw">let </span>v = entry.to_u64(<span class="self">self</span>.addr_mask)<span class="question-mark">?</span>;
-<a href=#1387 id=1387 data-nosnippet>1387</a>                <span class="kw">if </span>v != <span class="number">0 </span>{
+<a href=#1387 id=1387 data-nosnippet>1387</a>                <span class="kw">if </span><span class="macro">v !</span>= <span class="number">0 </span>{
 <a href=#1388 id=1388 data-nosnippet>1388</a>                    <span class="self">self</span>.pc = compute_pc(<span class="kw-2">&amp;</span><span class="self">self</span>.pc, <span class="kw-2">&amp;</span><span class="self">self</span>.bytecode, target)<span class="question-mark">?</span>;
 <a href=#1389 id=1389 data-nosnippet>1389</a>                }
 <a href=#1390 id=1390 data-nosnippet>1390</a>            }
@@ -1782,7 +1782,7 @@
 <a href=#1782 id=1782 data-nosnippet>1782</a>        <span class="kw">match </span><span class="self">self</span>.state {
 <a href=#1783 id=1783 data-nosnippet>1783</a>            EvaluationState::Error(err) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(err),
 <a href=#1784 id=1784 data-nosnippet>1784</a>            EvaluationState::Waiting(EvaluationWaiting::AtLocation) =&gt; {
-<a href=#1785 id=1785 data-nosnippet>1785</a>                <span class="kw">if </span>!bytes.is_empty() {
+<a href=#1785 id=1785 data-nosnippet>1785</a>                <span class="macro">if !</span>bytes.is_empty() {
 <a href=#1786 id=1786 data-nosnippet>1786</a>                    <span class="kw">let </span><span class="kw-2">mut </span>pc = bytes.clone();
 <a href=#1787 id=1787 data-nosnippet>1787</a>                    mem::swap(<span class="kw-2">&amp;mut </span>pc, <span class="kw-2">&amp;mut </span><span class="self">self</span>.pc);
 <a href=#1788 id=1788 data-nosnippet>1788</a>                    mem::swap(<span class="kw-2">&amp;mut </span>bytes, <span class="kw-2">&amp;mut </span><span class="self">self</span>.bytecode);
@@ -1929,7 +1929,7 @@
 <a href=#1929 id=1929 data-nosnippet>1929</a>    </span>}
 <a href=#1930 id=1930 data-nosnippet>1930</a>
 <a href=#1931 id=1931 data-nosnippet>1931</a>    <span class="kw">fn </span>evaluate_internal(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;EvaluationResult&lt;R&gt;&gt; {
-<a href=#1932 id=1932 data-nosnippet>1932</a>        <span class="kw">while </span>!<span class="self">self</span>.end_of_expression() {
+<a href=#1932 id=1932 data-nosnippet>1932</a>        <span class="macro">while !</span><span class="self">self</span>.end_of_expression() {
 <a href=#1933 id=1933 data-nosnippet>1933</a>            <span class="self">self</span>.iteration += <span class="number">1</span>;
 <a href=#1934 id=1934 data-nosnippet>1934</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(max_iterations) = <span class="self">self</span>.max_iterations {
 <a href=#1935 id=1935 data-nosnippet>1935</a>                <span class="kw">if </span><span class="self">self</span>.iteration &gt; max_iterations {
@@ -1950,7 +1950,7 @@
 <a href=#1950 id=1950 data-nosnippet>1950</a>                }
 <a href=#1951 id=1951 data-nosnippet>1951</a>                OperationEvaluationResult::Complete { location } =&gt; {
 <a href=#1952 id=1952 data-nosnippet>1952</a>                    <span class="kw">if </span><span class="self">self</span>.end_of_expression() {
-<a href=#1953 id=1953 data-nosnippet>1953</a>                        <span class="kw">if </span>!<span class="self">self</span>.result.is_empty() {
+<a href=#1953 id=1953 data-nosnippet>1953</a>                        <span class="macro">if !</span><span class="self">self</span>.result.is_empty() {
 <a href=#1954 id=1954 data-nosnippet>1954</a>                            <span class="comment">// We saw a piece earlier and then some
 <a href=#1955 id=1955 data-nosnippet>1955</a>                            // unterminated piece.  It's not clear this is
 <a href=#1956 id=1956 data-nosnippet>1956</a>                            // well-defined.
@@ -3368,7 +3368,7 @@
 <a href=#3368 id=3368 data-nosnippet>3368</a>            <span class="prelude-val">None</span>,
 <a href=#3369 id=3369 data-nosnippet>3369</a>            <span class="prelude-val">None</span>,
 <a href=#3370 id=3370 data-nosnippet>3370</a>            |eval, <span class="kw-2">mut </span>result| {
-<a href=#3371 id=3371 data-nosnippet>3371</a>                <span class="kw">while </span>result != EvaluationResult::Complete {
+<a href=#3371 id=3371 data-nosnippet>3371</a>                <span class="kw">while </span><span class="macro">result !</span>= EvaluationResult::Complete {
 <a href=#3372 id=3372 data-nosnippet>3372</a>                    result = eval.resume_with_register(<span class="kw">match </span>result {
 <a href=#3373 id=3373 data-nosnippet>3373</a>                        EvaluationResult::RequiresRegister {
 <a href=#3374 id=3374 data-nosnippet>3374</a>                            register,
@@ -3476,7 +3476,7 @@
 <a href=#3476 id=3476 data-nosnippet>3476</a>            <span class="prelude-val">None</span>,
 <a href=#3477 id=3477 data-nosnippet>3477</a>            <span class="prelude-val">None</span>,
 <a href=#3478 id=3478 data-nosnippet>3478</a>            |eval, <span class="kw-2">mut </span>result| {
-<a href=#3479 id=3479 data-nosnippet>3479</a>                <span class="kw">while </span>result != EvaluationResult::Complete {
+<a href=#3479 id=3479 data-nosnippet>3479</a>                <span class="kw">while </span><span class="macro">result !</span>= EvaluationResult::Complete {
 <a href=#3480 id=3480 data-nosnippet>3480</a>                    result = <span class="kw">match </span>result {
 <a href=#3481 id=3481 data-nosnippet>3481</a>                        EvaluationResult::RequiresMemory {
 <a href=#3482 id=3482 data-nosnippet>3482</a>                            address,
@@ -3524,7 +3524,7 @@
 <a href=#3524 id=3524 data-nosnippet>3524</a>            <span class="prelude-val">None</span>,
 <a href=#3525 id=3525 data-nosnippet>3525</a>            <span class="prelude-val">None</span>,
 <a href=#3526 id=3526 data-nosnippet>3526</a>            |eval, <span class="kw-2">mut </span>result| {
-<a href=#3527 id=3527 data-nosnippet>3527</a>                <span class="kw">while </span>result != EvaluationResult::Complete {
+<a href=#3527 id=3527 data-nosnippet>3527</a>                <span class="kw">while </span><span class="macro">result !</span>= EvaluationResult::Complete {
 <a href=#3528 id=3528 data-nosnippet>3528</a>                    result = <span class="kw">match </span>result {
 <a href=#3529 id=3529 data-nosnippet>3529</a>                        EvaluationResult::RequiresMemory {
 <a href=#3530 id=3530 data-nosnippet>3530</a>                            address,
@@ -3933,7 +3933,7 @@
 <a href=#3933 id=3933 data-nosnippet>3933</a>            <span class="prelude-val">None</span>,
 <a href=#3934 id=3934 data-nosnippet>3934</a>            <span class="prelude-val">None</span>,
 <a href=#3935 id=3935 data-nosnippet>3935</a>            |eval, <span class="kw-2">mut </span>result| {
-<a href=#3936 id=3936 data-nosnippet>3936</a>                <span class="kw">while </span>result != EvaluationResult::Complete {
+<a href=#3936 id=3936 data-nosnippet>3936</a>                <span class="kw">while </span><span class="macro">result !</span>= EvaluationResult::Complete {
 <a href=#3937 id=3937 data-nosnippet>3937</a>                    result = <span class="kw">match </span>result {
 <a href=#3938 id=3938 data-nosnippet>3938</a>                        EvaluationResult::RequiresRelocatedAddress(address) =&gt; {
 <a href=#3939 id=3939 data-nosnippet>3939</a>                            eval.resume_with_relocated_address(address)<span class="question-mark">?
@@ -4139,7 +4139,7 @@
 <a href=#4139 id=4139 data-nosnippet>4139</a>                <span class="prelude-val">None</span>,
 <a href=#4140 id=4140 data-nosnippet>4140</a>                <span class="prelude-val">None</span>,
 <a href=#4141 id=4141 data-nosnippet>4141</a>                |eval, <span class="kw-2">mut </span>result| {
-<a href=#4142 id=4142 data-nosnippet>4142</a>                    <span class="kw">while </span>result != EvaluationResult::Complete {
+<a href=#4142 id=4142 data-nosnippet>4142</a>                    <span class="kw">while </span><span class="macro">result !</span>= EvaluationResult::Complete {
 <a href=#4143 id=4143 data-nosnippet>4143</a>                        result = <span class="kw">match </span>result {
 <a href=#4144 id=4144 data-nosnippet>4144</a>                            EvaluationResult::RequiresMemory {
 <a href=#4145 id=4145 data-nosnippet>4145</a>                                address,
@@ -4179,4 +4179,5 @@
 <a href=#4179 id=4179 data-nosnippet>4179</a>            );
 <a href=#4180 id=4180 data-nosnippet>4180</a>        }
 <a href=#4181 id=4181 data-nosnippet>4181</a>    }
-<a href=#4182 id=4182 data-nosnippet>4182</a>}</code></pre></div></section></main></body></html>
+<a href=#4182 id=4182 data-nosnippet>4182</a>}
+</code></pre></div></section></main></body></html>

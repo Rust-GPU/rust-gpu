@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/gimli-0.31.1/src/write/line.rs`."><title>line.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="gimli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (f34ba774c 2025-08-03)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-68b7e25d.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">gimli/write/</div>line.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>alloc::vec::Vec;
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/gimli-0.31.1/src/write/line.rs`."><title>line.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="gimli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (adaa83897 2025-10-27)" data-channel="nightly" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">gimli/write/</div>line.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>alloc::vec::Vec;
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span>indexmap::{IndexMap, IndexSet};
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span>std::ops::{Deref, DerefMut};
 <a href=#4 id=4 data-nosnippet>4</a>
@@ -334,7 +334,7 @@
 <a href=#334 id=334 data-nosnippet>334</a>        <span class="self">self</span>.in_sequence = <span class="bool-val">false</span>;
 <a href=#335 id=335 data-nosnippet>335</a>        <span class="self">self</span>.row.address_offset = address_offset;
 <a href=#336 id=336 data-nosnippet>336</a>        <span class="kw">let </span>op_advance = <span class="self">self</span>.op_advance();
-<a href=#337 id=337 data-nosnippet>337</a>        <span class="kw">if </span>op_advance != <span class="number">0 </span>{
+<a href=#337 id=337 data-nosnippet>337</a>        <span class="kw">if </span><span class="macro">op_advance !</span>= <span class="number">0 </span>{
 <a href=#338 id=338 data-nosnippet>338</a>            <span class="self">self</span>.instructions
 <a href=#339 id=339 data-nosnippet>339</a>                .push(LineInstruction::AdvancePc(op_advance));
 <a href=#340 id=340 data-nosnippet>340</a>        }
@@ -368,7 +368,7 @@
 <a href=#368 id=368 data-nosnippet>368</a>        <span class="macro">assert!</span>(<span class="self">self</span>.in_sequence);
 <a href=#369 id=369 data-nosnippet>369</a>
 <a href=#370 id=370 data-nosnippet>370</a>        <span class="comment">// Output fields that are reset on every row.
-<a href=#371 id=371 data-nosnippet>371</a>        </span><span class="kw">if </span><span class="self">self</span>.row.discriminator != <span class="number">0 </span>{
+<a href=#371 id=371 data-nosnippet>371</a>        </span><span class="kw">if </span><span class="self">self</span>.row.<span class="macro">discriminator !</span>= <span class="number">0 </span>{
 <a href=#372 id=372 data-nosnippet>372</a>            <span class="self">self</span>.instructions
 <a href=#373 id=373 data-nosnippet>373</a>                .push(LineInstruction::SetDiscriminator(<span class="self">self</span>.row.discriminator));
 <a href=#374 id=374 data-nosnippet>374</a>            <span class="self">self</span>.row.discriminator = <span class="number">0</span>;
@@ -387,18 +387,18 @@
 <a href=#387 id=387 data-nosnippet>387</a>        }
 <a href=#388 id=388 data-nosnippet>388</a>
 <a href=#389 id=389 data-nosnippet>389</a>        <span class="comment">// Output fields that are not reset on every row.
-<a href=#390 id=390 data-nosnippet>390</a>        </span><span class="kw">if </span><span class="self">self</span>.row.is_statement != <span class="self">self</span>.prev_row.is_statement {
+<a href=#390 id=390 data-nosnippet>390</a>        </span><span class="kw">if </span><span class="self">self</span>.row.<span class="macro">is_statement !</span>= <span class="self">self</span>.prev_row.is_statement {
 <a href=#391 id=391 data-nosnippet>391</a>            <span class="self">self</span>.instructions.push(LineInstruction::NegateStatement);
 <a href=#392 id=392 data-nosnippet>392</a>        }
-<a href=#393 id=393 data-nosnippet>393</a>        <span class="kw">if </span><span class="self">self</span>.row.file != <span class="self">self</span>.prev_row.file {
+<a href=#393 id=393 data-nosnippet>393</a>        <span class="kw">if </span><span class="self">self</span>.row.<span class="macro">file !</span>= <span class="self">self</span>.prev_row.file {
 <a href=#394 id=394 data-nosnippet>394</a>            <span class="self">self</span>.instructions
 <a href=#395 id=395 data-nosnippet>395</a>                .push(LineInstruction::SetFile(<span class="self">self</span>.row.file));
 <a href=#396 id=396 data-nosnippet>396</a>        }
-<a href=#397 id=397 data-nosnippet>397</a>        <span class="kw">if </span><span class="self">self</span>.row.column != <span class="self">self</span>.prev_row.column {
+<a href=#397 id=397 data-nosnippet>397</a>        <span class="kw">if </span><span class="self">self</span>.row.<span class="macro">column !</span>= <span class="self">self</span>.prev_row.column {
 <a href=#398 id=398 data-nosnippet>398</a>            <span class="self">self</span>.instructions
 <a href=#399 id=399 data-nosnippet>399</a>                .push(LineInstruction::SetColumn(<span class="self">self</span>.row.column));
 <a href=#400 id=400 data-nosnippet>400</a>        }
-<a href=#401 id=401 data-nosnippet>401</a>        <span class="kw">if </span><span class="self">self</span>.row.isa != <span class="self">self</span>.prev_row.isa {
+<a href=#401 id=401 data-nosnippet>401</a>        <span class="kw">if </span><span class="self">self</span>.row.<span class="macro">isa !</span>= <span class="self">self</span>.prev_row.isa {
 <a href=#402 id=402 data-nosnippet>402</a>            <span class="self">self</span>.instructions
 <a href=#403 id=403 data-nosnippet>403</a>                .push(LineInstruction::SetIsa(<span class="self">self</span>.row.isa));
 <a href=#404 id=404 data-nosnippet>404</a>        }
@@ -418,7 +418,7 @@
 <a href=#418 id=418 data-nosnippet>418</a>        <span class="kw">let </span><span class="kw-2">mut </span>special = special_default;
 <a href=#419 id=419 data-nosnippet>419</a>        <span class="kw">let </span><span class="kw-2">mut </span>use_special = <span class="bool-val">false</span>;
 <a href=#420 id=420 data-nosnippet>420</a>
-<a href=#421 id=421 data-nosnippet>421</a>        <span class="kw">if </span>line_advance != <span class="number">0 </span>{
+<a href=#421 id=421 data-nosnippet>421</a>        <span class="kw">if </span><span class="macro">line_advance !</span>= <span class="number">0 </span>{
 <a href=#422 id=422 data-nosnippet>422</a>            <span class="kw">let </span>special_line = (line_advance <span class="kw">as </span>u64).wrapping_sub(line_base);
 <a href=#423 id=423 data-nosnippet>423</a>            <span class="kw">if </span>special_line &lt; line_range {
 <a href=#424 id=424 data-nosnippet>424</a>                special = special_base + special_line;
@@ -429,7 +429,7 @@
 <a href=#429 id=429 data-nosnippet>429</a>            }
 <a href=#430 id=430 data-nosnippet>430</a>        }
 <a href=#431 id=431 data-nosnippet>431</a>
-<a href=#432 id=432 data-nosnippet>432</a>        <span class="kw">if </span>op_advance != <span class="number">0 </span>{
+<a href=#432 id=432 data-nosnippet>432</a>        <span class="kw">if </span><span class="macro">op_advance !</span>= <span class="number">0 </span>{
 <a href=#433 id=433 data-nosnippet>433</a>            <span class="comment">// Using ConstAddPc can save a byte.
 <a href=#434 id=434 data-nosnippet>434</a>            </span><span class="kw">let </span>(special_op_advance, const_add_pc) = <span class="kw">if </span>special + op_advance * line_range &lt;= <span class="number">255 </span>{
 <a href=#435 id=435 data-nosnippet>435</a>                (op_advance, <span class="bool-val">false</span>)
@@ -451,7 +451,7 @@
 <a href=#451 id=451 data-nosnippet>451</a>            }
 <a href=#452 id=452 data-nosnippet>452</a>        }
 <a href=#453 id=453 data-nosnippet>453</a>
-<a href=#454 id=454 data-nosnippet>454</a>        <span class="kw">if </span>use_special &amp;&amp; special != special_default {
+<a href=#454 id=454 data-nosnippet>454</a>        <span class="kw">if </span>use_special &amp;&amp; <span class="macro">special !</span>= special_default {
 <a href=#455 id=455 data-nosnippet>455</a>            <span class="macro">debug_assert!</span>(special &gt;= special_base);
 <a href=#456 id=456 data-nosnippet>456</a>            <span class="macro">debug_assert!</span>(special &lt;= <span class="number">255</span>);
 <a href=#457 id=457 data-nosnippet>457</a>            <span class="self">self</span>.instructions
@@ -466,7 +466,7 @@
 <a href=#466 id=466 data-nosnippet>466</a>    <span class="kw">fn </span>op_advance(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
 <a href=#467 id=467 data-nosnippet>467</a>        <span class="macro">debug_assert!</span>(<span class="self">self</span>.row.address_offset &gt;= <span class="self">self</span>.prev_row.address_offset);
 <a href=#468 id=468 data-nosnippet>468</a>        <span class="kw">let </span><span class="kw-2">mut </span>address_advance = <span class="self">self</span>.row.address_offset - <span class="self">self</span>.prev_row.address_offset;
-<a href=#469 id=469 data-nosnippet>469</a>        <span class="kw">if </span><span class="self">self</span>.line_encoding.minimum_instruction_length != <span class="number">1 </span>{
+<a href=#469 id=469 data-nosnippet>469</a>        <span class="kw">if </span><span class="self">self</span>.line_encoding.<span class="macro">minimum_instruction_length !</span>= <span class="number">1 </span>{
 <a href=#470 id=470 data-nosnippet>470</a>            <span class="macro">debug_assert_eq!</span>(
 <a href=#471 id=471 data-nosnippet>471</a>                <span class="self">self</span>.row.address_offset % u64::from(<span class="self">self</span>.line_encoding.minimum_instruction_length),
 <a href=#472 id=472 data-nosnippet>472</a>                <span class="number">0
@@ -501,8 +501,8 @@
 <a href=#501 id=501 data-nosnippet>501</a>        <span class="macro">assert!</span>(!<span class="self">self</span>.is_none());
 <a href=#502 id=502 data-nosnippet>502</a>
 <a href=#503 id=503 data-nosnippet>503</a>        <span class="kw">if </span>encoding.version &lt; <span class="self">self</span>.version()
-<a href=#504 id=504 data-nosnippet>504</a>            || encoding.format != <span class="self">self</span>.format()
-<a href=#505 id=505 data-nosnippet>505</a>            || encoding.address_size != <span class="self">self</span>.address_size()
+<a href=#504 id=504 data-nosnippet>504</a>            || encoding.<span class="macro">format !</span>= <span class="self">self</span>.format()
+<a href=#505 id=505 data-nosnippet>505</a>            || encoding.<span class="macro">address_size !</span>= <span class="self">self</span>.address_size()
 <a href=#506 id=506 data-nosnippet>506</a>        {
 <a href=#507 id=507 data-nosnippet>507</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(Error::IncompatibleLineProgramEncoding);
 <a href=#508 id=508 data-nosnippet>508</a>        }
@@ -530,7 +530,7 @@
 <a href=#530 id=530 data-nosnippet>530</a>        w.write_u8(<span class="self">self</span>.line_encoding.minimum_instruction_length)<span class="question-mark">?</span>;
 <a href=#531 id=531 data-nosnippet>531</a>        <span class="kw">if </span><span class="self">self</span>.version() &gt;= <span class="number">4 </span>{
 <a href=#532 id=532 data-nosnippet>532</a>            w.write_u8(<span class="self">self</span>.line_encoding.maximum_operations_per_instruction)<span class="question-mark">?</span>;
-<a href=#533 id=533 data-nosnippet>533</a>        } <span class="kw">else if </span><span class="self">self</span>.line_encoding.maximum_operations_per_instruction != <span class="number">1 </span>{
+<a href=#533 id=533 data-nosnippet>533</a>        } <span class="kw">else if </span><span class="self">self</span>.line_encoding.<span class="macro">maximum_operations_per_instruction !</span>= <span class="number">1 </span>{
 <a href=#534 id=534 data-nosnippet>534</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(Error::NeedVersion(<span class="number">4</span>));
 <a href=#535 id=535 data-nosnippet>535</a>        };
 <a href=#536 id=536 data-nosnippet>536</a>        w.write_u8(<span class="kw">if </span><span class="self">self</span>.line_encoding.default_is_stmt {
@@ -869,7 +869,7 @@
 <a href=#869 id=869 data-nosnippet>869</a>        debug_line_str_offsets: <span class="kw-2">&amp;</span>DebugLineStrOffsets,
 <a href=#870 id=870 data-nosnippet>870</a>        debug_str_offsets: <span class="kw-2">&amp;</span>DebugStrOffsets,
 <a href=#871 id=871 data-nosnippet>871</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-<a href=#872 id=872 data-nosnippet>872</a>        <span class="kw">if </span>form != <span class="self">self</span>.form() {
+<a href=#872 id=872 data-nosnippet>872</a>        <span class="kw">if </span><span class="macro">form !</span>= <span class="self">self</span>.form() {
 <a href=#873 id=873 data-nosnippet>873</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(Error::LineStringFormMismatch);
 <a href=#874 id=874 data-nosnippet>874</a>        }
 <a href=#875 id=875 data-nosnippet>875</a>
@@ -1109,7 +1109,7 @@
 <a href=#1109 id=1109 data-nosnippet>1109</a>                    }
 <a href=#1110 id=1110 data-nosnippet>1110</a>                    <span class="kw">_ </span>=&gt; {
 <a href=#1111 id=1111 data-nosnippet>1111</a>                        <span class="kw">if </span>from_row.execute(instruction, <span class="kw-2">&amp;mut </span>from_program)<span class="question-mark">? </span>{
-<a href=#1112 id=1112 data-nosnippet>1112</a>                            <span class="kw">if </span>!program.in_sequence() {
+<a href=#1112 id=1112 data-nosnippet>1112</a>                            <span class="macro">if !</span>program.in_sequence() {
 <a href=#1113 id=1113 data-nosnippet>1113</a>                                program.begin_sequence(address);
 <a href=#1114 id=1114 data-nosnippet>1114</a>                                address = <span class="prelude-val">None</span>;
 <a href=#1115 id=1115 data-nosnippet>1115</a>                            }
@@ -1943,4 +1943,5 @@
 <a href=#1943 id=1943 data-nosnippet>1943</a>            }
 <a href=#1944 id=1944 data-nosnippet>1944</a>        }
 <a href=#1945 id=1945 data-nosnippet>1945</a>    }
-<a href=#1946 id=1946 data-nosnippet>1946</a>}</code></pre></div></section></main></body></html>
+<a href=#1946 id=1946 data-nosnippet>1946</a>}
+</code></pre></div></section></main></body></html>

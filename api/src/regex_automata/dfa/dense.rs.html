@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-automata-0.4.14/src/dfa/dense.rs`."><title>dense.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (f34ba774c 2025-08-03)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-68b7e25d.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">regex_automata/dfa/</div>dense.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/*!
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-automata-0.4.14/src/dfa/dense.rs`."><title>dense.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (adaa83897 2025-10-27)" data-channel="nightly" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">regex_automata/dfa/</div>dense.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/*!
 <a href=#2 id=2 data-nosnippet>2</a>Types and routines specific to dense DFAs.
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a>This module is the home of [`dense::DFA`](DFA).
@@ -1218,7 +1218,7 @@
 <a href=#1218 id=1218 data-nosnippet>1218</a>                quitset.add(b);
 <a href=#1219 id=1219 data-nosnippet>1219</a>            }
 <a href=#1220 id=1220 data-nosnippet>1220</a>        }
-<a href=#1221 id=1221 data-nosnippet>1221</a>        <span class="kw">let </span>classes = <span class="kw">if </span>!<span class="self">self</span>.config.get_byte_classes() {
+<a href=#1221 id=1221 data-nosnippet>1221</a>        <span class="kw">let </span>classes = <span class="macro">if !</span><span class="self">self</span>.config.get_byte_classes() {
 <a href=#1222 id=1222 data-nosnippet>1222</a>            <span class="comment">// DFAs will always use the equivalence class map, but enabling
 <a href=#1223 id=1223 data-nosnippet>1223</a>            // this option is useful for debugging. Namely, this will cause all
 <a href=#1224 id=1224 data-nosnippet>1224</a>            // transitions to be defined over their actual bytes instead of an
@@ -1236,7 +1236,7 @@
 <a href=#1236 id=1236 data-nosnippet>1236</a>            //
 <a href=#1237 id=1237 data-nosnippet>1237</a>            //   regex-cli find match dense --unicode-word-boundary \
 <a href=#1238 id=1238 data-nosnippet>1238</a>            //     -p '^#' -p '\b10\.55\.182\.100\b' -y @conn.json.1000x.log
-<a href=#1239 id=1239 data-nosnippet>1239</a>            </span><span class="kw">if </span>!quitset.is_empty() {
+<a href=#1239 id=1239 data-nosnippet>1239</a>            </span><span class="macro">if !</span>quitset.is_empty() {
 <a href=#1240 id=1240 data-nosnippet>1240</a>                set.add_set(<span class="kw-2">&amp;</span>quitset);
 <a href=#1241 id=1241 data-nosnippet>1241</a>            }
 <a href=#1242 id=1242 data-nosnippet>1242</a>            set.byte_classes()
@@ -1269,7 +1269,7 @@
 <a href=#1269 id=1269 data-nosnippet>1269</a>        // default configuration. State shuffling is complex enough as it is,
 <a href=#1270 id=1270 data-nosnippet>1270</a>        // so it's simpler to just "fix" our special state ID ranges to not
 <a href=#1271 id=1271 data-nosnippet>1271</a>        // include starting states after-the-fact.
-<a href=#1272 id=1272 data-nosnippet>1272</a>        </span><span class="kw">if </span>!<span class="self">self</span>.config.get_specialize_start_states() {
+<a href=#1272 id=1272 data-nosnippet>1272</a>        </span><span class="macro">if !</span><span class="self">self</span>.config.get_specialize_start_states() {
 <a href=#1273 id=1273 data-nosnippet>1273</a>            dfa.special.set_no_special_start_states();
 <a href=#1274 id=1274 data-nosnippet>1274</a>        }
 <a href=#1275 id=1275 data-nosnippet>1275</a>        <span class="comment">// Look for and set the universal starting states.
@@ -2368,7 +2368,7 @@
 <a href=#2368 id=2368 data-nosnippet>2368</a>                    ));
 <a href=#2369 id=2369 data-nosnippet>2369</a>                }
 <a href=#2370 id=2370 data-nosnippet>2370</a>                <span class="kw">let </span>needles = dfa.accels.needles(index);
-<a href=#2371 id=2371 data-nosnippet>2371</a>                <span class="kw">if </span>!(<span class="number">1 </span>&lt;= needles.len() &amp;&amp; needles.len() &lt;= <span class="number">3</span>) {
+<a href=#2371 id=2371 data-nosnippet>2371</a>                <span class="macro">if !</span>(<span class="number">1 </span>&lt;= needles.len() &amp;&amp; needles.len() &lt;= <span class="number">3</span>) {
 <a href=#2372 id=2372 data-nosnippet>2372</a>                    <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeError::generic(
 <a href=#2373 id=2373 data-nosnippet>2373</a>                        <span class="string">"accelerator needles has invalid length"</span>,
 <a href=#2374 id=2374 data-nosnippet>2374</a>                    ));
@@ -2672,7 +2672,7 @@
 <a href=#2672 id=2672 data-nosnippet>2672</a>                    update_special_accel(<span class="kw-2">&amp;mut </span><span class="self">self</span>.special, next_id);
 <a href=#2673 id=2673 data-nosnippet>2673</a>
 <a href=#2674 id=2674 data-nosnippet>2674</a>                    <span class="comment">// No need to do any actual swapping for equivalent IDs.
-<a href=#2675 id=2675 data-nosnippet>2675</a>                    </span><span class="kw">if </span>cur_id != next_id {
+<a href=#2675 id=2675 data-nosnippet>2675</a>                    </span><span class="kw">if </span><span class="macro">cur_id !</span>= next_id {
 <a href=#2676 id=2676 data-nosnippet>2676</a>                        remapper.swap(<span class="self">self</span>, cur_id, next_id);
 <a href=#2677 id=2677 data-nosnippet>2677</a>
 <a href=#2678 id=2678 data-nosnippet>2678</a>                        <span class="comment">// Swap pattern IDs for match states.
@@ -2755,7 +2755,7 @@
 <a href=#2755 id=2755 data-nosnippet>2755</a>                // again. This loop is still guaranteed to terminate though,
 <a href=#2756 id=2756 data-nosnippet>2756</a>                // because when accels contains cur_id, we're guaranteed to
 <a href=#2757 id=2757 data-nosnippet>2757</a>                // increment next_norm_id even if cur_id remains unchanged.
-<a href=#2758 id=2758 data-nosnippet>2758</a>                </span><span class="kw">if </span>!accels.contains_key(<span class="kw-2">&amp;</span>cur_id) {
+<a href=#2758 id=2758 data-nosnippet>2758</a>                </span><span class="macro">if !</span>accels.contains_key(<span class="kw-2">&amp;</span>cur_id) {
 <a href=#2759 id=2759 data-nosnippet>2759</a>                    cur_id = <span class="self">self</span>.tt.prev_state_id(cur_id);
 <a href=#2760 id=2760 data-nosnippet>2760</a>                }
 <a href=#2761 id=2761 data-nosnippet>2761</a>            }
@@ -3269,7 +3269,7 @@
 <a href=#3269 id=3269 data-nosnippet>3269</a>        <span class="kw">let </span>start = <span class="kw">match </span>config.get_look_behind() {
 <a href=#3270 id=3270 data-nosnippet>3270</a>            <span class="prelude-val">None </span>=&gt; Start::Text,
 <a href=#3271 id=3271 data-nosnippet>3271</a>            <span class="prelude-val">Some</span>(byte) =&gt; {
-<a href=#3272 id=3272 data-nosnippet>3272</a>                <span class="kw">if </span>!<span class="self">self</span>.quitset.is_empty() &amp;&amp; <span class="self">self</span>.quitset.contains(byte) {
+<a href=#3272 id=3272 data-nosnippet>3272</a>                <span class="macro">if !</span><span class="self">self</span>.quitset.is_empty() &amp;&amp; <span class="self">self</span>.quitset.contains(byte) {
 <a href=#3273 id=3273 data-nosnippet>3273</a>                    <span class="kw">return </span><span class="prelude-val">Err</span>(StartError::quit(byte));
 <a href=#3274 id=3274 data-nosnippet>3274</a>                }
 <a href=#3275 id=3275 data-nosnippet>3275</a>                <span class="self">self</span>.st.start_map.get(byte)
@@ -3289,7 +3289,7 @@
 <a href=#3289 id=3289 data-nosnippet>3289</a>
 <a href=#3290 id=3290 data-nosnippet>3290</a>    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
 <a href=#3291 id=3291 data-nosnippet>3291</a>    </span><span class="kw">fn </span>accelerator(<span class="kw-2">&amp;</span><span class="self">self</span>, id: StateID) -&gt; <span class="kw-2">&amp;</span>[u8] {
-<a href=#3292 id=3292 data-nosnippet>3292</a>        <span class="kw">if </span>!<span class="self">self</span>.is_accel_state(id) {
+<a href=#3292 id=3292 data-nosnippet>3292</a>        <span class="macro">if !</span><span class="self">self</span>.is_accel_state(id) {
 <a href=#3293 id=3293 data-nosnippet>3293</a>            <span class="kw">return </span><span class="kw-2">&amp;</span>[];
 <a href=#3294 id=3294 data-nosnippet>3294</a>        }
 <a href=#3295 id=3295 data-nosnippet>3295</a>        <span class="self">self</span>.accels.needles(<span class="self">self</span>.accelerator_index(id))
@@ -3629,7 +3629,7 @@
 <a href=#3629 id=3629 data-nosnippet>3629</a>                    || sp.is_match_state(state.id())
 <a href=#3630 id=3630 data-nosnippet>3630</a>                    || sp.is_start_state(state.id())
 <a href=#3631 id=3631 data-nosnippet>3631</a>                    || sp.is_accel_state(state.id());
-<a href=#3632 id=3632 data-nosnippet>3632</a>                <span class="kw">if </span>!is_actually_special {
+<a href=#3632 id=3632 data-nosnippet>3632</a>                <span class="macro">if !</span>is_actually_special {
 <a href=#3633 id=3633 data-nosnippet>3633</a>                    <span class="comment">// This is kind of a cryptic error message...
 <a href=#3634 id=3634 data-nosnippet>3634</a>                    </span><span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeError::generic(
 <a href=#3635 id=3635 data-nosnippet>3635</a>                        <span class="string">"found dense state tagged as special but \
@@ -3645,7 +3645,7 @@
 <a href=#3645 id=3645 data-nosnippet>3645</a>                }
 <a href=#3646 id=3646 data-nosnippet>3646</a>            }
 <a href=#3647 id=3647 data-nosnippet>3647</a>            <span class="kw">for </span>(<span class="kw">_</span>, to) <span class="kw">in </span>state.transitions() {
-<a href=#3648 id=3648 data-nosnippet>3648</a>                <span class="kw">if </span>!<span class="self">self</span>.is_valid(to) {
+<a href=#3648 id=3648 data-nosnippet>3648</a>                <span class="macro">if !</span><span class="self">self</span>.is_valid(to) {
 <a href=#3649 id=3649 data-nosnippet>3649</a>                    <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeError::generic(
 <a href=#3650 id=3650 data-nosnippet>3650</a>                        <span class="string">"found invalid state ID in transition table"</span>,
 <a href=#3651 id=3651 data-nosnippet>3651</a>                    ));
@@ -3999,7 +3999,7 @@
 <a href=#3999 id=3999 data-nosnippet>3999</a>        <span class="kw">let </span>(stride, nr) =
 <a href=#4000 id=4000 data-nosnippet>4000</a>            wire::try_read_u32_as_usize(slice, <span class="string">"start table stride"</span>)<span class="question-mark">?</span>;
 <a href=#4001 id=4001 data-nosnippet>4001</a>        slice = <span class="kw-2">&amp;</span>slice[nr..];
-<a href=#4002 id=4002 data-nosnippet>4002</a>        <span class="kw">if </span>stride != Start::len() {
+<a href=#4002 id=4002 data-nosnippet>4002</a>        <span class="kw">if </span><span class="macro">stride !</span>= Start::len() {
 <a href=#4003 id=4003 data-nosnippet>4003</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeError::generic(
 <a href=#4004 id=4004 data-nosnippet>4004</a>                <span class="string">"invalid starting table stride"</span>,
 <a href=#4005 id=4005 data-nosnippet>4005</a>            ));
@@ -4161,18 +4161,18 @@
 <a href=#4161 id=4161 data-nosnippet>4161</a>    /// That is, every state ID can be used to correctly index a state.
 <a href=#4162 id=4162 data-nosnippet>4162</a>    </span><span class="kw">fn </span>validate(<span class="kw-2">&amp;</span><span class="self">self</span>, dfa: <span class="kw-2">&amp;</span>DFA&lt;T&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), DeserializeError&gt; {
 <a href=#4163 id=4163 data-nosnippet>4163</a>        <span class="kw">let </span>tt = <span class="kw-2">&amp;</span>dfa.tt;
-<a href=#4164 id=4164 data-nosnippet>4164</a>        <span class="kw">if </span>!<span class="self">self</span>.universal_start_unanchored.map_or(<span class="bool-val">true</span>, |s| tt.is_valid(s)) {
+<a href=#4164 id=4164 data-nosnippet>4164</a>        <span class="macro">if !</span><span class="self">self</span>.universal_start_unanchored.map_or(<span class="bool-val">true</span>, |s| tt.is_valid(s)) {
 <a href=#4165 id=4165 data-nosnippet>4165</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeError::generic(
 <a href=#4166 id=4166 data-nosnippet>4166</a>                <span class="string">"found invalid universal unanchored starting state ID"</span>,
 <a href=#4167 id=4167 data-nosnippet>4167</a>            ));
 <a href=#4168 id=4168 data-nosnippet>4168</a>        }
-<a href=#4169 id=4169 data-nosnippet>4169</a>        <span class="kw">if </span>!<span class="self">self</span>.universal_start_anchored.map_or(<span class="bool-val">true</span>, |s| tt.is_valid(s)) {
+<a href=#4169 id=4169 data-nosnippet>4169</a>        <span class="macro">if !</span><span class="self">self</span>.universal_start_anchored.map_or(<span class="bool-val">true</span>, |s| tt.is_valid(s)) {
 <a href=#4170 id=4170 data-nosnippet>4170</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeError::generic(
 <a href=#4171 id=4171 data-nosnippet>4171</a>                <span class="string">"found invalid universal anchored starting state ID"</span>,
 <a href=#4172 id=4172 data-nosnippet>4172</a>            ));
 <a href=#4173 id=4173 data-nosnippet>4173</a>        }
 <a href=#4174 id=4174 data-nosnippet>4174</a>        <span class="kw">for </span><span class="kw-2">&amp;</span>id <span class="kw">in </span><span class="self">self</span>.table() {
-<a href=#4175 id=4175 data-nosnippet>4175</a>            <span class="kw">if </span>!tt.is_valid(id) {
+<a href=#4175 id=4175 data-nosnippet>4175</a>            <span class="macro">if !</span>tt.is_valid(id) {
 <a href=#4176 id=4176 data-nosnippet>4176</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeError::generic(
 <a href=#4177 id=4177 data-nosnippet>4177</a>                    <span class="string">"found invalid starting state ID"</span>,
 <a href=#4178 id=4178 data-nosnippet>4178</a>                ));
@@ -4223,13 +4223,13 @@
 <a href=#4223 id=4223 data-nosnippet>4223</a>        <span class="kw">let </span>start_index = start.as_usize();
 <a href=#4224 id=4224 data-nosnippet>4224</a>        <span class="kw">let </span>index = <span class="kw">match </span>anchored {
 <a href=#4225 id=4225 data-nosnippet>4225</a>            Anchored::No =&gt; {
-<a href=#4226 id=4226 data-nosnippet>4226</a>                <span class="kw">if </span>!<span class="self">self</span>.kind.has_unanchored() {
+<a href=#4226 id=4226 data-nosnippet>4226</a>                <span class="macro">if !</span><span class="self">self</span>.kind.has_unanchored() {
 <a href=#4227 id=4227 data-nosnippet>4227</a>                    <span class="kw">return </span><span class="prelude-val">Err</span>(StartError::unsupported_anchored(anchored));
 <a href=#4228 id=4228 data-nosnippet>4228</a>                }
 <a href=#4229 id=4229 data-nosnippet>4229</a>                start_index
 <a href=#4230 id=4230 data-nosnippet>4230</a>            }
 <a href=#4231 id=4231 data-nosnippet>4231</a>            Anchored::Yes =&gt; {
-<a href=#4232 id=4232 data-nosnippet>4232</a>                <span class="kw">if </span>!<span class="self">self</span>.kind.has_anchored() {
+<a href=#4232 id=4232 data-nosnippet>4232</a>                <span class="macro">if !</span><span class="self">self</span>.kind.has_anchored() {
 <a href=#4233 id=4233 data-nosnippet>4233</a>                    <span class="kw">return </span><span class="prelude-val">Err</span>(StartError::unsupported_anchored(anchored));
 <a href=#4234 id=4234 data-nosnippet>4234</a>                }
 <a href=#4235 id=4235 data-nosnippet>4235</a>                <span class="self">self</span>.stride + start_index
@@ -4853,7 +4853,7 @@
 <a href=#4853 id=4853 data-nosnippet>4853</a>            }
 <a href=#4854 id=4854 data-nosnippet>4854</a>            <span class="kw">for </span>unit <span class="kw">in </span>classes.elements(class) {
 <a href=#4855 id=4855 data-nosnippet>4855</a>                <span class="kw">if let </span><span class="prelude-val">Some</span>(byte) = unit.as_u8() {
-<a href=#4856 id=4856 data-nosnippet>4856</a>                    <span class="kw">if </span>!accel.add(byte) {
+<a href=#4856 id=4856 data-nosnippet>4856</a>                    <span class="macro">if !</span>accel.add(byte) {
 <a href=#4857 id=4857 data-nosnippet>4857</a>                        <span class="kw">return </span><span class="prelude-val">None</span>;
 <a href=#4858 id=4858 data-nosnippet>4858</a>                    }
 <a href=#4859 id=4859 data-nosnippet>4859</a>                }
@@ -4949,13 +4949,13 @@
 <a href=#4949 id=4949 data-nosnippet>4949</a>                <span class="self">self</span>.cur = <span class="prelude-val">Some</span>((prev_start, unit, prev_next));
 <a href=#4950 id=4950 data-nosnippet>4950</a>            } <span class="kw">else </span>{
 <a href=#4951 id=4951 data-nosnippet>4951</a>                <span class="self">self</span>.cur = <span class="prelude-val">Some</span>((unit, unit, next));
-<a href=#4952 id=4952 data-nosnippet>4952</a>                <span class="kw">if </span>prev_next != DEAD {
+<a href=#4952 id=4952 data-nosnippet>4952</a>                <span class="kw">if </span><span class="macro">prev_next !</span>= DEAD {
 <a href=#4953 id=4953 data-nosnippet>4953</a>                    <span class="kw">return </span><span class="prelude-val">Some</span>((prev_start, prev_end, prev_next));
 <a href=#4954 id=4954 data-nosnippet>4954</a>                }
 <a href=#4955 id=4955 data-nosnippet>4955</a>            }
 <a href=#4956 id=4956 data-nosnippet>4956</a>        }
 <a href=#4957 id=4957 data-nosnippet>4957</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>((start, end, next)) = <span class="self">self</span>.cur.take() {
-<a href=#4958 id=4958 data-nosnippet>4958</a>            <span class="kw">if </span>next != DEAD {
+<a href=#4958 id=4958 data-nosnippet>4958</a>            <span class="kw">if </span><span class="macro">next !</span>= DEAD {
 <a href=#4959 id=4959 data-nosnippet>4959</a>                <span class="kw">return </span><span class="prelude-val">Some</span>((start, end, next));
 <a href=#4960 id=4960 data-nosnippet>4960</a>            }
 <a href=#4961 id=4961 data-nosnippet>4961</a>        }
@@ -5257,4 +5257,5 @@
 <a href=#5257 id=5257 data-nosnippet>5257</a>        <span class="kw">let </span>(buf, <span class="kw">_</span>) = dfa.to_bytes_native_endian();
 <a href=#5258 id=5258 data-nosnippet>5258</a>        DFA::from_bytes(<span class="kw-2">&amp;</span>buf).unwrap_err();
 <a href=#5259 id=5259 data-nosnippet>5259</a>    }
-<a href=#5260 id=5260 data-nosnippet>5260</a>}</code></pre></div></section></main></body></html>
+<a href=#5260 id=5260 data-nosnippet>5260</a>}
+</code></pre></div></section></main></body></html>

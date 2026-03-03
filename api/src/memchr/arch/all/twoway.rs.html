@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/memchr-2.7.6/src/arch/all/twoway.rs`."><title>twoway.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="memchr" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (f34ba774c 2025-08-03)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../../../static.files/storage-68b7e25d.js"></script><script defer src="../../../../static.files/src-script-813739b1.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">memchr/arch/all/</div>twoway.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/*!
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/memchr-2.7.6/src/arch/all/twoway.rs`."><title>twoway.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="memchr" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (adaa83897 2025-10-27)" data-channel="nightly" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../../static.files/src-script-813739b1.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">memchr/arch/all/</div>twoway.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/*!
 <a href=#2 id=2 data-nosnippet>2</a>An implementation of the [Two-Way substring search algorithm][two-way].
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a>[`Finder`] can be built for forward searches, while [`FinderRev`] can be built
@@ -196,7 +196,7 @@
 <a href=#196 id=196 data-nosnippet>196</a>                    }
 <a href=#197 id=197 data-nosnippet>197</a>                }
 <a href=#198 id=198 data-nosnippet>198</a>            }
-<a href=#199 id=199 data-nosnippet>199</a>            <span class="kw">if </span>!<span class="self">self</span>.<span class="number">0</span>.byteset.contains(haystack[pos + last_byte_pos]) {
+<a href=#199 id=199 data-nosnippet>199</a>            <span class="macro">if !</span><span class="self">self</span>.<span class="number">0</span>.byteset.contains(haystack[pos + last_byte_pos]) {
 <a href=#200 id=200 data-nosnippet>200</a>                pos += needle.len();
 <a href=#201 id=201 data-nosnippet>201</a>                shift = <span class="number">0</span>;
 <a href=#202 id=202 data-nosnippet>202</a>                <span class="kw">continue</span>;
@@ -245,7 +245,7 @@
 <a href=#245 id=245 data-nosnippet>245</a>                }
 <a href=#246 id=246 data-nosnippet>246</a>            }
 <a href=#247 id=247 data-nosnippet>247</a>
-<a href=#248 id=248 data-nosnippet>248</a>            <span class="kw">if </span>!<span class="self">self</span>.<span class="number">0</span>.byteset.contains(haystack[pos + last_byte_pos]) {
+<a href=#248 id=248 data-nosnippet>248</a>            <span class="macro">if !</span><span class="self">self</span>.<span class="number">0</span>.byteset.contains(haystack[pos + last_byte_pos]) {
 <a href=#249 id=249 data-nosnippet>249</a>                pos += needle.len();
 <a href=#250 id=250 data-nosnippet>250</a>                <span class="kw">continue</span>;
 <a href=#251 id=251 data-nosnippet>251</a>            }
@@ -328,7 +328,7 @@
 <a href=#328 id=328 data-nosnippet>328</a>            <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>first_byte) =&gt; first_byte,
 <a href=#329 id=329 data-nosnippet>329</a>        };
 <a href=#330 id=330 data-nosnippet>330</a>        <span class="kw">while </span>pos &gt;= nlen {
-<a href=#331 id=331 data-nosnippet>331</a>            <span class="kw">if </span>!<span class="self">self</span>.<span class="number">0</span>.byteset.contains(haystack[pos - nlen]) {
+<a href=#331 id=331 data-nosnippet>331</a>            <span class="macro">if !</span><span class="self">self</span>.<span class="number">0</span>.byteset.contains(haystack[pos - nlen]) {
 <a href=#332 id=332 data-nosnippet>332</a>                pos -= nlen;
 <a href=#333 id=333 data-nosnippet>333</a>                shift = nlen;
 <a href=#334 id=334 data-nosnippet>334</a>                <span class="kw">continue</span>;
@@ -337,7 +337,7 @@
 <a href=#337 id=337 data-nosnippet>337</a>            <span class="kw">while </span>i &gt; <span class="number">0 </span>&amp;&amp; needle[i - <span class="number">1</span>] == haystack[pos - nlen + i - <span class="number">1</span>] {
 <a href=#338 id=338 data-nosnippet>338</a>                i -= <span class="number">1</span>;
 <a href=#339 id=339 data-nosnippet>339</a>            }
-<a href=#340 id=340 data-nosnippet>340</a>            <span class="kw">if </span>i &gt; <span class="number">0 </span>|| first_byte != haystack[pos - nlen] {
+<a href=#340 id=340 data-nosnippet>340</a>            <span class="kw">if </span>i &gt; <span class="number">0 </span>|| <span class="macro">first_byte !</span>= haystack[pos - nlen] {
 <a href=#341 id=341 data-nosnippet>341</a>                pos -= <span class="self">self</span>.<span class="number">0</span>.critical_pos - i + <span class="number">1</span>;
 <a href=#342 id=342 data-nosnippet>342</a>                shift = nlen;
 <a href=#343 id=343 data-nosnippet>343</a>            } <span class="kw">else </span>{
@@ -369,7 +369,7 @@
 <a href=#369 id=369 data-nosnippet>369</a>            <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>first_byte) =&gt; first_byte,
 <a href=#370 id=370 data-nosnippet>370</a>        };
 <a href=#371 id=371 data-nosnippet>371</a>        <span class="kw">while </span>pos &gt;= nlen {
-<a href=#372 id=372 data-nosnippet>372</a>            <span class="kw">if </span>!<span class="self">self</span>.<span class="number">0</span>.byteset.contains(haystack[pos - nlen]) {
+<a href=#372 id=372 data-nosnippet>372</a>            <span class="macro">if !</span><span class="self">self</span>.<span class="number">0</span>.byteset.contains(haystack[pos - nlen]) {
 <a href=#373 id=373 data-nosnippet>373</a>                pos -= nlen;
 <a href=#374 id=374 data-nosnippet>374</a>                <span class="kw">continue</span>;
 <a href=#375 id=375 data-nosnippet>375</a>            }
@@ -377,7 +377,7 @@
 <a href=#377 id=377 data-nosnippet>377</a>            <span class="kw">while </span>i &gt; <span class="number">0 </span>&amp;&amp; needle[i - <span class="number">1</span>] == haystack[pos - nlen + i - <span class="number">1</span>] {
 <a href=#378 id=378 data-nosnippet>378</a>                i -= <span class="number">1</span>;
 <a href=#379 id=379 data-nosnippet>379</a>            }
-<a href=#380 id=380 data-nosnippet>380</a>            <span class="kw">if </span>i &gt; <span class="number">0 </span>|| first_byte != haystack[pos - nlen] {
+<a href=#380 id=380 data-nosnippet>380</a>            <span class="kw">if </span>i &gt; <span class="number">0 </span>|| <span class="macro">first_byte !</span>= haystack[pos - nlen] {
 <a href=#381 id=381 data-nosnippet>381</a>                pos -= <span class="self">self</span>.<span class="number">0</span>.critical_pos - i + <span class="number">1</span>;
 <a href=#382 id=382 data-nosnippet>382</a>            } <span class="kw">else </span>{
 <a href=#383 id=383 data-nosnippet>383</a>                <span class="kw">let </span><span class="kw-2">mut </span>j = <span class="self">self</span>.<span class="number">0</span>.critical_pos;
@@ -448,7 +448,7 @@
 <a href=#448 id=448 data-nosnippet>448</a>        }
 <a href=#449 id=449 data-nosnippet>449</a>
 <a href=#450 id=450 data-nosnippet>450</a>        <span class="kw">let </span>(u, v) = needle.split_at(critical_pos);
-<a href=#451 id=451 data-nosnippet>451</a>        <span class="kw">if </span>!is_suffix(<span class="kw-2">&amp;</span>v[..period_lower_bound], u) {
+<a href=#451 id=451 data-nosnippet>451</a>        <span class="macro">if !</span>is_suffix(<span class="kw-2">&amp;</span>v[..period_lower_bound], u) {
 <a href=#452 id=452 data-nosnippet>452</a>            <span class="kw">return </span>Shift::Large { shift: large };
 <a href=#453 id=453 data-nosnippet>453</a>        }
 <a href=#454 id=454 data-nosnippet>454</a>        Shift::Small { period: period_lower_bound }
@@ -471,7 +471,7 @@
 <a href=#471 id=471 data-nosnippet>471</a>        }
 <a href=#472 id=472 data-nosnippet>472</a>
 <a href=#473 id=473 data-nosnippet>473</a>        <span class="kw">let </span>(v, u) = needle.split_at(critical_pos);
-<a href=#474 id=474 data-nosnippet>474</a>        <span class="kw">if </span>!is_prefix(<span class="kw-2">&amp;</span>v[v.len() - period_lower_bound..], u) {
+<a href=#474 id=474 data-nosnippet>474</a>        <span class="macro">if !</span>is_prefix(<span class="kw-2">&amp;</span>v[v.len() - period_lower_bound..], u) {
 <a href=#475 id=475 data-nosnippet>475</a>            <span class="kw">return </span>Shift::Large { shift: large };
 <a href=#476 id=476 data-nosnippet>476</a>        }
 <a href=#477 id=477 data-nosnippet>477</a>        Shift::Small { period: period_lower_bound }
@@ -874,4 +874,5 @@
 <a href=#874 id=874 data-nosnippet>874</a>        <span class="kw">let </span>needle = <span class="string">"abab"</span>;
 <a href=#875 id=875 data-nosnippet>875</a>        <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="number">0</span>), rfind(haystack.as_bytes(), needle.as_bytes()));
 <a href=#876 id=876 data-nosnippet>876</a>    }
-<a href=#877 id=877 data-nosnippet>877</a>}</code></pre></div></section></main></body></html>
+<a href=#877 id=877 data-nosnippet>877</a>}
+</code></pre></div></section></main></body></html>

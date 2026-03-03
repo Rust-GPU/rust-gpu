@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/builder/builder_methods.rs`."><title>builder_methods.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (f34ba774c 2025-08-03)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-68b7e25d.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/builder/</div>builder_methods.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/builder/builder_methods.rs`."><title>builder_methods.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (adaa83897 2025-10-27)" data-channel="nightly" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/builder/</div>builder_methods.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
 <a href=#2 id=2 data-nosnippet>2</a></span><span class="kw">use </span><span class="kw">crate</span>::maybe_pqp_cg_ssa <span class="kw">as </span>rustc_codegen_ssa;
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span><span class="kw">super</span>::Builder;
@@ -569,7 +569,7 @@
 <a href=#569 id=569 data-nosnippet>569</a>
 <a href=#570 id=570 data-nosnippet>570</a>    <span class="attr">#[instrument(level = <span class="string">"trace"</span>, skip(<span class="self">self</span>))]
 <a href=#571 id=571 data-nosnippet>571</a>    </span><span class="kw">fn </span>zombie_ptr_equal(<span class="kw-2">&amp;</span><span class="self">self</span>, def: Word, inst: <span class="kw-2">&amp;</span>str) {
-<a href=#572 id=572 data-nosnippet>572</a>        <span class="kw">if </span>!<span class="self">self</span>.builder.has_capability(Capability::VariablePointers) {
+<a href=#572 id=572 data-nosnippet>572</a>        <span class="macro">if !</span><span class="self">self</span>.builder.has_capability(Capability::VariablePointers) {
 <a href=#573 id=573 data-nosnippet>573</a>            <span class="self">self</span>.zombie(
 <a href=#574 id=574 data-nosnippet>574</a>                def,
 <a href=#575 id=575 data-nosnippet>575</a>                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{inst} without OpCapability VariablePointers"</span>),
@@ -767,7 +767,7 @@
 <a href=#767 id=767 data-nosnippet>767</a>                    ty_size = MaybeSized::Sized(stride);
 <a href=#768 id=768 data-nosnippet>768</a>
 <a href=#769 id=769 data-nosnippet>769</a>                    <span class="kw">if </span>stride == Size::ZERO {
-<a href=#770 id=770 data-nosnippet>770</a>                        <span class="kw">if </span>offset != Size::ZERO {
+<a href=#770 id=770 data-nosnippet>770</a>                        <span class="kw">if </span><span class="macro">offset !</span>= Size::ZERO {
 <a href=#771 id=771 data-nosnippet>771</a>                            <span class="macro">trace!</span>(<span class="string">"zero-sized element with non-zero offset: {:?}"</span>, offset);
 <a href=#772 id=772 data-nosnippet>772</a>                            <span class="kw">return </span><span class="prelude-val">None</span>;
 <a href=#773 id=773 data-nosnippet>773</a>                        }
@@ -834,7 +834,7 @@
 <a href=#834 id=834 data-nosnippet>834</a>        <span class="comment">// HACK(eddyb) this effectively removes any real support for GEPs with
 <a href=#835 id=835 data-nosnippet>835</a>        // any `indices` (beyond `ptr_base_index`), which should now be the case
 <a href=#836 id=836 data-nosnippet>836</a>        // across `rustc_codegen_ssa` (see also comment inside `inbounds_gep`).
-<a href=#837 id=837 data-nosnippet>837</a>        </span><span class="kw">if </span>!indices.is_empty() {
+<a href=#837 id=837 data-nosnippet>837</a>        </span><span class="macro">if !</span>indices.is_empty() {
 <a href=#838 id=838 data-nosnippet>838</a>            <span class="self">self</span>.fatal(<span class="macro">format!</span>(
 <a href=#839 id=839 data-nosnippet>839</a>                <span class="string">"[RUST-GPU BUG] `inbounds_gep` or `gep` called \
 <a href=#840 id=840 data-nosnippet>840</a>                 with {} combined indices (expected only 1)"</span>,
@@ -1259,7 +1259,7 @@
 <a href=#1259 id=1259 data-nosnippet>1259</a>                .iter()
 <a href=#1260 id=1260 data-nosnippet>1260</a>                .enumerate()
 <a href=#1261 id=1261 data-nosnippet>1261</a>                .find_map(|(index, inst)| {
-<a href=#1262 id=1262 data-nosnippet>1262</a>                    <span class="kw">if </span>inst.class.opcode != Op::Variable {
+<a href=#1262 id=1262 data-nosnippet>1262</a>                    <span class="kw">if </span>inst.class.<span class="macro">opcode !</span>= Op::Variable {
 <a href=#1263 id=1263 data-nosnippet>1263</a>                        <span class="prelude-val">Some</span>(InsertPoint::FromBegin(index))
 <a href=#1264 id=1264 data-nosnippet>1264</a>                    } <span class="kw">else </span>{
 <a href=#1265 id=1265 data-nosnippet>1265</a>                        <span class="prelude-val">None
@@ -1974,7 +1974,7 @@
 <a href=#1974 id=1974 data-nosnippet>1974</a>        align: Align,
 <a href=#1975 id=1975 data-nosnippet>1975</a>        flags: MemFlags,
 <a href=#1976 id=1976 data-nosnippet>1976</a>    ) -&gt; <span class="self">Self</span>::Value {
-<a href=#1977 id=1977 data-nosnippet>1977</a>        <span class="kw">if </span>flags != MemFlags::empty() {
+<a href=#1977 id=1977 data-nosnippet>1977</a>        <span class="kw">if </span><span class="macro">flags !</span>= MemFlags::empty() {
 <a href=#1978 id=1978 data-nosnippet>1978</a>            <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"store_with_flags is not supported yet: {flags:?}"</span>));
 <a href=#1979 id=1979 data-nosnippet>1979</a>        }
 <a href=#1980 id=1980 data-nosnippet>1980</a>        <span class="self">self</span>.store(val, ptr, align)
@@ -2189,7 +2189,7 @@
 <a href=#2189 id=2189 data-nosnippet>2189</a>                <span class="kw">let </span>span = <span class="macro">span!</span>(Level::DEBUG, <span class="string">"unpack_newtype"</span>);
 <a href=#2190 id=2190 data-nosnippet>2190</a>                <span class="kw">let </span>_guard = span.enter();
 <a href=#2191 id=2191 data-nosnippet>2191</a>
-<a href=#2192 id=2192 data-nosnippet>2192</a>                <span class="kw">if </span>!<span class="macro">matches!</span>(kind, SpirvType::Adt { .. } | SpirvType::Array { .. }) {
+<a href=#2192 id=2192 data-nosnippet>2192</a>                <span class="macro">if !matches!</span>(kind, SpirvType::Adt { .. } | SpirvType::Array { .. }) {
 <a href=#2193 id=2193 data-nosnippet>2193</a>                    <span class="kw">return </span><span class="prelude-val">None</span>;
 <a href=#2194 id=2194 data-nosnippet>2194</a>                }
 <a href=#2195 id=2195 data-nosnippet>2195</a>                <span class="kw">let </span>size = kind.sizeof(<span class="self">self</span>)<span class="question-mark">?</span>;
@@ -2322,7 +2322,7 @@
 <a href=#2322 id=2322 data-nosnippet>2322</a>                }
 <a href=#2323 id=2323 data-nosnippet>2323</a>                <span class="comment">// Integer to bool cast - compare with zero
 <a href=#2324 id=2324 data-nosnippet>2324</a>                </span>(SpirvType::Integer(<span class="kw">_</span>, <span class="kw">_</span>), SpirvType::Bool) =&gt; {
-<a href=#2325 id=2325 data-nosnippet>2325</a>                    <span class="prelude-val">Some</span>(<span class="self">self</span>.constant_bool(<span class="self">self</span>.span(), const_val != <span class="number">0</span>))
+<a href=#2325 id=2325 data-nosnippet>2325</a>                    <span class="prelude-val">Some</span>(<span class="self">self</span>.constant_bool(<span class="self">self</span>.span(), <span class="macro">const_val !</span>= <span class="number">0</span>))
 <a href=#2326 id=2326 data-nosnippet>2326</a>                }
 <a href=#2327 id=2327 data-nosnippet>2327</a>                <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
 <a href=#2328 id=2328 data-nosnippet>2328</a>            };
@@ -2337,7 +2337,7 @@
 <a href=#2337 id=2337 data-nosnippet>2337</a>            </span>(
 <a href=#2338 id=2338 data-nosnippet>2338</a>                SpirvType::Integer(val_width, val_signedness),
 <a href=#2339 id=2339 data-nosnippet>2339</a>                SpirvType::Integer(dest_width, dest_signedness),
-<a href=#2340 id=2340 data-nosnippet>2340</a>            ) <span class="kw">if </span>val_width == dest_width &amp;&amp; val_signedness != dest_signedness =&gt; <span class="self">self
+<a href=#2340 id=2340 data-nosnippet>2340</a>            ) <span class="kw">if </span>val_width == dest_width &amp;&amp; <span class="macro">val_signedness !</span>= dest_signedness =&gt; <span class="self">self
 <a href=#2341 id=2341 data-nosnippet>2341</a>                </span>.emit()
 <a href=#2342 id=2342 data-nosnippet>2342</a>                .bitcast(dest_ty, <span class="prelude-val">None</span>, val.def(<span class="self">self</span>))
 <a href=#2343 id=2343 data-nosnippet>2343</a>                .unwrap()
@@ -2468,7 +2468,7 @@
 <a href=#2468 id=2468 data-nosnippet>2468</a>        <span class="comment">// Note: the signedness of the opcode doesn't have to match the signedness of the operands.
 <a href=#2469 id=2469 data-nosnippet>2469</a>        </span><span class="kw">use </span>IntPredicate::<span class="kw-2">*</span>;
 <a href=#2470 id=2470 data-nosnippet>2470</a>
-<a href=#2471 id=2471 data-nosnippet>2471</a>        <span class="kw">if </span>lhs.ty != rhs.ty
+<a href=#2471 id=2471 data-nosnippet>2471</a>        <span class="kw">if </span>lhs.<span class="macro">ty !</span>= rhs.ty
 <a href=#2472 id=2472 data-nosnippet>2472</a>            &amp;&amp; [lhs, rhs].map(|v| <span class="macro">matches!</span>(<span class="self">self</span>.lookup_type(v.ty), SpirvType::Pointer { .. }))
 <a href=#2473 id=2473 data-nosnippet>2473</a>                == [<span class="bool-val">true</span>, <span class="bool-val">true</span>]
 <a href=#2474 id=2474 data-nosnippet>2474</a>        {
@@ -2792,635 +2792,638 @@
 <a href=#2792 id=2792 data-nosnippet>2792</a>        _src_align: Align,
 <a href=#2793 id=2793 data-nosnippet>2793</a>        size: <span class="self">Self</span>::Value,
 <a href=#2794 id=2794 data-nosnippet>2794</a>        flags: MemFlags,
-<a href=#2795 id=2795 data-nosnippet>2795</a>    ) {
-<a href=#2796 id=2796 data-nosnippet>2796</a>        <span class="kw">if </span>flags != MemFlags::empty() {
-<a href=#2797 id=2797 data-nosnippet>2797</a>            <span class="self">self</span>.err(<span class="macro">format!</span>(
-<a href=#2798 id=2798 data-nosnippet>2798</a>                <span class="string">"memcpy with mem flags is not supported yet: {flags:?}"
-<a href=#2799 id=2799 data-nosnippet>2799</a>            </span>));
-<a href=#2800 id=2800 data-nosnippet>2800</a>        }
-<a href=#2801 id=2801 data-nosnippet>2801</a>        <span class="kw">let </span>const_size = <span class="self">self
-<a href=#2802 id=2802 data-nosnippet>2802</a>            </span>.builder
-<a href=#2803 id=2803 data-nosnippet>2803</a>            .lookup_const_scalar(size)
-<a href=#2804 id=2804 data-nosnippet>2804</a>            .and_then(|size| <span class="prelude-val">Some</span>(Size::from_bytes(u64::try_from(size).ok()<span class="question-mark">?</span>)));
-<a href=#2805 id=2805 data-nosnippet>2805</a>        <span class="kw">if </span>const_size == <span class="prelude-val">Some</span>(Size::ZERO) {
-<a href=#2806 id=2806 data-nosnippet>2806</a>            <span class="comment">// Nothing to do!
-<a href=#2807 id=2807 data-nosnippet>2807</a>            </span><span class="kw">return</span>;
-<a href=#2808 id=2808 data-nosnippet>2808</a>        }
-<a href=#2809 id=2809 data-nosnippet>2809</a>
-<a href=#2810 id=2810 data-nosnippet>2810</a>        <span class="kw">let </span>typed_copy_dst_src = const_size.and_then(|const_size| {
-<a href=#2811 id=2811 data-nosnippet>2811</a>            <span class="macro">trace!</span>(
-<a href=#2812 id=2812 data-nosnippet>2812</a>                <span class="string">"adjusting pointers: src: {} -&gt; dst: {}"</span>,
-<a href=#2813 id=2813 data-nosnippet>2813</a>                <span class="self">self</span>.debug_type(src.ty),
-<a href=#2814 id=2814 data-nosnippet>2814</a>                <span class="self">self</span>.debug_type(dst.ty),
-<a href=#2815 id=2815 data-nosnippet>2815</a>            );
-<a href=#2816 id=2816 data-nosnippet>2816</a>            <span class="kw">let </span>dst_adj = <span class="self">self</span>.adjust_pointer_for_sized_access(dst, const_size);
-<a href=#2817 id=2817 data-nosnippet>2817</a>            <span class="kw">let </span>src_adj = <span class="self">self</span>.adjust_pointer_for_sized_access(src, const_size);
-<a href=#2818 id=2818 data-nosnippet>2818</a>            <span class="kw">match </span>(dst_adj, src_adj) {
-<a href=#2819 id=2819 data-nosnippet>2819</a>                <span class="comment">// HACK(eddyb) fill in missing `dst`/`src` with the other side.
-<a href=#2820 id=2820 data-nosnippet>2820</a>                </span>(<span class="prelude-val">Some</span>((dst, access_ty)), <span class="prelude-val">None</span>) =&gt; {
-<a href=#2821 id=2821 data-nosnippet>2821</a>                    <span class="macro">trace!</span>(
-<a href=#2822 id=2822 data-nosnippet>2822</a>                        <span class="string">"DESTINATION adjusted memcpy calling pointercast: dst ty: {}, access ty: {}"</span>,
-<a href=#2823 id=2823 data-nosnippet>2823</a>                        <span class="self">self</span>.debug_type(dst.ty),
-<a href=#2824 id=2824 data-nosnippet>2824</a>                        <span class="self">self</span>.debug_type(access_ty)
-<a href=#2825 id=2825 data-nosnippet>2825</a>                    );
-<a href=#2826 id=2826 data-nosnippet>2826</a>                    <span class="prelude-val">Some</span>((dst, <span class="self">self</span>.pointercast(src, <span class="self">self</span>.type_ptr_to(access_ty))))
-<a href=#2827 id=2827 data-nosnippet>2827</a>                }
-<a href=#2828 id=2828 data-nosnippet>2828</a>                (<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>((src, access_ty))) =&gt; {
-<a href=#2829 id=2829 data-nosnippet>2829</a>                    <span class="macro">trace!</span>(
-<a href=#2830 id=2830 data-nosnippet>2830</a>                        <span class="string">"SOURCE adjusted memcpy calling pointercast: dst ty: {} -&gt; access ty: {}, src ty: {}"</span>,
-<a href=#2831 id=2831 data-nosnippet>2831</a>                        <span class="self">self</span>.debug_type(dst.ty),
-<a href=#2832 id=2832 data-nosnippet>2832</a>                        <span class="self">self</span>.debug_type(access_ty),
-<a href=#2833 id=2833 data-nosnippet>2833</a>                        <span class="self">self</span>.debug_type(src.ty)
-<a href=#2834 id=2834 data-nosnippet>2834</a>                    );
-<a href=#2835 id=2835 data-nosnippet>2835</a>                    <span class="prelude-val">Some</span>((<span class="self">self</span>.pointercast(dst, <span class="self">self</span>.type_ptr_to(access_ty)), src))
-<a href=#2836 id=2836 data-nosnippet>2836</a>                }
-<a href=#2837 id=2837 data-nosnippet>2837</a>                (<span class="prelude-val">Some</span>((dst, dst_access_ty)), <span class="prelude-val">Some</span>((src, src_access_ty)))
-<a href=#2838 id=2838 data-nosnippet>2838</a>                    <span class="kw">if </span>dst_access_ty == src_access_ty =&gt;
-<a href=#2839 id=2839 data-nosnippet>2839</a>                {
-<a href=#2840 id=2840 data-nosnippet>2840</a>                    <span class="macro">trace!</span>(<span class="string">"BOTH adjusted memcpy calling pointercast"</span>);
-<a href=#2841 id=2841 data-nosnippet>2841</a>                    <span class="prelude-val">Some</span>((dst, src))
-<a href=#2842 id=2842 data-nosnippet>2842</a>                }
-<a href=#2843 id=2843 data-nosnippet>2843</a>                (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>) | (<span class="prelude-val">Some</span>(<span class="kw">_</span>), <span class="prelude-val">Some</span>(<span class="kw">_</span>)) =&gt; <span class="prelude-val">None</span>,
-<a href=#2844 id=2844 data-nosnippet>2844</a>            }
-<a href=#2845 id=2845 data-nosnippet>2845</a>        });
-<a href=#2846 id=2846 data-nosnippet>2846</a>
-<a href=#2847 id=2847 data-nosnippet>2847</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>((dst, src)) = typed_copy_dst_src {
-<a href=#2848 id=2848 data-nosnippet>2848</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(const_value) = src.const_fold_load(<span class="self">self</span>) {
-<a href=#2849 id=2849 data-nosnippet>2849</a>                <span class="macro">trace!</span>(<span class="string">"storing const value"</span>);
-<a href=#2850 id=2850 data-nosnippet>2850</a>                <span class="self">self</span>.store(const_value, dst, Align::from_bytes(<span class="number">0</span>).unwrap());
-<a href=#2851 id=2851 data-nosnippet>2851</a>            } <span class="kw">else </span>{
-<a href=#2852 id=2852 data-nosnippet>2852</a>                <span class="macro">trace!</span>(<span class="string">"copying memory using OpCopyMemory"</span>);
-<a href=#2853 id=2853 data-nosnippet>2853</a>                <span class="self">self</span>.emit()
-<a href=#2854 id=2854 data-nosnippet>2854</a>                    .copy_memory(dst.def(<span class="self">self</span>), src.def(<span class="self">self</span>), <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, empty())
-<a href=#2855 id=2855 data-nosnippet>2855</a>                    .unwrap();
-<a href=#2856 id=2856 data-nosnippet>2856</a>            }
-<a href=#2857 id=2857 data-nosnippet>2857</a>        } <span class="kw">else </span>{
-<a href=#2858 id=2858 data-nosnippet>2858</a>            <span class="self">self</span>.emit()
-<a href=#2859 id=2859 data-nosnippet>2859</a>                .copy_memory_sized(
-<a href=#2860 id=2860 data-nosnippet>2860</a>                    dst.def(<span class="self">self</span>),
-<a href=#2861 id=2861 data-nosnippet>2861</a>                    src.def(<span class="self">self</span>),
-<a href=#2862 id=2862 data-nosnippet>2862</a>                    size.def(<span class="self">self</span>),
-<a href=#2863 id=2863 data-nosnippet>2863</a>                    <span class="prelude-val">None</span>,
+<a href=#2795 id=2795 data-nosnippet>2795</a>        _tt: <span class="prelude-ty">Option</span>&lt;rustc_ast::expand::typetree::FncTree&gt;,
+<a href=#2796 id=2796 data-nosnippet>2796</a>    ) {
+<a href=#2797 id=2797 data-nosnippet>2797</a>        <span class="kw">if </span><span class="macro">flags !</span>= MemFlags::empty() {
+<a href=#2798 id=2798 data-nosnippet>2798</a>            <span class="self">self</span>.err(<span class="macro">format!</span>(
+<a href=#2799 id=2799 data-nosnippet>2799</a>                <span class="string">"memcpy with mem flags is not supported yet: {flags:?}"
+<a href=#2800 id=2800 data-nosnippet>2800</a>            </span>));
+<a href=#2801 id=2801 data-nosnippet>2801</a>        }
+<a href=#2802 id=2802 data-nosnippet>2802</a>        <span class="kw">let </span>const_size = <span class="self">self
+<a href=#2803 id=2803 data-nosnippet>2803</a>            </span>.builder
+<a href=#2804 id=2804 data-nosnippet>2804</a>            .lookup_const_scalar(size)
+<a href=#2805 id=2805 data-nosnippet>2805</a>            .and_then(|size| <span class="prelude-val">Some</span>(Size::from_bytes(u64::try_from(size).ok()<span class="question-mark">?</span>)));
+<a href=#2806 id=2806 data-nosnippet>2806</a>        <span class="kw">if </span>const_size == <span class="prelude-val">Some</span>(Size::ZERO) {
+<a href=#2807 id=2807 data-nosnippet>2807</a>            <span class="comment">// Nothing to do!
+<a href=#2808 id=2808 data-nosnippet>2808</a>            </span><span class="kw">return</span>;
+<a href=#2809 id=2809 data-nosnippet>2809</a>        }
+<a href=#2810 id=2810 data-nosnippet>2810</a>
+<a href=#2811 id=2811 data-nosnippet>2811</a>        <span class="kw">let </span>typed_copy_dst_src = const_size.and_then(|const_size| {
+<a href=#2812 id=2812 data-nosnippet>2812</a>            <span class="macro">trace!</span>(
+<a href=#2813 id=2813 data-nosnippet>2813</a>                <span class="string">"adjusting pointers: src: {} -&gt; dst: {}"</span>,
+<a href=#2814 id=2814 data-nosnippet>2814</a>                <span class="self">self</span>.debug_type(src.ty),
+<a href=#2815 id=2815 data-nosnippet>2815</a>                <span class="self">self</span>.debug_type(dst.ty),
+<a href=#2816 id=2816 data-nosnippet>2816</a>            );
+<a href=#2817 id=2817 data-nosnippet>2817</a>            <span class="kw">let </span>dst_adj = <span class="self">self</span>.adjust_pointer_for_sized_access(dst, const_size);
+<a href=#2818 id=2818 data-nosnippet>2818</a>            <span class="kw">let </span>src_adj = <span class="self">self</span>.adjust_pointer_for_sized_access(src, const_size);
+<a href=#2819 id=2819 data-nosnippet>2819</a>            <span class="kw">match </span>(dst_adj, src_adj) {
+<a href=#2820 id=2820 data-nosnippet>2820</a>                <span class="comment">// HACK(eddyb) fill in missing `dst`/`src` with the other side.
+<a href=#2821 id=2821 data-nosnippet>2821</a>                </span>(<span class="prelude-val">Some</span>((dst, access_ty)), <span class="prelude-val">None</span>) =&gt; {
+<a href=#2822 id=2822 data-nosnippet>2822</a>                    <span class="macro">trace!</span>(
+<a href=#2823 id=2823 data-nosnippet>2823</a>                        <span class="string">"DESTINATION adjusted memcpy calling pointercast: dst ty: {}, access ty: {}"</span>,
+<a href=#2824 id=2824 data-nosnippet>2824</a>                        <span class="self">self</span>.debug_type(dst.ty),
+<a href=#2825 id=2825 data-nosnippet>2825</a>                        <span class="self">self</span>.debug_type(access_ty)
+<a href=#2826 id=2826 data-nosnippet>2826</a>                    );
+<a href=#2827 id=2827 data-nosnippet>2827</a>                    <span class="prelude-val">Some</span>((dst, <span class="self">self</span>.pointercast(src, <span class="self">self</span>.type_ptr_to(access_ty))))
+<a href=#2828 id=2828 data-nosnippet>2828</a>                }
+<a href=#2829 id=2829 data-nosnippet>2829</a>                (<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>((src, access_ty))) =&gt; {
+<a href=#2830 id=2830 data-nosnippet>2830</a>                    <span class="macro">trace!</span>(
+<a href=#2831 id=2831 data-nosnippet>2831</a>                        <span class="string">"SOURCE adjusted memcpy calling pointercast: dst ty: {} -&gt; access ty: {}, src ty: {}"</span>,
+<a href=#2832 id=2832 data-nosnippet>2832</a>                        <span class="self">self</span>.debug_type(dst.ty),
+<a href=#2833 id=2833 data-nosnippet>2833</a>                        <span class="self">self</span>.debug_type(access_ty),
+<a href=#2834 id=2834 data-nosnippet>2834</a>                        <span class="self">self</span>.debug_type(src.ty)
+<a href=#2835 id=2835 data-nosnippet>2835</a>                    );
+<a href=#2836 id=2836 data-nosnippet>2836</a>                    <span class="prelude-val">Some</span>((<span class="self">self</span>.pointercast(dst, <span class="self">self</span>.type_ptr_to(access_ty)), src))
+<a href=#2837 id=2837 data-nosnippet>2837</a>                }
+<a href=#2838 id=2838 data-nosnippet>2838</a>                (<span class="prelude-val">Some</span>((dst, dst_access_ty)), <span class="prelude-val">Some</span>((src, src_access_ty)))
+<a href=#2839 id=2839 data-nosnippet>2839</a>                    <span class="kw">if </span>dst_access_ty == src_access_ty =&gt;
+<a href=#2840 id=2840 data-nosnippet>2840</a>                {
+<a href=#2841 id=2841 data-nosnippet>2841</a>                    <span class="macro">trace!</span>(<span class="string">"BOTH adjusted memcpy calling pointercast"</span>);
+<a href=#2842 id=2842 data-nosnippet>2842</a>                    <span class="prelude-val">Some</span>((dst, src))
+<a href=#2843 id=2843 data-nosnippet>2843</a>                }
+<a href=#2844 id=2844 data-nosnippet>2844</a>                (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>) | (<span class="prelude-val">Some</span>(<span class="kw">_</span>), <span class="prelude-val">Some</span>(<span class="kw">_</span>)) =&gt; <span class="prelude-val">None</span>,
+<a href=#2845 id=2845 data-nosnippet>2845</a>            }
+<a href=#2846 id=2846 data-nosnippet>2846</a>        });
+<a href=#2847 id=2847 data-nosnippet>2847</a>
+<a href=#2848 id=2848 data-nosnippet>2848</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>((dst, src)) = typed_copy_dst_src {
+<a href=#2849 id=2849 data-nosnippet>2849</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(const_value) = src.const_fold_load(<span class="self">self</span>) {
+<a href=#2850 id=2850 data-nosnippet>2850</a>                <span class="macro">trace!</span>(<span class="string">"storing const value"</span>);
+<a href=#2851 id=2851 data-nosnippet>2851</a>                <span class="self">self</span>.store(const_value, dst, Align::from_bytes(<span class="number">0</span>).unwrap());
+<a href=#2852 id=2852 data-nosnippet>2852</a>            } <span class="kw">else </span>{
+<a href=#2853 id=2853 data-nosnippet>2853</a>                <span class="macro">trace!</span>(<span class="string">"copying memory using OpCopyMemory"</span>);
+<a href=#2854 id=2854 data-nosnippet>2854</a>                <span class="self">self</span>.emit()
+<a href=#2855 id=2855 data-nosnippet>2855</a>                    .copy_memory(dst.def(<span class="self">self</span>), src.def(<span class="self">self</span>), <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, empty())
+<a href=#2856 id=2856 data-nosnippet>2856</a>                    .unwrap();
+<a href=#2857 id=2857 data-nosnippet>2857</a>            }
+<a href=#2858 id=2858 data-nosnippet>2858</a>        } <span class="kw">else </span>{
+<a href=#2859 id=2859 data-nosnippet>2859</a>            <span class="self">self</span>.emit()
+<a href=#2860 id=2860 data-nosnippet>2860</a>                .copy_memory_sized(
+<a href=#2861 id=2861 data-nosnippet>2861</a>                    dst.def(<span class="self">self</span>),
+<a href=#2862 id=2862 data-nosnippet>2862</a>                    src.def(<span class="self">self</span>),
+<a href=#2863 id=2863 data-nosnippet>2863</a>                    size.def(<span class="self">self</span>),
 <a href=#2864 id=2864 data-nosnippet>2864</a>                    <span class="prelude-val">None</span>,
-<a href=#2865 id=2865 data-nosnippet>2865</a>                    empty(),
-<a href=#2866 id=2866 data-nosnippet>2866</a>                )
-<a href=#2867 id=2867 data-nosnippet>2867</a>                .unwrap();
-<a href=#2868 id=2868 data-nosnippet>2868</a>            <span class="self">self</span>.zombie(dst.def(<span class="self">self</span>), <span class="string">"cannot memcpy dynamically sized data"</span>);
-<a href=#2869 id=2869 data-nosnippet>2869</a>        }
-<a href=#2870 id=2870 data-nosnippet>2870</a>    }
-<a href=#2871 id=2871 data-nosnippet>2871</a>
-<a href=#2872 id=2872 data-nosnippet>2872</a>    <span class="kw">fn </span>memmove(
-<a href=#2873 id=2873 data-nosnippet>2873</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-<a href=#2874 id=2874 data-nosnippet>2874</a>        dst: <span class="self">Self</span>::Value,
-<a href=#2875 id=2875 data-nosnippet>2875</a>        dst_align: Align,
-<a href=#2876 id=2876 data-nosnippet>2876</a>        src: <span class="self">Self</span>::Value,
-<a href=#2877 id=2877 data-nosnippet>2877</a>        src_align: Align,
-<a href=#2878 id=2878 data-nosnippet>2878</a>        size: <span class="self">Self</span>::Value,
-<a href=#2879 id=2879 data-nosnippet>2879</a>        flags: MemFlags,
-<a href=#2880 id=2880 data-nosnippet>2880</a>    ) {
-<a href=#2881 id=2881 data-nosnippet>2881</a>        <span class="self">self</span>.memcpy(dst, dst_align, src, src_align, size, flags);
-<a href=#2882 id=2882 data-nosnippet>2882</a>    }
-<a href=#2883 id=2883 data-nosnippet>2883</a>
-<a href=#2884 id=2884 data-nosnippet>2884</a>    <span class="kw">fn </span>memset(
-<a href=#2885 id=2885 data-nosnippet>2885</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-<a href=#2886 id=2886 data-nosnippet>2886</a>        ptr: <span class="self">Self</span>::Value,
-<a href=#2887 id=2887 data-nosnippet>2887</a>        fill_byte: <span class="self">Self</span>::Value,
-<a href=#2888 id=2888 data-nosnippet>2888</a>        size: <span class="self">Self</span>::Value,
-<a href=#2889 id=2889 data-nosnippet>2889</a>        _align: Align,
-<a href=#2890 id=2890 data-nosnippet>2890</a>        flags: MemFlags,
-<a href=#2891 id=2891 data-nosnippet>2891</a>    ) {
-<a href=#2892 id=2892 data-nosnippet>2892</a>        <span class="kw">if </span>flags != MemFlags::empty() {
-<a href=#2893 id=2893 data-nosnippet>2893</a>            <span class="self">self</span>.err(<span class="macro">format!</span>(
-<a href=#2894 id=2894 data-nosnippet>2894</a>                <span class="string">"memset with mem flags is not supported yet: {flags:?}"
-<a href=#2895 id=2895 data-nosnippet>2895</a>            </span>));
-<a href=#2896 id=2896 data-nosnippet>2896</a>        }
-<a href=#2897 id=2897 data-nosnippet>2897</a>
-<a href=#2898 id=2898 data-nosnippet>2898</a>        <span class="kw">let </span>const_size = <span class="self">self
-<a href=#2899 id=2899 data-nosnippet>2899</a>            </span>.builder
-<a href=#2900 id=2900 data-nosnippet>2900</a>            .lookup_const_scalar(size)
-<a href=#2901 id=2901 data-nosnippet>2901</a>            .and_then(|size| <span class="prelude-val">Some</span>(Size::from_bytes(u64::try_from(size).ok()<span class="question-mark">?</span>)));
-<a href=#2902 id=2902 data-nosnippet>2902</a>
-<a href=#2903 id=2903 data-nosnippet>2903</a>        <span class="kw">let </span>elem_ty = <span class="kw">match </span><span class="self">self</span>.lookup_type(ptr.ty) {
-<a href=#2904 id=2904 data-nosnippet>2904</a>            SpirvType::Pointer { pointee } =&gt; pointee,
-<a href=#2905 id=2905 data-nosnippet>2905</a>            <span class="kw">_ </span>=&gt; <span class="self">self</span>.fatal(<span class="macro">format!</span>(
-<a href=#2906 id=2906 data-nosnippet>2906</a>                <span class="string">"memset called on non-pointer type: {}"</span>,
-<a href=#2907 id=2907 data-nosnippet>2907</a>                <span class="self">self</span>.debug_type(ptr.ty)
-<a href=#2908 id=2908 data-nosnippet>2908</a>            )),
-<a href=#2909 id=2909 data-nosnippet>2909</a>        };
-<a href=#2910 id=2910 data-nosnippet>2910</a>        <span class="kw">let </span>elem_ty_spv = <span class="self">self</span>.lookup_type(elem_ty);
-<a href=#2911 id=2911 data-nosnippet>2911</a>        <span class="kw">let </span>pat = <span class="kw">match </span><span class="self">self</span>.builder.lookup_const_scalar(fill_byte) {
-<a href=#2912 id=2912 data-nosnippet>2912</a>            <span class="prelude-val">Some</span>(fill_byte) =&gt; <span class="self">self</span>.memset_const_pattern(<span class="kw-2">&amp;</span>elem_ty_spv, fill_byte <span class="kw">as </span>u8),
-<a href=#2913 id=2913 data-nosnippet>2913</a>            <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.memset_dynamic_pattern(<span class="kw-2">&amp;</span>elem_ty_spv, fill_byte.def(<span class="self">self</span>)),
-<a href=#2914 id=2914 data-nosnippet>2914</a>        }
-<a href=#2915 id=2915 data-nosnippet>2915</a>        .with_type(elem_ty);
-<a href=#2916 id=2916 data-nosnippet>2916</a>        <span class="kw">match </span>const_size {
-<a href=#2917 id=2917 data-nosnippet>2917</a>            <span class="prelude-val">Some</span>(size) =&gt; <span class="self">self</span>.memset_constant_size(ptr, pat, size.bytes()),
-<a href=#2918 id=2918 data-nosnippet>2918</a>            <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.memset_dynamic_size(ptr, pat, size),
-<a href=#2919 id=2919 data-nosnippet>2919</a>        }
-<a href=#2920 id=2920 data-nosnippet>2920</a>    }
-<a href=#2921 id=2921 data-nosnippet>2921</a>
-<a href=#2922 id=2922 data-nosnippet>2922</a>    <span class="kw">fn </span>select(
-<a href=#2923 id=2923 data-nosnippet>2923</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-<a href=#2924 id=2924 data-nosnippet>2924</a>        cond: <span class="self">Self</span>::Value,
-<a href=#2925 id=2925 data-nosnippet>2925</a>        then_val: <span class="self">Self</span>::Value,
-<a href=#2926 id=2926 data-nosnippet>2926</a>        else_val: <span class="self">Self</span>::Value,
-<a href=#2927 id=2927 data-nosnippet>2927</a>    ) -&gt; <span class="self">Self</span>::Value {
-<a href=#2928 id=2928 data-nosnippet>2928</a>        <span class="macro">assert_ty_eq!</span>(<span class="self">self</span>, then_val.ty, else_val.ty);
-<a href=#2929 id=2929 data-nosnippet>2929</a>        <span class="kw">let </span>result_type = then_val.ty;
-<a href=#2930 id=2930 data-nosnippet>2930</a>
-<a href=#2931 id=2931 data-nosnippet>2931</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(ConstValue::Bool(b)) = <span class="self">self</span>.try_get_const_value(cond) {
-<a href=#2932 id=2932 data-nosnippet>2932</a>            <span class="comment">// as we directly return the values, it'll preserve their constness as well
-<a href=#2933 id=2933 data-nosnippet>2933</a>            </span><span class="kw">return if </span>b { then_val } <span class="kw">else </span>{ else_val };
-<a href=#2934 id=2934 data-nosnippet>2934</a>        }
-<a href=#2935 id=2935 data-nosnippet>2935</a>
-<a href=#2936 id=2936 data-nosnippet>2936</a>        <span class="self">self</span>.emit()
-<a href=#2937 id=2937 data-nosnippet>2937</a>            .select(
-<a href=#2938 id=2938 data-nosnippet>2938</a>                result_type,
-<a href=#2939 id=2939 data-nosnippet>2939</a>                <span class="prelude-val">None</span>,
-<a href=#2940 id=2940 data-nosnippet>2940</a>                cond.def(<span class="self">self</span>),
-<a href=#2941 id=2941 data-nosnippet>2941</a>                then_val.def(<span class="self">self</span>),
-<a href=#2942 id=2942 data-nosnippet>2942</a>                else_val.def(<span class="self">self</span>),
-<a href=#2943 id=2943 data-nosnippet>2943</a>            )
-<a href=#2944 id=2944 data-nosnippet>2944</a>            .unwrap()
-<a href=#2945 id=2945 data-nosnippet>2945</a>            .with_type(result_type)
-<a href=#2946 id=2946 data-nosnippet>2946</a>    }
-<a href=#2947 id=2947 data-nosnippet>2947</a>
-<a href=#2948 id=2948 data-nosnippet>2948</a>    <span class="kw">fn </span>va_arg(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _list: <span class="self">Self</span>::Value, _ty: <span class="self">Self</span>::Type) -&gt; <span class="self">Self</span>::Value {
-<a href=#2949 id=2949 data-nosnippet>2949</a>        <span class="macro">todo!</span>()
-<a href=#2950 id=2950 data-nosnippet>2950</a>    }
-<a href=#2951 id=2951 data-nosnippet>2951</a>
-<a href=#2952 id=2952 data-nosnippet>2952</a>    <span class="kw">fn </span>extract_element(<span class="kw-2">&amp;mut </span><span class="self">self</span>, vec: <span class="self">Self</span>::Value, idx: <span class="self">Self</span>::Value) -&gt; <span class="self">Self</span>::Value {
-<a href=#2953 id=2953 data-nosnippet>2953</a>        <span class="kw">let </span>result_type = <span class="kw">match </span><span class="self">self</span>.lookup_type(vec.ty) {
-<a href=#2954 id=2954 data-nosnippet>2954</a>            SpirvType::Vector { element, .. } =&gt; element,
-<a href=#2955 id=2955 data-nosnippet>2955</a>            other =&gt; <span class="self">self</span>.fatal(<span class="macro">format!</span>(<span class="string">"extract_element not implemented on type {other:?}"</span>)),
-<a href=#2956 id=2956 data-nosnippet>2956</a>        };
-<a href=#2957 id=2957 data-nosnippet>2957</a>        <span class="kw">match </span><span class="self">self</span>.builder.lookup_const_scalar(idx) {
-<a href=#2958 id=2958 data-nosnippet>2958</a>            <span class="prelude-val">Some</span>(const_index) =&gt; <span class="self">self</span>.emit().composite_extract(
-<a href=#2959 id=2959 data-nosnippet>2959</a>                result_type,
-<a href=#2960 id=2960 data-nosnippet>2960</a>                <span class="prelude-val">None</span>,
-<a href=#2961 id=2961 data-nosnippet>2961</a>                vec.def(<span class="self">self</span>),
-<a href=#2962 id=2962 data-nosnippet>2962</a>                [const_index <span class="kw">as </span>u32].iter().cloned(),
-<a href=#2963 id=2963 data-nosnippet>2963</a>            ),
-<a href=#2964 id=2964 data-nosnippet>2964</a>            <span class="prelude-val">None </span>=&gt; {
-<a href=#2965 id=2965 data-nosnippet>2965</a>                <span class="self">self</span>.emit()
-<a href=#2966 id=2966 data-nosnippet>2966</a>                    .vector_extract_dynamic(result_type, <span class="prelude-val">None</span>, vec.def(<span class="self">self</span>), idx.def(<span class="self">self</span>))
-<a href=#2967 id=2967 data-nosnippet>2967</a>            }
-<a href=#2968 id=2968 data-nosnippet>2968</a>        }
-<a href=#2969 id=2969 data-nosnippet>2969</a>        .unwrap()
-<a href=#2970 id=2970 data-nosnippet>2970</a>        .with_type(result_type)
-<a href=#2971 id=2971 data-nosnippet>2971</a>    }
-<a href=#2972 id=2972 data-nosnippet>2972</a>
-<a href=#2973 id=2973 data-nosnippet>2973</a>    <span class="kw">fn </span>vector_splat(<span class="kw-2">&amp;mut </span><span class="self">self</span>, num_elts: usize, elt: <span class="self">Self</span>::Value) -&gt; <span class="self">Self</span>::Value {
-<a href=#2974 id=2974 data-nosnippet>2974</a>        <span class="kw">let </span>result_type =
-<a href=#2975 id=2975 data-nosnippet>2975</a>            SpirvType::simd_vector(<span class="self">self</span>, <span class="self">self</span>.span(), <span class="self">self</span>.lookup_type(elt.ty), num_elts <span class="kw">as </span>u32)
-<a href=#2976 id=2976 data-nosnippet>2976</a>                .def(<span class="self">self</span>.span(), <span class="self">self</span>);
-<a href=#2977 id=2977 data-nosnippet>2977</a>        <span class="kw">if </span><span class="self">self</span>.builder.lookup_const(elt).is_some() {
-<a href=#2978 id=2978 data-nosnippet>2978</a>            <span class="self">self</span>.constant_composite(result_type, iter::repeat_n(elt.def(<span class="self">self</span>), num_elts))
-<a href=#2979 id=2979 data-nosnippet>2979</a>        } <span class="kw">else </span>{
-<a href=#2980 id=2980 data-nosnippet>2980</a>            <span class="self">self</span>.emit()
-<a href=#2981 id=2981 data-nosnippet>2981</a>                .composite_construct(result_type, <span class="prelude-val">None</span>, iter::repeat_n(elt.def(<span class="self">self</span>), num_elts))
-<a href=#2982 id=2982 data-nosnippet>2982</a>                .unwrap()
-<a href=#2983 id=2983 data-nosnippet>2983</a>                .with_type(result_type)
-<a href=#2984 id=2984 data-nosnippet>2984</a>        }
-<a href=#2985 id=2985 data-nosnippet>2985</a>    }
-<a href=#2986 id=2986 data-nosnippet>2986</a>
-<a href=#2987 id=2987 data-nosnippet>2987</a>    <span class="kw">fn </span>extract_value(<span class="kw-2">&amp;mut </span><span class="self">self</span>, agg_val: <span class="self">Self</span>::Value, idx: u64) -&gt; <span class="self">Self</span>::Value {
-<a href=#2988 id=2988 data-nosnippet>2988</a>        <span class="kw">let </span>result_type = <span class="kw">match </span><span class="self">self</span>.lookup_type(agg_val.ty) {
-<a href=#2989 id=2989 data-nosnippet>2989</a>            SpirvType::Adt { field_types, .. } =&gt; field_types[idx <span class="kw">as </span>usize],
-<a href=#2990 id=2990 data-nosnippet>2990</a>            SpirvType::Array { element, .. }
-<a href=#2991 id=2991 data-nosnippet>2991</a>            | SpirvType::Vector { element, .. }
-<a href=#2992 id=2992 data-nosnippet>2992</a>            | SpirvType::Matrix { element, .. } =&gt; element,
-<a href=#2993 id=2993 data-nosnippet>2993</a>            other =&gt; <span class="self">self</span>.fatal(<span class="macro">format!</span>(
-<a href=#2994 id=2994 data-nosnippet>2994</a>                <span class="string">"extract_value not implemented on type {}"</span>,
-<a href=#2995 id=2995 data-nosnippet>2995</a>                other.debug(agg_val.ty, <span class="self">self</span>)
-<a href=#2996 id=2996 data-nosnippet>2996</a>            )),
-<a href=#2997 id=2997 data-nosnippet>2997</a>        };
-<a href=#2998 id=2998 data-nosnippet>2998</a>        <span class="self">self</span>.emit()
-<a href=#2999 id=2999 data-nosnippet>2999</a>            .composite_extract(
-<a href=#3000 id=3000 data-nosnippet>3000</a>                result_type,
-<a href=#3001 id=3001 data-nosnippet>3001</a>                <span class="prelude-val">None</span>,
-<a href=#3002 id=3002 data-nosnippet>3002</a>                agg_val.def(<span class="self">self</span>),
-<a href=#3003 id=3003 data-nosnippet>3003</a>                [idx <span class="kw">as </span>u32].iter().cloned(),
-<a href=#3004 id=3004 data-nosnippet>3004</a>            )
-<a href=#3005 id=3005 data-nosnippet>3005</a>            .unwrap()
-<a href=#3006 id=3006 data-nosnippet>3006</a>            .with_type(result_type)
-<a href=#3007 id=3007 data-nosnippet>3007</a>    }
-<a href=#3008 id=3008 data-nosnippet>3008</a>
-<a href=#3009 id=3009 data-nosnippet>3009</a>    <span class="attr">#[instrument(level = <span class="string">"trace"</span>, skip(<span class="self">self</span>))]
-<a href=#3010 id=3010 data-nosnippet>3010</a>    </span><span class="kw">fn </span>insert_value(<span class="kw-2">&amp;mut </span><span class="self">self</span>, agg_val: <span class="self">Self</span>::Value, elt: <span class="self">Self</span>::Value, idx: u64) -&gt; <span class="self">Self</span>::Value {
-<a href=#3011 id=3011 data-nosnippet>3011</a>        <span class="kw">let </span>field_type = <span class="kw">match </span><span class="self">self</span>.lookup_type(agg_val.ty) {
-<a href=#3012 id=3012 data-nosnippet>3012</a>            SpirvType::Adt { field_types, .. } =&gt; field_types[idx <span class="kw">as </span>usize],
-<a href=#3013 id=3013 data-nosnippet>3013</a>            SpirvType::Array { element, .. }
-<a href=#3014 id=3014 data-nosnippet>3014</a>            | SpirvType::Vector { element, .. }
-<a href=#3015 id=3015 data-nosnippet>3015</a>            | SpirvType::Matrix { element, .. } =&gt; element,
-<a href=#3016 id=3016 data-nosnippet>3016</a>            other =&gt; <span class="self">self</span>.fatal(<span class="macro">format!</span>(<span class="string">"insert_value not implemented on type {other:?}"</span>)),
-<a href=#3017 id=3017 data-nosnippet>3017</a>        };
-<a href=#3018 id=3018 data-nosnippet>3018</a>
-<a href=#3019 id=3019 data-nosnippet>3019</a>        <span class="comment">// HACK(eddyb) temporary workaround for untyped pointers upstream.
-<a href=#3020 id=3020 data-nosnippet>3020</a>        // FIXME(eddyb) replace with untyped memory SPIR-V + `qptr` or similar.
-<a href=#3021 id=3021 data-nosnippet>3021</a>        </span><span class="kw">let </span>elt = <span class="self">self</span>.bitcast(elt, field_type);
-<a href=#3022 id=3022 data-nosnippet>3022</a>
-<a href=#3023 id=3023 data-nosnippet>3023</a>        <span class="self">self</span>.emit()
-<a href=#3024 id=3024 data-nosnippet>3024</a>            .composite_insert(
-<a href=#3025 id=3025 data-nosnippet>3025</a>                agg_val.ty,
-<a href=#3026 id=3026 data-nosnippet>3026</a>                <span class="prelude-val">None</span>,
-<a href=#3027 id=3027 data-nosnippet>3027</a>                elt.def(<span class="self">self</span>),
-<a href=#3028 id=3028 data-nosnippet>3028</a>                agg_val.def(<span class="self">self</span>),
-<a href=#3029 id=3029 data-nosnippet>3029</a>                [idx <span class="kw">as </span>u32].iter().cloned(),
-<a href=#3030 id=3030 data-nosnippet>3030</a>            )
-<a href=#3031 id=3031 data-nosnippet>3031</a>            .unwrap()
-<a href=#3032 id=3032 data-nosnippet>3032</a>            .with_type(agg_val.ty)
-<a href=#3033 id=3033 data-nosnippet>3033</a>    }
-<a href=#3034 id=3034 data-nosnippet>3034</a>
-<a href=#3035 id=3035 data-nosnippet>3035</a>    <span class="kw">fn </span>set_personality_fn(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _personality: <span class="self">Self</span>::Function) {
-<a href=#3036 id=3036 data-nosnippet>3036</a>        <span class="macro">todo!</span>()
-<a href=#3037 id=3037 data-nosnippet>3037</a>    }
-<a href=#3038 id=3038 data-nosnippet>3038</a>
-<a href=#3039 id=3039 data-nosnippet>3039</a>    <span class="comment">// These are used by everyone except msvc
-<a href=#3040 id=3040 data-nosnippet>3040</a>    </span><span class="kw">fn </span>cleanup_landing_pad(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _pers_fn: <span class="self">Self</span>::Function) -&gt; (<span class="self">Self</span>::Value, <span class="self">Self</span>::Value) {
-<a href=#3041 id=3041 data-nosnippet>3041</a>        <span class="macro">todo!</span>()
-<a href=#3042 id=3042 data-nosnippet>3042</a>    }
-<a href=#3043 id=3043 data-nosnippet>3043</a>
-<a href=#3044 id=3044 data-nosnippet>3044</a>    <span class="kw">fn </span>filter_landing_pad(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _pers_fn: <span class="self">Self</span>::Function) {
-<a href=#3045 id=3045 data-nosnippet>3045</a>        <span class="macro">todo!</span>()
-<a href=#3046 id=3046 data-nosnippet>3046</a>    }
-<a href=#3047 id=3047 data-nosnippet>3047</a>
-<a href=#3048 id=3048 data-nosnippet>3048</a>    <span class="kw">fn </span>resume(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _exn0: <span class="self">Self</span>::Value, _exn1: <span class="self">Self</span>::Value) {
-<a href=#3049 id=3049 data-nosnippet>3049</a>        <span class="macro">todo!</span>()
-<a href=#3050 id=3050 data-nosnippet>3050</a>    }
-<a href=#3051 id=3051 data-nosnippet>3051</a>
-<a href=#3052 id=3052 data-nosnippet>3052</a>    <span class="comment">// These are used only by msvc
-<a href=#3053 id=3053 data-nosnippet>3053</a>    </span><span class="kw">fn </span>cleanup_pad(
-<a href=#3054 id=3054 data-nosnippet>3054</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-<a href=#3055 id=3055 data-nosnippet>3055</a>        _parent: <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Value&gt;,
-<a href=#3056 id=3056 data-nosnippet>3056</a>        _args: <span class="kw-2">&amp;</span>[<span class="self">Self</span>::Value],
-<a href=#3057 id=3057 data-nosnippet>3057</a>    ) -&gt; <span class="self">Self</span>::Funclet {
-<a href=#3058 id=3058 data-nosnippet>3058</a>        <span class="macro">todo!</span>()
-<a href=#3059 id=3059 data-nosnippet>3059</a>    }
-<a href=#3060 id=3060 data-nosnippet>3060</a>
-<a href=#3061 id=3061 data-nosnippet>3061</a>    <span class="kw">fn </span>cleanup_ret(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _funclet: <span class="kw-2">&amp;</span><span class="self">Self</span>::Funclet, _unwind: <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::BasicBlock&gt;) {
-<a href=#3062 id=3062 data-nosnippet>3062</a>        <span class="macro">todo!</span>()
-<a href=#3063 id=3063 data-nosnippet>3063</a>    }
-<a href=#3064 id=3064 data-nosnippet>3064</a>
-<a href=#3065 id=3065 data-nosnippet>3065</a>    <span class="kw">fn </span>catch_pad(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _parent: <span class="self">Self</span>::Value, _args: <span class="kw-2">&amp;</span>[<span class="self">Self</span>::Value]) -&gt; <span class="self">Self</span>::Funclet {
-<a href=#3066 id=3066 data-nosnippet>3066</a>        <span class="macro">todo!</span>()
-<a href=#3067 id=3067 data-nosnippet>3067</a>    }
-<a href=#3068 id=3068 data-nosnippet>3068</a>
-<a href=#3069 id=3069 data-nosnippet>3069</a>    <span class="kw">fn </span>catch_switch(
-<a href=#3070 id=3070 data-nosnippet>3070</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-<a href=#3071 id=3071 data-nosnippet>3071</a>        _parent: <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Value&gt;,
-<a href=#3072 id=3072 data-nosnippet>3072</a>        _unwind: <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::BasicBlock&gt;,
-<a href=#3073 id=3073 data-nosnippet>3073</a>        _handlers: <span class="kw-2">&amp;</span>[<span class="self">Self</span>::BasicBlock],
-<a href=#3074 id=3074 data-nosnippet>3074</a>    ) -&gt; <span class="self">Self</span>::Value {
-<a href=#3075 id=3075 data-nosnippet>3075</a>        <span class="macro">todo!</span>()
-<a href=#3076 id=3076 data-nosnippet>3076</a>    }
-<a href=#3077 id=3077 data-nosnippet>3077</a>
-<a href=#3078 id=3078 data-nosnippet>3078</a>    <span class="kw">fn </span>atomic_cmpxchg(
-<a href=#3079 id=3079 data-nosnippet>3079</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-<a href=#3080 id=3080 data-nosnippet>3080</a>        dst: <span class="self">Self</span>::Value,
-<a href=#3081 id=3081 data-nosnippet>3081</a>        cmp: <span class="self">Self</span>::Value,
-<a href=#3082 id=3082 data-nosnippet>3082</a>        src: <span class="self">Self</span>::Value,
-<a href=#3083 id=3083 data-nosnippet>3083</a>        order: AtomicOrdering,
-<a href=#3084 id=3084 data-nosnippet>3084</a>        failure_order: AtomicOrdering,
-<a href=#3085 id=3085 data-nosnippet>3085</a>        _weak: bool,
-<a href=#3086 id=3086 data-nosnippet>3086</a>    ) -&gt; (<span class="self">Self</span>::Value, <span class="self">Self</span>::Value) {
-<a href=#3087 id=3087 data-nosnippet>3087</a>        <span class="macro">assert_ty_eq!</span>(<span class="self">self</span>, cmp.ty, src.ty);
-<a href=#3088 id=3088 data-nosnippet>3088</a>        <span class="kw">let </span>ty = src.ty;
-<a href=#3089 id=3089 data-nosnippet>3089</a>
-<a href=#3090 id=3090 data-nosnippet>3090</a>        <span class="kw">let </span>(dst, access_ty) = <span class="self">self</span>.adjust_pointer_for_typed_access(dst, ty);
-<a href=#3091 id=3091 data-nosnippet>3091</a>        <span class="kw">let </span>cmp = <span class="self">self</span>.bitcast(cmp, access_ty);
-<a href=#3092 id=3092 data-nosnippet>3092</a>        <span class="kw">let </span>src = <span class="self">self</span>.bitcast(src, access_ty);
-<a href=#3093 id=3093 data-nosnippet>3093</a>
-<a href=#3094 id=3094 data-nosnippet>3094</a>        <span class="self">self</span>.validate_atomic(access_ty, dst.def(<span class="self">self</span>));
-<a href=#3095 id=3095 data-nosnippet>3095</a>        <span class="comment">// TODO: Default to device scope
-<a href=#3096 id=3096 data-nosnippet>3096</a>        </span><span class="kw">let </span>memory = <span class="self">self</span>.constant_u32(<span class="self">self</span>.span(), Scope::Device <span class="kw">as </span>u32);
-<a href=#3097 id=3097 data-nosnippet>3097</a>        <span class="kw">let </span>semantics_equal = <span class="self">self</span>.ordering_to_semantics_def(order);
-<a href=#3098 id=3098 data-nosnippet>3098</a>        <span class="kw">let </span>semantics_unequal = <span class="self">self</span>.ordering_to_semantics_def(failure_order);
-<a href=#3099 id=3099 data-nosnippet>3099</a>        <span class="comment">// Note: OpAtomicCompareExchangeWeak is deprecated, and has the same semantics
-<a href=#3100 id=3100 data-nosnippet>3100</a>        </span><span class="kw">let </span>result = <span class="self">self
-<a href=#3101 id=3101 data-nosnippet>3101</a>            </span>.emit()
-<a href=#3102 id=3102 data-nosnippet>3102</a>            .atomic_compare_exchange(
-<a href=#3103 id=3103 data-nosnippet>3103</a>                access_ty,
-<a href=#3104 id=3104 data-nosnippet>3104</a>                <span class="prelude-val">None</span>,
-<a href=#3105 id=3105 data-nosnippet>3105</a>                dst.def(<span class="self">self</span>),
-<a href=#3106 id=3106 data-nosnippet>3106</a>                memory.def(<span class="self">self</span>),
-<a href=#3107 id=3107 data-nosnippet>3107</a>                semantics_equal.def(<span class="self">self</span>),
-<a href=#3108 id=3108 data-nosnippet>3108</a>                semantics_unequal.def(<span class="self">self</span>),
-<a href=#3109 id=3109 data-nosnippet>3109</a>                src.def(<span class="self">self</span>),
-<a href=#3110 id=3110 data-nosnippet>3110</a>                cmp.def(<span class="self">self</span>),
-<a href=#3111 id=3111 data-nosnippet>3111</a>            )
-<a href=#3112 id=3112 data-nosnippet>3112</a>            .unwrap()
-<a href=#3113 id=3113 data-nosnippet>3113</a>            .with_type(access_ty);
-<a href=#3114 id=3114 data-nosnippet>3114</a>
-<a href=#3115 id=3115 data-nosnippet>3115</a>        <span class="kw">let </span>val = <span class="self">self</span>.bitcast(result, ty);
-<a href=#3116 id=3116 data-nosnippet>3116</a>        <span class="kw">let </span>success = <span class="self">self</span>.icmp(IntPredicate::IntEQ, val, cmp);
-<a href=#3117 id=3117 data-nosnippet>3117</a>
-<a href=#3118 id=3118 data-nosnippet>3118</a>        (val, success)
-<a href=#3119 id=3119 data-nosnippet>3119</a>    }
-<a href=#3120 id=3120 data-nosnippet>3120</a>
-<a href=#3121 id=3121 data-nosnippet>3121</a>    <span class="kw">fn </span>atomic_rmw(
-<a href=#3122 id=3122 data-nosnippet>3122</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-<a href=#3123 id=3123 data-nosnippet>3123</a>        op: AtomicRmwBinOp,
-<a href=#3124 id=3124 data-nosnippet>3124</a>        dst: <span class="self">Self</span>::Value,
-<a href=#3125 id=3125 data-nosnippet>3125</a>        src: <span class="self">Self</span>::Value,
-<a href=#3126 id=3126 data-nosnippet>3126</a>        order: AtomicOrdering,
-<a href=#3127 id=3127 data-nosnippet>3127</a>    ) -&gt; <span class="self">Self</span>::Value {
-<a href=#3128 id=3128 data-nosnippet>3128</a>        <span class="kw">let </span>ty = src.ty;
-<a href=#3129 id=3129 data-nosnippet>3129</a>
-<a href=#3130 id=3130 data-nosnippet>3130</a>        <span class="kw">let </span>(dst, access_ty) = <span class="self">self</span>.adjust_pointer_for_typed_access(dst, ty);
-<a href=#3131 id=3131 data-nosnippet>3131</a>        <span class="kw">let </span>src = <span class="self">self</span>.bitcast(src, access_ty);
-<a href=#3132 id=3132 data-nosnippet>3132</a>
-<a href=#3133 id=3133 data-nosnippet>3133</a>        <span class="self">self</span>.validate_atomic(access_ty, dst.def(<span class="self">self</span>));
-<a href=#3134 id=3134 data-nosnippet>3134</a>        <span class="comment">// TODO: Default to device scope
-<a href=#3135 id=3135 data-nosnippet>3135</a>        </span><span class="kw">let </span>memory = <span class="self">self
-<a href=#3136 id=3136 data-nosnippet>3136</a>            </span>.constant_u32(<span class="self">self</span>.span(), Scope::Device <span class="kw">as </span>u32)
-<a href=#3137 id=3137 data-nosnippet>3137</a>            .def(<span class="self">self</span>);
-<a href=#3138 id=3138 data-nosnippet>3138</a>        <span class="kw">let </span>semantics = <span class="self">self</span>.ordering_to_semantics_def(order).def(<span class="self">self</span>);
-<a href=#3139 id=3139 data-nosnippet>3139</a>        <span class="kw">use </span>AtomicRmwBinOp::<span class="kw-2">*</span>;
-<a href=#3140 id=3140 data-nosnippet>3140</a>        <span class="kw">let </span>result = <span class="kw">match </span>op {
-<a href=#3141 id=3141 data-nosnippet>3141</a>            AtomicXchg =&gt; <span class="self">self</span>.emit().atomic_exchange(
-<a href=#3142 id=3142 data-nosnippet>3142</a>                access_ty,
-<a href=#3143 id=3143 data-nosnippet>3143</a>                <span class="prelude-val">None</span>,
-<a href=#3144 id=3144 data-nosnippet>3144</a>                dst.def(<span class="self">self</span>),
-<a href=#3145 id=3145 data-nosnippet>3145</a>                memory,
-<a href=#3146 id=3146 data-nosnippet>3146</a>                semantics,
-<a href=#3147 id=3147 data-nosnippet>3147</a>                src.def(<span class="self">self</span>),
-<a href=#3148 id=3148 data-nosnippet>3148</a>            ),
-<a href=#3149 id=3149 data-nosnippet>3149</a>            AtomicAdd =&gt; <span class="self">self</span>.emit().atomic_i_add(
-<a href=#3150 id=3150 data-nosnippet>3150</a>                access_ty,
-<a href=#3151 id=3151 data-nosnippet>3151</a>                <span class="prelude-val">None</span>,
-<a href=#3152 id=3152 data-nosnippet>3152</a>                dst.def(<span class="self">self</span>),
-<a href=#3153 id=3153 data-nosnippet>3153</a>                memory,
-<a href=#3154 id=3154 data-nosnippet>3154</a>                semantics,
-<a href=#3155 id=3155 data-nosnippet>3155</a>                src.def(<span class="self">self</span>),
-<a href=#3156 id=3156 data-nosnippet>3156</a>            ),
-<a href=#3157 id=3157 data-nosnippet>3157</a>            AtomicSub =&gt; <span class="self">self</span>.emit().atomic_i_sub(
-<a href=#3158 id=3158 data-nosnippet>3158</a>                access_ty,
-<a href=#3159 id=3159 data-nosnippet>3159</a>                <span class="prelude-val">None</span>,
-<a href=#3160 id=3160 data-nosnippet>3160</a>                dst.def(<span class="self">self</span>),
-<a href=#3161 id=3161 data-nosnippet>3161</a>                memory,
-<a href=#3162 id=3162 data-nosnippet>3162</a>                semantics,
-<a href=#3163 id=3163 data-nosnippet>3163</a>                src.def(<span class="self">self</span>),
-<a href=#3164 id=3164 data-nosnippet>3164</a>            ),
-<a href=#3165 id=3165 data-nosnippet>3165</a>            AtomicAnd =&gt; <span class="self">self</span>.emit().atomic_and(
-<a href=#3166 id=3166 data-nosnippet>3166</a>                access_ty,
-<a href=#3167 id=3167 data-nosnippet>3167</a>                <span class="prelude-val">None</span>,
-<a href=#3168 id=3168 data-nosnippet>3168</a>                dst.def(<span class="self">self</span>),
-<a href=#3169 id=3169 data-nosnippet>3169</a>                memory,
-<a href=#3170 id=3170 data-nosnippet>3170</a>                semantics,
-<a href=#3171 id=3171 data-nosnippet>3171</a>                src.def(<span class="self">self</span>),
-<a href=#3172 id=3172 data-nosnippet>3172</a>            ),
-<a href=#3173 id=3173 data-nosnippet>3173</a>            AtomicNand =&gt; <span class="self">self</span>.fatal(<span class="string">"atomic nand is not supported"</span>),
-<a href=#3174 id=3174 data-nosnippet>3174</a>            AtomicOr =&gt; <span class="self">self</span>.emit().atomic_or(
-<a href=#3175 id=3175 data-nosnippet>3175</a>                access_ty,
-<a href=#3176 id=3176 data-nosnippet>3176</a>                <span class="prelude-val">None</span>,
-<a href=#3177 id=3177 data-nosnippet>3177</a>                dst.def(<span class="self">self</span>),
-<a href=#3178 id=3178 data-nosnippet>3178</a>                memory,
-<a href=#3179 id=3179 data-nosnippet>3179</a>                semantics,
-<a href=#3180 id=3180 data-nosnippet>3180</a>                src.def(<span class="self">self</span>),
-<a href=#3181 id=3181 data-nosnippet>3181</a>            ),
-<a href=#3182 id=3182 data-nosnippet>3182</a>            AtomicXor =&gt; <span class="self">self</span>.emit().atomic_xor(
-<a href=#3183 id=3183 data-nosnippet>3183</a>                access_ty,
-<a href=#3184 id=3184 data-nosnippet>3184</a>                <span class="prelude-val">None</span>,
-<a href=#3185 id=3185 data-nosnippet>3185</a>                dst.def(<span class="self">self</span>),
-<a href=#3186 id=3186 data-nosnippet>3186</a>                memory,
-<a href=#3187 id=3187 data-nosnippet>3187</a>                semantics,
-<a href=#3188 id=3188 data-nosnippet>3188</a>                src.def(<span class="self">self</span>),
-<a href=#3189 id=3189 data-nosnippet>3189</a>            ),
-<a href=#3190 id=3190 data-nosnippet>3190</a>            AtomicMax =&gt; <span class="self">self</span>.emit().atomic_s_max(
-<a href=#3191 id=3191 data-nosnippet>3191</a>                access_ty,
-<a href=#3192 id=3192 data-nosnippet>3192</a>                <span class="prelude-val">None</span>,
-<a href=#3193 id=3193 data-nosnippet>3193</a>                dst.def(<span class="self">self</span>),
-<a href=#3194 id=3194 data-nosnippet>3194</a>                memory,
-<a href=#3195 id=3195 data-nosnippet>3195</a>                semantics,
-<a href=#3196 id=3196 data-nosnippet>3196</a>                src.def(<span class="self">self</span>),
-<a href=#3197 id=3197 data-nosnippet>3197</a>            ),
-<a href=#3198 id=3198 data-nosnippet>3198</a>            AtomicMin =&gt; <span class="self">self</span>.emit().atomic_s_min(
-<a href=#3199 id=3199 data-nosnippet>3199</a>                access_ty,
-<a href=#3200 id=3200 data-nosnippet>3200</a>                <span class="prelude-val">None</span>,
-<a href=#3201 id=3201 data-nosnippet>3201</a>                dst.def(<span class="self">self</span>),
-<a href=#3202 id=3202 data-nosnippet>3202</a>                memory,
-<a href=#3203 id=3203 data-nosnippet>3203</a>                semantics,
-<a href=#3204 id=3204 data-nosnippet>3204</a>                src.def(<span class="self">self</span>),
-<a href=#3205 id=3205 data-nosnippet>3205</a>            ),
-<a href=#3206 id=3206 data-nosnippet>3206</a>            AtomicUMax =&gt; <span class="self">self</span>.emit().atomic_u_max(
-<a href=#3207 id=3207 data-nosnippet>3207</a>                access_ty,
-<a href=#3208 id=3208 data-nosnippet>3208</a>                <span class="prelude-val">None</span>,
-<a href=#3209 id=3209 data-nosnippet>3209</a>                dst.def(<span class="self">self</span>),
-<a href=#3210 id=3210 data-nosnippet>3210</a>                memory,
-<a href=#3211 id=3211 data-nosnippet>3211</a>                semantics,
-<a href=#3212 id=3212 data-nosnippet>3212</a>                src.def(<span class="self">self</span>),
-<a href=#3213 id=3213 data-nosnippet>3213</a>            ),
-<a href=#3214 id=3214 data-nosnippet>3214</a>            AtomicUMin =&gt; <span class="self">self</span>.emit().atomic_u_min(
-<a href=#3215 id=3215 data-nosnippet>3215</a>                access_ty,
-<a href=#3216 id=3216 data-nosnippet>3216</a>                <span class="prelude-val">None</span>,
-<a href=#3217 id=3217 data-nosnippet>3217</a>                dst.def(<span class="self">self</span>),
-<a href=#3218 id=3218 data-nosnippet>3218</a>                memory,
-<a href=#3219 id=3219 data-nosnippet>3219</a>                semantics,
-<a href=#3220 id=3220 data-nosnippet>3220</a>                src.def(<span class="self">self</span>),
-<a href=#3221 id=3221 data-nosnippet>3221</a>            ),
-<a href=#3222 id=3222 data-nosnippet>3222</a>        }
-<a href=#3223 id=3223 data-nosnippet>3223</a>        .unwrap()
-<a href=#3224 id=3224 data-nosnippet>3224</a>        .with_type(access_ty);
-<a href=#3225 id=3225 data-nosnippet>3225</a>        <span class="self">self</span>.bitcast(result, ty)
-<a href=#3226 id=3226 data-nosnippet>3226</a>    }
-<a href=#3227 id=3227 data-nosnippet>3227</a>
-<a href=#3228 id=3228 data-nosnippet>3228</a>    <span class="kw">fn </span>atomic_fence(<span class="kw-2">&amp;mut </span><span class="self">self</span>, order: AtomicOrdering, _scope: SynchronizationScope) {
-<a href=#3229 id=3229 data-nosnippet>3229</a>        <span class="comment">// Ignore sync scope (it only has "single thread" and "cross thread")
-<a href=#3230 id=3230 data-nosnippet>3230</a>        // TODO: Default to device scope
-<a href=#3231 id=3231 data-nosnippet>3231</a>        </span><span class="kw">let </span>memory = <span class="self">self
-<a href=#3232 id=3232 data-nosnippet>3232</a>            </span>.constant_u32(<span class="self">self</span>.span(), Scope::Device <span class="kw">as </span>u32)
-<a href=#3233 id=3233 data-nosnippet>3233</a>            .def(<span class="self">self</span>);
-<a href=#3234 id=3234 data-nosnippet>3234</a>        <span class="kw">let </span>semantics = <span class="self">self</span>.ordering_to_semantics_def(order).def(<span class="self">self</span>);
-<a href=#3235 id=3235 data-nosnippet>3235</a>        <span class="self">self</span>.emit().memory_barrier(memory, semantics).unwrap();
-<a href=#3236 id=3236 data-nosnippet>3236</a>    }
-<a href=#3237 id=3237 data-nosnippet>3237</a>
-<a href=#3238 id=3238 data-nosnippet>3238</a>    <span class="kw">fn </span>set_invariant_load(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _load: <span class="self">Self</span>::Value) {
-<a href=#3239 id=3239 data-nosnippet>3239</a>        <span class="comment">// ignore
-<a href=#3240 id=3240 data-nosnippet>3240</a>    </span>}
-<a href=#3241 id=3241 data-nosnippet>3241</a>
-<a href=#3242 id=3242 data-nosnippet>3242</a>    <span class="doccomment">/// Called for `StorageLive`
-<a href=#3243 id=3243 data-nosnippet>3243</a>    </span><span class="kw">fn </span>lifetime_start(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _ptr: <span class="self">Self</span>::Value, _size: Size) {
-<a href=#3244 id=3244 data-nosnippet>3244</a>        <span class="comment">// ignore
-<a href=#3245 id=3245 data-nosnippet>3245</a>    </span>}
-<a href=#3246 id=3246 data-nosnippet>3246</a>
-<a href=#3247 id=3247 data-nosnippet>3247</a>    <span class="doccomment">/// Called for `StorageDead`
-<a href=#3248 id=3248 data-nosnippet>3248</a>    </span><span class="kw">fn </span>lifetime_end(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _ptr: <span class="self">Self</span>::Value, _size: Size) {
-<a href=#3249 id=3249 data-nosnippet>3249</a>        <span class="comment">// ignore
-<a href=#3250 id=3250 data-nosnippet>3250</a>    </span>}
-<a href=#3251 id=3251 data-nosnippet>3251</a>
-<a href=#3252 id=3252 data-nosnippet>3252</a>    <span class="attr">#[tracing::instrument(
-<a href=#3253 id=3253 data-nosnippet>3253</a>        level = <span class="string">"debug"</span>,
-<a href=#3254 id=3254 data-nosnippet>3254</a>        skip(<span class="self">self</span>, callee_ty, _fn_attrs, fn_abi, callee, args, funclet)
-<a href=#3255 id=3255 data-nosnippet>3255</a>    )]
-<a href=#3256 id=3256 data-nosnippet>3256</a>    </span><span class="kw">fn </span>call(
-<a href=#3257 id=3257 data-nosnippet>3257</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-<a href=#3258 id=3258 data-nosnippet>3258</a>        callee_ty: <span class="self">Self</span>::Type,
-<a href=#3259 id=3259 data-nosnippet>3259</a>        _fn_attrs: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>CodegenFnAttrs&gt;,
-<a href=#3260 id=3260 data-nosnippet>3260</a>        fn_abi: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>FnAbi&lt;<span class="lifetime">'tcx</span>, Ty&lt;<span class="lifetime">'tcx</span>&gt;&gt;&gt;,
-<a href=#3261 id=3261 data-nosnippet>3261</a>        callee: <span class="self">Self</span>::Value,
-<a href=#3262 id=3262 data-nosnippet>3262</a>        args: <span class="kw-2">&amp;</span>[<span class="self">Self</span>::Value],
-<a href=#3263 id=3263 data-nosnippet>3263</a>        funclet: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="self">Self</span>::Funclet&gt;,
-<a href=#3264 id=3264 data-nosnippet>3264</a>        instance: <span class="prelude-ty">Option</span>&lt;ty::Instance&lt;<span class="lifetime">'tcx</span>&gt;&gt;,
-<a href=#3265 id=3265 data-nosnippet>3265</a>    ) -&gt; <span class="self">Self</span>::Value {
-<a href=#3266 id=3266 data-nosnippet>3266</a>        <span class="kw">if </span>funclet.is_some() {
-<a href=#3267 id=3267 data-nosnippet>3267</a>            <span class="self">self</span>.fatal(<span class="string">"TODO: Funclets are not supported"</span>);
-<a href=#3268 id=3268 data-nosnippet>3268</a>        }
-<a href=#3269 id=3269 data-nosnippet>3269</a>
-<a href=#3270 id=3270 data-nosnippet>3270</a>        <span class="comment">// NOTE(eddyb) see the comment on `SpirvValueKind::FnAddr`, this should
-<a href=#3271 id=3271 data-nosnippet>3271</a>        // be fixed upstream, so we never see any "function pointer" values being
-<a href=#3272 id=3272 data-nosnippet>3272</a>        // created just to perform direct calls.
-<a href=#3273 id=3273 data-nosnippet>3273</a>        </span><span class="kw">let </span>(callee_val, result_type, argument_types) = <span class="kw">match </span><span class="self">self</span>.lookup_type(callee.ty) {
-<a href=#3274 id=3274 data-nosnippet>3274</a>            SpirvType::Pointer { pointee } =&gt; <span class="kw">match </span><span class="self">self</span>.lookup_type(pointee) {
-<a href=#3275 id=3275 data-nosnippet>3275</a>                SpirvType::Function {
-<a href=#3276 id=3276 data-nosnippet>3276</a>                    return_type,
-<a href=#3277 id=3277 data-nosnippet>3277</a>                    arguments,
-<a href=#3278 id=3278 data-nosnippet>3278</a>                } =&gt; (
-<a href=#3279 id=3279 data-nosnippet>3279</a>                    <span class="kw">if let </span>SpirvValueKind::FnAddr { function } = callee.kind {
-<a href=#3280 id=3280 data-nosnippet>3280</a>                        <span class="macro">assert_ty_eq!</span>(<span class="self">self</span>, callee_ty, pointee);
-<a href=#3281 id=3281 data-nosnippet>3281</a>                        function
-<a href=#3282 id=3282 data-nosnippet>3282</a>                    }
-<a href=#3283 id=3283 data-nosnippet>3283</a>                    <span class="comment">// Truly indirect call.
-<a href=#3284 id=3284 data-nosnippet>3284</a>                    </span><span class="kw">else </span>{
-<a href=#3285 id=3285 data-nosnippet>3285</a>                        <span class="kw">let </span>fn_ptr_val = callee.def(<span class="self">self</span>);
-<a href=#3286 id=3286 data-nosnippet>3286</a>                        <span class="self">self</span>.zombie(fn_ptr_val, <span class="string">"indirect calls are not supported in SPIR-V"</span>);
-<a href=#3287 id=3287 data-nosnippet>3287</a>                        fn_ptr_val
-<a href=#3288 id=3288 data-nosnippet>3288</a>                    },
-<a href=#3289 id=3289 data-nosnippet>3289</a>                    return_type,
-<a href=#3290 id=3290 data-nosnippet>3290</a>                    arguments,
-<a href=#3291 id=3291 data-nosnippet>3291</a>                ),
-<a href=#3292 id=3292 data-nosnippet>3292</a>                <span class="kw">_ </span>=&gt; <span class="macro">bug!</span>(
-<a href=#3293 id=3293 data-nosnippet>3293</a>                    <span class="string">"call expected `fn` pointer to point to function type, got `{}`"</span>,
-<a href=#3294 id=3294 data-nosnippet>3294</a>                    <span class="self">self</span>.debug_type(pointee)
-<a href=#3295 id=3295 data-nosnippet>3295</a>                ),
-<a href=#3296 id=3296 data-nosnippet>3296</a>            },
-<a href=#3297 id=3297 data-nosnippet>3297</a>
-<a href=#3298 id=3298 data-nosnippet>3298</a>            <span class="kw">_ </span>=&gt; <span class="macro">bug!</span>(
-<a href=#3299 id=3299 data-nosnippet>3299</a>                <span class="string">"call expected `fn` pointer type, got `{}`"</span>,
-<a href=#3300 id=3300 data-nosnippet>3300</a>                <span class="self">self</span>.debug_type(callee.ty)
-<a href=#3301 id=3301 data-nosnippet>3301</a>            ),
-<a href=#3302 id=3302 data-nosnippet>3302</a>        };
-<a href=#3303 id=3303 data-nosnippet>3303</a>
-<a href=#3304 id=3304 data-nosnippet>3304</a>        <span class="comment">// HACK(eddyb) temporary workaround for untyped pointers upstream.
-<a href=#3305 id=3305 data-nosnippet>3305</a>        // FIXME(eddyb) replace with untyped memory SPIR-V + `qptr` or similar.
-<a href=#3306 id=3306 data-nosnippet>3306</a>        </span><span class="kw">let </span>args: SmallVec&lt;[<span class="kw">_</span>; <span class="number">8</span>]&gt; = args
-<a href=#3307 id=3307 data-nosnippet>3307</a>            .iter()
-<a href=#3308 id=3308 data-nosnippet>3308</a>            .zip_eq(argument_types)
-<a href=#3309 id=3309 data-nosnippet>3309</a>            .map(|(<span class="kw-2">&amp;</span>arg, <span class="kw-2">&amp;</span>expected_type)| <span class="self">self</span>.bitcast(arg, expected_type))
-<a href=#3310 id=3310 data-nosnippet>3310</a>            .collect();
-<a href=#3311 id=3311 data-nosnippet>3311</a>        <span class="kw">let </span>args = <span class="kw-2">&amp;</span>args[..];
-<a href=#3312 id=3312 data-nosnippet>3312</a>
-<a href=#3313 id=3313 data-nosnippet>3313</a>        <span class="comment">// FIXME(eddyb) should the maps exist at all, now that the `DefId` is known
-<a href=#3314 id=3314 data-nosnippet>3314</a>        // at `call` time, and presumably its high-level details can be looked up?
-<a href=#3315 id=3315 data-nosnippet>3315</a>        </span><span class="kw">let </span>instance_def_id = instance.map(|instance| instance.def_id());
-<a href=#3316 id=3316 data-nosnippet>3316</a>
-<a href=#3317 id=3317 data-nosnippet>3317</a>        <span class="kw">let </span>libm_intrinsic =
-<a href=#3318 id=3318 data-nosnippet>3318</a>            instance_def_id.and_then(|def_id| <span class="self">self</span>.libm_intrinsics.borrow().get(<span class="kw-2">&amp;</span>def_id).copied());
-<a href=#3319 id=3319 data-nosnippet>3319</a>        <span class="kw">let </span>num_traits_intrinsics = instance_def_id
-<a href=#3320 id=3320 data-nosnippet>3320</a>            .and_then(|def_id| <span class="self">self</span>.num_traits_intrinsics.borrow().get(<span class="kw-2">&amp;</span>def_id).copied());
-<a href=#3321 id=3321 data-nosnippet>3321</a>        <span class="kw">let </span>buffer_load_intrinsic = instance_def_id
-<a href=#3322 id=3322 data-nosnippet>3322</a>            .is_some_and(|def_id| <span class="self">self</span>.buffer_load_intrinsics.borrow().contains(<span class="kw-2">&amp;</span>def_id));
-<a href=#3323 id=3323 data-nosnippet>3323</a>        <span class="kw">let </span>buffer_store_intrinsic = instance_def_id
-<a href=#3324 id=3324 data-nosnippet>3324</a>            .is_some_and(|def_id| <span class="self">self</span>.buffer_store_intrinsics.borrow().contains(<span class="kw-2">&amp;</span>def_id));
-<a href=#3325 id=3325 data-nosnippet>3325</a>        <span class="kw">let </span>is_panic_entry_point = instance_def_id
-<a href=#3326 id=3326 data-nosnippet>3326</a>            .is_some_and(|def_id| <span class="self">self</span>.panic_entry_points.borrow().contains(<span class="kw-2">&amp;</span>def_id));
-<a href=#3327 id=3327 data-nosnippet>3327</a>        <span class="kw">let </span>from_trait_impl =
-<a href=#3328 id=3328 data-nosnippet>3328</a>            instance_def_id.and_then(|def_id| <span class="self">self</span>.from_trait_impls.borrow().get(<span class="kw-2">&amp;</span>def_id).copied());
-<a href=#3329 id=3329 data-nosnippet>3329</a>
-<a href=#3330 id=3330 data-nosnippet>3330</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(libm_intrinsic) = libm_intrinsic.or(num_traits_intrinsics) {
-<a href=#3331 id=3331 data-nosnippet>3331</a>            <span class="kw">let </span>result = <span class="self">self</span>.call_libm_intrinsic(libm_intrinsic, result_type, args);
-<a href=#3332 id=3332 data-nosnippet>3332</a>            <span class="kw">if </span>result_type != result.ty {
-<a href=#3333 id=3333 data-nosnippet>3333</a>                <span class="macro">bug!</span>(
-<a href=#3334 id=3334 data-nosnippet>3334</a>                    <span class="string">"Mismatched libm result type for {:?}: expected {}, got {}"</span>,
-<a href=#3335 id=3335 data-nosnippet>3335</a>                    libm_intrinsic,
-<a href=#3336 id=3336 data-nosnippet>3336</a>                    <span class="self">self</span>.debug_type(result_type),
-<a href=#3337 id=3337 data-nosnippet>3337</a>                    <span class="self">self</span>.debug_type(result.ty),
-<a href=#3338 id=3338 data-nosnippet>3338</a>                );
-<a href=#3339 id=3339 data-nosnippet>3339</a>            }
-<a href=#3340 id=3340 data-nosnippet>3340</a>            <span class="kw">return </span>result;
-<a href=#3341 id=3341 data-nosnippet>3341</a>        }
-<a href=#3342 id=3342 data-nosnippet>3342</a>
-<a href=#3343 id=3343 data-nosnippet>3343</a>        <span class="kw">if </span>is_panic_entry_point {
-<a href=#3344 id=3344 data-nosnippet>3344</a>            <span class="kw">return </span>DecodedFormatArgs::try_decode_and_remove_format_args(<span class="self">self</span>, args)
-<a href=#3345 id=3345 data-nosnippet>3345</a>                .codegen_panic(<span class="self">self</span>, result_type);
-<a href=#3346 id=3346 data-nosnippet>3346</a>        }
-<a href=#3347 id=3347 data-nosnippet>3347</a>        <span class="kw">if </span>buffer_load_intrinsic {
-<a href=#3348 id=3348 data-nosnippet>3348</a>            <span class="kw">return </span><span class="self">self</span>.codegen_buffer_load_intrinsic(fn_abi, result_type, args);
-<a href=#3349 id=3349 data-nosnippet>3349</a>        }
-<a href=#3350 id=3350 data-nosnippet>3350</a>        <span class="kw">if </span>buffer_store_intrinsic {
-<a href=#3351 id=3351 data-nosnippet>3351</a>            <span class="self">self</span>.codegen_buffer_store_intrinsic(fn_abi, args);
-<a href=#3352 id=3352 data-nosnippet>3352</a>            <span class="kw">let </span>void_ty = SpirvType::Void.def(rustc_span::DUMMY_SP, <span class="self">self</span>);
-<a href=#3353 id=3353 data-nosnippet>3353</a>            <span class="kw">return </span>SpirvValue {
-<a href=#3354 id=3354 data-nosnippet>3354</a>                kind: SpirvValueKind::IllegalTypeUsed(void_ty),
-<a href=#3355 id=3355 data-nosnippet>3355</a>                ty: void_ty,
-<a href=#3356 id=3356 data-nosnippet>3356</a>            };
-<a href=#3357 id=3357 data-nosnippet>3357</a>        }
-<a href=#3358 id=3358 data-nosnippet>3358</a>
-<a href=#3359 id=3359 data-nosnippet>3359</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>((source_ty, target_ty)) = from_trait_impl {
-<a href=#3360 id=3360 data-nosnippet>3360</a>            <span class="comment">// Optimize From::from calls with constant arguments to avoid creating intermediate types.
-<a href=#3361 id=3361 data-nosnippet>3361</a>            // Since From is only implemented for safe conversions (widening conversions that preserve
-<a href=#3362 id=3362 data-nosnippet>3362</a>            // the numeric value), we can directly create a constant of the target type for primitive
-<a href=#3363 id=3363 data-nosnippet>3363</a>            // numeric types.
-<a href=#3364 id=3364 data-nosnippet>3364</a>            </span><span class="kw">if let </span>[arg] = args
-<a href=#3365 id=3365 data-nosnippet>3365</a>                &amp;&amp; <span class="kw">let </span><span class="prelude-val">Some</span>(const_val) = <span class="self">self</span>.builder.lookup_const_scalar(<span class="kw-2">*</span>arg)
-<a href=#3366 id=3366 data-nosnippet>3366</a>            {
-<a href=#3367 id=3367 data-nosnippet>3367</a>                <span class="kw">use </span>rustc_middle::ty::FloatTy;
-<a href=#3368 id=3368 data-nosnippet>3368</a>                <span class="kw">let </span>optimized_result = <span class="kw">match </span>(source_ty.kind(), target_ty.kind()) {
-<a href=#3369 id=3369 data-nosnippet>3369</a>                    <span class="comment">// Integer widening conversions
-<a href=#3370 id=3370 data-nosnippet>3370</a>                    </span>(ty::Uint(<span class="kw">_</span>), ty::Uint(<span class="kw">_</span>)) | (ty::Int(<span class="kw">_</span>), ty::Int(<span class="kw">_</span>)) =&gt; {
-<a href=#3371 id=3371 data-nosnippet>3371</a>                        <span class="prelude-val">Some</span>(<span class="self">self</span>.constant_int(result_type, const_val))
-<a href=#3372 id=3372 data-nosnippet>3372</a>                    }
-<a href=#3373 id=3373 data-nosnippet>3373</a>                    <span class="comment">// Float widening conversions
-<a href=#3374 id=3374 data-nosnippet>3374</a>                    // TODO(@LegNeato): Handle more float types
-<a href=#3375 id=3375 data-nosnippet>3375</a>                    </span>(ty::Float(FloatTy::F32), ty::Float(FloatTy::F64)) =&gt; {
-<a href=#3376 id=3376 data-nosnippet>3376</a>                        <span class="kw">let </span>float_val = f32::from_bits(const_val <span class="kw">as </span>u32) <span class="kw">as </span>f64;
-<a href=#3377 id=3377 data-nosnippet>3377</a>                        <span class="prelude-val">Some</span>(<span class="self">self</span>.constant_float(result_type, float_val))
-<a href=#3378 id=3378 data-nosnippet>3378</a>                    }
-<a href=#3379 id=3379 data-nosnippet>3379</a>                    <span class="comment">// No optimization for narrowing conversions or unsupported types
-<a href=#3380 id=3380 data-nosnippet>3380</a>                    </span><span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
-<a href=#3381 id=3381 data-nosnippet>3381</a>                };
-<a href=#3382 id=3382 data-nosnippet>3382</a>
-<a href=#3383 id=3383 data-nosnippet>3383</a>                <span class="kw">if let </span><span class="prelude-val">Some</span>(result) = optimized_result {
-<a href=#3384 id=3384 data-nosnippet>3384</a>                    <span class="kw">return </span>result;
-<a href=#3385 id=3385 data-nosnippet>3385</a>                }
-<a href=#3386 id=3386 data-nosnippet>3386</a>            }
-<a href=#3387 id=3387 data-nosnippet>3387</a>        }
-<a href=#3388 id=3388 data-nosnippet>3388</a>
-<a href=#3389 id=3389 data-nosnippet>3389</a>        <span class="comment">// HACK(fee1-dead): `MaybeUninit` uses a union which we don't have very good support yet. Replacing all calls to it
-<a href=#3390 id=3390 data-nosnippet>3390</a>        // with an `Undef` serves the same purpose and fixes compiler errors
-<a href=#3391 id=3391 data-nosnippet>3391</a>        </span><span class="kw">if </span>instance_def_id.is_some_and(|did| {
-<a href=#3392 id=3392 data-nosnippet>3392</a>            <span class="self">self</span>.tcx
-<a href=#3393 id=3393 data-nosnippet>3393</a>                .is_diagnostic_item(rustc_span::sym::maybe_uninit_uninit, did)
-<a href=#3394 id=3394 data-nosnippet>3394</a>        }) {
-<a href=#3395 id=3395 data-nosnippet>3395</a>            <span class="kw">return </span><span class="self">self</span>.undef(result_type);
-<a href=#3396 id=3396 data-nosnippet>3396</a>        }
-<a href=#3397 id=3397 data-nosnippet>3397</a>
-<a href=#3398 id=3398 data-nosnippet>3398</a>        <span class="comment">// Default: emit a regular function call
-<a href=#3399 id=3399 data-nosnippet>3399</a>        </span><span class="kw">let </span>args = args.iter().map(|arg| arg.def(<span class="self">self</span>)).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-<a href=#3400 id=3400 data-nosnippet>3400</a>        <span class="self">self</span>.emit()
-<a href=#3401 id=3401 data-nosnippet>3401</a>            .function_call(result_type, <span class="prelude-val">None</span>, callee_val, args)
-<a href=#3402 id=3402 data-nosnippet>3402</a>            .unwrap()
-<a href=#3403 id=3403 data-nosnippet>3403</a>            .with_type(result_type)
-<a href=#3404 id=3404 data-nosnippet>3404</a>    }
-<a href=#3405 id=3405 data-nosnippet>3405</a>
-<a href=#3406 id=3406 data-nosnippet>3406</a>    <span class="kw">fn </span>tail_call(
-<a href=#3407 id=3407 data-nosnippet>3407</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-<a href=#3408 id=3408 data-nosnippet>3408</a>        _llty: <span class="self">Self</span>::Type,
-<a href=#3409 id=3409 data-nosnippet>3409</a>        _fn_attrs: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>CodegenFnAttrs&gt;,
-<a href=#3410 id=3410 data-nosnippet>3410</a>        _fn_abi: <span class="kw-2">&amp;</span>FnAbi&lt;<span class="lifetime">'tcx</span>, Ty&lt;<span class="lifetime">'tcx</span>&gt;&gt;,
-<a href=#3411 id=3411 data-nosnippet>3411</a>        _llfn: <span class="self">Self</span>::Value,
-<a href=#3412 id=3412 data-nosnippet>3412</a>        _args: <span class="kw-2">&amp;</span>[<span class="self">Self</span>::Value],
-<a href=#3413 id=3413 data-nosnippet>3413</a>        _funclet: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="self">Self</span>::Funclet&gt;,
-<a href=#3414 id=3414 data-nosnippet>3414</a>        _instance: <span class="prelude-ty">Option</span>&lt;ty::Instance&lt;<span class="lifetime">'tcx</span>&gt;&gt;,
-<a href=#3415 id=3415 data-nosnippet>3415</a>    ) {
-<a href=#3416 id=3416 data-nosnippet>3416</a>        <span class="macro">todo!</span>()
-<a href=#3417 id=3417 data-nosnippet>3417</a>    }
-<a href=#3418 id=3418 data-nosnippet>3418</a>
-<a href=#3419 id=3419 data-nosnippet>3419</a>    <span class="kw">fn </span>zext(<span class="kw-2">&amp;mut </span><span class="self">self</span>, val: <span class="self">Self</span>::Value, dest_ty: <span class="self">Self</span>::Type) -&gt; <span class="self">Self</span>::Value {
-<a href=#3420 id=3420 data-nosnippet>3420</a>        <span class="self">self</span>.intcast(val, dest_ty, <span class="bool-val">false</span>)
-<a href=#3421 id=3421 data-nosnippet>3421</a>    }
-<a href=#3422 id=3422 data-nosnippet>3422</a>
-<a href=#3423 id=3423 data-nosnippet>3423</a>    <span class="kw">fn </span>apply_attrs_to_cleanup_callsite(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _llret: <span class="self">Self</span>::Value) {
-<a href=#3424 id=3424 data-nosnippet>3424</a>        <span class="comment">// Ignore
-<a href=#3425 id=3425 data-nosnippet>3425</a>    </span>}
-<a href=#3426 id=3426 data-nosnippet>3426</a>}</code></pre></div></section></main></body></html>
+<a href=#2865 id=2865 data-nosnippet>2865</a>                    <span class="prelude-val">None</span>,
+<a href=#2866 id=2866 data-nosnippet>2866</a>                    empty(),
+<a href=#2867 id=2867 data-nosnippet>2867</a>                )
+<a href=#2868 id=2868 data-nosnippet>2868</a>                .unwrap();
+<a href=#2869 id=2869 data-nosnippet>2869</a>            <span class="self">self</span>.zombie(dst.def(<span class="self">self</span>), <span class="string">"cannot memcpy dynamically sized data"</span>);
+<a href=#2870 id=2870 data-nosnippet>2870</a>        }
+<a href=#2871 id=2871 data-nosnippet>2871</a>    }
+<a href=#2872 id=2872 data-nosnippet>2872</a>
+<a href=#2873 id=2873 data-nosnippet>2873</a>    <span class="kw">fn </span>memmove(
+<a href=#2874 id=2874 data-nosnippet>2874</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+<a href=#2875 id=2875 data-nosnippet>2875</a>        dst: <span class="self">Self</span>::Value,
+<a href=#2876 id=2876 data-nosnippet>2876</a>        dst_align: Align,
+<a href=#2877 id=2877 data-nosnippet>2877</a>        src: <span class="self">Self</span>::Value,
+<a href=#2878 id=2878 data-nosnippet>2878</a>        src_align: Align,
+<a href=#2879 id=2879 data-nosnippet>2879</a>        size: <span class="self">Self</span>::Value,
+<a href=#2880 id=2880 data-nosnippet>2880</a>        flags: MemFlags,
+<a href=#2881 id=2881 data-nosnippet>2881</a>    ) {
+<a href=#2882 id=2882 data-nosnippet>2882</a>        <span class="self">self</span>.memcpy(dst, dst_align, src, src_align, size, flags, <span class="prelude-val">None</span>);
+<a href=#2883 id=2883 data-nosnippet>2883</a>    }
+<a href=#2884 id=2884 data-nosnippet>2884</a>
+<a href=#2885 id=2885 data-nosnippet>2885</a>    <span class="kw">fn </span>memset(
+<a href=#2886 id=2886 data-nosnippet>2886</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+<a href=#2887 id=2887 data-nosnippet>2887</a>        ptr: <span class="self">Self</span>::Value,
+<a href=#2888 id=2888 data-nosnippet>2888</a>        fill_byte: <span class="self">Self</span>::Value,
+<a href=#2889 id=2889 data-nosnippet>2889</a>        size: <span class="self">Self</span>::Value,
+<a href=#2890 id=2890 data-nosnippet>2890</a>        _align: Align,
+<a href=#2891 id=2891 data-nosnippet>2891</a>        flags: MemFlags,
+<a href=#2892 id=2892 data-nosnippet>2892</a>    ) {
+<a href=#2893 id=2893 data-nosnippet>2893</a>        <span class="kw">if </span><span class="macro">flags !</span>= MemFlags::empty() {
+<a href=#2894 id=2894 data-nosnippet>2894</a>            <span class="self">self</span>.err(<span class="macro">format!</span>(
+<a href=#2895 id=2895 data-nosnippet>2895</a>                <span class="string">"memset with mem flags is not supported yet: {flags:?}"
+<a href=#2896 id=2896 data-nosnippet>2896</a>            </span>));
+<a href=#2897 id=2897 data-nosnippet>2897</a>        }
+<a href=#2898 id=2898 data-nosnippet>2898</a>
+<a href=#2899 id=2899 data-nosnippet>2899</a>        <span class="kw">let </span>const_size = <span class="self">self
+<a href=#2900 id=2900 data-nosnippet>2900</a>            </span>.builder
+<a href=#2901 id=2901 data-nosnippet>2901</a>            .lookup_const_scalar(size)
+<a href=#2902 id=2902 data-nosnippet>2902</a>            .and_then(|size| <span class="prelude-val">Some</span>(Size::from_bytes(u64::try_from(size).ok()<span class="question-mark">?</span>)));
+<a href=#2903 id=2903 data-nosnippet>2903</a>
+<a href=#2904 id=2904 data-nosnippet>2904</a>        <span class="kw">let </span>elem_ty = <span class="kw">match </span><span class="self">self</span>.lookup_type(ptr.ty) {
+<a href=#2905 id=2905 data-nosnippet>2905</a>            SpirvType::Pointer { pointee } =&gt; pointee,
+<a href=#2906 id=2906 data-nosnippet>2906</a>            <span class="kw">_ </span>=&gt; <span class="self">self</span>.fatal(<span class="macro">format!</span>(
+<a href=#2907 id=2907 data-nosnippet>2907</a>                <span class="string">"memset called on non-pointer type: {}"</span>,
+<a href=#2908 id=2908 data-nosnippet>2908</a>                <span class="self">self</span>.debug_type(ptr.ty)
+<a href=#2909 id=2909 data-nosnippet>2909</a>            )),
+<a href=#2910 id=2910 data-nosnippet>2910</a>        };
+<a href=#2911 id=2911 data-nosnippet>2911</a>        <span class="kw">let </span>elem_ty_spv = <span class="self">self</span>.lookup_type(elem_ty);
+<a href=#2912 id=2912 data-nosnippet>2912</a>        <span class="kw">let </span>pat = <span class="kw">match </span><span class="self">self</span>.builder.lookup_const_scalar(fill_byte) {
+<a href=#2913 id=2913 data-nosnippet>2913</a>            <span class="prelude-val">Some</span>(fill_byte) =&gt; <span class="self">self</span>.memset_const_pattern(<span class="kw-2">&amp;</span>elem_ty_spv, fill_byte <span class="kw">as </span>u8),
+<a href=#2914 id=2914 data-nosnippet>2914</a>            <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.memset_dynamic_pattern(<span class="kw-2">&amp;</span>elem_ty_spv, fill_byte.def(<span class="self">self</span>)),
+<a href=#2915 id=2915 data-nosnippet>2915</a>        }
+<a href=#2916 id=2916 data-nosnippet>2916</a>        .with_type(elem_ty);
+<a href=#2917 id=2917 data-nosnippet>2917</a>        <span class="kw">match </span>const_size {
+<a href=#2918 id=2918 data-nosnippet>2918</a>            <span class="prelude-val">Some</span>(size) =&gt; <span class="self">self</span>.memset_constant_size(ptr, pat, size.bytes()),
+<a href=#2919 id=2919 data-nosnippet>2919</a>            <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.memset_dynamic_size(ptr, pat, size),
+<a href=#2920 id=2920 data-nosnippet>2920</a>        }
+<a href=#2921 id=2921 data-nosnippet>2921</a>    }
+<a href=#2922 id=2922 data-nosnippet>2922</a>
+<a href=#2923 id=2923 data-nosnippet>2923</a>    <span class="kw">fn </span>select(
+<a href=#2924 id=2924 data-nosnippet>2924</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+<a href=#2925 id=2925 data-nosnippet>2925</a>        cond: <span class="self">Self</span>::Value,
+<a href=#2926 id=2926 data-nosnippet>2926</a>        then_val: <span class="self">Self</span>::Value,
+<a href=#2927 id=2927 data-nosnippet>2927</a>        else_val: <span class="self">Self</span>::Value,
+<a href=#2928 id=2928 data-nosnippet>2928</a>    ) -&gt; <span class="self">Self</span>::Value {
+<a href=#2929 id=2929 data-nosnippet>2929</a>        <span class="macro">assert_ty_eq!</span>(<span class="self">self</span>, then_val.ty, else_val.ty);
+<a href=#2930 id=2930 data-nosnippet>2930</a>        <span class="kw">let </span>result_type = then_val.ty;
+<a href=#2931 id=2931 data-nosnippet>2931</a>
+<a href=#2932 id=2932 data-nosnippet>2932</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(ConstValue::Bool(b)) = <span class="self">self</span>.try_get_const_value(cond) {
+<a href=#2933 id=2933 data-nosnippet>2933</a>            <span class="comment">// as we directly return the values, it'll preserve their constness as well
+<a href=#2934 id=2934 data-nosnippet>2934</a>            </span><span class="kw">return if </span>b { then_val } <span class="kw">else </span>{ else_val };
+<a href=#2935 id=2935 data-nosnippet>2935</a>        }
+<a href=#2936 id=2936 data-nosnippet>2936</a>
+<a href=#2937 id=2937 data-nosnippet>2937</a>        <span class="self">self</span>.emit()
+<a href=#2938 id=2938 data-nosnippet>2938</a>            .select(
+<a href=#2939 id=2939 data-nosnippet>2939</a>                result_type,
+<a href=#2940 id=2940 data-nosnippet>2940</a>                <span class="prelude-val">None</span>,
+<a href=#2941 id=2941 data-nosnippet>2941</a>                cond.def(<span class="self">self</span>),
+<a href=#2942 id=2942 data-nosnippet>2942</a>                then_val.def(<span class="self">self</span>),
+<a href=#2943 id=2943 data-nosnippet>2943</a>                else_val.def(<span class="self">self</span>),
+<a href=#2944 id=2944 data-nosnippet>2944</a>            )
+<a href=#2945 id=2945 data-nosnippet>2945</a>            .unwrap()
+<a href=#2946 id=2946 data-nosnippet>2946</a>            .with_type(result_type)
+<a href=#2947 id=2947 data-nosnippet>2947</a>    }
+<a href=#2948 id=2948 data-nosnippet>2948</a>
+<a href=#2949 id=2949 data-nosnippet>2949</a>    <span class="kw">fn </span>va_arg(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _list: <span class="self">Self</span>::Value, _ty: <span class="self">Self</span>::Type) -&gt; <span class="self">Self</span>::Value {
+<a href=#2950 id=2950 data-nosnippet>2950</a>        <span class="macro">todo!</span>()
+<a href=#2951 id=2951 data-nosnippet>2951</a>    }
+<a href=#2952 id=2952 data-nosnippet>2952</a>
+<a href=#2953 id=2953 data-nosnippet>2953</a>    <span class="kw">fn </span>extract_element(<span class="kw-2">&amp;mut </span><span class="self">self</span>, vec: <span class="self">Self</span>::Value, idx: <span class="self">Self</span>::Value) -&gt; <span class="self">Self</span>::Value {
+<a href=#2954 id=2954 data-nosnippet>2954</a>        <span class="kw">let </span>result_type = <span class="kw">match </span><span class="self">self</span>.lookup_type(vec.ty) {
+<a href=#2955 id=2955 data-nosnippet>2955</a>            SpirvType::Vector { element, .. } =&gt; element,
+<a href=#2956 id=2956 data-nosnippet>2956</a>            other =&gt; <span class="self">self</span>.fatal(<span class="macro">format!</span>(<span class="string">"extract_element not implemented on type {other:?}"</span>)),
+<a href=#2957 id=2957 data-nosnippet>2957</a>        };
+<a href=#2958 id=2958 data-nosnippet>2958</a>        <span class="kw">match </span><span class="self">self</span>.builder.lookup_const_scalar(idx) {
+<a href=#2959 id=2959 data-nosnippet>2959</a>            <span class="prelude-val">Some</span>(const_index) =&gt; <span class="self">self</span>.emit().composite_extract(
+<a href=#2960 id=2960 data-nosnippet>2960</a>                result_type,
+<a href=#2961 id=2961 data-nosnippet>2961</a>                <span class="prelude-val">None</span>,
+<a href=#2962 id=2962 data-nosnippet>2962</a>                vec.def(<span class="self">self</span>),
+<a href=#2963 id=2963 data-nosnippet>2963</a>                [const_index <span class="kw">as </span>u32].iter().cloned(),
+<a href=#2964 id=2964 data-nosnippet>2964</a>            ),
+<a href=#2965 id=2965 data-nosnippet>2965</a>            <span class="prelude-val">None </span>=&gt; {
+<a href=#2966 id=2966 data-nosnippet>2966</a>                <span class="self">self</span>.emit()
+<a href=#2967 id=2967 data-nosnippet>2967</a>                    .vector_extract_dynamic(result_type, <span class="prelude-val">None</span>, vec.def(<span class="self">self</span>), idx.def(<span class="self">self</span>))
+<a href=#2968 id=2968 data-nosnippet>2968</a>            }
+<a href=#2969 id=2969 data-nosnippet>2969</a>        }
+<a href=#2970 id=2970 data-nosnippet>2970</a>        .unwrap()
+<a href=#2971 id=2971 data-nosnippet>2971</a>        .with_type(result_type)
+<a href=#2972 id=2972 data-nosnippet>2972</a>    }
+<a href=#2973 id=2973 data-nosnippet>2973</a>
+<a href=#2974 id=2974 data-nosnippet>2974</a>    <span class="kw">fn </span>vector_splat(<span class="kw-2">&amp;mut </span><span class="self">self</span>, num_elts: usize, elt: <span class="self">Self</span>::Value) -&gt; <span class="self">Self</span>::Value {
+<a href=#2975 id=2975 data-nosnippet>2975</a>        <span class="kw">let </span>result_type =
+<a href=#2976 id=2976 data-nosnippet>2976</a>            SpirvType::simd_vector(<span class="self">self</span>, <span class="self">self</span>.span(), <span class="self">self</span>.lookup_type(elt.ty), num_elts <span class="kw">as </span>u32)
+<a href=#2977 id=2977 data-nosnippet>2977</a>                .def(<span class="self">self</span>.span(), <span class="self">self</span>);
+<a href=#2978 id=2978 data-nosnippet>2978</a>        <span class="kw">if </span><span class="self">self</span>.builder.lookup_const(elt).is_some() {
+<a href=#2979 id=2979 data-nosnippet>2979</a>            <span class="self">self</span>.constant_composite(result_type, iter::repeat_n(elt.def(<span class="self">self</span>), num_elts))
+<a href=#2980 id=2980 data-nosnippet>2980</a>        } <span class="kw">else </span>{
+<a href=#2981 id=2981 data-nosnippet>2981</a>            <span class="self">self</span>.emit()
+<a href=#2982 id=2982 data-nosnippet>2982</a>                .composite_construct(result_type, <span class="prelude-val">None</span>, iter::repeat_n(elt.def(<span class="self">self</span>), num_elts))
+<a href=#2983 id=2983 data-nosnippet>2983</a>                .unwrap()
+<a href=#2984 id=2984 data-nosnippet>2984</a>                .with_type(result_type)
+<a href=#2985 id=2985 data-nosnippet>2985</a>        }
+<a href=#2986 id=2986 data-nosnippet>2986</a>    }
+<a href=#2987 id=2987 data-nosnippet>2987</a>
+<a href=#2988 id=2988 data-nosnippet>2988</a>    <span class="kw">fn </span>extract_value(<span class="kw-2">&amp;mut </span><span class="self">self</span>, agg_val: <span class="self">Self</span>::Value, idx: u64) -&gt; <span class="self">Self</span>::Value {
+<a href=#2989 id=2989 data-nosnippet>2989</a>        <span class="kw">let </span>result_type = <span class="kw">match </span><span class="self">self</span>.lookup_type(agg_val.ty) {
+<a href=#2990 id=2990 data-nosnippet>2990</a>            SpirvType::Adt { field_types, .. } =&gt; field_types[idx <span class="kw">as </span>usize],
+<a href=#2991 id=2991 data-nosnippet>2991</a>            SpirvType::Array { element, .. }
+<a href=#2992 id=2992 data-nosnippet>2992</a>            | SpirvType::Vector { element, .. }
+<a href=#2993 id=2993 data-nosnippet>2993</a>            | SpirvType::Matrix { element, .. } =&gt; element,
+<a href=#2994 id=2994 data-nosnippet>2994</a>            other =&gt; <span class="self">self</span>.fatal(<span class="macro">format!</span>(
+<a href=#2995 id=2995 data-nosnippet>2995</a>                <span class="string">"extract_value not implemented on type {}"</span>,
+<a href=#2996 id=2996 data-nosnippet>2996</a>                other.debug(agg_val.ty, <span class="self">self</span>)
+<a href=#2997 id=2997 data-nosnippet>2997</a>            )),
+<a href=#2998 id=2998 data-nosnippet>2998</a>        };
+<a href=#2999 id=2999 data-nosnippet>2999</a>        <span class="self">self</span>.emit()
+<a href=#3000 id=3000 data-nosnippet>3000</a>            .composite_extract(
+<a href=#3001 id=3001 data-nosnippet>3001</a>                result_type,
+<a href=#3002 id=3002 data-nosnippet>3002</a>                <span class="prelude-val">None</span>,
+<a href=#3003 id=3003 data-nosnippet>3003</a>                agg_val.def(<span class="self">self</span>),
+<a href=#3004 id=3004 data-nosnippet>3004</a>                [idx <span class="kw">as </span>u32].iter().cloned(),
+<a href=#3005 id=3005 data-nosnippet>3005</a>            )
+<a href=#3006 id=3006 data-nosnippet>3006</a>            .unwrap()
+<a href=#3007 id=3007 data-nosnippet>3007</a>            .with_type(result_type)
+<a href=#3008 id=3008 data-nosnippet>3008</a>    }
+<a href=#3009 id=3009 data-nosnippet>3009</a>
+<a href=#3010 id=3010 data-nosnippet>3010</a>    <span class="attr">#[instrument(level = <span class="string">"trace"</span>, skip(<span class="self">self</span>))]
+<a href=#3011 id=3011 data-nosnippet>3011</a>    </span><span class="kw">fn </span>insert_value(<span class="kw-2">&amp;mut </span><span class="self">self</span>, agg_val: <span class="self">Self</span>::Value, elt: <span class="self">Self</span>::Value, idx: u64) -&gt; <span class="self">Self</span>::Value {
+<a href=#3012 id=3012 data-nosnippet>3012</a>        <span class="kw">let </span>field_type = <span class="kw">match </span><span class="self">self</span>.lookup_type(agg_val.ty) {
+<a href=#3013 id=3013 data-nosnippet>3013</a>            SpirvType::Adt { field_types, .. } =&gt; field_types[idx <span class="kw">as </span>usize],
+<a href=#3014 id=3014 data-nosnippet>3014</a>            SpirvType::Array { element, .. }
+<a href=#3015 id=3015 data-nosnippet>3015</a>            | SpirvType::Vector { element, .. }
+<a href=#3016 id=3016 data-nosnippet>3016</a>            | SpirvType::Matrix { element, .. } =&gt; element,
+<a href=#3017 id=3017 data-nosnippet>3017</a>            other =&gt; <span class="self">self</span>.fatal(<span class="macro">format!</span>(<span class="string">"insert_value not implemented on type {other:?}"</span>)),
+<a href=#3018 id=3018 data-nosnippet>3018</a>        };
+<a href=#3019 id=3019 data-nosnippet>3019</a>
+<a href=#3020 id=3020 data-nosnippet>3020</a>        <span class="comment">// HACK(eddyb) temporary workaround for untyped pointers upstream.
+<a href=#3021 id=3021 data-nosnippet>3021</a>        // FIXME(eddyb) replace with untyped memory SPIR-V + `qptr` or similar.
+<a href=#3022 id=3022 data-nosnippet>3022</a>        </span><span class="kw">let </span>elt = <span class="self">self</span>.bitcast(elt, field_type);
+<a href=#3023 id=3023 data-nosnippet>3023</a>
+<a href=#3024 id=3024 data-nosnippet>3024</a>        <span class="self">self</span>.emit()
+<a href=#3025 id=3025 data-nosnippet>3025</a>            .composite_insert(
+<a href=#3026 id=3026 data-nosnippet>3026</a>                agg_val.ty,
+<a href=#3027 id=3027 data-nosnippet>3027</a>                <span class="prelude-val">None</span>,
+<a href=#3028 id=3028 data-nosnippet>3028</a>                elt.def(<span class="self">self</span>),
+<a href=#3029 id=3029 data-nosnippet>3029</a>                agg_val.def(<span class="self">self</span>),
+<a href=#3030 id=3030 data-nosnippet>3030</a>                [idx <span class="kw">as </span>u32].iter().cloned(),
+<a href=#3031 id=3031 data-nosnippet>3031</a>            )
+<a href=#3032 id=3032 data-nosnippet>3032</a>            .unwrap()
+<a href=#3033 id=3033 data-nosnippet>3033</a>            .with_type(agg_val.ty)
+<a href=#3034 id=3034 data-nosnippet>3034</a>    }
+<a href=#3035 id=3035 data-nosnippet>3035</a>
+<a href=#3036 id=3036 data-nosnippet>3036</a>    <span class="kw">fn </span>set_personality_fn(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _personality: <span class="self">Self</span>::Function) {
+<a href=#3037 id=3037 data-nosnippet>3037</a>        <span class="macro">todo!</span>()
+<a href=#3038 id=3038 data-nosnippet>3038</a>    }
+<a href=#3039 id=3039 data-nosnippet>3039</a>
+<a href=#3040 id=3040 data-nosnippet>3040</a>    <span class="comment">// These are used by everyone except msvc
+<a href=#3041 id=3041 data-nosnippet>3041</a>    </span><span class="kw">fn </span>cleanup_landing_pad(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _pers_fn: <span class="self">Self</span>::Function) -&gt; (<span class="self">Self</span>::Value, <span class="self">Self</span>::Value) {
+<a href=#3042 id=3042 data-nosnippet>3042</a>        <span class="macro">todo!</span>()
+<a href=#3043 id=3043 data-nosnippet>3043</a>    }
+<a href=#3044 id=3044 data-nosnippet>3044</a>
+<a href=#3045 id=3045 data-nosnippet>3045</a>    <span class="kw">fn </span>filter_landing_pad(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _pers_fn: <span class="self">Self</span>::Function) {
+<a href=#3046 id=3046 data-nosnippet>3046</a>        <span class="macro">todo!</span>()
+<a href=#3047 id=3047 data-nosnippet>3047</a>    }
+<a href=#3048 id=3048 data-nosnippet>3048</a>
+<a href=#3049 id=3049 data-nosnippet>3049</a>    <span class="kw">fn </span>resume(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _exn0: <span class="self">Self</span>::Value, _exn1: <span class="self">Self</span>::Value) {
+<a href=#3050 id=3050 data-nosnippet>3050</a>        <span class="macro">todo!</span>()
+<a href=#3051 id=3051 data-nosnippet>3051</a>    }
+<a href=#3052 id=3052 data-nosnippet>3052</a>
+<a href=#3053 id=3053 data-nosnippet>3053</a>    <span class="comment">// These are used only by msvc
+<a href=#3054 id=3054 data-nosnippet>3054</a>    </span><span class="kw">fn </span>cleanup_pad(
+<a href=#3055 id=3055 data-nosnippet>3055</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+<a href=#3056 id=3056 data-nosnippet>3056</a>        _parent: <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Value&gt;,
+<a href=#3057 id=3057 data-nosnippet>3057</a>        _args: <span class="kw-2">&amp;</span>[<span class="self">Self</span>::Value],
+<a href=#3058 id=3058 data-nosnippet>3058</a>    ) -&gt; <span class="self">Self</span>::Funclet {
+<a href=#3059 id=3059 data-nosnippet>3059</a>        <span class="macro">todo!</span>()
+<a href=#3060 id=3060 data-nosnippet>3060</a>    }
+<a href=#3061 id=3061 data-nosnippet>3061</a>
+<a href=#3062 id=3062 data-nosnippet>3062</a>    <span class="kw">fn </span>cleanup_ret(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _funclet: <span class="kw-2">&amp;</span><span class="self">Self</span>::Funclet, _unwind: <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::BasicBlock&gt;) {
+<a href=#3063 id=3063 data-nosnippet>3063</a>        <span class="macro">todo!</span>()
+<a href=#3064 id=3064 data-nosnippet>3064</a>    }
+<a href=#3065 id=3065 data-nosnippet>3065</a>
+<a href=#3066 id=3066 data-nosnippet>3066</a>    <span class="kw">fn </span>catch_pad(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _parent: <span class="self">Self</span>::Value, _args: <span class="kw-2">&amp;</span>[<span class="self">Self</span>::Value]) -&gt; <span class="self">Self</span>::Funclet {
+<a href=#3067 id=3067 data-nosnippet>3067</a>        <span class="macro">todo!</span>()
+<a href=#3068 id=3068 data-nosnippet>3068</a>    }
+<a href=#3069 id=3069 data-nosnippet>3069</a>
+<a href=#3070 id=3070 data-nosnippet>3070</a>    <span class="kw">fn </span>catch_switch(
+<a href=#3071 id=3071 data-nosnippet>3071</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+<a href=#3072 id=3072 data-nosnippet>3072</a>        _parent: <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Value&gt;,
+<a href=#3073 id=3073 data-nosnippet>3073</a>        _unwind: <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::BasicBlock&gt;,
+<a href=#3074 id=3074 data-nosnippet>3074</a>        _handlers: <span class="kw-2">&amp;</span>[<span class="self">Self</span>::BasicBlock],
+<a href=#3075 id=3075 data-nosnippet>3075</a>    ) -&gt; <span class="self">Self</span>::Value {
+<a href=#3076 id=3076 data-nosnippet>3076</a>        <span class="macro">todo!</span>()
+<a href=#3077 id=3077 data-nosnippet>3077</a>    }
+<a href=#3078 id=3078 data-nosnippet>3078</a>
+<a href=#3079 id=3079 data-nosnippet>3079</a>    <span class="kw">fn </span>atomic_cmpxchg(
+<a href=#3080 id=3080 data-nosnippet>3080</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+<a href=#3081 id=3081 data-nosnippet>3081</a>        dst: <span class="self">Self</span>::Value,
+<a href=#3082 id=3082 data-nosnippet>3082</a>        cmp: <span class="self">Self</span>::Value,
+<a href=#3083 id=3083 data-nosnippet>3083</a>        src: <span class="self">Self</span>::Value,
+<a href=#3084 id=3084 data-nosnippet>3084</a>        order: AtomicOrdering,
+<a href=#3085 id=3085 data-nosnippet>3085</a>        failure_order: AtomicOrdering,
+<a href=#3086 id=3086 data-nosnippet>3086</a>        _weak: bool,
+<a href=#3087 id=3087 data-nosnippet>3087</a>    ) -&gt; (<span class="self">Self</span>::Value, <span class="self">Self</span>::Value) {
+<a href=#3088 id=3088 data-nosnippet>3088</a>        <span class="macro">assert_ty_eq!</span>(<span class="self">self</span>, cmp.ty, src.ty);
+<a href=#3089 id=3089 data-nosnippet>3089</a>        <span class="kw">let </span>ty = src.ty;
+<a href=#3090 id=3090 data-nosnippet>3090</a>
+<a href=#3091 id=3091 data-nosnippet>3091</a>        <span class="kw">let </span>(dst, access_ty) = <span class="self">self</span>.adjust_pointer_for_typed_access(dst, ty);
+<a href=#3092 id=3092 data-nosnippet>3092</a>        <span class="kw">let </span>cmp = <span class="self">self</span>.bitcast(cmp, access_ty);
+<a href=#3093 id=3093 data-nosnippet>3093</a>        <span class="kw">let </span>src = <span class="self">self</span>.bitcast(src, access_ty);
+<a href=#3094 id=3094 data-nosnippet>3094</a>
+<a href=#3095 id=3095 data-nosnippet>3095</a>        <span class="self">self</span>.validate_atomic(access_ty, dst.def(<span class="self">self</span>));
+<a href=#3096 id=3096 data-nosnippet>3096</a>        <span class="comment">// TODO: Default to device scope
+<a href=#3097 id=3097 data-nosnippet>3097</a>        </span><span class="kw">let </span>memory = <span class="self">self</span>.constant_u32(<span class="self">self</span>.span(), Scope::Device <span class="kw">as </span>u32);
+<a href=#3098 id=3098 data-nosnippet>3098</a>        <span class="kw">let </span>semantics_equal = <span class="self">self</span>.ordering_to_semantics_def(order);
+<a href=#3099 id=3099 data-nosnippet>3099</a>        <span class="kw">let </span>semantics_unequal = <span class="self">self</span>.ordering_to_semantics_def(failure_order);
+<a href=#3100 id=3100 data-nosnippet>3100</a>        <span class="comment">// Note: OpAtomicCompareExchangeWeak is deprecated, and has the same semantics
+<a href=#3101 id=3101 data-nosnippet>3101</a>        </span><span class="kw">let </span>result = <span class="self">self
+<a href=#3102 id=3102 data-nosnippet>3102</a>            </span>.emit()
+<a href=#3103 id=3103 data-nosnippet>3103</a>            .atomic_compare_exchange(
+<a href=#3104 id=3104 data-nosnippet>3104</a>                access_ty,
+<a href=#3105 id=3105 data-nosnippet>3105</a>                <span class="prelude-val">None</span>,
+<a href=#3106 id=3106 data-nosnippet>3106</a>                dst.def(<span class="self">self</span>),
+<a href=#3107 id=3107 data-nosnippet>3107</a>                memory.def(<span class="self">self</span>),
+<a href=#3108 id=3108 data-nosnippet>3108</a>                semantics_equal.def(<span class="self">self</span>),
+<a href=#3109 id=3109 data-nosnippet>3109</a>                semantics_unequal.def(<span class="self">self</span>),
+<a href=#3110 id=3110 data-nosnippet>3110</a>                src.def(<span class="self">self</span>),
+<a href=#3111 id=3111 data-nosnippet>3111</a>                cmp.def(<span class="self">self</span>),
+<a href=#3112 id=3112 data-nosnippet>3112</a>            )
+<a href=#3113 id=3113 data-nosnippet>3113</a>            .unwrap()
+<a href=#3114 id=3114 data-nosnippet>3114</a>            .with_type(access_ty);
+<a href=#3115 id=3115 data-nosnippet>3115</a>
+<a href=#3116 id=3116 data-nosnippet>3116</a>        <span class="kw">let </span>val = <span class="self">self</span>.bitcast(result, ty);
+<a href=#3117 id=3117 data-nosnippet>3117</a>        <span class="kw">let </span>success = <span class="self">self</span>.icmp(IntPredicate::IntEQ, val, cmp);
+<a href=#3118 id=3118 data-nosnippet>3118</a>
+<a href=#3119 id=3119 data-nosnippet>3119</a>        (val, success)
+<a href=#3120 id=3120 data-nosnippet>3120</a>    }
+<a href=#3121 id=3121 data-nosnippet>3121</a>
+<a href=#3122 id=3122 data-nosnippet>3122</a>    <span class="kw">fn </span>atomic_rmw(
+<a href=#3123 id=3123 data-nosnippet>3123</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+<a href=#3124 id=3124 data-nosnippet>3124</a>        op: AtomicRmwBinOp,
+<a href=#3125 id=3125 data-nosnippet>3125</a>        dst: <span class="self">Self</span>::Value,
+<a href=#3126 id=3126 data-nosnippet>3126</a>        src: <span class="self">Self</span>::Value,
+<a href=#3127 id=3127 data-nosnippet>3127</a>        order: AtomicOrdering,
+<a href=#3128 id=3128 data-nosnippet>3128</a>        _ret_ptr: bool,
+<a href=#3129 id=3129 data-nosnippet>3129</a>    ) -&gt; <span class="self">Self</span>::Value {
+<a href=#3130 id=3130 data-nosnippet>3130</a>        <span class="kw">let </span>ty = src.ty;
+<a href=#3131 id=3131 data-nosnippet>3131</a>
+<a href=#3132 id=3132 data-nosnippet>3132</a>        <span class="kw">let </span>(dst, access_ty) = <span class="self">self</span>.adjust_pointer_for_typed_access(dst, ty);
+<a href=#3133 id=3133 data-nosnippet>3133</a>        <span class="kw">let </span>src = <span class="self">self</span>.bitcast(src, access_ty);
+<a href=#3134 id=3134 data-nosnippet>3134</a>
+<a href=#3135 id=3135 data-nosnippet>3135</a>        <span class="self">self</span>.validate_atomic(access_ty, dst.def(<span class="self">self</span>));
+<a href=#3136 id=3136 data-nosnippet>3136</a>        <span class="comment">// TODO: Default to device scope
+<a href=#3137 id=3137 data-nosnippet>3137</a>        </span><span class="kw">let </span>memory = <span class="self">self
+<a href=#3138 id=3138 data-nosnippet>3138</a>            </span>.constant_u32(<span class="self">self</span>.span(), Scope::Device <span class="kw">as </span>u32)
+<a href=#3139 id=3139 data-nosnippet>3139</a>            .def(<span class="self">self</span>);
+<a href=#3140 id=3140 data-nosnippet>3140</a>        <span class="kw">let </span>semantics = <span class="self">self</span>.ordering_to_semantics_def(order).def(<span class="self">self</span>);
+<a href=#3141 id=3141 data-nosnippet>3141</a>        <span class="kw">use </span>AtomicRmwBinOp::<span class="kw-2">*</span>;
+<a href=#3142 id=3142 data-nosnippet>3142</a>        <span class="kw">let </span>result = <span class="kw">match </span>op {
+<a href=#3143 id=3143 data-nosnippet>3143</a>            AtomicXchg =&gt; <span class="self">self</span>.emit().atomic_exchange(
+<a href=#3144 id=3144 data-nosnippet>3144</a>                access_ty,
+<a href=#3145 id=3145 data-nosnippet>3145</a>                <span class="prelude-val">None</span>,
+<a href=#3146 id=3146 data-nosnippet>3146</a>                dst.def(<span class="self">self</span>),
+<a href=#3147 id=3147 data-nosnippet>3147</a>                memory,
+<a href=#3148 id=3148 data-nosnippet>3148</a>                semantics,
+<a href=#3149 id=3149 data-nosnippet>3149</a>                src.def(<span class="self">self</span>),
+<a href=#3150 id=3150 data-nosnippet>3150</a>            ),
+<a href=#3151 id=3151 data-nosnippet>3151</a>            AtomicAdd =&gt; <span class="self">self</span>.emit().atomic_i_add(
+<a href=#3152 id=3152 data-nosnippet>3152</a>                access_ty,
+<a href=#3153 id=3153 data-nosnippet>3153</a>                <span class="prelude-val">None</span>,
+<a href=#3154 id=3154 data-nosnippet>3154</a>                dst.def(<span class="self">self</span>),
+<a href=#3155 id=3155 data-nosnippet>3155</a>                memory,
+<a href=#3156 id=3156 data-nosnippet>3156</a>                semantics,
+<a href=#3157 id=3157 data-nosnippet>3157</a>                src.def(<span class="self">self</span>),
+<a href=#3158 id=3158 data-nosnippet>3158</a>            ),
+<a href=#3159 id=3159 data-nosnippet>3159</a>            AtomicSub =&gt; <span class="self">self</span>.emit().atomic_i_sub(
+<a href=#3160 id=3160 data-nosnippet>3160</a>                access_ty,
+<a href=#3161 id=3161 data-nosnippet>3161</a>                <span class="prelude-val">None</span>,
+<a href=#3162 id=3162 data-nosnippet>3162</a>                dst.def(<span class="self">self</span>),
+<a href=#3163 id=3163 data-nosnippet>3163</a>                memory,
+<a href=#3164 id=3164 data-nosnippet>3164</a>                semantics,
+<a href=#3165 id=3165 data-nosnippet>3165</a>                src.def(<span class="self">self</span>),
+<a href=#3166 id=3166 data-nosnippet>3166</a>            ),
+<a href=#3167 id=3167 data-nosnippet>3167</a>            AtomicAnd =&gt; <span class="self">self</span>.emit().atomic_and(
+<a href=#3168 id=3168 data-nosnippet>3168</a>                access_ty,
+<a href=#3169 id=3169 data-nosnippet>3169</a>                <span class="prelude-val">None</span>,
+<a href=#3170 id=3170 data-nosnippet>3170</a>                dst.def(<span class="self">self</span>),
+<a href=#3171 id=3171 data-nosnippet>3171</a>                memory,
+<a href=#3172 id=3172 data-nosnippet>3172</a>                semantics,
+<a href=#3173 id=3173 data-nosnippet>3173</a>                src.def(<span class="self">self</span>),
+<a href=#3174 id=3174 data-nosnippet>3174</a>            ),
+<a href=#3175 id=3175 data-nosnippet>3175</a>            AtomicNand =&gt; <span class="self">self</span>.fatal(<span class="string">"atomic nand is not supported"</span>),
+<a href=#3176 id=3176 data-nosnippet>3176</a>            AtomicOr =&gt; <span class="self">self</span>.emit().atomic_or(
+<a href=#3177 id=3177 data-nosnippet>3177</a>                access_ty,
+<a href=#3178 id=3178 data-nosnippet>3178</a>                <span class="prelude-val">None</span>,
+<a href=#3179 id=3179 data-nosnippet>3179</a>                dst.def(<span class="self">self</span>),
+<a href=#3180 id=3180 data-nosnippet>3180</a>                memory,
+<a href=#3181 id=3181 data-nosnippet>3181</a>                semantics,
+<a href=#3182 id=3182 data-nosnippet>3182</a>                src.def(<span class="self">self</span>),
+<a href=#3183 id=3183 data-nosnippet>3183</a>            ),
+<a href=#3184 id=3184 data-nosnippet>3184</a>            AtomicXor =&gt; <span class="self">self</span>.emit().atomic_xor(
+<a href=#3185 id=3185 data-nosnippet>3185</a>                access_ty,
+<a href=#3186 id=3186 data-nosnippet>3186</a>                <span class="prelude-val">None</span>,
+<a href=#3187 id=3187 data-nosnippet>3187</a>                dst.def(<span class="self">self</span>),
+<a href=#3188 id=3188 data-nosnippet>3188</a>                memory,
+<a href=#3189 id=3189 data-nosnippet>3189</a>                semantics,
+<a href=#3190 id=3190 data-nosnippet>3190</a>                src.def(<span class="self">self</span>),
+<a href=#3191 id=3191 data-nosnippet>3191</a>            ),
+<a href=#3192 id=3192 data-nosnippet>3192</a>            AtomicMax =&gt; <span class="self">self</span>.emit().atomic_s_max(
+<a href=#3193 id=3193 data-nosnippet>3193</a>                access_ty,
+<a href=#3194 id=3194 data-nosnippet>3194</a>                <span class="prelude-val">None</span>,
+<a href=#3195 id=3195 data-nosnippet>3195</a>                dst.def(<span class="self">self</span>),
+<a href=#3196 id=3196 data-nosnippet>3196</a>                memory,
+<a href=#3197 id=3197 data-nosnippet>3197</a>                semantics,
+<a href=#3198 id=3198 data-nosnippet>3198</a>                src.def(<span class="self">self</span>),
+<a href=#3199 id=3199 data-nosnippet>3199</a>            ),
+<a href=#3200 id=3200 data-nosnippet>3200</a>            AtomicMin =&gt; <span class="self">self</span>.emit().atomic_s_min(
+<a href=#3201 id=3201 data-nosnippet>3201</a>                access_ty,
+<a href=#3202 id=3202 data-nosnippet>3202</a>                <span class="prelude-val">None</span>,
+<a href=#3203 id=3203 data-nosnippet>3203</a>                dst.def(<span class="self">self</span>),
+<a href=#3204 id=3204 data-nosnippet>3204</a>                memory,
+<a href=#3205 id=3205 data-nosnippet>3205</a>                semantics,
+<a href=#3206 id=3206 data-nosnippet>3206</a>                src.def(<span class="self">self</span>),
+<a href=#3207 id=3207 data-nosnippet>3207</a>            ),
+<a href=#3208 id=3208 data-nosnippet>3208</a>            AtomicUMax =&gt; <span class="self">self</span>.emit().atomic_u_max(
+<a href=#3209 id=3209 data-nosnippet>3209</a>                access_ty,
+<a href=#3210 id=3210 data-nosnippet>3210</a>                <span class="prelude-val">None</span>,
+<a href=#3211 id=3211 data-nosnippet>3211</a>                dst.def(<span class="self">self</span>),
+<a href=#3212 id=3212 data-nosnippet>3212</a>                memory,
+<a href=#3213 id=3213 data-nosnippet>3213</a>                semantics,
+<a href=#3214 id=3214 data-nosnippet>3214</a>                src.def(<span class="self">self</span>),
+<a href=#3215 id=3215 data-nosnippet>3215</a>            ),
+<a href=#3216 id=3216 data-nosnippet>3216</a>            AtomicUMin =&gt; <span class="self">self</span>.emit().atomic_u_min(
+<a href=#3217 id=3217 data-nosnippet>3217</a>                access_ty,
+<a href=#3218 id=3218 data-nosnippet>3218</a>                <span class="prelude-val">None</span>,
+<a href=#3219 id=3219 data-nosnippet>3219</a>                dst.def(<span class="self">self</span>),
+<a href=#3220 id=3220 data-nosnippet>3220</a>                memory,
+<a href=#3221 id=3221 data-nosnippet>3221</a>                semantics,
+<a href=#3222 id=3222 data-nosnippet>3222</a>                src.def(<span class="self">self</span>),
+<a href=#3223 id=3223 data-nosnippet>3223</a>            ),
+<a href=#3224 id=3224 data-nosnippet>3224</a>        }
+<a href=#3225 id=3225 data-nosnippet>3225</a>        .unwrap()
+<a href=#3226 id=3226 data-nosnippet>3226</a>        .with_type(access_ty);
+<a href=#3227 id=3227 data-nosnippet>3227</a>        <span class="self">self</span>.bitcast(result, ty)
+<a href=#3228 id=3228 data-nosnippet>3228</a>    }
+<a href=#3229 id=3229 data-nosnippet>3229</a>
+<a href=#3230 id=3230 data-nosnippet>3230</a>    <span class="kw">fn </span>atomic_fence(<span class="kw-2">&amp;mut </span><span class="self">self</span>, order: AtomicOrdering, _scope: SynchronizationScope) {
+<a href=#3231 id=3231 data-nosnippet>3231</a>        <span class="comment">// Ignore sync scope (it only has "single thread" and "cross thread")
+<a href=#3232 id=3232 data-nosnippet>3232</a>        // TODO: Default to device scope
+<a href=#3233 id=3233 data-nosnippet>3233</a>        </span><span class="kw">let </span>memory = <span class="self">self
+<a href=#3234 id=3234 data-nosnippet>3234</a>            </span>.constant_u32(<span class="self">self</span>.span(), Scope::Device <span class="kw">as </span>u32)
+<a href=#3235 id=3235 data-nosnippet>3235</a>            .def(<span class="self">self</span>);
+<a href=#3236 id=3236 data-nosnippet>3236</a>        <span class="kw">let </span>semantics = <span class="self">self</span>.ordering_to_semantics_def(order).def(<span class="self">self</span>);
+<a href=#3237 id=3237 data-nosnippet>3237</a>        <span class="self">self</span>.emit().memory_barrier(memory, semantics).unwrap();
+<a href=#3238 id=3238 data-nosnippet>3238</a>    }
+<a href=#3239 id=3239 data-nosnippet>3239</a>
+<a href=#3240 id=3240 data-nosnippet>3240</a>    <span class="kw">fn </span>set_invariant_load(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _load: <span class="self">Self</span>::Value) {
+<a href=#3241 id=3241 data-nosnippet>3241</a>        <span class="comment">// ignore
+<a href=#3242 id=3242 data-nosnippet>3242</a>    </span>}
+<a href=#3243 id=3243 data-nosnippet>3243</a>
+<a href=#3244 id=3244 data-nosnippet>3244</a>    <span class="doccomment">/// Called for `StorageLive`
+<a href=#3245 id=3245 data-nosnippet>3245</a>    </span><span class="kw">fn </span>lifetime_start(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _ptr: <span class="self">Self</span>::Value, _size: Size) {
+<a href=#3246 id=3246 data-nosnippet>3246</a>        <span class="comment">// ignore
+<a href=#3247 id=3247 data-nosnippet>3247</a>    </span>}
+<a href=#3248 id=3248 data-nosnippet>3248</a>
+<a href=#3249 id=3249 data-nosnippet>3249</a>    <span class="doccomment">/// Called for `StorageDead`
+<a href=#3250 id=3250 data-nosnippet>3250</a>    </span><span class="kw">fn </span>lifetime_end(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _ptr: <span class="self">Self</span>::Value, _size: Size) {
+<a href=#3251 id=3251 data-nosnippet>3251</a>        <span class="comment">// ignore
+<a href=#3252 id=3252 data-nosnippet>3252</a>    </span>}
+<a href=#3253 id=3253 data-nosnippet>3253</a>
+<a href=#3254 id=3254 data-nosnippet>3254</a>    <span class="attr">#[tracing::instrument(
+<a href=#3255 id=3255 data-nosnippet>3255</a>        level = <span class="string">"debug"</span>,
+<a href=#3256 id=3256 data-nosnippet>3256</a>        skip(<span class="self">self</span>, callee_ty, _fn_attrs, fn_abi, callee, args, funclet)
+<a href=#3257 id=3257 data-nosnippet>3257</a>    )]
+<a href=#3258 id=3258 data-nosnippet>3258</a>    </span><span class="kw">fn </span>call(
+<a href=#3259 id=3259 data-nosnippet>3259</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+<a href=#3260 id=3260 data-nosnippet>3260</a>        callee_ty: <span class="self">Self</span>::Type,
+<a href=#3261 id=3261 data-nosnippet>3261</a>        _fn_attrs: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>CodegenFnAttrs&gt;,
+<a href=#3262 id=3262 data-nosnippet>3262</a>        fn_abi: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>FnAbi&lt;<span class="lifetime">'tcx</span>, Ty&lt;<span class="lifetime">'tcx</span>&gt;&gt;&gt;,
+<a href=#3263 id=3263 data-nosnippet>3263</a>        callee: <span class="self">Self</span>::Value,
+<a href=#3264 id=3264 data-nosnippet>3264</a>        args: <span class="kw-2">&amp;</span>[<span class="self">Self</span>::Value],
+<a href=#3265 id=3265 data-nosnippet>3265</a>        funclet: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="self">Self</span>::Funclet&gt;,
+<a href=#3266 id=3266 data-nosnippet>3266</a>        instance: <span class="prelude-ty">Option</span>&lt;ty::Instance&lt;<span class="lifetime">'tcx</span>&gt;&gt;,
+<a href=#3267 id=3267 data-nosnippet>3267</a>    ) -&gt; <span class="self">Self</span>::Value {
+<a href=#3268 id=3268 data-nosnippet>3268</a>        <span class="kw">if </span>funclet.is_some() {
+<a href=#3269 id=3269 data-nosnippet>3269</a>            <span class="self">self</span>.fatal(<span class="string">"TODO: Funclets are not supported"</span>);
+<a href=#3270 id=3270 data-nosnippet>3270</a>        }
+<a href=#3271 id=3271 data-nosnippet>3271</a>
+<a href=#3272 id=3272 data-nosnippet>3272</a>        <span class="comment">// NOTE(eddyb) see the comment on `SpirvValueKind::FnAddr`, this should
+<a href=#3273 id=3273 data-nosnippet>3273</a>        // be fixed upstream, so we never see any "function pointer" values being
+<a href=#3274 id=3274 data-nosnippet>3274</a>        // created just to perform direct calls.
+<a href=#3275 id=3275 data-nosnippet>3275</a>        </span><span class="kw">let </span>(callee_val, result_type, argument_types) = <span class="kw">match </span><span class="self">self</span>.lookup_type(callee.ty) {
+<a href=#3276 id=3276 data-nosnippet>3276</a>            SpirvType::Pointer { pointee } =&gt; <span class="kw">match </span><span class="self">self</span>.lookup_type(pointee) {
+<a href=#3277 id=3277 data-nosnippet>3277</a>                SpirvType::Function {
+<a href=#3278 id=3278 data-nosnippet>3278</a>                    return_type,
+<a href=#3279 id=3279 data-nosnippet>3279</a>                    arguments,
+<a href=#3280 id=3280 data-nosnippet>3280</a>                } =&gt; (
+<a href=#3281 id=3281 data-nosnippet>3281</a>                    <span class="kw">if let </span>SpirvValueKind::FnAddr { function } = callee.kind {
+<a href=#3282 id=3282 data-nosnippet>3282</a>                        <span class="macro">assert_ty_eq!</span>(<span class="self">self</span>, callee_ty, pointee);
+<a href=#3283 id=3283 data-nosnippet>3283</a>                        function
+<a href=#3284 id=3284 data-nosnippet>3284</a>                    }
+<a href=#3285 id=3285 data-nosnippet>3285</a>                    <span class="comment">// Truly indirect call.
+<a href=#3286 id=3286 data-nosnippet>3286</a>                    </span><span class="kw">else </span>{
+<a href=#3287 id=3287 data-nosnippet>3287</a>                        <span class="kw">let </span>fn_ptr_val = callee.def(<span class="self">self</span>);
+<a href=#3288 id=3288 data-nosnippet>3288</a>                        <span class="self">self</span>.zombie(fn_ptr_val, <span class="string">"indirect calls are not supported in SPIR-V"</span>);
+<a href=#3289 id=3289 data-nosnippet>3289</a>                        fn_ptr_val
+<a href=#3290 id=3290 data-nosnippet>3290</a>                    },
+<a href=#3291 id=3291 data-nosnippet>3291</a>                    return_type,
+<a href=#3292 id=3292 data-nosnippet>3292</a>                    arguments,
+<a href=#3293 id=3293 data-nosnippet>3293</a>                ),
+<a href=#3294 id=3294 data-nosnippet>3294</a>                <span class="kw">_ </span>=&gt; <span class="macro">bug!</span>(
+<a href=#3295 id=3295 data-nosnippet>3295</a>                    <span class="string">"call expected `fn` pointer to point to function type, got `{}`"</span>,
+<a href=#3296 id=3296 data-nosnippet>3296</a>                    <span class="self">self</span>.debug_type(pointee)
+<a href=#3297 id=3297 data-nosnippet>3297</a>                ),
+<a href=#3298 id=3298 data-nosnippet>3298</a>            },
+<a href=#3299 id=3299 data-nosnippet>3299</a>
+<a href=#3300 id=3300 data-nosnippet>3300</a>            <span class="kw">_ </span>=&gt; <span class="macro">bug!</span>(
+<a href=#3301 id=3301 data-nosnippet>3301</a>                <span class="string">"call expected `fn` pointer type, got `{}`"</span>,
+<a href=#3302 id=3302 data-nosnippet>3302</a>                <span class="self">self</span>.debug_type(callee.ty)
+<a href=#3303 id=3303 data-nosnippet>3303</a>            ),
+<a href=#3304 id=3304 data-nosnippet>3304</a>        };
+<a href=#3305 id=3305 data-nosnippet>3305</a>
+<a href=#3306 id=3306 data-nosnippet>3306</a>        <span class="comment">// HACK(eddyb) temporary workaround for untyped pointers upstream.
+<a href=#3307 id=3307 data-nosnippet>3307</a>        // FIXME(eddyb) replace with untyped memory SPIR-V + `qptr` or similar.
+<a href=#3308 id=3308 data-nosnippet>3308</a>        </span><span class="kw">let </span>args: SmallVec&lt;[<span class="kw">_</span>; <span class="number">8</span>]&gt; = args
+<a href=#3309 id=3309 data-nosnippet>3309</a>            .iter()
+<a href=#3310 id=3310 data-nosnippet>3310</a>            .zip_eq(argument_types)
+<a href=#3311 id=3311 data-nosnippet>3311</a>            .map(|(<span class="kw-2">&amp;</span>arg, <span class="kw-2">&amp;</span>expected_type)| <span class="self">self</span>.bitcast(arg, expected_type))
+<a href=#3312 id=3312 data-nosnippet>3312</a>            .collect();
+<a href=#3313 id=3313 data-nosnippet>3313</a>        <span class="kw">let </span>args = <span class="kw-2">&amp;</span>args[..];
+<a href=#3314 id=3314 data-nosnippet>3314</a>
+<a href=#3315 id=3315 data-nosnippet>3315</a>        <span class="comment">// FIXME(eddyb) should the maps exist at all, now that the `DefId` is known
+<a href=#3316 id=3316 data-nosnippet>3316</a>        // at `call` time, and presumably its high-level details can be looked up?
+<a href=#3317 id=3317 data-nosnippet>3317</a>        </span><span class="kw">let </span>instance_def_id = instance.map(|instance| instance.def_id());
+<a href=#3318 id=3318 data-nosnippet>3318</a>
+<a href=#3319 id=3319 data-nosnippet>3319</a>        <span class="kw">let </span>libm_intrinsic =
+<a href=#3320 id=3320 data-nosnippet>3320</a>            instance_def_id.and_then(|def_id| <span class="self">self</span>.libm_intrinsics.borrow().get(<span class="kw-2">&amp;</span>def_id).copied());
+<a href=#3321 id=3321 data-nosnippet>3321</a>        <span class="kw">let </span>num_traits_intrinsics = instance_def_id
+<a href=#3322 id=3322 data-nosnippet>3322</a>            .and_then(|def_id| <span class="self">self</span>.num_traits_intrinsics.borrow().get(<span class="kw-2">&amp;</span>def_id).copied());
+<a href=#3323 id=3323 data-nosnippet>3323</a>        <span class="kw">let </span>buffer_load_intrinsic = instance_def_id
+<a href=#3324 id=3324 data-nosnippet>3324</a>            .is_some_and(|def_id| <span class="self">self</span>.buffer_load_intrinsics.borrow().contains(<span class="kw-2">&amp;</span>def_id));
+<a href=#3325 id=3325 data-nosnippet>3325</a>        <span class="kw">let </span>buffer_store_intrinsic = instance_def_id
+<a href=#3326 id=3326 data-nosnippet>3326</a>            .is_some_and(|def_id| <span class="self">self</span>.buffer_store_intrinsics.borrow().contains(<span class="kw-2">&amp;</span>def_id));
+<a href=#3327 id=3327 data-nosnippet>3327</a>        <span class="kw">let </span>is_panic_entry_point = instance_def_id
+<a href=#3328 id=3328 data-nosnippet>3328</a>            .is_some_and(|def_id| <span class="self">self</span>.panic_entry_points.borrow().contains(<span class="kw-2">&amp;</span>def_id));
+<a href=#3329 id=3329 data-nosnippet>3329</a>        <span class="kw">let </span>from_trait_impl =
+<a href=#3330 id=3330 data-nosnippet>3330</a>            instance_def_id.and_then(|def_id| <span class="self">self</span>.from_trait_impls.borrow().get(<span class="kw-2">&amp;</span>def_id).copied());
+<a href=#3331 id=3331 data-nosnippet>3331</a>
+<a href=#3332 id=3332 data-nosnippet>3332</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(libm_intrinsic) = libm_intrinsic.or(num_traits_intrinsics) {
+<a href=#3333 id=3333 data-nosnippet>3333</a>            <span class="kw">let </span>result = <span class="self">self</span>.call_libm_intrinsic(libm_intrinsic, result_type, args);
+<a href=#3334 id=3334 data-nosnippet>3334</a>            <span class="kw">if </span><span class="macro">result_type !</span>= result.ty {
+<a href=#3335 id=3335 data-nosnippet>3335</a>                <span class="macro">bug!</span>(
+<a href=#3336 id=3336 data-nosnippet>3336</a>                    <span class="string">"Mismatched libm result type for {:?}: expected {}, got {}"</span>,
+<a href=#3337 id=3337 data-nosnippet>3337</a>                    libm_intrinsic,
+<a href=#3338 id=3338 data-nosnippet>3338</a>                    <span class="self">self</span>.debug_type(result_type),
+<a href=#3339 id=3339 data-nosnippet>3339</a>                    <span class="self">self</span>.debug_type(result.ty),
+<a href=#3340 id=3340 data-nosnippet>3340</a>                );
+<a href=#3341 id=3341 data-nosnippet>3341</a>            }
+<a href=#3342 id=3342 data-nosnippet>3342</a>            <span class="kw">return </span>result;
+<a href=#3343 id=3343 data-nosnippet>3343</a>        }
+<a href=#3344 id=3344 data-nosnippet>3344</a>
+<a href=#3345 id=3345 data-nosnippet>3345</a>        <span class="kw">if </span>is_panic_entry_point {
+<a href=#3346 id=3346 data-nosnippet>3346</a>            <span class="kw">return </span>DecodedFormatArgs::try_decode_and_remove_format_args(<span class="self">self</span>, args)
+<a href=#3347 id=3347 data-nosnippet>3347</a>                .codegen_panic(<span class="self">self</span>, result_type);
+<a href=#3348 id=3348 data-nosnippet>3348</a>        }
+<a href=#3349 id=3349 data-nosnippet>3349</a>        <span class="kw">if </span>buffer_load_intrinsic {
+<a href=#3350 id=3350 data-nosnippet>3350</a>            <span class="kw">return </span><span class="self">self</span>.codegen_buffer_load_intrinsic(fn_abi, result_type, args);
+<a href=#3351 id=3351 data-nosnippet>3351</a>        }
+<a href=#3352 id=3352 data-nosnippet>3352</a>        <span class="kw">if </span>buffer_store_intrinsic {
+<a href=#3353 id=3353 data-nosnippet>3353</a>            <span class="self">self</span>.codegen_buffer_store_intrinsic(fn_abi, args);
+<a href=#3354 id=3354 data-nosnippet>3354</a>            <span class="kw">let </span>void_ty = SpirvType::Void.def(rustc_span::DUMMY_SP, <span class="self">self</span>);
+<a href=#3355 id=3355 data-nosnippet>3355</a>            <span class="kw">return </span>SpirvValue {
+<a href=#3356 id=3356 data-nosnippet>3356</a>                kind: SpirvValueKind::IllegalTypeUsed(void_ty),
+<a href=#3357 id=3357 data-nosnippet>3357</a>                ty: void_ty,
+<a href=#3358 id=3358 data-nosnippet>3358</a>            };
+<a href=#3359 id=3359 data-nosnippet>3359</a>        }
+<a href=#3360 id=3360 data-nosnippet>3360</a>
+<a href=#3361 id=3361 data-nosnippet>3361</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>((source_ty, target_ty)) = from_trait_impl {
+<a href=#3362 id=3362 data-nosnippet>3362</a>            <span class="comment">// Optimize From::from calls with constant arguments to avoid creating intermediate types.
+<a href=#3363 id=3363 data-nosnippet>3363</a>            // Since From is only implemented for safe conversions (widening conversions that preserve
+<a href=#3364 id=3364 data-nosnippet>3364</a>            // the numeric value), we can directly create a constant of the target type for primitive
+<a href=#3365 id=3365 data-nosnippet>3365</a>            // numeric types.
+<a href=#3366 id=3366 data-nosnippet>3366</a>            </span><span class="kw">if let </span>[arg] = args
+<a href=#3367 id=3367 data-nosnippet>3367</a>                &amp;&amp; <span class="kw">let </span><span class="prelude-val">Some</span>(const_val) = <span class="self">self</span>.builder.lookup_const_scalar(<span class="kw-2">*</span>arg)
+<a href=#3368 id=3368 data-nosnippet>3368</a>            {
+<a href=#3369 id=3369 data-nosnippet>3369</a>                <span class="kw">use </span>rustc_middle::ty::FloatTy;
+<a href=#3370 id=3370 data-nosnippet>3370</a>                <span class="kw">let </span>optimized_result = <span class="kw">match </span>(source_ty.kind(), target_ty.kind()) {
+<a href=#3371 id=3371 data-nosnippet>3371</a>                    <span class="comment">// Integer widening conversions
+<a href=#3372 id=3372 data-nosnippet>3372</a>                    </span>(ty::Uint(<span class="kw">_</span>), ty::Uint(<span class="kw">_</span>)) | (ty::Int(<span class="kw">_</span>), ty::Int(<span class="kw">_</span>)) =&gt; {
+<a href=#3373 id=3373 data-nosnippet>3373</a>                        <span class="prelude-val">Some</span>(<span class="self">self</span>.constant_int(result_type, const_val))
+<a href=#3374 id=3374 data-nosnippet>3374</a>                    }
+<a href=#3375 id=3375 data-nosnippet>3375</a>                    <span class="comment">// Float widening conversions
+<a href=#3376 id=3376 data-nosnippet>3376</a>                    // TODO(@LegNeato): Handle more float types
+<a href=#3377 id=3377 data-nosnippet>3377</a>                    </span>(ty::Float(FloatTy::F32), ty::Float(FloatTy::F64)) =&gt; {
+<a href=#3378 id=3378 data-nosnippet>3378</a>                        <span class="kw">let </span>float_val = f32::from_bits(const_val <span class="kw">as </span>u32) <span class="kw">as </span>f64;
+<a href=#3379 id=3379 data-nosnippet>3379</a>                        <span class="prelude-val">Some</span>(<span class="self">self</span>.constant_float(result_type, float_val))
+<a href=#3380 id=3380 data-nosnippet>3380</a>                    }
+<a href=#3381 id=3381 data-nosnippet>3381</a>                    <span class="comment">// No optimization for narrowing conversions or unsupported types
+<a href=#3382 id=3382 data-nosnippet>3382</a>                    </span><span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+<a href=#3383 id=3383 data-nosnippet>3383</a>                };
+<a href=#3384 id=3384 data-nosnippet>3384</a>
+<a href=#3385 id=3385 data-nosnippet>3385</a>                <span class="kw">if let </span><span class="prelude-val">Some</span>(result) = optimized_result {
+<a href=#3386 id=3386 data-nosnippet>3386</a>                    <span class="kw">return </span>result;
+<a href=#3387 id=3387 data-nosnippet>3387</a>                }
+<a href=#3388 id=3388 data-nosnippet>3388</a>            }
+<a href=#3389 id=3389 data-nosnippet>3389</a>        }
+<a href=#3390 id=3390 data-nosnippet>3390</a>
+<a href=#3391 id=3391 data-nosnippet>3391</a>        <span class="comment">// HACK(fee1-dead): `MaybeUninit` uses a union which we don't have very good support yet. Replacing all calls to it
+<a href=#3392 id=3392 data-nosnippet>3392</a>        // with an `Undef` serves the same purpose and fixes compiler errors
+<a href=#3393 id=3393 data-nosnippet>3393</a>        </span><span class="kw">if </span>instance_def_id.is_some_and(|did| {
+<a href=#3394 id=3394 data-nosnippet>3394</a>            <span class="self">self</span>.tcx
+<a href=#3395 id=3395 data-nosnippet>3395</a>                .is_diagnostic_item(rustc_span::sym::maybe_uninit_uninit, did)
+<a href=#3396 id=3396 data-nosnippet>3396</a>        }) {
+<a href=#3397 id=3397 data-nosnippet>3397</a>            <span class="kw">return </span><span class="self">self</span>.undef(result_type);
+<a href=#3398 id=3398 data-nosnippet>3398</a>        }
+<a href=#3399 id=3399 data-nosnippet>3399</a>
+<a href=#3400 id=3400 data-nosnippet>3400</a>        <span class="comment">// Default: emit a regular function call
+<a href=#3401 id=3401 data-nosnippet>3401</a>        </span><span class="kw">let </span>args = args.iter().map(|arg| arg.def(<span class="self">self</span>)).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+<a href=#3402 id=3402 data-nosnippet>3402</a>        <span class="self">self</span>.emit()
+<a href=#3403 id=3403 data-nosnippet>3403</a>            .function_call(result_type, <span class="prelude-val">None</span>, callee_val, args)
+<a href=#3404 id=3404 data-nosnippet>3404</a>            .unwrap()
+<a href=#3405 id=3405 data-nosnippet>3405</a>            .with_type(result_type)
+<a href=#3406 id=3406 data-nosnippet>3406</a>    }
+<a href=#3407 id=3407 data-nosnippet>3407</a>
+<a href=#3408 id=3408 data-nosnippet>3408</a>    <span class="kw">fn </span>tail_call(
+<a href=#3409 id=3409 data-nosnippet>3409</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+<a href=#3410 id=3410 data-nosnippet>3410</a>        _llty: <span class="self">Self</span>::Type,
+<a href=#3411 id=3411 data-nosnippet>3411</a>        _fn_attrs: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>CodegenFnAttrs&gt;,
+<a href=#3412 id=3412 data-nosnippet>3412</a>        _fn_abi: <span class="kw-2">&amp;</span>FnAbi&lt;<span class="lifetime">'tcx</span>, Ty&lt;<span class="lifetime">'tcx</span>&gt;&gt;,
+<a href=#3413 id=3413 data-nosnippet>3413</a>        _llfn: <span class="self">Self</span>::Value,
+<a href=#3414 id=3414 data-nosnippet>3414</a>        _args: <span class="kw-2">&amp;</span>[<span class="self">Self</span>::Value],
+<a href=#3415 id=3415 data-nosnippet>3415</a>        _funclet: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="self">Self</span>::Funclet&gt;,
+<a href=#3416 id=3416 data-nosnippet>3416</a>        _instance: <span class="prelude-ty">Option</span>&lt;ty::Instance&lt;<span class="lifetime">'tcx</span>&gt;&gt;,
+<a href=#3417 id=3417 data-nosnippet>3417</a>    ) {
+<a href=#3418 id=3418 data-nosnippet>3418</a>        <span class="macro">todo!</span>()
+<a href=#3419 id=3419 data-nosnippet>3419</a>    }
+<a href=#3420 id=3420 data-nosnippet>3420</a>
+<a href=#3421 id=3421 data-nosnippet>3421</a>    <span class="kw">fn </span>zext(<span class="kw-2">&amp;mut </span><span class="self">self</span>, val: <span class="self">Self</span>::Value, dest_ty: <span class="self">Self</span>::Type) -&gt; <span class="self">Self</span>::Value {
+<a href=#3422 id=3422 data-nosnippet>3422</a>        <span class="self">self</span>.intcast(val, dest_ty, <span class="bool-val">false</span>)
+<a href=#3423 id=3423 data-nosnippet>3423</a>    }
+<a href=#3424 id=3424 data-nosnippet>3424</a>
+<a href=#3425 id=3425 data-nosnippet>3425</a>    <span class="kw">fn </span>apply_attrs_to_cleanup_callsite(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _llret: <span class="self">Self</span>::Value) {
+<a href=#3426 id=3426 data-nosnippet>3426</a>        <span class="comment">// Ignore
+<a href=#3427 id=3427 data-nosnippet>3427</a>    </span>}
+<a href=#3428 id=3428 data-nosnippet>3428</a>}
+</code></pre></div></section></main></body></html>

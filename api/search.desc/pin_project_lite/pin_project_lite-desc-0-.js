@@ -1,1 +1,0 @@
-searchState.loadedDescShard("pin_project_lite", 0, "A lightweight version of pin-project written with …\nA macro that creates a projection type covering all the …")

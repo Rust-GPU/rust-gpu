@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spirt-0.4.0/src/spv/lift.rs`."><title>lift.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="spirt" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (f34ba774c 2025-08-03)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-68b7e25d.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">spirt/spv/</div>lift.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! SPIR-T to SPIR-V lifting.
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spirt-0.4.0/src/spv/lift.rs`."><title>lift.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="spirt" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (adaa83897 2025-10-27)" data-channel="nightly" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">spirt/spv/</div>lift.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! SPIR-T to SPIR-V lifting.
 <a href=#2 id=2 data-nosnippet>2</a>
 <a href=#3 id=3 data-nosnippet>3</a></span><span class="kw">use </span><span class="kw">crate</span>::func_at::FuncAt;
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span><span class="kw">crate</span>::spv::{<span class="self">self</span>, spec};
@@ -586,7 +586,7 @@
 <a href=#586 id=586 data-nosnippet>586</a>                            <span class="kw">let </span>loop_body_def = func_def_body.at(<span class="kw-2">*</span>body).def();
 <a href=#587 id=587 data-nosnippet>587</a>                            <span class="kw">let </span>loop_body_inputs = <span class="kw-2">&amp;</span>loop_body_def.inputs;
 <a href=#588 id=588 data-nosnippet>588</a>
-<a href=#589 id=589 data-nosnippet>589</a>                            <span class="kw">if </span>!loop_body_inputs.is_empty() {
+<a href=#589 id=589 data-nosnippet>589</a>                            <span class="macro">if !</span>loop_body_inputs.is_empty() {
 <a href=#590 id=590 data-nosnippet>590</a>                                region_inputs_source.insert(
 <a href=#591 id=591 data-nosnippet>591</a>                                    <span class="kw-2">*</span>body,
 <a href=#592 id=592 data-nosnippet>592</a>                                    RegionInputsSource::LoopHeaderPhis(control_node),
@@ -1669,7 +1669,7 @@
 <a href=#1669 id=1669 data-nosnippet>1669</a>                        ids: iter::once(ids.debug_strings[<span class="kw-2">&amp;</span>cx[file]]).collect(),
 <a href=#1670 id=1670 data-nosnippet>1670</a>                    })<span class="question-mark">?</span>;
 <a href=#1671 id=1671 data-nosnippet>1671</a>
-<a href=#1672 id=1672 data-nosnippet>1672</a>                    <span class="kw">while </span>!contents_rest.is_empty() {
+<a href=#1672 id=1672 data-nosnippet>1672</a>                    <span class="macro">while !</span>contents_rest.is_empty() {
 <a href=#1673 id=1673 data-nosnippet>1673</a>                        <span class="comment">// FIXME(eddyb) test with UTF-8! this `split_at` should
 <a href=#1674 id=1674 data-nosnippet>1674</a>                        // actually take *less* than the full possible size, to
 <a href=#1675 id=1675 data-nosnippet>1675</a>                        // avoid cutting a UTF-8 sequence.
@@ -1717,7 +1717,7 @@
 <a href=#1717 id=1717 data-nosnippet>1717</a>            </span>} <span class="kw">else </span>{
 <a href=#1718 id=1718 data-nosnippet>1718</a>                current_block_id
 <a href=#1719 id=1719 data-nosnippet>1719</a>            };
-<a href=#1720 id=1720 data-nosnippet>1720</a>            <span class="kw">if </span>current_block_id != new_block_id {
+<a href=#1720 id=1720 data-nosnippet>1720</a>            <span class="kw">if </span><span class="macro">current_block_id !</span>= new_block_id {
 <a href=#1721 id=1721 data-nosnippet>1721</a>                current_debug_line = <span class="prelude-val">None</span>;
 <a href=#1722 id=1722 data-nosnippet>1722</a>            }
 <a href=#1723 id=1723 data-nosnippet>1723</a>            current_block_id = new_block_id;
@@ -1732,7 +1732,7 @@
 <a href=#1732 id=1732 data-nosnippet>1732</a>                }
 <a href=#1733 id=1733 data-nosnippet>1733</a>                <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
 <a href=#1734 id=1734 data-nosnippet>1734</a>            });
-<a href=#1735 id=1735 data-nosnippet>1735</a>            <span class="kw">if </span>current_debug_line != new_debug_line {
+<a href=#1735 id=1735 data-nosnippet>1735</a>            <span class="kw">if </span><span class="macro">current_debug_line !</span>= new_debug_line {
 <a href=#1736 id=1736 data-nosnippet>1736</a>                <span class="kw">let </span>(opcode, imms, ids) = <span class="kw">match </span>new_debug_line {
 <a href=#1737 id=1737 data-nosnippet>1737</a>                    <span class="prelude-val">Some</span>((file_path_id, line, col)) =&gt; (
 <a href=#1738 id=1738 data-nosnippet>1738</a>                        wk.OpLine,
@@ -1760,4 +1760,5 @@
 <a href=#1760 id=1760 data-nosnippet>1760</a>
 <a href=#1761 id=1761 data-nosnippet>1761</a>        <span class="prelude-val">Ok</span>(emitter)
 <a href=#1762 id=1762 data-nosnippet>1762</a>    }
-<a href=#1763 id=1763 data-nosnippet>1763</a>}</code></pre></div></section></main></body></html>
+<a href=#1763 id=1763 data-nosnippet>1763</a>}
+</code></pre></div></section></main></body></html>

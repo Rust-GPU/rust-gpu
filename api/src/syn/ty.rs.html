@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/syn-2.0.114/src/ty.rs`."><title>ty.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="syn" data-themes="" data-resource-suffix="" data-rustdoc-version="1.91.0-nightly (f34ba774c 2025-08-03)" data-channel="nightly" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-68b7e25d.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">syn/</div>ty.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span><span class="kw">crate</span>::attr::Attribute;
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/syn-2.0.114/src/ty.rs`."><title>ty.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="syn" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (adaa83897 2025-10-27)" data-channel="nightly" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">syn/</div>ty.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span><span class="kw">crate</span>::attr::Attribute;
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span><span class="kw">crate</span>::expr::Expr;
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span><span class="kw">crate</span>::generics::{BoundLifetimes, TypeParamBound};
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span><span class="kw">crate</span>::ident::Ident;
@@ -366,7 +366,7 @@
 <a href=#366 id=366 data-nosnippet>366</a>        <span class="kw">if </span>lookahead.peek(<span class="macro">Token!</span>[<span class="kw">for</span>]) {
 <a href=#367 id=367 data-nosnippet>367</a>            lifetimes = input.parse()<span class="question-mark">?</span>;
 <a href=#368 id=368 data-nosnippet>368</a>            lookahead = input.lookahead1();
-<a href=#369 id=369 data-nosnippet>369</a>            <span class="kw">if </span>!lookahead.peek(Ident)
+<a href=#369 id=369 data-nosnippet>369</a>            <span class="macro">if !</span>lookahead.peek(Ident)
 <a href=#370 id=370 data-nosnippet>370</a>                &amp;&amp; !lookahead.peek(<span class="macro">Token!</span>[<span class="kw">fn</span>])
 <a href=#371 id=371 data-nosnippet>371</a>                &amp;&amp; !lookahead.peek(<span class="macro">Token!</span>[<span class="kw">unsafe</span>])
 <a href=#372 id=372 data-nosnippet>372</a>                &amp;&amp; !lookahead.peek(<span class="macro">Token!</span>[<span class="kw">extern</span>])
@@ -428,7 +428,7 @@
 <a href=#428 id=428 data-nosnippet>428</a>                        <span class="kw">let </span><span class="kw-2">mut </span>elems = Punctuated::new();
 <a href=#429 id=429 data-nosnippet>429</a>                        elems.push_value(first);
 <a href=#430 id=430 data-nosnippet>430</a>                        elems.push_punct(content.parse()<span class="question-mark">?</span>);
-<a href=#431 id=431 data-nosnippet>431</a>                        <span class="kw">while </span>!content.is_empty() {
+<a href=#431 id=431 data-nosnippet>431</a>                        <span class="macro">while !</span>content.is_empty() {
 <a href=#432 id=432 data-nosnippet>432</a>                            elems.push_value(content.parse()<span class="question-mark">?</span>);
 <a href=#433 id=433 data-nosnippet>433</a>                            <span class="kw">if </span>content.is_empty() {
 <a href=#434 id=434 data-nosnippet>434</a>                                <span class="kw">break</span>;
@@ -545,7 +545,7 @@
 <a href=#545 id=545 data-nosnippet>545</a>                <span class="kw">if </span>allow_plus {
 <a href=#546 id=546 data-nosnippet>546</a>                    <span class="kw">while </span>input.peek(<span class="macro">Token!</span>[+]) {
 <a href=#547 id=547 data-nosnippet>547</a>                        bounds.push_punct(input.parse()<span class="question-mark">?</span>);
-<a href=#548 id=548 data-nosnippet>548</a>                        <span class="kw">if </span>!(input.peek(Ident::peek_any)
+<a href=#548 id=548 data-nosnippet>548</a>                        <span class="macro">if !</span>(input.peek(Ident::peek_any)
 <a href=#549 id=549 data-nosnippet>549</a>                            || input.peek(<span class="macro">Token!</span>[::])
 <a href=#550 id=550 data-nosnippet>550</a>                            || input.peek(<span class="macro">Token!</span>[<span class="question-mark">?</span>])
 <a href=#551 id=551 data-nosnippet>551</a>                            || input.peek(Lifetime)
@@ -689,7 +689,7 @@
 <a href=#689 id=689 data-nosnippet>689</a>                inputs: {
 <a href=#690 id=690 data-nosnippet>690</a>                    <span class="kw">let </span><span class="kw-2">mut </span>inputs = Punctuated::new();
 <a href=#691 id=691 data-nosnippet>691</a>
-<a href=#692 id=692 data-nosnippet>692</a>                    <span class="kw">while </span>!args.is_empty() {
+<a href=#692 id=692 data-nosnippet>692</a>                    <span class="macro">while !</span>args.is_empty() {
 <a href=#693 id=693 data-nosnippet>693</a>                        <span class="kw">let </span>attrs = args.call(Attribute::parse_outer)<span class="question-mark">?</span>;
 <a href=#694 id=694 data-nosnippet>694</a>
 <a href=#695 id=695 data-nosnippet>695</a>                        <span class="kw">if </span>inputs.empty_or_trailing()
@@ -759,7 +759,7 @@
 <a href=#759 id=759 data-nosnippet>759</a>                    <span class="kw">let </span><span class="kw-2">mut </span>elems = Punctuated::new();
 <a href=#760 id=760 data-nosnippet>760</a>                    elems.push_value(first);
 <a href=#761 id=761 data-nosnippet>761</a>                    elems.push_punct(content.parse()<span class="question-mark">?</span>);
-<a href=#762 id=762 data-nosnippet>762</a>                    <span class="kw">while </span>!content.is_empty() {
+<a href=#762 id=762 data-nosnippet>762</a>                    <span class="macro">while !</span>content.is_empty() {
 <a href=#763 id=763 data-nosnippet>763</a>                        elems.push_value(content.parse()<span class="question-mark">?</span>);
 <a href=#764 id=764 data-nosnippet>764</a>                        <span class="kw">if </span>content.is_empty() {
 <a href=#765 id=765 data-nosnippet>765</a>                            <span class="kw">break</span>;
@@ -873,7 +873,7 @@
 <a href=#873 id=873 data-nosnippet>873</a>                }
 <a href=#874 id=874 data-nosnippet>874</a>            }
 <a href=#875 id=875 data-nosnippet>875</a>            <span class="comment">// Just lifetimes like `'a + 'b` is not a TraitObject.
-<a href=#876 id=876 data-nosnippet>876</a>            </span><span class="kw">if </span>!at_least_one_trait {
+<a href=#876 id=876 data-nosnippet>876</a>            </span><span class="macro">if !</span>at_least_one_trait {
 <a href=#877 id=877 data-nosnippet>877</a>                <span class="kw">let </span>msg = <span class="string">"at least one trait is required for an object type"</span>;
 <a href=#878 id=878 data-nosnippet>878</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(error::new2(dyn_span, last_lifetime_span.unwrap(), msg));
 <a href=#879 id=879 data-nosnippet>879</a>            }
@@ -935,7 +935,7 @@
 <a href=#935 id=935 data-nosnippet>935</a>                    }
 <a href=#936 id=936 data-nosnippet>936</a>                }
 <a href=#937 id=937 data-nosnippet>937</a>            }
-<a href=#938 id=938 data-nosnippet>938</a>            <span class="kw">if </span>!at_least_one_trait {
+<a href=#938 id=938 data-nosnippet>938</a>            <span class="macro">if !</span>at_least_one_trait {
 <a href=#939 id=939 data-nosnippet>939</a>                <span class="kw">let </span>msg = <span class="string">"at least one trait must be specified"</span>;
 <a href=#940 id=940 data-nosnippet>940</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(error::new2(
 <a href=#941 id=941 data-nosnippet>941</a>                    impl_token.span,
@@ -1025,7 +1025,7 @@
 <a href=#1025 id=1025 data-nosnippet>1025</a>        };
 <a href=#1026 id=1026 data-nosnippet>1026</a>
 <a href=#1027 id=1027 data-nosnippet>1027</a>        <span class="kw">let </span>ty = <span class="kw">match </span>ty {
-<a href=#1028 id=1028 data-nosnippet>1028</a>            <span class="prelude-val">Some</span>(ty) <span class="kw">if </span>!has_mut_self =&gt; ty,
+<a href=#1028 id=1028 data-nosnippet>1028</a>            <span class="prelude-val">Some</span>(ty) <span class="macro">if !</span>has_mut_self =&gt; ty,
 <a href=#1029 id=1029 data-nosnippet>1029</a>            <span class="kw">_ </span>=&gt; {
 <a href=#1030 id=1030 data-nosnippet>1030</a>                name = <span class="prelude-val">None</span>;
 <a href=#1031 id=1031 data-nosnippet>1031</a>                Type::Verbatim(verbatim::between(<span class="kw-2">&amp;</span>begin, input))
@@ -1140,7 +1140,7 @@
 <a href=#1140 id=1140 data-nosnippet>1140</a>            <span class="self">self</span>.paren_token.surround(tokens, |tokens| {
 <a href=#1141 id=1141 data-nosnippet>1141</a>                <span class="self">self</span>.inputs.to_tokens(tokens);
 <a href=#1142 id=1142 data-nosnippet>1142</a>                <span class="kw">if let </span><span class="prelude-val">Some</span>(variadic) = <span class="kw-2">&amp;</span><span class="self">self</span>.variadic {
-<a href=#1143 id=1143 data-nosnippet>1143</a>                    <span class="kw">if </span>!<span class="self">self</span>.inputs.empty_or_trailing() {
+<a href=#1143 id=1143 data-nosnippet>1143</a>                    <span class="macro">if !</span><span class="self">self</span>.inputs.empty_or_trailing() {
 <a href=#1144 id=1144 data-nosnippet>1144</a>                        <span class="kw">let </span>span = variadic.dots.spans[<span class="number">0</span>];
 <a href=#1145 id=1145 data-nosnippet>1145</a>                        <span class="macro">Token!</span>[,](span).to_tokens(tokens);
 <a href=#1146 id=1146 data-nosnippet>1146</a>                    }
@@ -1272,4 +1272,5 @@
 <a href=#1272 id=1272 data-nosnippet>1272</a>            <span class="self">self</span>.name.to_tokens(tokens);
 <a href=#1273 id=1273 data-nosnippet>1273</a>        }
 <a href=#1274 id=1274 data-nosnippet>1274</a>    }
-<a href=#1275 id=1275 data-nosnippet>1275</a>}</code></pre></div></section></main></body></html>
+<a href=#1275 id=1275 data-nosnippet>1275</a>}
+</code></pre></div></section></main></body></html>
