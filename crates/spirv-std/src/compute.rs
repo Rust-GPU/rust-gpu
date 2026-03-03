@@ -7,7 +7,7 @@ use glam::UVec3;
 /// In the compute language, [`local_invocation_id`] is an input variable containing the n-dimensional index of the
 /// local work invocation within the work group that the current shader is executing in. The possible values for this
 /// variable range across the local work group size, i.e., `(0,0,0)` to
-/// `(`[`workgroup_size`]`.x - 1, `[`workgroup_size`]`.y - 1, `[`workgroup_size`]`.z - 1)`.
+/// `(workgroup_size.x - 1, workgroup_size.y - 1, workgroup_size.z - 1)`.
 ///
 /// * GLSL: [`gl_LocalInvocationID`](https://registry.khronos.org/OpenGL-Refpages/gl4/html/gl_LocalInvocationID.xhtml)
 /// * WGSL: [`local_invocation_id`](https://www.w3.org/TR/WGSL/#local-invocation-id-builtin-value)
@@ -24,8 +24,8 @@ pub fn local_invocation_id() -> UVec3 {
 ///
 /// In the compute language, [`local_invocation_index`] is a derived input variable containing the 1-dimensional
 /// linearized index of the work invocation within the work group that the current shader is executing on. The value of
-/// [`local_invocation_index`] is equal to [`local_invocation_id`]`.z * `[`workgroup_size`]`.x * `[`workgroup_size`]`.y`
-/// `+ `[`local_invocation_id`]`.y * `[`workgroup_size`]`.x + `[`local_invocation_id`]`.x`.
+/// [`local_invocation_index`] is equal to [`local_invocation_id`]`.z * workgroup_size.x * workgroup_size.y`
+/// `+ `[`local_invocation_id`]`.y * workgroup_size.x + `[`local_invocation_id`]`.x`.
 ///
 /// * GLSL: [`gl_LocalInvocationIndex`](https://registry.khronos.org/OpenGL-Refpages/gl4/html/gl_LocalInvocationIndex.xhtml)
 /// * WGSL: [`local_invocation_index`](https://www.w3.org/TR/WGSL/#local-invocation-index-builtin-value)
@@ -42,7 +42,7 @@ pub fn local_invocation_index() -> u32 {
 ///
 /// In the compute language, [`global_invocation_id`] is a derived input variable containing the n-dimensional index of
 /// the work invocation within the global work group that the current shader is executing on. The value of
-/// [`global_invocation_id`] is equal to [`workgroup_id`]` * `[`workgroup_size`]` + `[`local_invocation_id`].
+/// [`global_invocation_id`] is equal to [`workgroup_id`]` * workgroup_size + `[`local_invocation_id`].
 ///
 /// * GLSL: [`gl_GlobalInvocationID`](https://registry.khronos.org/OpenGL-Refpages/gl4/html/gl_GlobalInvocationID.xhtml)
 /// * WGSL: [`global_invocation_id`](https://www.w3.org/TR/WGSL/#global-invocation-index-builtin-value)
