@@ -69,7 +69,7 @@ impl<'a> Trie<'a> {
 
     fn emit(&self, builder: &mut String, full_name: String, indent: usize) {
         let mut children = self.children.iter().collect::<Vec<_>>();
-        children.sort_unstable_by(|(k1, _), (k2, _)| k1.cmp(k2));
+        children.sort_unstable_by_key(|(k1, _)| *k1);
         for (child_name, child) in children {
             let full_child_name = if full_name.is_empty() {
                 (*child_name).to_string()
