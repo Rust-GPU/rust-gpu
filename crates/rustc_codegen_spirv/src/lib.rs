@@ -228,10 +228,10 @@ impl CodegenBackend for SpirvCodegenBackend {
         // FIXME(eddyb) this is currently only passed back to us, specifically
         // into `target_machine_factory` (which is a noop), but it might make
         // sense to move some of the target feature parsing into here.
-        providers.global_backend_features = |_tcx, ()| vec![];
+        providers.queries.global_backend_features = |_tcx, ()| vec![];
 
         crate::abi::provide(providers);
-        crate::attr::provide(providers);
+        crate::attr::provide(&mut providers.queries);
     }
 
     fn target_cpu(&self, sess: &Session) -> String {
@@ -324,7 +324,7 @@ impl WriteBackendMethods for SpirvCodegenBackend {
         _opt_level: config::OptLevel,
         _target_features: &[String],
     ) -> TargetMachineFactoryFn<Self> {
-        Arc::new(|_| Ok(()))
+        Arc::new(|_, _| ())
     }
 
     // FIXME(eddyb) reuse the "merge" stage of `crate::linker` for this, or even

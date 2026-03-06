@@ -1826,8 +1826,8 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
     }
 
     fn scalable_alloca(&mut self, elt: u64, align: Align, element_ty: Ty<'_>) -> Self::Value {
-        let element = self.layout_of(element_ty).spirv_type(self.span(), self);
-        self.declare_func_local_var(self.type_array(element, elt), align)
+        let _ = (elt, align, element_ty);
+        self.fatal("scalable alloca is not supported in SPIR-V backend")
     }
 
     fn load(&mut self, ty: Self::Type, ptr: Self::Value, _align: Align) -> Self::Value {

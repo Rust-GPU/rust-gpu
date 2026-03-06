@@ -6,8 +6,7 @@ use crate::{SpirvCodegenBackend, SpirvModuleBuffer, linker};
 use ar::{Archive, GnuBuilder, Header};
 use rspirv::binary::Assemble;
 use rspirv::dr::Module;
-use rustc_ast::CRATE_NODE_ID;
-use rustc_attr_parsing::{ShouldEmit, eval_config_entry};
+use rustc_attr_parsing::eval_config_entry;
 use rustc_codegen_spirv_types::{CompileResult, ModuleResult};
 use rustc_codegen_ssa::back::lto::{SerializedModule, ThinModule, ThinShared};
 use rustc_codegen_ssa::back::write::CodegenContext;
@@ -450,7 +449,7 @@ fn add_upstream_rust_crates(
         let src = &crate_info.used_crate_source[&cnum];
         match data[cnum] {
             Linkage::NotLinked | Linkage::IncludedFromDylib => {}
-            Linkage::Static => rlibs.push(src.rlib.as_ref().unwrap().0.clone()),
+            Linkage::Static => rlibs.push(src.rlib.as_ref().unwrap().clone()),
             //Linkage::Dynamic => rlibs.push(src.dylib.as_ref().unwrap().0.clone()),
             Linkage::Dynamic => {
                 sess.dcx().err("TODO: Linkage::Dynamic not supported yet");
@@ -494,9 +493,7 @@ fn add_upstream_native_libraries(sess: &Session, crate_info: &CrateInfo, crate_t
 // (see `compiler/rustc_codegen_ssa/src/back/link.rs`)
 fn relevant_lib(sess: &Session, lib: &NativeLib) -> bool {
     match lib.cfg {
-        Some(ref cfg) => {
-            eval_config_entry(sess, cfg, CRATE_NODE_ID, ShouldEmit::ErrorsAndLints).as_bool()
-        }
+        Some(ref cfg) => eval_config_entry(sess, cfg).as_bool(),
         None => true,
     }
 }
@@ -635,7 +632,7 @@ pub(crate) fn run_thin(
     modules: Vec<(String, SpirvModuleBuffer)>,
     cached_modules: Vec<(SerializedModule<SpirvModuleBuffer>, WorkProduct)>,
 ) -> (Vec<ThinModule<SpirvCodegenBackend>>, Vec<WorkProduct>) {
-    if cgcx.opts.cg.linker_plugin_lto.enabled() {
+    if cgcx.use_linker_plugin_lto {
         unreachable!("We should never reach this case if the LTO step is deferred to the linker");
     }
     assert!(

@@ -97,7 +97,9 @@ impl<'tcx> LayoutTypeCodegenMethods<'tcx> for CodegenCx<'tcx> {
 
     fn is_backend_immediate(&self, layout: TyAndLayout<'tcx>) -> bool {
         match layout.backend_repr {
-            BackendRepr::Scalar(_) | BackendRepr::SimdVector { .. } => true,
+            BackendRepr::Scalar(_)
+            | BackendRepr::ScalableVector { .. }
+            | BackendRepr::SimdVector { .. } => true,
             BackendRepr::ScalarPair(..) => false,
             BackendRepr::Memory { .. } => layout.is_zst(),
         }
@@ -107,6 +109,7 @@ impl<'tcx> LayoutTypeCodegenMethods<'tcx> for CodegenCx<'tcx> {
         match layout.backend_repr {
             BackendRepr::ScalarPair(..) => true,
             BackendRepr::Scalar(_)
+            | BackendRepr::ScalableVector { .. }
             | BackendRepr::SimdVector { .. }
             | BackendRepr::Memory { .. } => false,
         }

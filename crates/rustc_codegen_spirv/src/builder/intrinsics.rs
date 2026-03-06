@@ -400,12 +400,15 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
         todo!()
     }
 
-    fn va_start(&mut self, _val: Self::Value) -> Self::Value {
-        todo!()
+    fn va_start(&mut self, val: Self::Value) -> Self::Value {
+        // SPIR-V backend has no variadic ABI support; keep the placeholder
+        // operand unchanged so MIR lowering can proceed without crashing.
+        val
     }
 
-    fn va_end(&mut self, _val: Self::Value) -> Self::Value {
-        todo!()
+    fn va_end(&mut self, val: Self::Value) -> Self::Value {
+        // See `va_start` above.
+        val
     }
 }
 

@@ -12,7 +12,6 @@ use rustc_span::{Span, source_map::SourceMap};
 use smallvec::SmallVec;
 use std::borrow::Cow;
 use std::marker::PhantomData;
-use std::path::PathBuf;
 use std::sync::Arc;
 use std::{fmt, iter, slice, str};
 
@@ -447,7 +446,7 @@ impl<'a> SpanRegenerator<'a> {
 
             // HACK(eddyb) in case the file has changed, and because `SourceMap`
             // is strictly monotonic, we need to come up with some other name.
-            let mut sm_file_name_candidates = [PathBuf::from(file_name).into()]
+            let mut sm_file_name_candidates = [FileName::Custom(file_name.to_string())]
                 .into_iter()
                 .chain((0..).map(|i| FileName::Custom(format!("outdated({i}) {file_name}"))));
 

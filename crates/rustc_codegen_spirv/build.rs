@@ -329,6 +329,7 @@ mod maybe_pqp_cg_ssa;
     fs::write(out_dir.join("pqp_cg_ssa.rs"), pqp_cg_ssa_top_level)?;
 
     println!("cargo::rustc-check-cfg=cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)");
+    println!("cargo::rustc-check-cfg=cfg(bootstrap)");
 
     // HACK(eddyb) `if cfg!(llvm_enzyme)` added upstream for autodiff support.
     println!("cargo::rustc-check-cfg=cfg(llvm_enzyme)");

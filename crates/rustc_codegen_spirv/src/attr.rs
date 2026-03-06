@@ -514,7 +514,9 @@ pub(crate) fn provide(providers: &mut Providers) {
     *providers = Providers {
         check_mod_attrs: |tcx, module_def_id| {
             // Run both the default checks, and our `#[spirv(...)]` ones.
-            (rustc_interface::DEFAULT_QUERY_PROVIDERS.check_mod_attrs)(tcx, module_def_id);
+            (rustc_interface::DEFAULT_QUERY_PROVIDERS
+                .queries
+                .check_mod_attrs)(tcx, module_def_id);
             check_mod_attrs(tcx, module_def_id);
         },
         ..*providers
@@ -537,10 +539,10 @@ fn parse_attrs_for_checking<'a>(
                 Attribute::Unparsed(item) => {
                     // #[...]
                     let s = &item.path.segments;
-                    if let Some(rust_gpu) = s.get(0) && rust_gpu.name == sym.rust_gpu {
+                    if let Some(rust_gpu) = s.get(0) && *rust_gpu == sym.rust_gpu {
                         // #[rust_gpu ...]
                         match s.get(1) {
-                            Some(command) if command.name == sym.spirv_attr_with_version => {
+                            Some(command) if *command == sym.spirv_attr_with_version => {
                                 // #[rust_gpu::spirv ...]
                                 if let Some(args) = attr.meta_item_list() {
                                     // #[rust_gpu::spirv(...)]
@@ -554,11 +556,11 @@ fn parse_attrs_for_checking<'a>(
                                     ))
                                 }
                             }
-                            Some(command) if command.name == sym.vector => {
+                            Some(command) if *command == sym.vector => {
                                 // #[rust_gpu::vector ...]
                                 match s.get(2) {
                                     // #[rust_gpu::vector::v1]
-                                    Some(version) if version.name == sym.v1 => {
+                                    Some(version) if *version == sym.v1 => {
                                         Ok(SmallVec::from_iter([
                                             Ok((attr.span(), SpirvAttribute::IntrinsicType(IntrinsicType::Vector)))
                                         ]))

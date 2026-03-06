@@ -39,6 +39,15 @@ fn attrs_to_spirv(attrs: &CodegenFnAttrs) -> FunctionControl {
 }
 
 impl<'tcx> CodegenCx<'tcx> {
+    pub(crate) fn static_addr_of_constant(&self, cv: SpirvValue) -> SpirvValue {
+        self.def_constant(
+            self.type_ptr_to(cv.ty),
+            SpirvConst::PtrTo {
+                pointee: cv.def_cx(self),
+            },
+        )
+    }
+
     /// Returns a function if it already exists, or declares a header if it doesn't.
     pub fn get_fn_ext(&self, instance: Instance<'tcx>) -> SpirvFunctionCursor {
         assert!(!instance.args.has_infer());
@@ -133,6 +142,7 @@ impl<'tcx> CodegenCx<'tcx> {
             self.set_linkage(fn_id, symbol_name.to_owned(), linkage);
         }
 
+        #[allow(deprecated)]
         let attrs = AggregatedSpirvAttributes::parse(self, self.tcx.get_all_attrs(def_id));
         if let Some(entry) = attrs.entry.map(|attr| attr.value) {
             // HACK(eddyb) early insert to let `shader_entry_stub` call this
@@ -212,9 +222,12 @@ impl<'tcx> CodegenCx<'tcx> {
 
         // HACK(eddyb) there is no good way to identify these definitions
         // (e.g. no `#[lang = "..."]` attribute), but this works well enough.
-        if let Some("panic_nounwind_fmt" | "panic_explicit") =
-            demangled_symbol_name.strip_prefix("core::panicking::")
+        if let Some(name) = demangled_symbol_name.strip_prefix("core::panicking::")
+            && (name == "panic_explicit" || name.starts_with("panic_"))
         {
+            self.panic_entry_points.borrow_mut().insert(def_id);
+        }
+        if demangled_symbol_name.ends_with("::precondition_check") {
             self.panic_entry_points.borrow_mut().insert(def_id);
         }
         if let Some(pieces_len) = demangled_symbol_name
@@ -369,13 +382,7 @@ impl<'tcx> PreDefineCodegenMethods<'tcx> for CodegenCx<'tcx> {
 
 impl<'tcx> StaticCodegenMethods for CodegenCx<'tcx> {
     fn static_addr_of(&self, alloc: ConstAllocation<'_>, _kind: Option<&str>) -> Self::Value {
-        let cv = self.const_data_from_alloc(alloc);
-        self.def_constant(
-            self.type_ptr_to(cv.ty),
-            SpirvConst::PtrTo {
-                pointee: cv.def_cx(self),
-            },
-        )
+        self.static_addr_of_constant(self.const_data_from_alloc(alloc))
     }
 
     fn codegen_static(&mut self, def_id: DefId) {
