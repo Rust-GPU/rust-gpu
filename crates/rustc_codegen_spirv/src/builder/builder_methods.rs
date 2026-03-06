@@ -3284,12 +3284,14 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                     } => (true, return_type, arguments),
                     // Newer rustc can represent direct call targets as `ptr<void>`,
                     // with the callee signature carried separately.
-                    _ => match self.lookup_type(callee_ty) {
-                        SpirvType::Function {
+                    _ => {
+                        if let SpirvType::Function {
                             return_type,
                             arguments,
-                        } => (false, return_type, arguments),
-                        _ => {
+                        } = self.lookup_type(callee_ty)
+                        {
+                            (false, return_type, arguments)
+                        } else {
                             let Some(fn_abi) = fn_abi else {
                                 bug!(
                                     "call expected `fn` pointer to point to function type, got `{}`",
@@ -3305,7 +3307,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                                 _ => bug!("call expected function ABI to lower to function type"),
                             }
                         }
-                    },
+                    }
                 };
 
                 let callee_val = if let SpirvValueKind::FnAddr { function } = callee.kind {
