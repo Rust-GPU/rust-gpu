@@ -83,7 +83,7 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
         let ret_ty = self.layout_of(sig.output()).spirv_type(self.span(), self);
 
         let value = match name {
-            sym::likely | sym::unlikely => {
+            _ if name == sym::unlikely || name.as_str() == "likely" => {
                 // Ignore these for now.
                 args[0].immediate()
             }
@@ -369,6 +369,15 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
         Ok(())
     }
 
+    fn codegen_llvm_intrinsic_call(
+        &mut self,
+        instance: ty::Instance<'tcx>,
+        _args: &[OperandRef<'tcx, Self::Value>],
+        _is_cleanup: bool,
+    ) -> Self::Value {
+        bug!("LLVM intrinsic call not supported in SPIR-V backend: {instance:?}")
+    }
+
     fn abort(&mut self) {
         self.abort_with_kind_and_message_debug_printf("abort", "intrinsics::abort() called", []);
     }
@@ -386,7 +395,7 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
         &mut self,
         _llvtable: Self::Value,
         _vtable_byte_offset: u64,
-        _typeid: Self::Metadata,
+        _typeid: &[u8],
     ) -> Self::Value {
         todo!()
     }

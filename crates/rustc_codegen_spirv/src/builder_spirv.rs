@@ -15,14 +15,14 @@ use rspirv::{binary::Assemble, binary::Disassemble};
 use rustc_abi::Size;
 use rustc_arena::DroplessArena;
 use rustc_codegen_ssa::traits::ConstCodegenMethods as _;
+use rustc_data_structures::assert_matches;
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 use rustc_middle::bug;
 use rustc_middle::mir::interpret::ConstAllocation;
 use rustc_middle::ty::TyCtxt;
 use rustc_span::source_map::SourceMap;
 use rustc_span::symbol::Symbol;
-use rustc_span::{DUMMY_SP, FileName, FileNameDisplayPreference, SourceFile, Span};
-use std::assert_matches::assert_matches;
+use rustc_span::{DUMMY_SP, SourceFile, Span};
 use std::cell::{RefCell, RefMut};
 use std::hash::{Hash, Hasher};
 use std::iter;
@@ -883,12 +883,7 @@ impl<'tcx> BuilderSpirv<'tcx> {
                 // `RealFileName::to_string_lossy` returning `Cow<'_, str>`,
                 // but sadly that `'_` is the lifetime of the temporary `Arc`,
                 // not `'tcx`, so we have to arena-allocate to get `&'tcx str`.
-                let file_name = match &sf.name {
-                    FileName::Real(name) => {
-                        name.to_string_lossy(FileNameDisplayPreference::Remapped)
-                    }
-                    _ => sf.name.prefer_remapped_unconditionally().to_string().into(),
-                };
+                let file_name = sf.name.prefer_remapped_unconditionally().to_string_lossy();
                 let file_name = {
                     // FIXME(eddyb) it should be possible to arena-allocate a
                     // `&str` directly, but it would require upstream changes,

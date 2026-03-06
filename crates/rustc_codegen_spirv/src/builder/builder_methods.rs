@@ -1825,6 +1825,11 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         self.declare_func_local_var(self.type_array(self.type_i8(), size.bytes()), align)
     }
 
+    fn scalable_alloca(&mut self, elt: u64, align: Align, element_ty: Ty<'_>) -> Self::Value {
+        let element = self.layout_of(element_ty).spirv_type(self.span(), self);
+        self.declare_func_local_var(self.type_array(element, elt), align)
+    }
+
     fn load(&mut self, ty: Self::Type, ptr: Self::Value, _align: Align) -> Self::Value {
         let (ptr, access_ty) = self.adjust_pointer_for_typed_access(ptr, ty);
         let loaded_val = ptr.const_fold_load(self).unwrap_or_else(|| {
@@ -3075,6 +3080,10 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         _handlers: &[Self::BasicBlock],
     ) -> Self::Value {
         todo!()
+    }
+
+    fn get_funclet_cleanuppad(&self, _funclet: &Self::Funclet) -> Self::Value {
+        bug!("Funclets are not supported")
     }
 
     fn atomic_cmpxchg(

@@ -291,11 +291,11 @@ impl<'a, 'tcx> StaticBuilderMethods for Builder<'a, 'tcx> {
 
 impl<'a, 'tcx> BackendTypes for Builder<'a, 'tcx> {
     type Value = <CodegenCx<'tcx> as BackendTypes>::Value;
-    type Metadata = <CodegenCx<'tcx> as BackendTypes>::Metadata;
     type Function = <CodegenCx<'tcx> as BackendTypes>::Function;
 
     type BasicBlock = <CodegenCx<'tcx> as BackendTypes>::BasicBlock;
     type Type = <CodegenCx<'tcx> as BackendTypes>::Type;
+    type FunctionSignature = <CodegenCx<'tcx> as BackendTypes>::FunctionSignature;
     type Funclet = <CodegenCx<'tcx> as BackendTypes>::Funclet;
 
     type DIScope = <CodegenCx<'tcx> as BackendTypes>::DIScope;

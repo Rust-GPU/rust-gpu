@@ -11,7 +11,7 @@ use rustc_attr_parsing::{ShouldEmit, eval_config_entry};
 use rustc_codegen_spirv_types::{CompileResult, ModuleResult};
 use rustc_codegen_ssa::back::lto::{SerializedModule, ThinModule, ThinShared};
 use rustc_codegen_ssa::back::write::CodegenContext;
-use rustc_codegen_ssa::{CodegenResults, NativeLib};
+use rustc_codegen_ssa::{CompiledModules, CrateInfo, NativeLib};
 use rustc_data_structures::fx::FxHashSet;
 use rustc_errors::Diag;
 use rustc_hir::attrs::NativeLibKind;
@@ -37,7 +37,8 @@ use std::sync::Arc;
 
 pub fn link(
     sess: &Session,
-    codegen_results: &CodegenResults,
+    compiled_modules: &CompiledModules,
+    crate_info: &CrateInfo,
     metadata: &EncodedMetadata,
     outputs: &OutputFilenames,
     crate_name: &str,
@@ -59,7 +60,7 @@ pub fn link(
             );
         }
 
-        for obj in codegen_results
+        for obj in compiled_modules
             .modules
             .iter()
             .filter_map(|m| m.object.as_ref())
@@ -79,7 +80,8 @@ pub fn link(
                 CrateType::Rlib => {
                     link_rlib(
                         sess,
-                        codegen_results,
+                        compiled_modules,
+                        crate_info,
                         metadata,
                         &out_filename_file_for_writing,
                     );
@@ -97,7 +99,8 @@ pub fn link(
                         sess,
                         crate_type,
                         &out_filename_file_for_writing,
-                        codegen_results,
+                        compiled_modules,
+                        crate_info,
                         outputs,
                         &disambiguated_crate_name_for_dumps,
                     );
@@ -128,19 +131,20 @@ pub fn link(
 
 fn link_rlib(
     sess: &Session,
-    codegen_results: &CodegenResults,
+    compiled_modules: &CompiledModules,
+    crate_info: &CrateInfo,
     metadata: &EncodedMetadata,
     out_filename: &Path,
 ) {
     let mut file_list = Vec::<&Path>::new();
-    for obj in codegen_results
+    for obj in compiled_modules
         .modules
         .iter()
         .filter_map(|m| m.object.as_ref())
     {
         file_list.push(obj);
     }
-    for lib in codegen_results.crate_info.used_libraries.iter() {
+    for lib in crate_info.used_libraries.iter() {
         if let NativeLibKind::Static {
             bundle: None | Some(true),
             ..
@@ -160,13 +164,14 @@ fn link_exe(
     sess: &Session,
     crate_type: CrateType,
     out_filename: &Path,
-    codegen_results: &CodegenResults,
+    compiled_modules: &CompiledModules,
+    crate_info: &CrateInfo,
     outputs: &OutputFilenames,
     disambiguated_crate_name_for_dumps: &OsStr,
 ) {
     let mut objects = Vec::new();
     let mut rlibs = Vec::new();
-    for obj in codegen_results
+    for obj in compiled_modules
         .modules
         .iter()
         .filter_map(|m| m.object.as_ref())
@@ -174,12 +179,7 @@ fn link_exe(
         objects.push(obj.clone());
     }
 
-    link_local_crate_native_libs_and_dependent_crate_libs(
-        &mut rlibs,
-        sess,
-        crate_type,
-        codegen_results,
-    );
+    link_local_crate_native_libs_and_dependent_crate_libs(&mut rlibs, sess, crate_type, crate_info);
 
     let cg_args = CodegenArgs::from_session(sess);
 
@@ -417,20 +417,19 @@ fn link_local_crate_native_libs_and_dependent_crate_libs(
     rlibs: &mut Vec<PathBuf>,
     sess: &Session,
     crate_type: CrateType,
-    codegen_results: &CodegenResults,
+    crate_info: &CrateInfo,
 ) {
     if sess.opts.unstable_opts.link_native_libraries {
-        add_local_native_libraries(sess, codegen_results);
+        add_local_native_libraries(sess, crate_info);
     }
-    add_upstream_rust_crates(sess, rlibs, codegen_results, crate_type);
+    add_upstream_rust_crates(sess, rlibs, crate_info, crate_type);
     if sess.opts.unstable_opts.link_native_libraries {
-        add_upstream_native_libraries(sess, codegen_results, crate_type);
+        add_upstream_native_libraries(sess, crate_info, crate_type);
     }
 }
 
-fn add_local_native_libraries(sess: &Session, codegen_results: &CodegenResults) {
-    let relevant_libs = codegen_results
-        .crate_info
+fn add_local_native_libraries(sess: &Session, crate_info: &CrateInfo) {
+    let relevant_libs = crate_info
         .used_libraries
         .iter()
         .filter(|l| relevant_lib(sess, l));
@@ -440,16 +439,15 @@ fn add_local_native_libraries(sess: &Session, codegen_results: &CodegenResults) 
 fn add_upstream_rust_crates(
     sess: &Session,
     rlibs: &mut Vec<PathBuf>,
-    codegen_results: &CodegenResults,
+    crate_info: &CrateInfo,
     crate_type: CrateType,
 ) {
-    let data = codegen_results
-        .crate_info
+    let data = crate_info
         .dependency_formats
         .get(&crate_type)
         .expect("failed to find crate type in dependency format list");
-    for &cnum in &codegen_results.crate_info.used_crates {
-        let src = &codegen_results.crate_info.used_crate_source[&cnum];
+    for &cnum in &crate_info.used_crates {
+        let src = &crate_info.used_crate_source[&cnum];
         match data[cnum] {
             Linkage::NotLinked | Linkage::IncludedFromDylib => {}
             Linkage::Static => rlibs.push(src.rlib.as_ref().unwrap().0.clone()),
@@ -461,19 +459,14 @@ fn add_upstream_rust_crates(
     }
 }
 
-fn add_upstream_native_libraries(
-    sess: &Session,
-    codegen_results: &CodegenResults,
-    crate_type: CrateType,
-) {
-    let data = codegen_results
-        .crate_info
+fn add_upstream_native_libraries(sess: &Session, crate_info: &CrateInfo, crate_type: CrateType) {
+    let data = crate_info
         .dependency_formats
         .get(&crate_type)
         .expect("failed to find crate type in dependency format list");
 
-    for &cnum in &codegen_results.crate_info.used_crates {
-        for lib in codegen_results.crate_info.native_libraries[&cnum].iter() {
+    for &cnum in &crate_info.used_crates {
+        for lib in crate_info.native_libraries[&cnum].iter() {
             if !relevant_lib(sess, lib) {
                 continue;
             }
@@ -638,7 +631,7 @@ fn do_link(
 /// As of right now, this is essentially a no-op, just plumbing through all the files.
 // TODO: WorkProduct impl
 pub(crate) fn run_thin(
-    cgcx: &CodegenContext<SpirvCodegenBackend>,
+    cgcx: &CodegenContext,
     modules: Vec<(String, SpirvModuleBuffer)>,
     cached_modules: Vec<(SerializedModule<SpirvModuleBuffer>, WorkProduct)>,
 ) -> (Vec<ThinModule<SpirvCodegenBackend>>, Vec<WorkProduct>) {

@@ -13,6 +13,7 @@ use rspirv::spirv::{
 };
 use rustc_abi::FieldsShape;
 use rustc_codegen_ssa::traits::{BaseTypeCodegenMethods, BuilderMethods, MiscCodegenMethods as _};
+use rustc_data_structures::assert_matches;
 use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::MultiSpan;
 use rustc_hir as hir;
@@ -21,7 +22,6 @@ use rustc_middle::ty::layout::{LayoutOf, TyAndLayout};
 use rustc_middle::ty::{self, Instance, Ty};
 use rustc_span::{DUMMY_SP, Span};
 use rustc_target::callconv::{ArgAbi, FnAbi, PassMode};
-use std::assert_matches::assert_matches;
 
 /// Various information about an entry-point parameter, which can only be deduced
 /// (and/or checked) in all cases by using the original reference/value Rust type

@@ -9,11 +9,11 @@ use crate::custom_decorations::{CustomDecoration, SrcLocDecoration};
 use crate::spirv_type::SpirvType;
 use itertools::Itertools;
 use rspirv::spirv::{FunctionControl, LinkageType, StorageClass, Word};
-use rustc_abi::Align;
 use rustc_codegen_ssa::traits::{PreDefineCodegenMethods, StaticCodegenMethods};
 use rustc_hir::attrs::{InlineAttr, Linkage};
 use rustc_middle::bug;
 use rustc_middle::middle::codegen_fn_attrs::{CodegenFnAttrFlags, CodegenFnAttrs};
+use rustc_middle::mir::interpret::ConstAllocation;
 use rustc_middle::mir::mono::{MonoItem, Visibility};
 use rustc_middle::ty::layout::{FnAbiOf, LayoutOf};
 use rustc_middle::ty::{self, Instance, TypeVisitableExt, TypingEnv};
@@ -368,7 +368,8 @@ impl<'tcx> PreDefineCodegenMethods<'tcx> for CodegenCx<'tcx> {
 }
 
 impl<'tcx> StaticCodegenMethods for CodegenCx<'tcx> {
-    fn static_addr_of(&self, cv: Self::Value, _align: Align, _kind: Option<&str>) -> Self::Value {
+    fn static_addr_of(&self, alloc: ConstAllocation<'_>, _kind: Option<&str>) -> Self::Value {
+        let cv = self.const_data_from_alloc(alloc);
         self.def_constant(
             self.type_ptr_to(cv.ty),
             SpirvConst::PtrTo {

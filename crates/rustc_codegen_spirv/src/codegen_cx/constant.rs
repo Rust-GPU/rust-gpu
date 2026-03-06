@@ -250,19 +250,14 @@ impl ConstCodegenMethods for CodegenCx<'_> {
                 let alloc_id = prov.alloc_id();
                 let (base_addr, _base_addr_space) = match self.tcx.global_alloc(alloc_id) {
                     GlobalAlloc::Memory(alloc) => {
-                        let pointee = match self.lookup_type(ty) {
+                        let _pointee = match self.lookup_type(ty) {
                             SpirvType::Pointer { pointee } => pointee,
                             other => self.tcx.dcx().fatal(format!(
                                 "GlobalAlloc::Memory type not implemented: {}",
                                 other.debug(ty, self)
                             )),
                         };
-                        // FIXME(eddyb) always use `const_data_from_alloc`, and
-                        // defer the actual `try_read_from_const_alloc` step.
-                        let init = self
-                            .try_read_from_const_alloc(alloc, pointee)
-                            .unwrap_or_else(|| self.const_data_from_alloc(alloc));
-                        let value = self.static_addr_of(init, alloc.inner().align, None);
+                        let value = self.static_addr_of(alloc, None);
                         (value, AddressSpace::ZERO)
                     }
                     GlobalAlloc::Function { instance } => (
@@ -279,19 +274,14 @@ impl ConstCodegenMethods for CodegenCx<'_> {
                                 }),
                             )))
                             .unwrap_memory();
-                        let pointee = match self.lookup_type(ty) {
+                        let _pointee = match self.lookup_type(ty) {
                             SpirvType::Pointer { pointee } => pointee,
                             other => self.tcx.dcx().fatal(format!(
                                 "GlobalAlloc::VTable type not implemented: {}",
                                 other.debug(ty, self)
                             )),
                         };
-                        // FIXME(eddyb) always use `const_data_from_alloc`, and
-                        // defer the actual `try_read_from_const_alloc` step.
-                        let init = self
-                            .try_read_from_const_alloc(alloc, pointee)
-                            .unwrap_or_else(|| self.const_data_from_alloc(alloc));
-                        let value = self.static_addr_of(init, alloc.inner().align, None);
+                        let value = self.static_addr_of(alloc, None);
                         (value, AddressSpace::ZERO)
                     }
                     GlobalAlloc::Static(def_id) => {
@@ -317,20 +307,6 @@ impl ConstCodegenMethods for CodegenCx<'_> {
         }
     }
 
-    // HACK(eddyb) this uses a symbolic `ConstDataFromAlloc`, to allow deferring
-    // the actual value generation until after a pointer to this value is cast
-    // to its final type (e.g. that will be loaded as).
-    // FIXME(eddyb) replace this with `qptr` handling of constant data.
-    fn const_data_from_alloc(&self, alloc: ConstAllocation<'_>) -> Self::Value {
-        // HACK(eddyb) the `ConstCodegenMethods` trait no longer guarantees the
-        // lifetime that `alloc` is interned for, but since it *is* interned,
-        // we can cheaply recover it (see also the `ty::Lift` infrastructure).
-        let alloc = self.tcx.lift(alloc).unwrap();
-
-        let void_type = SpirvType::Void.def(DUMMY_SP, self);
-        self.def_constant(void_type, SpirvConst::ConstDataFromAlloc(alloc))
-    }
-
     fn const_ptr_byte_offset(&self, val: Self::Value, offset: Size) -> Self::Value {
         if offset == Size::ZERO {
             val
@@ -345,6 +321,20 @@ impl ConstCodegenMethods for CodegenCx<'_> {
 }
 
 impl<'tcx> CodegenCx<'tcx> {
+    // HACK(eddyb) this uses a symbolic `ConstDataFromAlloc`, to allow deferring
+    // the actual value generation until after a pointer to this value is cast
+    // to its final type (e.g. that will be loaded as).
+    // FIXME(eddyb) replace this with `qptr` handling of constant data.
+    pub(crate) fn const_data_from_alloc(&self, alloc: ConstAllocation<'_>) -> SpirvValue {
+        // HACK(eddyb) the `ConstCodegenMethods` trait no longer guarantees the
+        // lifetime that `alloc` is interned for, but since it *is* interned,
+        // we can cheaply recover it (see also the `ty::Lift` infrastructure).
+        let alloc = self.tcx.lift(alloc).unwrap();
+
+        let void_type = SpirvType::Void.def(DUMMY_SP, self);
+        self.def_constant(void_type, SpirvConst::ConstDataFromAlloc(alloc))
+    }
+
     pub fn const_bitcast(&self, val: SpirvValue, ty: Word) -> SpirvValue {
         // HACK(eddyb) special-case `const_data_from_alloc` + `static_addr_of`
         // as the old `from_const_alloc` (now `OperandRef::from_const_alloc`).
@@ -353,9 +343,9 @@ impl<'tcx> CodegenCx<'tcx> {
             && let Some(SpirvConst::ConstDataFromAlloc(alloc)) =
                 self.builder.lookup_const_by_id(pointee)
             && let SpirvType::Pointer { pointee } = self.lookup_type(ty)
-            && let Some(init) = self.try_read_from_const_alloc(alloc, pointee)
+            && self.try_read_from_const_alloc(alloc, pointee).is_some()
         {
-            return self.static_addr_of(init, alloc.inner().align, None);
+            return self.static_addr_of(alloc, None);
         }
 
         if val.ty == ty {

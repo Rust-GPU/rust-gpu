@@ -76,7 +76,7 @@ impl<'tcx> LayoutTypeCodegenMethods<'tcx> for CodegenCx<'tcx> {
         )
     }
 
-    fn fn_decl_backend_type(&self, fn_abi: &FnAbi<'tcx, Ty<'tcx>>) -> Self::Type {
+    fn fn_decl_backend_type(&self, fn_abi: &FnAbi<'tcx, Ty<'tcx>>) -> Self::FunctionSignature {
         fn_abi.spirv_type(DUMMY_SP, self)
     }
 
@@ -171,7 +171,7 @@ impl BaseTypeCodegenMethods for CodegenCx<'_> {
         .def(DUMMY_SP, self)
     }
 
-    fn type_func(&self, args: &[Self::Type], ret: Self::Type) -> Self::Type {
+    fn type_func(&self, args: &[Self::Type], ret: Self::Type) -> Self::FunctionSignature {
         SpirvType::Function {
             return_type: ret,
             arguments: args,

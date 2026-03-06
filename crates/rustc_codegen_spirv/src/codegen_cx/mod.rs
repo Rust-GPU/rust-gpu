@@ -788,11 +788,11 @@ impl FromStr for ModuleOutputType {
 
 impl<'tcx> BackendTypes for CodegenCx<'tcx> {
     type Value = SpirvValue;
-    type Metadata = ();
     type Function = SpirvFunctionCursor;
 
     type BasicBlock = SpirvBlockCursor;
     type Type = Word;
+    type FunctionSignature = Word;
     // Funclet: A structure representing an active landing pad for the duration of a basic block. (??)
     // https://doc.rust-lang.org/nightly/nightly-rustc/rustc_codegen_llvm/common/struct.Funclet.html
     //
@@ -880,7 +880,7 @@ impl<'tcx> MiscCodegenMethods<'tcx> for CodegenCx<'tcx> {
         todo!()
     }
 
-    fn declare_c_main(&self, _fn_type: Self::Type) -> Option<Self::Function> {
+    fn declare_c_main(&self, _fn_type: Self::FunctionSignature) -> Option<Self::Function> {
         todo!()
     }
 }

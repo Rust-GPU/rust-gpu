@@ -322,9 +322,6 @@ pub(super) fn elf_e_flags(architecture: Architecture, sess: &Session) -> u32 {",
     let pqp_cg_ssa_top_level = all_extern_crates
         + r#"
 
-// HACK(eddyb) reexporting macro output for further macro use (can't patch macro).
-use maybe_pqp_cg_ssa::fluent_generated;
-
 #[allow(unused, clippy::all, clippy::pedantic, clippy::restriction)]
 #[path = "pqp_cg_ssa/src/lib.rs"]
 mod maybe_pqp_cg_ssa;
