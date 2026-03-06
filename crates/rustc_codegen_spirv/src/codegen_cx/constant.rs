@@ -622,7 +622,33 @@ impl<'tcx> CodegenCx<'tcx> {
             }
             SpirvType::RuntimeArray { element } => {
                 let stride = self.lookup_type(element).sizeof(self).unwrap();
-                let count = (alloc.inner().size() - offset).bytes() / stride.bytes();
+                if stride.bytes() == 0 {
+                    let result = self.undef(ty);
+                    self.zombie_no_span(
+                        result.def_cx(self),
+                        &format!(
+                            "unsupported unsized `{}` constant with zero-sized elements",
+                            self.debug_type(ty)
+                        ),
+                    );
+                    return (result, Size::ZERO);
+                }
+
+                let read_size = alloc.inner().size() - offset;
+                let rem = read_size.bytes() % stride.bytes();
+                if rem != 0 {
+                    let result = self.undef(ty);
+                    self.zombie_no_span(
+                        result.def_cx(self),
+                        &format!(
+                            "unsupported unsized `{}` constant with {rem} trailing bytes",
+                            self.debug_type(ty)
+                        ),
+                    );
+                    return (result, read_size);
+                }
+
+                let count = read_size.bytes() / stride.bytes();
                 let sized_ty = self.type_array(element, count);
 
                 let result = self.constant_composite(
