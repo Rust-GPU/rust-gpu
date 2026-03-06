@@ -276,130 +276,168 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
             insts.reverse();
             Some(insts)
         };
-        let fmt_args_new_call_insts = try_rev_take(3).ok_or_else(|| {
-            FormatArgsNotRecognized("fmt::Arguments::new call: ran out of instructions".into())
-        })?;
-        let ((pieces_slice_ptr_id, pieces_len), (rt_args_slice_ptr_id, rt_args_count)) =
-            match fmt_args_new_call_insts[..] {
-                [
-                    Inst::Call(call_ret_id, callee_id, ref call_args),
-                    Inst::Store(st_dst_id, st_val_id),
-                    Inst::Load(ld_val_id, ld_src_id),
-                ] if call_ret_id == st_val_id
-                    && st_dst_id == ld_src_id
-                    && ld_val_id == format_args_id =>
-                {
-                    require_local_var(st_dst_id, "fmt::Arguments::new destination")?;
+        // Newer rustc can pass the `fmt::Arguments::new_*` result directly to
+        // panic entry points (single trailing call), while older versions go
+        // through a local temporary (`Call -> Store -> Load`).
+        let fmt_args_new_call_inst_count = if matches!(
+            try_rev_take(-3).as_deref(),
+            Some(&[Inst::Call(_, _, _), Inst::Store(_, _), Inst::Load(_, _)])
+        ) {
+            3
+        } else if matches!(
+            try_rev_take(-1).as_deref(),
+            Some(&[Inst::Call(call_ret_id, _, _)]) if call_ret_id == format_args_id
+        ) {
+            1
+        } else {
+            // HACK(eddyb) gather context for new call patterns before bailing.
+            let mut insts = SmallVec::<[Inst<Word>; 32]>::new();
+            while let Some(extra_inst) = try_rev_take(1) {
+                insts.extend(extra_inst);
+                if insts.len() >= 32 {
+                    break;
+                }
+            }
+            insts.reverse();
 
-                    let Some(&(pieces_len, rt_args_count)) =
-                        cx.fmt_args_new_fn_ids.borrow().get(&callee_id)
-                    else {
-                        return Err(FormatArgsNotRecognized(
-                            "fmt::Arguments::new callee not registered".into(),
-                        ));
-                    };
+            return Err(if insts.is_empty() {
+                FormatArgsNotRecognized("fmt::Arguments::new call: ran out of instructions".into())
+            } else {
+                FormatArgsNotRecognized(format!("fmt::Arguments::new call sequence ({insts:?})",))
+            });
+        };
+        let fmt_args_new_call_insts = try_rev_take(fmt_args_new_call_inst_count).unwrap();
+        let (call_args, pieces_len, rt_args_count) = match fmt_args_new_call_insts[..] {
+            [
+                Inst::Call(call_ret_id, callee_id, ref call_args),
+                Inst::Store(st_dst_id, st_val_id),
+                Inst::Load(ld_val_id, ld_src_id),
+            ] if call_ret_id == st_val_id
+                && st_dst_id == ld_src_id
+                && ld_val_id == format_args_id =>
+            {
+                require_local_var(st_dst_id, "fmt::Arguments::new destination")?;
 
-                    match call_args[..] {
-                        // `<core::fmt::Arguments>::new_v1_formatted`
-                        //
-                        // HACK(eddyb) this isn't fully supported,
-                        // as that would require digging into unstable
-                        // internals of `core::fmt::rt::Placeholder`s,
-                        // but the whole call still needs to be removed,
-                        // and both const str pieces and runtime args
-                        // can still be printed (even if in jankier way).
-                        [
-                            pieces_slice_ptr_id,
-                            pieces_len_id,
-                            rt_args_slice_ptr_id,
-                            rt_args_len_id,
-                            fmt_placeholders_slice_ptr_id,
-                            fmt_placeholders_len_id,
-                        ] if (pieces_len, rt_args_count) == (!0, !0) => {
-                            let [pieces_len, rt_args_len, fmt_placeholders_len] =
-                                match [pieces_len_id, rt_args_len_id, fmt_placeholders_len_id]
-                                    .map(const_u32_as_usize)
-                                {
-                                    [Some(a), Some(b), Some(c)] => [a, b, c],
-                                    _ => {
-                                        return Err(FormatArgsNotRecognized(
-                                            "fmt::Arguments::new_v1_formatted \
-                                                     with dynamic lengths"
-                                                .into(),
-                                        ));
-                                    }
-                                };
+                let Some(&(pieces_len, rt_args_count)) =
+                    cx.fmt_args_new_fn_ids.borrow().get(&callee_id)
+                else {
+                    return Err(FormatArgsNotRecognized(
+                        "fmt::Arguments::new callee not registered".into(),
+                    ));
+                };
 
-                            let prepare_args_insts = try_rev_take(2).ok_or_else(|| {
-                                FormatArgsNotRecognized(
-                                        "fmt::Arguments::new_v1_formatted call: ran out of instructions".into(),
-                                    )
-                            })?;
-                            let (rt_args_slice_ptr_id, _fmt_placeholders_slice_ptr_id) =
-                                match prepare_args_insts[..] {
-                                    [
-                                        Inst::Bitcast(rt_args_cast_out_id, rt_args_cast_in_id),
-                                        Inst::Bitcast(
-                                            placeholders_cast_out_id,
-                                            placeholders_cast_in_id,
-                                        ),
-                                    ] if rt_args_cast_out_id == rt_args_slice_ptr_id
-                                        && placeholders_cast_out_id
-                                            == fmt_placeholders_slice_ptr_id =>
-                                    {
-                                        (rt_args_cast_in_id, placeholders_cast_in_id)
-                                    }
-                                    _ => {
-                                        let mut insts = prepare_args_insts;
-                                        insts.extend(fmt_args_new_call_insts);
-                                        return Err(FormatArgsNotRecognized(format!(
-                                            "fmt::Arguments::new_v1_formatted call sequence ({insts:?})",
-                                        )));
-                                    }
-                                };
+                (call_args, pieces_len, rt_args_count)
+            }
+            [Inst::Call(call_ret_id, callee_id, ref call_args)]
+                if call_ret_id == format_args_id =>
+            {
+                let Some(&(pieces_len, rt_args_count)) =
+                    cx.fmt_args_new_fn_ids.borrow().get(&callee_id)
+                else {
+                    return Err(FormatArgsNotRecognized(
+                        "fmt::Arguments::new callee not registered".into(),
+                    ));
+                };
 
-                            decoded_format_args.has_unknown_fmt_placeholder_to_args_mapping =
-                                Some(fmt_placeholders_len);
-
-                            (
-                                (pieces_slice_ptr_id, pieces_len),
-                                (Some(rt_args_slice_ptr_id), rt_args_len),
-                            )
-                        }
-
-                        // `<core::fmt::Arguments>::new_v1`
-                        [pieces_slice_ptr_id, rt_args_slice_ptr_id] => (
-                            (pieces_slice_ptr_id, pieces_len),
-                            (Some(rt_args_slice_ptr_id), rt_args_count),
-                        ),
-
-                        // `<core::fmt::Arguments>::new_const`
-                        [pieces_slice_ptr_id] if rt_args_count == 0 => {
-                            ((pieces_slice_ptr_id, pieces_len), (None, rt_args_count))
-                        }
-
-                        _ => {
-                            return Err(FormatArgsNotRecognized(
-                                "fmt::Arguments::new call args".into(),
-                            ));
-                        }
+                (call_args, pieces_len, rt_args_count)
+            }
+            _ => {
+                // HACK(eddyb) this gathers more context before reporting.
+                let mut insts = fmt_args_new_call_insts;
+                insts.reverse();
+                while let Some(extra_inst) = try_rev_take(1) {
+                    insts.extend(extra_inst);
+                    if insts.len() >= 32 {
+                        break;
                     }
                 }
-                _ => {
-                    // HACK(eddyb) this gathers more context before reporting.
-                    let mut insts = fmt_args_new_call_insts;
-                    insts.reverse();
-                    while let Some(extra_inst) = try_rev_take(1) {
-                        insts.extend(extra_inst);
-                        if insts.len() >= 32 {
-                            break;
-                        }
-                    }
-                    insts.reverse();
+                insts.reverse();
 
-                    return Err(FormatArgsNotRecognized(format!(
-                        "fmt::Arguments::new call sequence ({insts:?})",
-                    )));
+                return Err(FormatArgsNotRecognized(format!(
+                    "fmt::Arguments::new call sequence ({insts:?})",
+                )));
+            }
+        };
+        let ((pieces_slice_ptr_id, pieces_len), (rt_args_slice_ptr_id, rt_args_count)) =
+            match call_args[..] {
+                // `<core::fmt::Arguments>::new_v1_formatted`
+                //
+                // HACK(eddyb) this isn't fully supported,
+                // as that would require digging into unstable
+                // internals of `core::fmt::rt::Placeholder`s,
+                // but the whole call still needs to be removed,
+                // and both const str pieces and runtime args
+                // can still be printed (even if in jankier way).
+                [
+                    pieces_slice_ptr_id,
+                    pieces_len_id,
+                    rt_args_slice_ptr_id,
+                    rt_args_len_id,
+                    fmt_placeholders_slice_ptr_id,
+                    fmt_placeholders_len_id,
+                ] if (pieces_len, rt_args_count) == (!0, !0) => {
+                    let [pieces_len, rt_args_len, fmt_placeholders_len] =
+                        match [pieces_len_id, rt_args_len_id, fmt_placeholders_len_id]
+                            .map(const_u32_as_usize)
+                        {
+                            [Some(a), Some(b), Some(c)] => [a, b, c],
+                            _ => {
+                                return Err(FormatArgsNotRecognized(
+                                    "fmt::Arguments::new_v1_formatted \
+                                             with dynamic lengths"
+                                        .into(),
+                                ));
+                            }
+                        };
+
+                    let prepare_args_insts = try_rev_take(2).ok_or_else(|| {
+                        FormatArgsNotRecognized(
+                            "fmt::Arguments::new_v1_formatted call: ran out of instructions".into(),
+                        )
+                    })?;
+                    let (rt_args_slice_ptr_id, _fmt_placeholders_slice_ptr_id) =
+                        match prepare_args_insts[..] {
+                            [
+                                Inst::Bitcast(rt_args_cast_out_id, rt_args_cast_in_id),
+                                Inst::Bitcast(placeholders_cast_out_id, placeholders_cast_in_id),
+                            ] if rt_args_cast_out_id == rt_args_slice_ptr_id
+                                && placeholders_cast_out_id == fmt_placeholders_slice_ptr_id =>
+                            {
+                                (rt_args_cast_in_id, placeholders_cast_in_id)
+                            }
+                            _ => {
+                                let mut insts = prepare_args_insts;
+                                insts.extend(fmt_args_new_call_insts);
+                                return Err(FormatArgsNotRecognized(format!(
+                                    "fmt::Arguments::new_v1_formatted call sequence ({insts:?})",
+                                )));
+                            }
+                        };
+
+                    decoded_format_args.has_unknown_fmt_placeholder_to_args_mapping =
+                        Some(fmt_placeholders_len);
+
+                    (
+                        (pieces_slice_ptr_id, pieces_len),
+                        (Some(rt_args_slice_ptr_id), rt_args_len),
+                    )
+                }
+
+                // `<core::fmt::Arguments>::new_v1`
+                [pieces_slice_ptr_id, rt_args_slice_ptr_id] => (
+                    (pieces_slice_ptr_id, pieces_len),
+                    (Some(rt_args_slice_ptr_id), rt_args_count),
+                ),
+
+                // `<core::fmt::Arguments>::new_const`
+                [pieces_slice_ptr_id] if rt_args_count == 0 => {
+                    ((pieces_slice_ptr_id, pieces_len), (None, rt_args_count))
+                }
+
+                _ => {
+                    return Err(FormatArgsNotRecognized(
+                        "fmt::Arguments::new call args".into(),
+                    ));
                 }
             };
 
@@ -772,7 +810,9 @@ impl<'a, 'tcx> CodegenPanic<'a, 'tcx> for FormatArgsResult<'tcx> {
         match self {
             Ok(e) => e.codegen_panic(builder, result_type),
             Err(FormatArgsNotRecognized(step)) => {
-                if let Some(current_span) = builder.current_span {
+                if let Some(current_span) = builder.current_span
+                    && !builder.tcx.sess.opts.unstable_opts.ui_testing
+                {
                     // HACK(eddyb) Cargo silences warnings in dependencies.
                     let force_warn = |span, msg| -> rustc_errors::Diag<'_, ()> {
                         rustc_errors::Diag::new(
