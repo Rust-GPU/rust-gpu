@@ -8,7 +8,9 @@ use crate::spirv_type::SpirvType;
 use itertools::Itertools as _;
 use rspirv::spirv::Word;
 use rustc_abi::{self as abi, AddressSpace, Float, HasDataLayout, Integer, Primitive, Size};
-use rustc_codegen_ssa::traits::{ConstCodegenMethods, MiscCodegenMethods, StaticCodegenMethods};
+use rustc_codegen_ssa::traits::{
+    BaseTypeCodegenMethods, ConstCodegenMethods, MiscCodegenMethods, StaticCodegenMethods,
+};
 use rustc_middle::mir::interpret::{AllocError, ConstAllocation, GlobalAlloc, Scalar, alloc_range};
 use rustc_middle::ty::layout::LayoutOf;
 use rustc_span::{DUMMY_SP, Span};
@@ -168,13 +170,14 @@ impl ConstCodegenMethods for CodegenCx<'_> {
         let str_ty = self
             .layout_of(self.tcx.types.str_)
             .spirv_type(DUMMY_SP, self);
+        let bytes_ty = self.type_array(self.type_i8(), len as u64);
         (
             self.def_constant(
                 self.type_ptr_to(str_ty),
                 SpirvConst::PtrTo {
                     pointee: self
                         .constant_composite(
-                            str_ty,
+                            bytes_ty,
                             s.bytes().map(|b| self.const_u8(b).def_cx(self)),
                         )
                         .def_cx(self),
@@ -343,9 +346,38 @@ impl<'tcx> CodegenCx<'tcx> {
             && let Some(SpirvConst::ConstDataFromAlloc(alloc)) =
                 self.builder.lookup_const_by_id(pointee)
             && let SpirvType::Pointer { pointee } = self.lookup_type(ty)
-            && let Some(init) = self.try_read_from_const_alloc(alloc, pointee)
         {
-            return self.static_addr_of_constant(init);
+            let init = self.try_read_from_const_alloc(alloc, pointee).or_else(|| {
+                match self.lookup_type(pointee) {
+                    // Reify unsized constants through a sized backing array,
+                    // then keep the requested pointer type in `SpirvConst::PtrTo`.
+                    SpirvType::RuntimeArray { element } => {
+                        let elem_size = self.lookup_type(element).sizeof(self)?;
+                        if elem_size.bytes() == 0 {
+                            return None;
+                        }
+
+                        let alloc_size = alloc.inner().size();
+                        if alloc_size.bytes() % elem_size.bytes() != 0 {
+                            return None;
+                        }
+
+                        let count = alloc_size.bytes() / elem_size.bytes();
+                        let sized_ty = self.type_array(element, count);
+                        self.try_read_from_const_alloc(alloc, sized_ty)
+                    }
+                    _ => None,
+                }
+            });
+
+            if let Some(init) = init {
+                return self.def_constant(
+                    ty,
+                    SpirvConst::PtrTo {
+                        pointee: init.def_cx(self),
+                    },
+                );
+            }
         }
 
         if val.ty == ty {
@@ -554,8 +586,7 @@ impl<'tcx> CodegenCx<'tcx> {
             }
             SpirvType::Vector { element, .. }
             | SpirvType::Matrix { element, .. }
-            | SpirvType::Array { element, .. }
-            | SpirvType::RuntimeArray { element } => {
+            | SpirvType::Array { element, .. } => {
                 let stride = self.lookup_type(element).sizeof(self).unwrap();
 
                 let count = match ty_def {
@@ -564,9 +595,6 @@ impl<'tcx> CodegenCx<'tcx> {
                     }
                     SpirvType::Array { count, .. } => {
                         u64::try_from(self.builder.lookup_const_scalar(count).unwrap()).unwrap()
-                    }
-                    SpirvType::RuntimeArray { .. } => {
-                        (alloc.inner().size() - offset).bytes() / stride.bytes()
                     }
                     _ => unreachable!(),
                 };
@@ -590,18 +618,24 @@ impl<'tcx> CodegenCx<'tcx> {
                     assert_eq!(read_size, ty_size);
                 }
 
-                if let SpirvType::RuntimeArray { .. } = ty_def {
-                    // FIXME(eddyb) values of this type should never be created,
-                    // the only reasonable encoding of e.g. `&str` consts should
-                    // be `&[u8; N]` consts, with the `static_addr_of` pointer
-                    // (*not* the value it points to) cast to `&str`, afterwards.
-                    self.zombie_no_span(
-                        result.def_cx(self),
-                        &format!("unsupported unsized `{}` constant", self.debug_type(ty)),
-                    );
-                }
-
                 (result, read_size)
+            }
+            SpirvType::RuntimeArray { element } => {
+                let stride = self.lookup_type(element).sizeof(self).unwrap();
+                let count = (alloc.inner().size() - offset).bytes() / stride.bytes();
+                let sized_ty = self.type_array(element, count);
+
+                let result = self.constant_composite(
+                    sized_ty,
+                    (0..count).map(|i| {
+                        let (e, e_size) =
+                            self.read_from_const_alloc_at(alloc, element, offset + i * stride);
+                        assert_eq!(e_size, stride);
+                        e.def_cx(self)
+                    }),
+                );
+
+                (result, count * stride)
             }
 
             SpirvType::Void

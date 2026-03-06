@@ -230,6 +230,9 @@ impl<'tcx> CodegenCx<'tcx> {
         if demangled_symbol_name.ends_with("::precondition_check") {
             self.panic_entry_points.borrow_mut().insert(def_id);
         }
+        if demangled_symbol_name.contains("::bounds_check") {
+            self.panic_entry_points.borrow_mut().insert(def_id);
+        }
         if let Some(pieces_len) = demangled_symbol_name
             .strip_prefix("<core::fmt::Arguments>::new_const::<")
             .and_then(|s| s.strip_suffix(">"))
@@ -253,6 +256,10 @@ impl<'tcx> CodegenCx<'tcx> {
             self.fmt_args_new_fn_ids
                 .borrow_mut()
                 .insert(fn_id, (!0, !0));
+        }
+        if demangled_symbol_name == "<core::fmt::Arguments>::from_str" {
+            // HACK(eddyb) `!1` distinguishes `from_str` from normal `new_*`.
+            self.fmt_args_new_fn_ids.borrow_mut().insert(fn_id, (!1, 0));
         }
 
         // HACK(eddyb) there is no good way to identify these definitions

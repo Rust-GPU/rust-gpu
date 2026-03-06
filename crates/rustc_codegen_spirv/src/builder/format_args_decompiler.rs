@@ -183,6 +183,7 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
         enum Inst<ID> {
             Bitcast(ID, ID),
             CompositeExtract(ID, ID, u32),
+            CompositeInsert(ID, ID, ID, u32),
             InBoundsAccessChain(ID, ID, u32),
             InBoundsAccessChain2(ID, ID, u32, u32),
             Store(ID, ID),
@@ -228,6 +229,18 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                         (inst.result_id, &inst.operands[..])
                 {
                     return Some(Inst::CompositeExtract(r, x, i));
+                }
+                if inst.class.opcode == Op::CompositeInsert
+                    && let (
+                        Some(r),
+                        &[
+                            Operand::IdRef(inserted),
+                            Operand::IdRef(base),
+                            Operand::LiteralBit32(i),
+                        ],
+                    ) = (inst.result_id, &inst.operands[..])
+                {
+                    return Some(Inst::CompositeInsert(r, inserted, base, i));
                 }
 
                 // HACK(eddyb) all instructions accepted below
@@ -289,6 +302,20 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
             Some(&[Inst::Call(call_ret_id, _, _)]) if call_ret_id == format_args_id
         ) {
             1
+        } else if matches!(
+            try_rev_take(-5).as_deref(),
+            Some(&[
+                Inst::Call(call_ret_id, _, _),
+                Inst::CompositeExtract(extracted0, from0, 0),
+                Inst::CompositeExtract(extracted1, from1, 1),
+                Inst::CompositeInsert(inserted0, value0, _, 0),
+                Inst::CompositeInsert(inserted1, value1, inserted0_prev, 1),
+            ]) if [from0, from1] == [call_ret_id; 2]
+                && [value0, value1] == [extracted0, extracted1]
+                && inserted0 == inserted0_prev
+                && inserted1 == format_args_id
+        ) {
+            5
         } else {
             // HACK(eddyb) gather context for new call patterns before bailing.
             let mut insts = SmallVec::<[Inst<Word>; 32]>::new();
@@ -341,6 +368,27 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
 
                 (call_args, pieces_len, rt_args_count)
             }
+            [
+                Inst::Call(call_ret_id, callee_id, ref call_args),
+                Inst::CompositeExtract(extracted0, from0, 0),
+                Inst::CompositeExtract(extracted1, from1, 1),
+                Inst::CompositeInsert(inserted0, value0, _, 0),
+                Inst::CompositeInsert(inserted1, value1, inserted0_prev, 1),
+            ] if [from0, from1] == [call_ret_id; 2]
+                && [value0, value1] == [extracted0, extracted1]
+                && inserted0 == inserted0_prev
+                && inserted1 == format_args_id =>
+            {
+                let Some(&(pieces_len, rt_args_count)) =
+                    cx.fmt_args_new_fn_ids.borrow().get(&callee_id)
+                else {
+                    return Err(FormatArgsNotRecognized(
+                        "fmt::Arguments::new callee not registered".into(),
+                    ));
+                };
+
+                (call_args, pieces_len, rt_args_count)
+            }
             _ => {
                 // HACK(eddyb) this gathers more context before reporting.
                 let mut insts = fmt_args_new_call_insts;
@@ -358,88 +406,112 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                 )));
             }
         };
-        let ((pieces_slice_ptr_id, pieces_len), (rt_args_slice_ptr_id, rt_args_count)) =
-            match call_args[..] {
-                // `<core::fmt::Arguments>::new_v1_formatted`
-                //
-                // HACK(eddyb) this isn't fully supported,
-                // as that would require digging into unstable
-                // internals of `core::fmt::rt::Placeholder`s,
-                // but the whole call still needs to be removed,
-                // and both const str pieces and runtime args
-                // can still be printed (even if in jankier way).
-                [
-                    pieces_slice_ptr_id,
-                    pieces_len_id,
-                    rt_args_slice_ptr_id,
-                    rt_args_len_id,
-                    fmt_placeholders_slice_ptr_id,
-                    fmt_placeholders_len_id,
-                ] if (pieces_len, rt_args_count) == (!0, !0) => {
-                    let [pieces_len, rt_args_len, fmt_placeholders_len] =
-                        match [pieces_len_id, rt_args_len_id, fmt_placeholders_len_id]
-                            .map(const_u32_as_usize)
-                        {
-                            [Some(a), Some(b), Some(c)] => [a, b, c],
-                            _ => {
-                                return Err(FormatArgsNotRecognized(
-                                    "fmt::Arguments::new_v1_formatted \
+        const FMT_ARGS_FROM_STR_PIECES_LEN: usize = !1;
+        enum PiecesSource {
+            Slice { ptr_id: Word, len: usize },
+            DirectConstStr([Word; 2]),
+        }
+        let (pieces_source, (rt_args_slice_ptr_id, rt_args_count)) = match call_args[..] {
+            // `<core::fmt::Arguments>::new_v1_formatted`
+            //
+            // HACK(eddyb) this isn't fully supported,
+            // as that would require digging into unstable
+            // internals of `core::fmt::rt::Placeholder`s,
+            // but the whole call still needs to be removed,
+            // and both const str pieces and runtime args
+            // can still be printed (even if in jankier way).
+            [
+                pieces_slice_ptr_id,
+                pieces_len_id,
+                rt_args_slice_ptr_id,
+                rt_args_len_id,
+                fmt_placeholders_slice_ptr_id,
+                fmt_placeholders_len_id,
+            ] if (pieces_len, rt_args_count) == (!0, !0) => {
+                let [pieces_len, rt_args_len, fmt_placeholders_len] =
+                    match [pieces_len_id, rt_args_len_id, fmt_placeholders_len_id]
+                        .map(const_u32_as_usize)
+                    {
+                        [Some(a), Some(b), Some(c)] => [a, b, c],
+                        _ => {
+                            return Err(FormatArgsNotRecognized(
+                                "fmt::Arguments::new_v1_formatted \
                                              with dynamic lengths"
-                                        .into(),
-                                ));
-                            }
-                        };
+                                    .into(),
+                            ));
+                        }
+                    };
 
-                    let prepare_args_insts = try_rev_take(2).ok_or_else(|| {
-                        FormatArgsNotRecognized(
-                            "fmt::Arguments::new_v1_formatted call: ran out of instructions".into(),
-                        )
-                    })?;
-                    let (rt_args_slice_ptr_id, _fmt_placeholders_slice_ptr_id) =
-                        match prepare_args_insts[..] {
-                            [
-                                Inst::Bitcast(rt_args_cast_out_id, rt_args_cast_in_id),
-                                Inst::Bitcast(placeholders_cast_out_id, placeholders_cast_in_id),
-                            ] if rt_args_cast_out_id == rt_args_slice_ptr_id
-                                && placeholders_cast_out_id == fmt_placeholders_slice_ptr_id =>
-                            {
-                                (rt_args_cast_in_id, placeholders_cast_in_id)
-                            }
-                            _ => {
-                                let mut insts = prepare_args_insts;
-                                insts.extend(fmt_args_new_call_insts);
-                                return Err(FormatArgsNotRecognized(format!(
-                                    "fmt::Arguments::new_v1_formatted call sequence ({insts:?})",
-                                )));
-                            }
-                        };
-
-                    decoded_format_args.has_unknown_fmt_placeholder_to_args_mapping =
-                        Some(fmt_placeholders_len);
-
-                    (
-                        (pieces_slice_ptr_id, pieces_len),
-                        (Some(rt_args_slice_ptr_id), rt_args_len),
+                let prepare_args_insts = try_rev_take(2).ok_or_else(|| {
+                    FormatArgsNotRecognized(
+                        "fmt::Arguments::new_v1_formatted call: ran out of instructions".into(),
                     )
-                }
+                })?;
+                let (rt_args_slice_ptr_id, _fmt_placeholders_slice_ptr_id) =
+                    match prepare_args_insts[..] {
+                        [
+                            Inst::Bitcast(rt_args_cast_out_id, rt_args_cast_in_id),
+                            Inst::Bitcast(placeholders_cast_out_id, placeholders_cast_in_id),
+                        ] if rt_args_cast_out_id == rt_args_slice_ptr_id
+                            && placeholders_cast_out_id == fmt_placeholders_slice_ptr_id =>
+                        {
+                            (rt_args_cast_in_id, placeholders_cast_in_id)
+                        }
+                        _ => {
+                            let mut insts = prepare_args_insts;
+                            insts.extend(fmt_args_new_call_insts);
+                            return Err(FormatArgsNotRecognized(format!(
+                                "fmt::Arguments::new_v1_formatted call sequence ({insts:?})",
+                            )));
+                        }
+                    };
 
-                // `<core::fmt::Arguments>::new_v1`
-                [pieces_slice_ptr_id, rt_args_slice_ptr_id] => (
-                    (pieces_slice_ptr_id, pieces_len),
-                    (Some(rt_args_slice_ptr_id), rt_args_count),
-                ),
+                decoded_format_args.has_unknown_fmt_placeholder_to_args_mapping =
+                    Some(fmt_placeholders_len);
 
-                // `<core::fmt::Arguments>::new_const`
-                [pieces_slice_ptr_id] if rt_args_count == 0 => {
-                    ((pieces_slice_ptr_id, pieces_len), (None, rt_args_count))
-                }
+                (
+                    PiecesSource::Slice {
+                        ptr_id: pieces_slice_ptr_id,
+                        len: pieces_len,
+                    },
+                    (Some(rt_args_slice_ptr_id), rt_args_len),
+                )
+            }
 
-                _ => {
-                    return Err(FormatArgsNotRecognized(
-                        "fmt::Arguments::new call args".into(),
-                    ));
-                }
-            };
+            // `<core::fmt::Arguments>::from_str`
+            [str_ptr_id, str_len_id]
+                if (pieces_len, rt_args_count) == (FMT_ARGS_FROM_STR_PIECES_LEN, 0) =>
+            {
+                (
+                    PiecesSource::DirectConstStr([str_ptr_id, str_len_id]),
+                    (None, 0),
+                )
+            }
+
+            // `<core::fmt::Arguments>::new_v1`
+            [pieces_slice_ptr_id, rt_args_slice_ptr_id] => (
+                PiecesSource::Slice {
+                    ptr_id: pieces_slice_ptr_id,
+                    len: pieces_len,
+                },
+                (Some(rt_args_slice_ptr_id), rt_args_count),
+            ),
+
+            // `<core::fmt::Arguments>::new_const`
+            [pieces_slice_ptr_id] if rt_args_count == 0 => (
+                PiecesSource::Slice {
+                    ptr_id: pieces_slice_ptr_id,
+                    len: pieces_len,
+                },
+                (None, rt_args_count),
+            ),
+
+            _ => {
+                return Err(FormatArgsNotRecognized(
+                    "fmt::Arguments::new call args".into(),
+                ));
+            }
+        };
 
         // HACK(eddyb) this is the worst part: if we do have runtime
         // arguments (from e.g. new `assert!`s being added to `core`),
@@ -626,52 +698,65 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
             }
         }
 
-        // If the `pieces: &[&str]` slice needs a bitcast, it'll be here.
-        // HACK(eddyb) `try_rev_take(-1)` is "peeking", not taking.
-        let pieces_slice_ptr_id = match try_rev_take(-1).as_deref() {
-            Some(&[Inst::Bitcast(out_id, in_id)]) if out_id == pieces_slice_ptr_id => {
-                // HACK(eddyb) consume the peeked instructions.
-                try_rev_take(1).unwrap();
-
-                in_id
+        decoded_format_args.const_pieces = match pieces_source {
+            PiecesSource::DirectConstStr(str_ref) => {
+                const_str_as_utf8(&str_ref).map(|s| [s].into_iter().collect())
             }
-            _ => pieces_slice_ptr_id,
-        };
-        decoded_format_args.const_pieces =
-            match const_slice_as_elem_ids(pieces_slice_ptr_id, pieces_len) {
-                Some(piece_ids) => piece_ids
-                    .iter()
-                    .map(|&piece_id| match cx.builder.lookup_const_by_id(piece_id)? {
-                        SpirvConst::Composite(piece) => const_str_as_utf8(piece.try_into().ok()?),
-                        _ => None,
-                    })
-                    .collect::<Option<_>>(),
-                // HACK(eddyb) minor upstream blunder results in at
-                // least one instance of a runtime `[&str; 1]` array,
-                // see also this comment left on the responsible PR:
-                // https://github.com/rust-lang/rust/pull/129658#discussion_r2181834781
-                // HACK(eddyb) `try_rev_take(-4)` is "peeking", not taking.
-                None if pieces_len == 1 => match try_rev_take(-4).as_deref() {
-                    Some(
-                        &[
-                            Inst::InBoundsAccessChain2(field0_ptr, array_ptr_0, 0, 0),
-                            Inst::Store(st0_dst_ptr, st0_val),
-                            Inst::InBoundsAccessChain2(field1_ptr, array_ptr_1, 0, 1),
-                            Inst::Store(st1_dst_ptr, st1_val),
-                        ],
-                    ) if [array_ptr_0, array_ptr_1] == [pieces_slice_ptr_id; 2]
-                        && st0_dst_ptr == field0_ptr
-                        && st1_dst_ptr == field1_ptr =>
-                    {
+            PiecesSource::Slice {
+                ptr_id: pieces_slice_ptr_id,
+                len: pieces_len,
+            } => {
+                // If the `pieces: &[&str]` slice needs a bitcast, it'll be here.
+                // HACK(eddyb) `try_rev_take(-1)` is "peeking", not taking.
+                let pieces_slice_ptr_id = match try_rev_take(-1).as_deref() {
+                    Some(&[Inst::Bitcast(out_id, in_id)]) if out_id == pieces_slice_ptr_id => {
                         // HACK(eddyb) consume the peeked instructions.
-                        try_rev_take(4).unwrap();
+                        try_rev_take(1).unwrap();
 
-                        const_str_as_utf8(&[st0_val, st1_val]).map(|s| [s].into_iter().collect())
+                        in_id
                     }
-                    _ => None,
-                },
-                None => None,
-            };
+                    _ => pieces_slice_ptr_id,
+                };
+
+                match const_slice_as_elem_ids(pieces_slice_ptr_id, pieces_len) {
+                    Some(piece_ids) => piece_ids
+                        .iter()
+                        .map(|&piece_id| match cx.builder.lookup_const_by_id(piece_id)? {
+                            SpirvConst::Composite(piece) => {
+                                const_str_as_utf8(piece.try_into().ok()?)
+                            }
+                            _ => None,
+                        })
+                        .collect::<Option<_>>(),
+                    // HACK(eddyb) minor upstream blunder results in at
+                    // least one instance of a runtime `[&str; 1]` array,
+                    // see also this comment left on the responsible PR:
+                    // https://github.com/rust-lang/rust/pull/129658#discussion_r2181834781
+                    // HACK(eddyb) `try_rev_take(-4)` is "peeking", not taking.
+                    None if pieces_len == 1 => match try_rev_take(-4).as_deref() {
+                        Some(
+                            &[
+                                Inst::InBoundsAccessChain2(field0_ptr, array_ptr_0, 0, 0),
+                                Inst::Store(st0_dst_ptr, st0_val),
+                                Inst::InBoundsAccessChain2(field1_ptr, array_ptr_1, 0, 1),
+                                Inst::Store(st1_dst_ptr, st1_val),
+                            ],
+                        ) if [array_ptr_0, array_ptr_1] == [pieces_slice_ptr_id; 2]
+                            && st0_dst_ptr == field0_ptr
+                            && st1_dst_ptr == field1_ptr =>
+                        {
+                            // HACK(eddyb) consume the peeked instructions.
+                            try_rev_take(4).unwrap();
+
+                            const_str_as_utf8(&[st0_val, st1_val])
+                                .map(|s| [s].into_iter().collect())
+                        }
+                        _ => None,
+                    },
+                    None => None,
+                }
+            }
+        };
 
         // Keep all instructions up to (but not including) the last one
         // confirmed above to be the first instruction of `format_args!`.
