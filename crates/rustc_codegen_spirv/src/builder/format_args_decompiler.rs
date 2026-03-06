@@ -1,6 +1,7 @@
 use crate::abi::ConvSpirvType;
 use crate::builder::Builder;
 use crate::builder_spirv::{SpirvConst, SpirvValue, SpirvValueExt, SpirvValueKind};
+use crate::codegen_cx::FmtArgsCtor;
 use crate::custom_insts::CustomOp;
 use either::Either;
 use itertools::Itertools;
@@ -334,7 +335,16 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
             });
         };
         let fmt_args_new_call_insts = try_rev_take(fmt_args_new_call_inst_count).unwrap();
-        let (call_args, pieces_len, rt_args_count) = match fmt_args_new_call_insts[..] {
+        let lookup_fmt_args_ctor = |callee_id| {
+            cx.fmt_args_new_fn_ids
+                .borrow()
+                .get(&callee_id)
+                .copied()
+                .ok_or_else(|| {
+                    FormatArgsNotRecognized("fmt::Arguments::new callee not registered".into())
+                })
+        };
+        let (call_args, ctor) = match fmt_args_new_call_insts[..] {
             [
                 Inst::Call(call_ret_id, callee_id, ref call_args),
                 Inst::Store(st_dst_id, st_val_id),
@@ -345,28 +355,12 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
             {
                 require_local_var(st_dst_id, "fmt::Arguments::new destination")?;
 
-                let Some(&(pieces_len, rt_args_count)) =
-                    cx.fmt_args_new_fn_ids.borrow().get(&callee_id)
-                else {
-                    return Err(FormatArgsNotRecognized(
-                        "fmt::Arguments::new callee not registered".into(),
-                    ));
-                };
-
-                (call_args, pieces_len, rt_args_count)
+                (call_args.as_slice(), lookup_fmt_args_ctor(callee_id)?)
             }
             [Inst::Call(call_ret_id, callee_id, ref call_args)]
                 if call_ret_id == format_args_id =>
             {
-                let Some(&(pieces_len, rt_args_count)) =
-                    cx.fmt_args_new_fn_ids.borrow().get(&callee_id)
-                else {
-                    return Err(FormatArgsNotRecognized(
-                        "fmt::Arguments::new callee not registered".into(),
-                    ));
-                };
-
-                (call_args, pieces_len, rt_args_count)
+                (call_args.as_slice(), lookup_fmt_args_ctor(callee_id)?)
             }
             [
                 Inst::Call(call_ret_id, callee_id, ref call_args),
@@ -379,15 +373,7 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                 && inserted0 == inserted0_prev
                 && inserted1 == format_args_id =>
             {
-                let Some(&(pieces_len, rt_args_count)) =
-                    cx.fmt_args_new_fn_ids.borrow().get(&callee_id)
-                else {
-                    return Err(FormatArgsNotRecognized(
-                        "fmt::Arguments::new callee not registered".into(),
-                    ));
-                };
-
-                (call_args, pieces_len, rt_args_count)
+                (call_args.as_slice(), lookup_fmt_args_ctor(callee_id)?)
             }
             _ => {
                 // HACK(eddyb) this gathers more context before reporting.
@@ -406,12 +392,11 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                 )));
             }
         };
-        const FMT_ARGS_FROM_STR_PIECES_LEN: usize = !1;
         enum PiecesSource {
             Slice { ptr_id: Word, len: usize },
             DirectConstStr([Word; 2]),
         }
-        let (pieces_source, (rt_args_slice_ptr_id, rt_args_count)) = match call_args[..] {
+        let (pieces_source, (rt_args_slice_ptr_id, rt_args_count)) = match (ctor, call_args) {
             // `<core::fmt::Arguments>::new_v1_formatted`
             //
             // HACK(eddyb) this isn't fully supported,
@@ -420,14 +405,17 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
             // but the whole call still needs to be removed,
             // and both const str pieces and runtime args
             // can still be printed (even if in jankier way).
-            [
-                pieces_slice_ptr_id,
-                pieces_len_id,
-                rt_args_slice_ptr_id,
-                rt_args_len_id,
-                fmt_placeholders_slice_ptr_id,
-                fmt_placeholders_len_id,
-            ] if (pieces_len, rt_args_count) == (!0, !0) => {
+            (
+                FmtArgsCtor::NewV1FormattedDynamic,
+                &[
+                    pieces_slice_ptr_id,
+                    pieces_len_id,
+                    rt_args_slice_ptr_id,
+                    rt_args_len_id,
+                    fmt_placeholders_slice_ptr_id,
+                    fmt_placeholders_len_id,
+                ],
+            ) => {
                 let [pieces_len, rt_args_len, fmt_placeholders_len] =
                     match [pieces_len_id, rt_args_len_id, fmt_placeholders_len_id]
                         .map(const_u32_as_usize)
@@ -479,17 +467,19 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
             }
 
             // `<core::fmt::Arguments>::from_str`
-            [str_ptr_id, str_len_id]
-                if (pieces_len, rt_args_count) == (FMT_ARGS_FROM_STR_PIECES_LEN, 0) =>
-            {
-                (
-                    PiecesSource::DirectConstStr([str_ptr_id, str_len_id]),
-                    (None, 0),
-                )
-            }
+            (FmtArgsCtor::FromStr, &[str_ptr_id, str_len_id]) => (
+                PiecesSource::DirectConstStr([str_ptr_id, str_len_id]),
+                (None, 0),
+            ),
 
             // `<core::fmt::Arguments>::new_v1`
-            [pieces_slice_ptr_id, rt_args_slice_ptr_id] => (
+            (
+                FmtArgsCtor::NewV1 {
+                    pieces_len,
+                    rt_args_count,
+                },
+                &[pieces_slice_ptr_id, rt_args_slice_ptr_id],
+            ) => (
                 PiecesSource::Slice {
                     ptr_id: pieces_slice_ptr_id,
                     len: pieces_len,
@@ -498,17 +488,17 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
             ),
 
             // `<core::fmt::Arguments>::new_const`
-            [pieces_slice_ptr_id] if rt_args_count == 0 => (
+            (FmtArgsCtor::NewConst { pieces_len }, &[pieces_slice_ptr_id]) => (
                 PiecesSource::Slice {
                     ptr_id: pieces_slice_ptr_id,
                     len: pieces_len,
                 },
-                (None, rt_args_count),
+                (None, 0),
             ),
 
             _ => {
                 return Err(FormatArgsNotRecognized(
-                    "fmt::Arguments::new call args".into(),
+                    "fmt::Arguments::new ctor/call-args mismatch".into(),
                 ));
             }
         };

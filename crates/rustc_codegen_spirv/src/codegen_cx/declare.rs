@@ -1,7 +1,7 @@
 // HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
 use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 
-use super::CodegenCx;
+use super::{CodegenCx, FmtArgsCtor};
 use crate::abi::ConvSpirvType;
 use crate::attr::AggregatedSpirvAttributes;
 use crate::builder_spirv::{SpirvConst, SpirvFunctionCursor, SpirvValue, SpirvValueExt};
@@ -237,9 +237,12 @@ impl<'tcx> CodegenCx<'tcx> {
             .strip_prefix("<core::fmt::Arguments>::new_const::<")
             .and_then(|s| s.strip_suffix(">"))
         {
-            self.fmt_args_new_fn_ids
-                .borrow_mut()
-                .insert(fn_id, (pieces_len.parse().unwrap(), 0));
+            self.fmt_args_new_fn_ids.borrow_mut().insert(
+                fn_id,
+                FmtArgsCtor::NewConst {
+                    pieces_len: pieces_len.parse().unwrap(),
+                },
+            );
         }
         if let Some(generics) = demangled_symbol_name
             .strip_prefix("<core::fmt::Arguments>::new_v1::<")
@@ -248,18 +251,21 @@ impl<'tcx> CodegenCx<'tcx> {
             let (pieces_len, rt_args_len) = generics.split_once(", ").unwrap();
             self.fmt_args_new_fn_ids.borrow_mut().insert(
                 fn_id,
-                (pieces_len.parse().unwrap(), rt_args_len.parse().unwrap()),
+                FmtArgsCtor::NewV1 {
+                    pieces_len: pieces_len.parse().unwrap(),
+                    rt_args_count: rt_args_len.parse().unwrap(),
+                },
             );
         }
         if demangled_symbol_name == "<core::fmt::Arguments>::new_v1_formatted" {
-            // HACK(eddyb) `!0` used as a placeholder value to indicate "dynamic".
             self.fmt_args_new_fn_ids
                 .borrow_mut()
-                .insert(fn_id, (!0, !0));
+                .insert(fn_id, FmtArgsCtor::NewV1FormattedDynamic);
         }
         if demangled_symbol_name == "<core::fmt::Arguments>::from_str" {
-            // HACK(eddyb) `!1` distinguishes `from_str` from normal `new_*`.
-            self.fmt_args_new_fn_ids.borrow_mut().insert(fn_id, (!1, 0));
+            self.fmt_args_new_fn_ids
+                .borrow_mut()
+                .insert(fn_id, FmtArgsCtor::FromStr);
         }
 
         // HACK(eddyb) there is no good way to identify these definitions
