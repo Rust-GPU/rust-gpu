@@ -19,6 +19,7 @@ use rustc_middle::ty::layout::{FnAbiOf, LayoutOf};
 use rustc_middle::ty::{self, Instance, TypeVisitableExt, TypingEnv};
 use rustc_span::Span;
 use rustc_span::def_id::DefId;
+use rustc_span::symbol::sym;
 
 fn attrs_to_spirv(attrs: &CodegenFnAttrs) -> FunctionControl {
     let mut control = FunctionControl::NONE;
@@ -227,10 +228,11 @@ impl<'tcx> CodegenCx<'tcx> {
         {
             self.panic_entry_points.borrow_mut().insert(def_id);
         }
-        if demangled_symbol_name.ends_with("::precondition_check") {
+        let is_nonlocal_core = !def_id.is_local() && self.tcx.crate_name(def_id.krate) == sym::core;
+        if is_nonlocal_core && demangled_symbol_name.ends_with("::precondition_check") {
             self.panic_entry_points.borrow_mut().insert(def_id);
         }
-        if demangled_symbol_name.contains("::bounds_check") {
+        if is_nonlocal_core && demangled_symbol_name.ends_with("::bounds_check") {
             self.panic_entry_points.borrow_mut().insert(def_id);
         }
         if let Some(pieces_len) = demangled_symbol_name
