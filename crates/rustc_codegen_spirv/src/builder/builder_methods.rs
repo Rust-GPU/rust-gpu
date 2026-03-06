@@ -3274,29 +3274,55 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         // be fixed upstream, so we never see any "function pointer" values being
         // created just to perform direct calls.
         let (callee_val, result_type, argument_types) = match self.lookup_type(callee.ty) {
-            SpirvType::Pointer { pointee } => match self.lookup_type(pointee) {
-                SpirvType::Function {
-                    return_type,
-                    arguments,
-                } => (
-                    if let SpirvValueKind::FnAddr { function } = callee.kind {
-                        assert_ty_eq!(self, callee_ty, pointee);
-                        function
-                    }
-                    // Truly indirect call.
-                    else {
-                        let fn_ptr_val = callee.def(self);
-                        self.zombie(fn_ptr_val, "indirect calls are not supported in SPIR-V");
-                        fn_ptr_val
+            SpirvType::Pointer { pointee } => {
+                let (pointee_is_function, result_type, argument_types) = match self
+                    .lookup_type(pointee)
+                {
+                    SpirvType::Function {
+                        return_type,
+                        arguments,
+                    } => (true, return_type, arguments),
+                    // Newer rustc can represent direct call targets as `ptr<void>`,
+                    // with the callee signature carried separately.
+                    _ => match self.lookup_type(callee_ty) {
+                        SpirvType::Function {
+                            return_type,
+                            arguments,
+                        } => (false, return_type, arguments),
+                        _ => {
+                            let Some(fn_abi) = fn_abi else {
+                                bug!(
+                                    "call expected `fn` pointer to point to function type, got `{}`",
+                                    self.debug_type(pointee)
+                                );
+                            };
+                            let fn_ty = fn_abi.spirv_type(self.span(), self);
+                            match self.lookup_type(fn_ty) {
+                                SpirvType::Function {
+                                    return_type,
+                                    arguments,
+                                } => (false, return_type, arguments),
+                                _ => bug!("call expected function ABI to lower to function type"),
+                            }
+                        }
                     },
-                    return_type,
-                    arguments,
-                ),
-                _ => bug!(
-                    "call expected `fn` pointer to point to function type, got `{}`",
-                    self.debug_type(pointee)
-                ),
-            },
+                };
+
+                let callee_val = if let SpirvValueKind::FnAddr { function } = callee.kind {
+                    if pointee_is_function {
+                        assert_ty_eq!(self, callee_ty, pointee);
+                    }
+                    function
+                }
+                // Truly indirect call.
+                else {
+                    let fn_ptr_val = callee.def(self);
+                    self.zombie(fn_ptr_val, "indirect calls are not supported in SPIR-V");
+                    fn_ptr_val
+                };
+
+                (callee_val, result_type, argument_types)
+            }
 
             _ => bug!(
                 "call expected `fn` pointer type, got `{}`",
