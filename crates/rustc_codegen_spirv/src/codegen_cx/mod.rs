@@ -116,6 +116,15 @@ impl<'tcx> CodegenCx<'tcx> {
 
             // HACK(eddyb) this loads the same `serde_json` used by `rustc_target`.
             extern crate serde_json;
+            fn normalize_target_spec_json(mut json: serde_json::Value) -> serde_json::Value {
+                // rustc currently rejects this key in external target JSON unless
+                // the target is `nvptx64` or `amdgcn`, even though the in-memory
+                // target options for SPIR-V can set it.
+                if let Some(obj) = json.as_object_mut() {
+                    obj.remove("is-like-gpu");
+                }
+                json
+            }
 
             let expected = &target.rustc_target();
             let found = &tcx.sess.target;
@@ -128,11 +137,13 @@ impl<'tcx> CodegenCx<'tcx> {
                 TargetTuple::TargetTuple(_) => {
                     // FIXME(eddyb) this case should be impossible as upstream
                     // `rustc` doesn't support `spirv-*` targets!
-                    (expected != found).then(|| [expected, found].map(|spec| spec.to_json()))
+                    let expected = normalize_target_spec_json(expected.to_json());
+                    let found = normalize_target_spec_json(found.to_json());
+                    (expected != found).then_some([expected, found])
                 }
                 TargetTuple::TargetJson { contents, .. } => {
-                    let expected = expected.to_json();
-                    let found = serde_json::from_str(contents).unwrap();
+                    let expected = normalize_target_spec_json(expected.to_json());
+                    let found = normalize_target_spec_json(serde_json::from_str(contents).unwrap());
                     (expected != found).then_some([expected, found])
                 }
             }
