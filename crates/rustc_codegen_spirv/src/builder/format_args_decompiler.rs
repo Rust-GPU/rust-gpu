@@ -199,10 +199,12 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
         if let [
             SpirvValue {
                 kind: SpirvValueKind::Def(a_id),
+                ty: a_ty,
                 ..
             },
             SpirvValue {
                 kind: SpirvValueKind::Def(b_id),
+                ty: b_ty,
                 ..
             },
             ref other_args @ ..,
@@ -213,6 +215,17 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                 && let Some(const_msg) = const_str_as_utf8(&[a_id, b_id])
             {
                 decoded_format_args.const_pieces = Some([const_msg].into_iter().collect());
+                return Ok(decoded_format_args);
+            }
+
+            // Dynamic `&str` panic messages (e.g. `panic_display(&msg)` where
+            // `msg` isn't a directly recoverable constant).
+            if other_args.len() <= 2
+                && matches!(cx.lookup_type(a_ty), SpirvType::Pointer { .. })
+                && matches!(cx.lookup_type(b_ty), SpirvType::Integer(..))
+            {
+                decoded_format_args.const_pieces =
+                    Some(["<dynamic panic message>".into()].into_iter().collect());
                 return Ok(decoded_format_args);
             }
         }
@@ -475,9 +488,10 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                 try_rev_take(1).unwrap();
                 lookup_fmt_args_ctor(callee_id)?
             } else {
-                return Err(FormatArgsNotRecognized(
-                    "fmt::Arguments::new call: split fmt::Arguments args without recoverable ctor metadata".into(),
-                ));
+                // We failed to recover constructor metadata for an already-split
+                // `fmt::Arguments` value. Keep panic lowering sound by falling
+                // back to an unknown panic message, without requiring decompilation.
+                return Ok(decoded_format_args);
             };
 
             (
@@ -533,6 +547,9 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                 if insts.is_empty() {
                     return Ok(decoded_format_args);
                 }
+                if !insts.iter().any(|inst| matches!(inst, Inst::Call(_, _, _))) {
+                    return Ok(decoded_format_args);
+                }
                 return Err(FormatArgsNotRecognized(format!(
                     "fmt::Arguments::new call sequence ({insts:?})",
                 )));
@@ -549,6 +566,9 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                 insts.reverse();
 
                 if insts.is_empty() {
+                    return Ok(decoded_format_args);
+                }
+                if !insts.iter().any(|inst| matches!(inst, Inst::Call(_, _, _))) {
                     return Ok(decoded_format_args);
                 }
                 return Err(FormatArgsNotRecognized(format!(
