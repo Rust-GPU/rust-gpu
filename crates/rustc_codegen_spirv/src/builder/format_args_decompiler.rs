@@ -12,6 +12,7 @@ use rustc_abi::BackendRepr;
 use rustc_data_structures::fx::FxHashSet;
 use rustc_middle::ty::Ty;
 use rustc_middle::ty::layout::LayoutOf;
+use rustc_span::def_id::DefId;
 use smallvec::SmallVec;
 use std::borrow::Cow;
 use std::cell::Cell;
@@ -56,6 +57,7 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
     pub fn try_decode_and_remove_format_args<'a>(
         builder: &mut Builder<'a, 'tcx>,
         args: &[SpirvValue],
+        panic_def_id: Option<DefId>,
     ) -> FormatArgsResult<'tcx> {
         let mut decoded_format_args = DecodedFormatArgs::default();
 
@@ -187,11 +189,59 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
             Some((pieces, placeholder_count, placeholders_map_1_to_1))
         };
 
+        let panic_const_message = || {
+            let def_id = panic_def_id?;
+            let def_path = cx.tcx.def_path_str(def_id);
+            let name = def_path.strip_prefix("core::panicking::panic_const::")?;
+            match name {
+                "panic_const_add_overflow" => Some("attempt to add with overflow"),
+                "panic_const_sub_overflow" => Some("attempt to subtract with overflow"),
+                "panic_const_mul_overflow" => Some("attempt to multiply with overflow"),
+                "panic_const_div_overflow" => Some("attempt to divide with overflow"),
+                "panic_const_rem_overflow" => {
+                    Some("attempt to calculate the remainder with overflow")
+                }
+                "panic_const_neg_overflow" => Some("attempt to negate with overflow"),
+                "panic_const_shr_overflow" => Some("attempt to shift right with overflow"),
+                "panic_const_shl_overflow" => Some("attempt to shift left with overflow"),
+                "panic_const_div_by_zero" => Some("attempt to divide by zero"),
+                "panic_const_rem_by_zero" => {
+                    Some("attempt to calculate the remainder with a divisor of zero")
+                }
+                "panic_const_coroutine_resumed" => Some("coroutine resumed after completion"),
+                "panic_const_async_fn_resumed" => Some("`async fn` resumed after completion"),
+                "panic_const_async_gen_fn_resumed" => {
+                    Some("`async gen fn` resumed after completion")
+                }
+                "panic_const_gen_fn_none" => {
+                    Some("`gen fn` should just keep returning `None` after completion")
+                }
+                "panic_const_coroutine_resumed_panic" => Some("coroutine resumed after panicking"),
+                "panic_const_async_fn_resumed_panic" => Some("`async fn` resumed after panicking"),
+                "panic_const_async_gen_fn_resumed_panic" => {
+                    Some("`async gen fn` resumed after panicking")
+                }
+                "panic_const_gen_fn_none_panic" => {
+                    Some("`gen fn` should just keep returning `None` after panicking")
+                }
+                "panic_const_coroutine_resumed_drop" => Some("coroutine resumed after async drop"),
+                "panic_const_async_fn_resumed_drop" => Some("`async fn` resumed after async drop"),
+                "panic_const_async_gen_fn_resumed_drop" => {
+                    Some("`async gen fn` resumed after async drop")
+                }
+                "panic_const_gen_fn_none_drop" => Some("`gen fn` resumed after async drop"),
+                _ => None,
+            }
+        };
+
         // HACK(eddyb) `panic_explicit` doesn't take any regular arguments,
         // only an (implicit) `&'static panic::Location<'static>`.
         if args.len() == 1 {
-            decoded_format_args.const_pieces =
-                Some(["explicit panic".into()].into_iter().collect());
+            decoded_format_args.const_pieces = Some(
+                [panic_const_message().unwrap_or("explicit panic").into()]
+                    .into_iter()
+                    .collect(),
+            );
             return Ok(decoded_format_args);
         }
 

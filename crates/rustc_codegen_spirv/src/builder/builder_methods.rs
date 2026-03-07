@@ -3381,8 +3381,12 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         }
 
         if is_panic_entry_point {
-            return DecodedFormatArgs::try_decode_and_remove_format_args(self, args)
-                .codegen_panic(self, result_type);
+            return DecodedFormatArgs::try_decode_and_remove_format_args(
+                self,
+                args,
+                instance_def_id,
+            )
+            .codegen_panic(self, result_type);
         }
         if buffer_load_intrinsic {
             return self.codegen_buffer_load_intrinsic(fn_abi, result_type, args);
