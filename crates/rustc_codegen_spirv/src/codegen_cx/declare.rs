@@ -233,8 +233,8 @@ impl<'tcx> CodegenCx<'tcx> {
         if is_nonlocal_core && demangled_symbol_name.ends_with("::precondition_check") {
             self.panic_entry_points.borrow_mut().insert(def_id);
         }
-        let is_spirv_std_byte_addressable_bounds_check =
-            is_nonlocal && self.tcx.def_path_str(def_id) == "spirv_std::byte_addressable_buffer::bounds_check";
+        let is_spirv_std_byte_addressable_bounds_check = is_nonlocal
+            && self.tcx.def_path_str(def_id) == "spirv_std::byte_addressable_buffer::bounds_check";
         if (is_nonlocal_core && demangled_symbol_name.ends_with("::bounds_check"))
             || is_spirv_std_byte_addressable_bounds_check
         {
