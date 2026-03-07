@@ -1,5 +1,6 @@
 // build-fail
 // normalize-stderr-test "\S*/crates/spirv-std/src/" -> "$$SPIRV_STD_SRC/"
+// normalize-stderr-test "crates/spirv-std/src/" -> "$$SPIRV_STD_SRC/"
 // compile-flags: -Ctarget-feature=+Sampled1D
 
 use spirv_std::{Image, Sampler, arch, spirv};
