@@ -50,6 +50,11 @@ use std::str::FromStr;
 /// explicit and type-safe, replacing the old sentinel tuple encoding.
 #[derive(Clone, Copy, Debug)]
 pub enum FmtArgsCtor {
+    /// `Arguments::new(template, args)` (new format template encoding).
+    NewTemplate {
+        template_len: usize,
+        rt_args_count: usize,
+    },
     /// `Arguments::new_const(pieces)`.
     NewConst { pieces_len: usize },
     /// `Arguments::new_v1(pieces, args)`.
@@ -59,7 +64,7 @@ pub enum FmtArgsCtor {
     },
     /// `Arguments::new_v1_formatted(..)` where lengths come from call operands.
     NewV1FormattedDynamic,
-    /// `Arguments::from_str(s)`.
+    /// `Arguments::from_str(s)` / `Arguments::from_str_nonconst(s)`.
     FromStr,
 }
 
@@ -93,7 +98,7 @@ pub struct CodegenCx<'tcx> {
     /// of these lang items, which we always replace with an "abort".
     pub panic_entry_points: RefCell<FxHashSet<DefId>>,
 
-    /// `core::fmt::Arguments::{new_const,new_v1,new_v1_formatted,from_str}`
+    /// `core::fmt::Arguments::{new,new_const,new_v1,new_v1_formatted,from_str,from_str_nonconst}`
     /// instances (for Rust 2021 panics).
     pub fmt_args_new_fn_ids: RefCell<FxHashMap<Word, FmtArgsCtor>>,
 

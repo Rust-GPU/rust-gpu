@@ -240,6 +240,23 @@ impl<'tcx> CodegenCx<'tcx> {
         {
             self.panic_entry_points.borrow_mut().insert(def_id);
         }
+        if let Some(generics) = demangled_symbol_name
+            .strip_prefix("<core::fmt::Arguments>::new::<")
+            .and_then(|s| s.strip_suffix(">"))
+        {
+            let mut generics = generics.split(',').map(str::trim);
+            if let (Some(template_len), Some(rt_args_count), None) =
+                (generics.next(), generics.next(), generics.next())
+            {
+                self.fmt_args_new_fn_ids.borrow_mut().insert(
+                    fn_id,
+                    FmtArgsCtor::NewTemplate {
+                        template_len: template_len.parse().unwrap(),
+                        rt_args_count: rt_args_count.parse().unwrap(),
+                    },
+                );
+            }
+        }
         if let Some(pieces_len) = demangled_symbol_name
             .strip_prefix("<core::fmt::Arguments>::new_const::<")
             .and_then(|s| s.strip_suffix(">"))
@@ -269,7 +286,9 @@ impl<'tcx> CodegenCx<'tcx> {
                 .borrow_mut()
                 .insert(fn_id, FmtArgsCtor::NewV1FormattedDynamic);
         }
-        if demangled_symbol_name == "<core::fmt::Arguments>::from_str" {
+        if demangled_symbol_name == "<core::fmt::Arguments>::from_str"
+            || demangled_symbol_name == "<core::fmt::Arguments>::from_str_nonconst"
+        {
             self.fmt_args_new_fn_ids
                 .borrow_mut()
                 .insert(fn_id, FmtArgsCtor::FromStr);
@@ -300,6 +319,11 @@ impl<'tcx> CodegenCx<'tcx> {
                     .borrow_mut()
                     .insert(fn_id, (ty, spec));
             }
+        }
+        if demangled_symbol_name == "<core::fmt::rt::Argument>::from_usize" {
+            self.fmt_rt_arg_new_fn_ids_to_ty_and_spec
+                .borrow_mut()
+                .insert(fn_id, (self.tcx.types.usize, '?'));
         }
 
         declared
