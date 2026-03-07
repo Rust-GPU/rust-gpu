@@ -200,12 +200,10 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
             SpirvValue {
                 kind: SpirvValueKind::Def(a_id),
                 ty: a_ty,
-                ..
             },
             SpirvValue {
                 kind: SpirvValueKind::Def(b_id),
                 ty: b_ty,
-                ..
             },
             ref other_args @ ..,
         ] = args[..]
@@ -238,12 +236,10 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                 SpirvValue {
                     kind: SpirvValueKind::Def(template_id),
                     ty: template_ty_id,
-                    ..
                 },
                 SpirvValue {
                     kind: SpirvValueKind::Def(rt_args_or_tagged_len_id),
                     ty: rt_args_or_tagged_len_ty_id,
-                    ..
                 },
                 ref trailing @ ..,
             ] if trailing.len() <= 2
@@ -462,165 +458,77 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                     FormatArgsNotRecognized("fmt::Arguments::new callee not registered".into())
                 })
         };
-        let (ctor, call_args_storage) = if let Some((
-            template_id,
-            template_ty_id,
-            rt_args_ptr_id,
-            rt_args_ptr_ty_id,
-        )) = split_fmt_args
-        {
-            let ctor = if let (Some(template_len), Some(rt_args_count)) = (
-                const_ptr_to_composite_len(template_id)
-                    .or_else(|| array_len_from_ptr_type(template_ty_id)),
-                const_ptr_to_composite_len(rt_args_ptr_id)
-                    .or_else(|| array_len_from_ptr_type(rt_args_ptr_ty_id)),
-            ) {
-                FmtArgsCtor::NewTemplate {
-                    template_len,
-                    rt_args_count,
-                }
-            } else if let Some(&[Inst::Call(_, callee_id, ref call_args)]) =
-                try_rev_take(-1).as_deref()
-                && call_args.len() == 2
-                && [call_args[0], call_args[1]] == [template_id, rt_args_ptr_id]
+        let (ctor, call_args_storage) =
+            if let Some((template_id, template_ty_id, rt_args_ptr_id, rt_args_ptr_ty_id)) =
+                split_fmt_args
             {
-                // Consume the matched call instruction.
-                try_rev_take(1).unwrap();
-                lookup_fmt_args_ctor(callee_id)?
-            } else {
-                // We failed to recover constructor metadata for an already-split
-                // `fmt::Arguments` value. Keep panic lowering sound by falling
-                // back to an unknown panic message, without requiring decompilation.
-                return Ok(decoded_format_args);
-            };
-
-            (
-                ctor,
-                SmallVec::<[Word; 8]>::from_slice(&[template_id, rt_args_ptr_id]),
-            )
-        } else {
-            // Newer rustc can pass the `fmt::Arguments::new_*` result directly to
-            // panic entry points (single trailing call), while older versions go
-            // through a local temporary (`Call -> Store -> Load`).
-            let fmt_args_new_call_inst_count = if matches!(
-                try_rev_take(-3).as_deref(),
-                Some(&[Inst::Call(_, _, _), Inst::Store(_, _), Inst::Load(_, _)])
-            ) {
-                3
-            } else if let Some(&[Inst::Call(call_ret_id, callee_id, _)]) =
-                try_rev_take(-1).as_deref()
-            {
-                if call_ret_id == format_args_id
-                    || cx.fmt_args_new_fn_ids.borrow().contains_key(&callee_id)
+                let ctor = if let (Some(template_len), Some(rt_args_count)) = (
+                    const_ptr_to_composite_len(template_id)
+                        .or_else(|| array_len_from_ptr_type(template_ty_id)),
+                    const_ptr_to_composite_len(rt_args_ptr_id)
+                        .or_else(|| array_len_from_ptr_type(rt_args_ptr_ty_id)),
+                ) {
+                    FmtArgsCtor::NewTemplate {
+                        template_len,
+                        rt_args_count,
+                    }
+                } else if let Some(&[Inst::Call(_, callee_id, ref call_args)]) =
+                    try_rev_take(-1).as_deref()
+                    && call_args.len() == 2
+                    && [call_args[0], call_args[1]] == [template_id, rt_args_ptr_id]
                 {
-                    1
+                    // Consume the matched call instruction.
+                    try_rev_take(1).unwrap();
+                    lookup_fmt_args_ctor(callee_id)?
                 } else {
-                    0
-                }
-            } else if matches!(
-                try_rev_take(-5).as_deref(),
-                Some(&[
-                    Inst::Call(call_ret_id, _, _),
-                    Inst::CompositeExtract(extracted0, from0, 0),
-                    Inst::CompositeExtract(extracted1, from1, 1),
-                    Inst::CompositeInsert(inserted0, value0, _, 0),
-                    Inst::CompositeInsert(inserted1, value1, inserted0_prev, 1),
-                ]) if [from0, from1] == [call_ret_id; 2]
-                    && [value0, value1] == [extracted0, extracted1]
-                    && inserted0 == inserted0_prev
-                    && inserted1 == format_args_id
-            ) {
-                5
-            } else if try_rev_take(-1).is_some() {
-                0
+                    // We failed to recover constructor metadata for an already-split
+                    // `fmt::Arguments` value. Keep panic lowering sound by falling
+                    // back to an unknown panic message, without requiring decompilation.
+                    return Ok(decoded_format_args);
+                };
+
+                (
+                    ctor,
+                    SmallVec::<[Word; 8]>::from_slice(&[template_id, rt_args_ptr_id]),
+                )
             } else {
-                // HACK(eddyb) gather context for new call patterns before bailing.
-                let mut insts = SmallVec::<[Inst<Word>; 32]>::new();
-                while let Some(extra_inst) = try_rev_take(1) {
-                    insts.extend(extra_inst);
-                    if insts.len() >= 32 {
-                        break;
-                    }
-                }
-                insts.reverse();
-
-                if insts.is_empty() {
-                    return Ok(decoded_format_args);
-                }
-                if !insts.iter().any(|inst| matches!(inst, Inst::Call(_, _, _))) {
-                    return Ok(decoded_format_args);
-                }
-                return Err(FormatArgsNotRecognized(format!(
-                    "fmt::Arguments::new call sequence ({insts:?})",
-                )));
-            };
-            if fmt_args_new_call_inst_count == 0 {
-                // HACK(eddyb) gather context for new call patterns before bailing.
-                let mut insts = SmallVec::<[Inst<Word>; 32]>::new();
-                while let Some(extra_inst) = try_rev_take(1) {
-                    insts.extend(extra_inst);
-                    if insts.len() >= 32 {
-                        break;
-                    }
-                }
-                insts.reverse();
-
-                if insts.is_empty() {
-                    return Ok(decoded_format_args);
-                }
-                if !insts.iter().any(|inst| matches!(inst, Inst::Call(_, _, _))) {
-                    return Ok(decoded_format_args);
-                }
-                return Err(FormatArgsNotRecognized(format!(
-                    "fmt::Arguments::new call sequence ({insts:?})",
-                )));
-            }
-            let fmt_args_new_call_insts = try_rev_take(fmt_args_new_call_inst_count).unwrap();
-            match fmt_args_new_call_insts[..] {
-                [
-                    Inst::Call(call_ret_id, callee_id, ref call_args),
-                    Inst::Store(st_dst_id, st_val_id),
-                    Inst::Load(ld_val_id, ld_src_id),
-                ] if call_ret_id == st_val_id
-                    && st_dst_id == ld_src_id
-                    && ld_val_id == format_args_id =>
+                // Newer rustc can pass the `fmt::Arguments::new_*` result directly to
+                // panic entry points (single trailing call), while older versions go
+                // through a local temporary (`Call -> Store -> Load`).
+                let fmt_args_new_call_inst_count = if matches!(
+                    try_rev_take(-3).as_deref(),
+                    Some(&[Inst::Call(_, _, _), Inst::Store(_, _), Inst::Load(_, _)])
+                ) {
+                    3
+                } else if let Some(&[Inst::Call(call_ret_id, callee_id, _)]) =
+                    try_rev_take(-1).as_deref()
                 {
-                    require_local_var(st_dst_id, "fmt::Arguments::new destination")?;
-
-                    (
-                        lookup_fmt_args_ctor(callee_id)?,
-                        call_args.iter().copied().collect(),
-                    )
-                }
-                [Inst::Call(call_ret_id, callee_id, ref call_args)]
                     if call_ret_id == format_args_id
-                        || cx.fmt_args_new_fn_ids.borrow().contains_key(&callee_id) =>
-                {
-                    (
-                        lookup_fmt_args_ctor(callee_id)?,
-                        call_args.iter().copied().collect(),
-                    )
-                }
-                [
-                    Inst::Call(call_ret_id, callee_id, ref call_args),
-                    Inst::CompositeExtract(extracted0, from0, 0),
-                    Inst::CompositeExtract(extracted1, from1, 1),
-                    Inst::CompositeInsert(inserted0, value0, _, 0),
-                    Inst::CompositeInsert(inserted1, value1, inserted0_prev, 1),
-                ] if [from0, from1] == [call_ret_id; 2]
-                    && [value0, value1] == [extracted0, extracted1]
-                    && inserted0 == inserted0_prev
-                    && inserted1 == format_args_id =>
-                {
-                    (
-                        lookup_fmt_args_ctor(callee_id)?,
-                        call_args.iter().copied().collect(),
-                    )
-                }
-                _ => {
-                    // HACK(eddyb) this gathers more context before reporting.
-                    let mut insts = fmt_args_new_call_insts;
-                    insts.reverse();
+                        || cx.fmt_args_new_fn_ids.borrow().contains_key(&callee_id)
+                    {
+                        1
+                    } else {
+                        0
+                    }
+                } else if matches!(
+                    try_rev_take(-5).as_deref(),
+                    Some(&[
+                        Inst::Call(call_ret_id, _, _),
+                        Inst::CompositeExtract(extracted0, from0, 0),
+                        Inst::CompositeExtract(extracted1, from1, 1),
+                        Inst::CompositeInsert(inserted0, value0, _, 0),
+                        Inst::CompositeInsert(inserted1, value1, inserted0_prev, 1),
+                    ]) if [from0, from1] == [call_ret_id; 2]
+                        && [value0, value1] == [extracted0, extracted1]
+                        && inserted0 == inserted0_prev
+                        && inserted1 == format_args_id
+                ) {
+                    5
+                } else if try_rev_take(-1).is_some() {
+                    0
+                } else {
+                    // HACK(eddyb) gather context for new call patterns before bailing.
+                    let mut insts = SmallVec::<[Inst<Word>; 32]>::new();
                     while let Some(extra_inst) = try_rev_take(1) {
                         insts.extend(extra_inst);
                         if insts.len() >= 32 {
@@ -629,12 +537,97 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                     }
                     insts.reverse();
 
+                    if insts.is_empty() {
+                        return Ok(decoded_format_args);
+                    }
+                    if !insts.iter().any(|inst| matches!(inst, Inst::Call(_, _, _))) {
+                        return Ok(decoded_format_args);
+                    }
+                    return Err(FormatArgsNotRecognized(format!(
+                        "fmt::Arguments::new call sequence ({insts:?})",
+                    )));
+                };
+                if fmt_args_new_call_inst_count == 0 {
+                    // HACK(eddyb) gather context for new call patterns before bailing.
+                    let mut insts = SmallVec::<[Inst<Word>; 32]>::new();
+                    while let Some(extra_inst) = try_rev_take(1) {
+                        insts.extend(extra_inst);
+                        if insts.len() >= 32 {
+                            break;
+                        }
+                    }
+                    insts.reverse();
+
+                    if insts.is_empty() {
+                        return Ok(decoded_format_args);
+                    }
+                    if !insts.iter().any(|inst| matches!(inst, Inst::Call(_, _, _))) {
+                        return Ok(decoded_format_args);
+                    }
                     return Err(FormatArgsNotRecognized(format!(
                         "fmt::Arguments::new call sequence ({insts:?})",
                     )));
                 }
-            }
-        };
+                let fmt_args_new_call_insts = try_rev_take(fmt_args_new_call_inst_count).unwrap();
+                match fmt_args_new_call_insts[..] {
+                    [
+                        Inst::Call(call_ret_id, callee_id, ref call_args),
+                        Inst::Store(st_dst_id, st_val_id),
+                        Inst::Load(ld_val_id, ld_src_id),
+                    ] if call_ret_id == st_val_id
+                        && st_dst_id == ld_src_id
+                        && ld_val_id == format_args_id =>
+                    {
+                        require_local_var(st_dst_id, "fmt::Arguments::new destination")?;
+
+                        (
+                            lookup_fmt_args_ctor(callee_id)?,
+                            call_args.iter().copied().collect(),
+                        )
+                    }
+                    [Inst::Call(call_ret_id, callee_id, ref call_args)]
+                        if call_ret_id == format_args_id
+                            || cx.fmt_args_new_fn_ids.borrow().contains_key(&callee_id) =>
+                    {
+                        (
+                            lookup_fmt_args_ctor(callee_id)?,
+                            call_args.iter().copied().collect(),
+                        )
+                    }
+                    [
+                        Inst::Call(call_ret_id, callee_id, ref call_args),
+                        Inst::CompositeExtract(extracted0, from0, 0),
+                        Inst::CompositeExtract(extracted1, from1, 1),
+                        Inst::CompositeInsert(inserted0, value0, _, 0),
+                        Inst::CompositeInsert(inserted1, value1, inserted0_prev, 1),
+                    ] if [from0, from1] == [call_ret_id; 2]
+                        && [value0, value1] == [extracted0, extracted1]
+                        && inserted0 == inserted0_prev
+                        && inserted1 == format_args_id =>
+                    {
+                        (
+                            lookup_fmt_args_ctor(callee_id)?,
+                            call_args.iter().copied().collect(),
+                        )
+                    }
+                    _ => {
+                        // HACK(eddyb) this gathers more context before reporting.
+                        let mut insts = fmt_args_new_call_insts;
+                        insts.reverse();
+                        while let Some(extra_inst) = try_rev_take(1) {
+                            insts.extend(extra_inst);
+                            if insts.len() >= 32 {
+                                break;
+                            }
+                        }
+                        insts.reverse();
+
+                        return Err(FormatArgsNotRecognized(format!(
+                            "fmt::Arguments::new call sequence ({insts:?})",
+                        )));
+                    }
+                }
+            };
         let call_args = call_args_storage.as_slice();
         enum PiecesSource {
             Slice { ptr_id: Word, len: usize },
