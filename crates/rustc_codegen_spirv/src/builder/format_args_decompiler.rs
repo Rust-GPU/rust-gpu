@@ -6,8 +6,8 @@ use crate::custom_insts::CustomOp;
 use crate::spirv_type::SpirvType;
 use either::Either;
 use itertools::Itertools;
-use rspirv::dr::Operand;
-use rspirv::spirv::{Op, Word};
+use rspirv::dr::{InsertPoint, Instruction, Operand};
+use rspirv::spirv::{Op, StorageClass, Word};
 use rustc_abi::{Align, BackendRepr};
 use rustc_data_structures::fx::FxHashSet;
 use rustc_middle::ty::Ty;
@@ -236,11 +236,37 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
             }
         };
         let mut spill_value_to_local = |value: SpirvValue| {
-            let size = builder
-                .lookup_type(value.ty)
-                .sizeof(builder)
-                .expect("panic argument should have a sized type");
-            let ptr = builder.alloca(size, Align::ONE);
+            let ptr_ty = builder.type_ptr_to(value.ty);
+
+            let ptr = {
+                // `OpVariable`s in functions must be inserted at the start of the
+                // first block, before any non-`OpVariable` instruction.
+                let mut emit = builder.emit();
+                emit.select_block(Some(0)).unwrap();
+                let index = {
+                    let block = &emit.module_ref().functions[emit.selected_function().unwrap()]
+                        .blocks[emit.selected_block().unwrap()];
+                    block
+                        .instructions
+                        .iter()
+                        .enumerate()
+                        .find_map(|(index, inst)| {
+                            (inst.class.opcode != Op::Variable)
+                                .then_some(InsertPoint::FromBegin(index))
+                        })
+                        .unwrap_or(InsertPoint::End)
+                };
+                let result_id = emit.id();
+                let inst = Instruction::new(
+                    Op::Variable,
+                    Some(ptr_ty),
+                    Some(result_id),
+                    vec![Operand::StorageClass(StorageClass::Function)],
+                );
+                emit.insert_into_block(index, inst).unwrap();
+                result_id.with_type(ptr_ty)
+            };
+
             builder.store(value, ptr, Align::ONE);
             match ptr.kind {
                 SpirvValueKind::Def(id) => Some(id),
