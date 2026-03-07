@@ -236,7 +236,11 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
             }
         };
         let mut spill_value_to_local = |value: SpirvValue| {
-            let ptr = builder.typed_alloca(value.ty, Align::ONE);
+            let size = builder
+                .lookup_type(value.ty)
+                .sizeof(builder)
+                .expect("panic argument should have a sized type");
+            let ptr = builder.alloca(size, Align::ONE);
             builder.store(value, ptr, Align::ONE);
             match ptr.kind {
                 SpirvValueKind::Def(id) => Some(id),
