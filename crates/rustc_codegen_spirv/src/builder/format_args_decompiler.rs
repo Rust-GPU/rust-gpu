@@ -248,8 +248,8 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
             cx.tcx.def_path_str(def_id) == "core::panicking::panic_bounds_check"
         }) && args.len() >= 2
         {
-            let index = args[0].clone();
-            let len = args[1].clone();
+            let index = args[0];
+            let len = args[1];
             if let (Some(len_ref_id), Some(index_ref_id)) =
                 (spill_value_to_local(len), spill_value_to_local(index))
             {
