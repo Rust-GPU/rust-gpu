@@ -8,7 +8,7 @@ use either::Either;
 use itertools::Itertools;
 use rspirv::dr::Operand;
 use rspirv::spirv::{Op, Word};
-use rustc_abi::BackendRepr;
+use rustc_abi::{Align, BackendRepr};
 use rustc_data_structures::fx::FxHashSet;
 use rustc_middle::ty::Ty;
 use rustc_middle::ty::layout::LayoutOf;
@@ -16,6 +16,8 @@ use rustc_span::def_id::DefId;
 use smallvec::SmallVec;
 use std::borrow::Cow;
 use std::cell::Cell;
+
+use crate::maybe_pqp_cg_ssa::traits::BuilderMethods;
 
 // HACK(eddyb) Rust 2021 `panic!` always uses `format_args!`, even
 // in the simple case that used to pass a `&str` constant, which
@@ -233,6 +235,42 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                 _ => None,
             }
         };
+        let mut spill_value_to_local = |value: SpirvValue| {
+            let ptr = builder.typed_alloca(value.ty, Align::ONE);
+            builder.store(value, ptr, Align::ONE);
+            match ptr.kind {
+                SpirvValueKind::Def(id) => Some(id),
+                _ => None,
+            }
+        };
+
+        if panic_def_id.is_some_and(|def_id| {
+            cx.tcx.def_path_str(def_id) == "core::panicking::panic_bounds_check"
+        }) && args.len() >= 2
+        {
+            let index = args[0].clone();
+            let len = args[1].clone();
+            if let (Some(len_ref_id), Some(index_ref_id)) =
+                (spill_value_to_local(len), spill_value_to_local(index))
+            {
+                decoded_format_args.const_pieces = Some(
+                    [
+                        "index out of bounds: the len is ".into(),
+                        " but the index is ".into(),
+                        String::new(),
+                    ]
+                    .into_iter()
+                    .collect(),
+                );
+                decoded_format_args.ref_arg_ids_with_ty_and_spec = [
+                    (len_ref_id, cx.tcx.types.usize, ' '),
+                    (index_ref_id, cx.tcx.types.usize, ' '),
+                ]
+                .into_iter()
+                .collect();
+                return Ok(decoded_format_args);
+            }
+        }
 
         // HACK(eddyb) `panic_explicit` doesn't take any regular arguments,
         // only an (implicit) `&'static panic::Location<'static>`.
