@@ -9,6 +9,7 @@
 #![feature(string_from_utf8_lossy_owned)]
 #![feature(trait_alias)]
 #![feature(try_blocks)]
+#![cfg_attr(rustc_codegen_spirv_disable_pqp_cg_ssa, allow(unused_features))]
 #![recursion_limit = "256"]
 // HACK(eddyb) end of `rustc_codegen_ssa` crate-level attributes (see `build.rs`).
 

@@ -228,11 +228,16 @@ impl<'tcx> CodegenCx<'tcx> {
         {
             self.panic_entry_points.borrow_mut().insert(def_id);
         }
-        let is_nonlocal_core = !def_id.is_local() && self.tcx.crate_name(def_id.krate) == sym::core;
+        let is_nonlocal = !def_id.is_local();
+        let is_nonlocal_core = is_nonlocal && self.tcx.crate_name(def_id.krate) == sym::core;
         if is_nonlocal_core && demangled_symbol_name.ends_with("::precondition_check") {
             self.panic_entry_points.borrow_mut().insert(def_id);
         }
-        if is_nonlocal_core && demangled_symbol_name.ends_with("::bounds_check") {
+        let is_spirv_std_byte_addressable_bounds_check =
+            is_nonlocal && self.tcx.def_path_str(def_id) == "spirv_std::byte_addressable_buffer::bounds_check";
+        if (is_nonlocal_core && demangled_symbol_name.ends_with("::bounds_check"))
+            || is_spirv_std_byte_addressable_bounds_check
+        {
             self.panic_entry_points.borrow_mut().insert(def_id);
         }
         if let Some(pieces_len) = demangled_symbol_name
