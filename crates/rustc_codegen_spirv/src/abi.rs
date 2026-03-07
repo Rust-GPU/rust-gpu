@@ -21,6 +21,7 @@ use rustc_middle::ty::{
 use rustc_middle::ty::{GenericArgsRef, ScalarInt};
 use rustc_middle::util::Providers;
 use rustc_middle::{bug, span_bug};
+use rustc_session::config::OptLevel;
 use rustc_span::DUMMY_SP;
 use rustc_span::def_id::DefId;
 use rustc_span::{Span, Symbol};
@@ -131,7 +132,15 @@ pub(crate) fn provide(providers: &mut Providers) {
         let result = (rustc_interface::DEFAULT_QUERY_PROVIDERS
             .queries
             .fn_abi_of_instance_no_deduced_attrs)(tcx, key);
-        Ok(readjust_fn_abi(tcx, result?))
+        // Keep this query in its original shape while `fn_abi_of_instance_raw`
+        // is being computed: rustc validates strict invariants there.
+        // Otherwise, if `fn_abi_of_instance` would route through this query
+        // directly (e.g. incremental or opt-level=0), apply SPIR-V readjustment.
+        if tcx.sess.opts.optimize != OptLevel::No && tcx.sess.opts.incremental.is_none() {
+            result
+        } else {
+            Ok(readjust_fn_abi(tcx, result?))
+        }
     };
     providers.queries.fn_abi_of_instance_raw = |tcx, key| {
         let result = (rustc_interface::DEFAULT_QUERY_PROVIDERS
