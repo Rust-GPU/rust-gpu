@@ -11,7 +11,7 @@ use crate::custom_insts::CustomInst;
 use crate::spirv_type::SpirvType;
 use itertools::Itertools;
 use rspirv::dr::{InsertPoint, Instruction, Operand};
-use rspirv::spirv::{Capability, MemoryModel, MemorySemantics, Op, Scope, StorageClass, Word};
+use rspirv::spirv::{MemoryModel, MemorySemantics, Op, Scope, StorageClass, Word};
 use rustc_abi::{Align, BackendRepr, Scalar, Size, WrappingRange};
 use rustc_apfloat::{Float, Round, Status, ieee};
 use rustc_codegen_ssa::MemFlags;
@@ -569,12 +569,10 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
 
     #[instrument(level = "trace", skip(self))]
     fn zombie_ptr_equal(&self, def: Word, inst: &str) {
-        if !self.builder.has_capability(Capability::VariablePointers) {
-            self.zombie(
-                def,
-                &format!("{inst} without OpCapability VariablePointers"),
-            );
-        }
+        self.zombie(
+            def,
+            &format!("{inst} without OpCapability VariablePointers"),
+        );
     }
 
     /// Convenience wrapper for `adjust_pointer_for_sized_access`, falling back
