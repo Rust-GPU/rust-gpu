@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerocopy-0.8.38/src/byteorder.rs`."><title>byteorder.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="zerocopy" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (bd3ac0330 2025-11-01)" data-channel="nightly" data-search-js="search-5c29b3b5.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">zerocopy/</div>byteorder.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// Copyright 2019 The Fuchsia Authors
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerocopy-0.8.38/src/byteorder.rs`."><title>byteorder.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="zerocopy" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (01867557c 2025-11-12)" data-channel="nightly" data-search-js="search-8e3fad08.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">zerocopy/</div>byteorder.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// Copyright 2019 The Fuchsia Authors
 <a href=#2 id=2 data-nosnippet>2</a>//
 <a href=#3 id=3 data-nosnippet>3</a>// Licensed under a BSD-style license &lt;LICENSE-BSD&gt;, Apache License, Version 2.0
 <a href=#4 id=4 data-nosnippet>4</a>// &lt;LICENSE-APACHE or https://www.apache.org/licenses/LICENSE-2.0&gt;, or the MIT
@@ -163,11 +163,11 @@
 <a href=#163 id=163 data-nosnippet>163</a></span><span class="kw">pub type </span>LE = LittleEndian;
 <a href=#164 id=164 data-nosnippet>164</a>
 <a href=#165 id=165 data-nosnippet>165</a><span class="macro">macro_rules!</span> impl_fmt_trait {
-<a href=#166 id=166 data-nosnippet>166</a>    (<span class="macro-nonterminal">$name</span>:ident, <span class="macro-nonterminal">$native</span>:ident, <span class="macro-nonterminal">$</span><span class="kw">trait</span>:<span class="macro-nonterminal">ident</span>) =&gt; {
-<a href=#167 id=167 data-nosnippet>167</a>        <span class="kw">impl</span>&lt;O: ByteOrder&gt; <span class="macro-nonterminal">$</span><span class="kw">trait for </span><span class="macro-nonterminal">$name</span>&lt;O&gt; {
+<a href=#166 id=166 data-nosnippet>166</a>    (<span class="macro-nonterminal">$name</span>:ident, <span class="macro-nonterminal">$native</span>:ident, <span class="macro-nonterminal">$trait</span>:ident) =&gt; {
+<a href=#167 id=167 data-nosnippet>167</a>        <span class="kw">impl</span>&lt;O: ByteOrder&gt; <span class="macro-nonterminal">$trait </span><span class="kw">for </span><span class="macro-nonterminal">$name</span>&lt;O&gt; {
 <a href=#168 id=168 data-nosnippet>168</a>            <span class="attr">#[inline(always)]
 <a href=#169 id=169 data-nosnippet>169</a>            </span><span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
-<a href=#170 id=170 data-nosnippet>170</a>                <span class="macro-nonterminal">$</span><span class="kw">trait</span><span class="macro-nonterminal">::fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.get(), f)
+<a href=#170 id=170 data-nosnippet>170</a>                <span class="macro-nonterminal">$trait</span>::fmt(<span class="kw-2">&amp;</span><span class="self">self</span>.get(), f)
 <a href=#171 id=171 data-nosnippet>171</a>            }
 <a href=#172 id=172 data-nosnippet>172</a>        }
 <a href=#173 id=173 data-nosnippet>173</a>    };
@@ -270,37 +270,37 @@
 <a href=#270 id=270 data-nosnippet>270</a>        <span class="macro">impl_ops_traits!</span>(@with_byteorder_swap <span class="macro-nonterminal">$name</span>, <span class="macro-nonterminal">$native</span>, Rem, rem, RemAssign, rem_assign);
 <a href=#271 id=271 data-nosnippet>271</a>        <span class="macro">impl_ops_traits!</span>(@with_byteorder_swap <span class="macro-nonterminal">$name</span>, <span class="macro-nonterminal">$native</span>, Sub, sub, SubAssign, sub_assign);
 <a href=#272 id=272 data-nosnippet>272</a>    };
-<a href=#273 id=273 data-nosnippet>273</a>    (@with_byteorder_swap <span class="macro-nonterminal">$name</span>:ident, <span class="macro-nonterminal">$native</span>:ident, <span class="macro-nonterminal">$</span><span class="kw">trait</span>:<span class="macro-nonterminal">ident</span>, <span class="macro-nonterminal">$method</span>:ident, <span class="macro-nonterminal">$trait_assign</span>:ident, <span class="macro-nonterminal">$method_assign</span>:ident) =&gt; {
-<a href=#274 id=274 data-nosnippet>274</a>        <span class="kw">impl</span>&lt;O: ByteOrder&gt; core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>&lt;<span class="macro-nonterminal">$name</span>&lt;O&gt;&gt; <span class="kw">for </span><span class="macro-nonterminal">$name</span>&lt;O&gt; {
+<a href=#273 id=273 data-nosnippet>273</a>    (@with_byteorder_swap <span class="macro-nonterminal">$name</span>:ident, <span class="macro-nonterminal">$native</span>:ident, <span class="macro-nonterminal">$trait</span>:ident, <span class="macro-nonterminal">$method</span>:ident, <span class="macro-nonterminal">$trait_assign</span>:ident, <span class="macro-nonterminal">$method_assign</span>:ident) =&gt; {
+<a href=#274 id=274 data-nosnippet>274</a>        <span class="kw">impl</span>&lt;O: ByteOrder&gt; core::ops::<span class="macro-nonterminal">$trait</span>&lt;<span class="macro-nonterminal">$name</span>&lt;O&gt;&gt; <span class="kw">for </span><span class="macro-nonterminal">$name</span>&lt;O&gt; {
 <a href=#275 id=275 data-nosnippet>275</a>            <span class="kw">type </span>Output = <span class="macro-nonterminal">$name</span>&lt;O&gt;;
 <a href=#276 id=276 data-nosnippet>276</a>
 <a href=#277 id=277 data-nosnippet>277</a>            <span class="attr">#[inline(always)]
 <a href=#278 id=278 data-nosnippet>278</a>            </span><span class="kw">fn </span><span class="macro-nonterminal">$method</span>(<span class="self">self</span>, rhs: <span class="macro-nonterminal">$name</span>&lt;O&gt;) -&gt; <span class="macro-nonterminal">$name</span>&lt;O&gt; {
 <a href=#279 id=279 data-nosnippet>279</a>                <span class="kw">let </span>self_native: <span class="macro-nonterminal">$native </span>= <span class="self">self</span>.get();
 <a href=#280 id=280 data-nosnippet>280</a>                <span class="kw">let </span>rhs_native: <span class="macro-nonterminal">$native </span>= rhs.get();
-<a href=#281 id=281 data-nosnippet>281</a>                <span class="kw">let </span>result_native = core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>::<span class="macro-nonterminal">$method</span>(self_native, rhs_native);
+<a href=#281 id=281 data-nosnippet>281</a>                <span class="kw">let </span>result_native = core::ops::<span class="macro-nonterminal">$trait</span>::<span class="macro-nonterminal">$method</span>(self_native, rhs_native);
 <a href=#282 id=282 data-nosnippet>282</a>                <span class="macro-nonterminal">$name</span>::&lt;O&gt;::new(result_native)
 <a href=#283 id=283 data-nosnippet>283</a>            }
 <a href=#284 id=284 data-nosnippet>284</a>        }
 <a href=#285 id=285 data-nosnippet>285</a>
-<a href=#286 id=286 data-nosnippet>286</a>        <span class="kw">impl</span>&lt;O: ByteOrder&gt; core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>&lt;<span class="macro-nonterminal">$name</span>&lt;O&gt;&gt; <span class="kw">for </span><span class="macro-nonterminal">$native </span>{
+<a href=#286 id=286 data-nosnippet>286</a>        <span class="kw">impl</span>&lt;O: ByteOrder&gt; core::ops::<span class="macro-nonterminal">$trait</span>&lt;<span class="macro-nonterminal">$name</span>&lt;O&gt;&gt; <span class="kw">for </span><span class="macro-nonterminal">$native </span>{
 <a href=#287 id=287 data-nosnippet>287</a>            <span class="kw">type </span>Output = <span class="macro-nonterminal">$name</span>&lt;O&gt;;
 <a href=#288 id=288 data-nosnippet>288</a>
 <a href=#289 id=289 data-nosnippet>289</a>            <span class="attr">#[inline(always)]
 <a href=#290 id=290 data-nosnippet>290</a>            </span><span class="kw">fn </span><span class="macro-nonterminal">$method</span>(<span class="self">self</span>, rhs: <span class="macro-nonterminal">$name</span>&lt;O&gt;) -&gt; <span class="macro-nonterminal">$name</span>&lt;O&gt; {
 <a href=#291 id=291 data-nosnippet>291</a>                <span class="kw">let </span>rhs_native: <span class="macro-nonterminal">$native </span>= rhs.get();
-<a href=#292 id=292 data-nosnippet>292</a>                <span class="kw">let </span>result_native = core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>::<span class="macro-nonterminal">$method</span>(<span class="self">self</span>, rhs_native);
+<a href=#292 id=292 data-nosnippet>292</a>                <span class="kw">let </span>result_native = core::ops::<span class="macro-nonterminal">$trait</span>::<span class="macro-nonterminal">$method</span>(<span class="self">self</span>, rhs_native);
 <a href=#293 id=293 data-nosnippet>293</a>                <span class="macro-nonterminal">$name</span>::&lt;O&gt;::new(result_native)
 <a href=#294 id=294 data-nosnippet>294</a>            }
 <a href=#295 id=295 data-nosnippet>295</a>        }
 <a href=#296 id=296 data-nosnippet>296</a>
-<a href=#297 id=297 data-nosnippet>297</a>        <span class="kw">impl</span>&lt;O: ByteOrder&gt; core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>&lt;<span class="macro-nonterminal">$native</span>&gt; <span class="kw">for </span><span class="macro-nonterminal">$name</span>&lt;O&gt; {
+<a href=#297 id=297 data-nosnippet>297</a>        <span class="kw">impl</span>&lt;O: ByteOrder&gt; core::ops::<span class="macro-nonterminal">$trait</span>&lt;<span class="macro-nonterminal">$native</span>&gt; <span class="kw">for </span><span class="macro-nonterminal">$name</span>&lt;O&gt; {
 <a href=#298 id=298 data-nosnippet>298</a>            <span class="kw">type </span>Output = <span class="macro-nonterminal">$name</span>&lt;O&gt;;
 <a href=#299 id=299 data-nosnippet>299</a>
 <a href=#300 id=300 data-nosnippet>300</a>            <span class="attr">#[inline(always)]
 <a href=#301 id=301 data-nosnippet>301</a>            </span><span class="kw">fn </span><span class="macro-nonterminal">$method</span>(<span class="self">self</span>, rhs: <span class="macro-nonterminal">$native</span>) -&gt; <span class="macro-nonterminal">$name</span>&lt;O&gt; {
 <a href=#302 id=302 data-nosnippet>302</a>                <span class="kw">let </span>self_native: <span class="macro-nonterminal">$native </span>= <span class="self">self</span>.get();
-<a href=#303 id=303 data-nosnippet>303</a>                <span class="kw">let </span>result_native = core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>::<span class="macro-nonterminal">$method</span>(self_native, rhs);
+<a href=#303 id=303 data-nosnippet>303</a>                <span class="kw">let </span>result_native = core::ops::<span class="macro-nonterminal">$trait</span>::<span class="macro-nonterminal">$method</span>(self_native, rhs);
 <a href=#304 id=304 data-nosnippet>304</a>                <span class="macro-nonterminal">$name</span>::&lt;O&gt;::new(result_native)
 <a href=#305 id=305 data-nosnippet>305</a>            }
 <a href=#306 id=306 data-nosnippet>306</a>        }
@@ -308,7 +308,7 @@
 <a href=#308 id=308 data-nosnippet>308</a>        <span class="kw">impl</span>&lt;O: ByteOrder&gt; core::ops::<span class="macro-nonterminal">$trait_assign</span>&lt;<span class="macro-nonterminal">$name</span>&lt;O&gt;&gt; <span class="kw">for </span><span class="macro-nonterminal">$name</span>&lt;O&gt; {
 <a href=#309 id=309 data-nosnippet>309</a>            <span class="attr">#[inline(always)]
 <a href=#310 id=310 data-nosnippet>310</a>            </span><span class="kw">fn </span><span class="macro-nonterminal">$method_assign</span>(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rhs: <span class="macro-nonterminal">$name</span>&lt;O&gt;) {
-<a href=#311 id=311 data-nosnippet>311</a>                <span class="kw-2">*</span><span class="self">self </span>= core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>::<span class="macro-nonterminal">$method</span>(<span class="kw-2">*</span><span class="self">self</span>, rhs);
+<a href=#311 id=311 data-nosnippet>311</a>                <span class="kw-2">*</span><span class="self">self </span>= core::ops::<span class="macro-nonterminal">$trait</span>::<span class="macro-nonterminal">$method</span>(<span class="kw-2">*</span><span class="self">self</span>, rhs);
 <a href=#312 id=312 data-nosnippet>312</a>            }
 <a href=#313 id=313 data-nosnippet>313</a>        }
 <a href=#314 id=314 data-nosnippet>314</a>
@@ -316,14 +316,14 @@
 <a href=#316 id=316 data-nosnippet>316</a>            <span class="attr">#[inline(always)]
 <a href=#317 id=317 data-nosnippet>317</a>            </span><span class="kw">fn </span><span class="macro-nonterminal">$method_assign</span>(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rhs: <span class="macro-nonterminal">$name</span>&lt;O&gt;) {
 <a href=#318 id=318 data-nosnippet>318</a>                <span class="kw">let </span>rhs_native: <span class="macro-nonterminal">$native </span>= rhs.get();
-<a href=#319 id=319 data-nosnippet>319</a>                <span class="kw-2">*</span><span class="self">self </span>= core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>::<span class="macro-nonterminal">$method</span>(<span class="kw-2">*</span><span class="self">self</span>, rhs_native);
+<a href=#319 id=319 data-nosnippet>319</a>                <span class="kw-2">*</span><span class="self">self </span>= core::ops::<span class="macro-nonterminal">$trait</span>::<span class="macro-nonterminal">$method</span>(<span class="kw-2">*</span><span class="self">self</span>, rhs_native);
 <a href=#320 id=320 data-nosnippet>320</a>            }
 <a href=#321 id=321 data-nosnippet>321</a>        }
 <a href=#322 id=322 data-nosnippet>322</a>
 <a href=#323 id=323 data-nosnippet>323</a>        <span class="kw">impl</span>&lt;O: ByteOrder&gt; core::ops::<span class="macro-nonterminal">$trait_assign</span>&lt;<span class="macro-nonterminal">$native</span>&gt; <span class="kw">for </span><span class="macro-nonterminal">$name</span>&lt;O&gt; {
 <a href=#324 id=324 data-nosnippet>324</a>            <span class="attr">#[inline(always)]
 <a href=#325 id=325 data-nosnippet>325</a>            </span><span class="kw">fn </span><span class="macro-nonterminal">$method_assign</span>(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rhs: <span class="macro-nonterminal">$native</span>) {
-<a href=#326 id=326 data-nosnippet>326</a>                <span class="kw-2">*</span><span class="self">self </span>= core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>::<span class="macro-nonterminal">$method</span>(<span class="kw-2">*</span><span class="self">self</span>, rhs);
+<a href=#326 id=326 data-nosnippet>326</a>                <span class="kw-2">*</span><span class="self">self </span>= core::ops::<span class="macro-nonterminal">$trait</span>::<span class="macro-nonterminal">$method</span>(<span class="kw-2">*</span><span class="self">self</span>, rhs);
 <a href=#327 id=327 data-nosnippet>327</a>            }
 <a href=#328 id=328 data-nosnippet>328</a>        }
 <a href=#329 id=329 data-nosnippet>329</a>    };
@@ -333,20 +333,20 @@
 <a href=#333 id=333 data-nosnippet>333</a>    //
 <a href=#334 id=334 data-nosnippet>334</a>    // When only one operand is a byteorder type, we still need to perform a
 <a href=#335 id=335 data-nosnippet>335</a>    // byteorder swap.
-<a href=#336 id=336 data-nosnippet>336</a>    </span>(@without_byteorder_swap <span class="macro-nonterminal">$name</span>:ident, <span class="macro-nonterminal">$native</span>:ident, <span class="macro-nonterminal">$</span><span class="kw">trait</span>:<span class="macro-nonterminal">ident</span>, <span class="macro-nonterminal">$method</span>:ident, <span class="macro-nonterminal">$trait_assign</span>:ident, <span class="macro-nonterminal">$method_assign</span>:ident) =&gt; {
-<a href=#337 id=337 data-nosnippet>337</a>        <span class="kw">impl</span>&lt;O: ByteOrder&gt; core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>&lt;<span class="macro-nonterminal">$name</span>&lt;O&gt;&gt; <span class="kw">for </span><span class="macro-nonterminal">$name</span>&lt;O&gt; {
+<a href=#336 id=336 data-nosnippet>336</a>    </span>(@without_byteorder_swap <span class="macro-nonterminal">$name</span>:ident, <span class="macro-nonterminal">$native</span>:ident, <span class="macro-nonterminal">$trait</span>:ident, <span class="macro-nonterminal">$method</span>:ident, <span class="macro-nonterminal">$trait_assign</span>:ident, <span class="macro-nonterminal">$method_assign</span>:ident) =&gt; {
+<a href=#337 id=337 data-nosnippet>337</a>        <span class="kw">impl</span>&lt;O: ByteOrder&gt; core::ops::<span class="macro-nonterminal">$trait</span>&lt;<span class="macro-nonterminal">$name</span>&lt;O&gt;&gt; <span class="kw">for </span><span class="macro-nonterminal">$name</span>&lt;O&gt; {
 <a href=#338 id=338 data-nosnippet>338</a>            <span class="kw">type </span>Output = <span class="macro-nonterminal">$name</span>&lt;O&gt;;
 <a href=#339 id=339 data-nosnippet>339</a>
 <a href=#340 id=340 data-nosnippet>340</a>            <span class="attr">#[inline(always)]
 <a href=#341 id=341 data-nosnippet>341</a>            </span><span class="kw">fn </span><span class="macro-nonterminal">$method</span>(<span class="self">self</span>, rhs: <span class="macro-nonterminal">$name</span>&lt;O&gt;) -&gt; <span class="macro-nonterminal">$name</span>&lt;O&gt; {
 <a href=#342 id=342 data-nosnippet>342</a>                <span class="kw">let </span>self_native = <span class="macro-nonterminal">$native::from_ne_bytes</span>(<span class="self">self</span>.<span class="number">0</span>);
 <a href=#343 id=343 data-nosnippet>343</a>                <span class="kw">let </span>rhs_native = <span class="macro-nonterminal">$native::from_ne_bytes</span>(rhs.<span class="number">0</span>);
-<a href=#344 id=344 data-nosnippet>344</a>                <span class="kw">let </span>result_native = core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>::<span class="macro-nonterminal">$method</span>(self_native, rhs_native);
+<a href=#344 id=344 data-nosnippet>344</a>                <span class="kw">let </span>result_native = core::ops::<span class="macro-nonterminal">$trait</span>::<span class="macro-nonterminal">$method</span>(self_native, rhs_native);
 <a href=#345 id=345 data-nosnippet>345</a>                <span class="macro-nonterminal">$name</span>(result_native.to_ne_bytes(), PhantomData)
 <a href=#346 id=346 data-nosnippet>346</a>            }
 <a href=#347 id=347 data-nosnippet>347</a>        }
 <a href=#348 id=348 data-nosnippet>348</a>
-<a href=#349 id=349 data-nosnippet>349</a>        <span class="kw">impl</span>&lt;O: ByteOrder&gt; core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>&lt;<span class="macro-nonterminal">$name</span>&lt;O&gt;&gt; <span class="kw">for </span><span class="macro-nonterminal">$native </span>{
+<a href=#349 id=349 data-nosnippet>349</a>        <span class="kw">impl</span>&lt;O: ByteOrder&gt; core::ops::<span class="macro-nonterminal">$trait</span>&lt;<span class="macro-nonterminal">$name</span>&lt;O&gt;&gt; <span class="kw">for </span><span class="macro-nonterminal">$native </span>{
 <a href=#350 id=350 data-nosnippet>350</a>            <span class="kw">type </span>Output = <span class="macro-nonterminal">$name</span>&lt;O&gt;;
 <a href=#351 id=351 data-nosnippet>351</a>
 <a href=#352 id=352 data-nosnippet>352</a>            <span class="attr">#[inline(always)]
@@ -358,13 +358,13 @@
 <a href=#358 id=358 data-nosnippet>358</a>                <span class="comment">// No runtime cost - just byte packing
 <a href=#359 id=359 data-nosnippet>359</a>                </span><span class="kw">let </span>slf_native = <span class="macro-nonterminal">$native::from_ne_bytes</span>(slf_byteorder.<span class="number">0</span>);
 <a href=#360 id=360 data-nosnippet>360</a>                <span class="comment">// Runtime cost - perform the operation
-<a href=#361 id=361 data-nosnippet>361</a>                </span><span class="kw">let </span>result_native = core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>::<span class="macro-nonterminal">$method</span>(slf_native, rhs_native);
+<a href=#361 id=361 data-nosnippet>361</a>                </span><span class="kw">let </span>result_native = core::ops::<span class="macro-nonterminal">$trait</span>::<span class="macro-nonterminal">$method</span>(slf_native, rhs_native);
 <a href=#362 id=362 data-nosnippet>362</a>                <span class="comment">// No runtime cost - just byte unpacking
 <a href=#363 id=363 data-nosnippet>363</a>                </span><span class="macro-nonterminal">$name</span>(result_native.to_ne_bytes(), PhantomData)
 <a href=#364 id=364 data-nosnippet>364</a>            }
 <a href=#365 id=365 data-nosnippet>365</a>        }
 <a href=#366 id=366 data-nosnippet>366</a>
-<a href=#367 id=367 data-nosnippet>367</a>        <span class="kw">impl</span>&lt;O: ByteOrder&gt; core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>&lt;<span class="macro-nonterminal">$native</span>&gt; <span class="kw">for </span><span class="macro-nonterminal">$name</span>&lt;O&gt; {
+<a href=#367 id=367 data-nosnippet>367</a>        <span class="kw">impl</span>&lt;O: ByteOrder&gt; core::ops::<span class="macro-nonterminal">$trait</span>&lt;<span class="macro-nonterminal">$native</span>&gt; <span class="kw">for </span><span class="macro-nonterminal">$name</span>&lt;O&gt; {
 <a href=#368 id=368 data-nosnippet>368</a>            <span class="kw">type </span>Output = <span class="macro-nonterminal">$name</span>&lt;O&gt;;
 <a href=#369 id=369 data-nosnippet>369</a>
 <a href=#370 id=370 data-nosnippet>370</a>            <span class="attr">#[inline(always)]
@@ -376,7 +376,7 @@
 <a href=#376 id=376 data-nosnippet>376</a>                <span class="comment">// No runtime cost - just byte packing
 <a href=#377 id=377 data-nosnippet>377</a>                </span><span class="kw">let </span>slf_native = <span class="macro-nonterminal">$native::from_ne_bytes</span>(<span class="self">self</span>.<span class="number">0</span>);
 <a href=#378 id=378 data-nosnippet>378</a>                <span class="comment">// Runtime cost - perform the operation
-<a href=#379 id=379 data-nosnippet>379</a>                </span><span class="kw">let </span>result_native = core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>::<span class="macro-nonterminal">$method</span>(slf_native, rhs_native);
+<a href=#379 id=379 data-nosnippet>379</a>                </span><span class="kw">let </span>result_native = core::ops::<span class="macro-nonterminal">$trait</span>::<span class="macro-nonterminal">$method</span>(slf_native, rhs_native);
 <a href=#380 id=380 data-nosnippet>380</a>                <span class="comment">// No runtime cost - just byte unpacking
 <a href=#381 id=381 data-nosnippet>381</a>                </span><span class="macro-nonterminal">$name</span>(result_native.to_ne_bytes(), PhantomData)
 <a href=#382 id=382 data-nosnippet>382</a>            }
@@ -385,7 +385,7 @@
 <a href=#385 id=385 data-nosnippet>385</a>        <span class="kw">impl</span>&lt;O: ByteOrder&gt; core::ops::<span class="macro-nonterminal">$trait_assign</span>&lt;<span class="macro-nonterminal">$name</span>&lt;O&gt;&gt; <span class="kw">for </span><span class="macro-nonterminal">$name</span>&lt;O&gt; {
 <a href=#386 id=386 data-nosnippet>386</a>            <span class="attr">#[inline(always)]
 <a href=#387 id=387 data-nosnippet>387</a>            </span><span class="kw">fn </span><span class="macro-nonterminal">$method_assign</span>(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rhs: <span class="macro-nonterminal">$name</span>&lt;O&gt;) {
-<a href=#388 id=388 data-nosnippet>388</a>                <span class="kw-2">*</span><span class="self">self </span>= core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>::<span class="macro-nonterminal">$method</span>(<span class="kw-2">*</span><span class="self">self</span>, rhs);
+<a href=#388 id=388 data-nosnippet>388</a>                <span class="kw-2">*</span><span class="self">self </span>= core::ops::<span class="macro-nonterminal">$trait</span>::<span class="macro-nonterminal">$method</span>(<span class="kw-2">*</span><span class="self">self</span>, rhs);
 <a href=#389 id=389 data-nosnippet>389</a>            }
 <a href=#390 id=390 data-nosnippet>390</a>        }
 <a href=#391 id=391 data-nosnippet>391</a>
@@ -395,14 +395,14 @@
 <a href=#395 id=395 data-nosnippet>395</a>                <span class="comment">// (Maybe) runtime cost - byte order swap
 <a href=#396 id=396 data-nosnippet>396</a>                </span><span class="kw">let </span>rhs_native = rhs.get();
 <a href=#397 id=397 data-nosnippet>397</a>                <span class="comment">// Runtime cost - perform the operation
-<a href=#398 id=398 data-nosnippet>398</a>                </span><span class="kw-2">*</span><span class="self">self </span>= core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>::<span class="macro-nonterminal">$method</span>(<span class="kw-2">*</span><span class="self">self</span>, rhs_native);
+<a href=#398 id=398 data-nosnippet>398</a>                </span><span class="kw-2">*</span><span class="self">self </span>= core::ops::<span class="macro-nonterminal">$trait</span>::<span class="macro-nonterminal">$method</span>(<span class="kw-2">*</span><span class="self">self</span>, rhs_native);
 <a href=#399 id=399 data-nosnippet>399</a>            }
 <a href=#400 id=400 data-nosnippet>400</a>        }
 <a href=#401 id=401 data-nosnippet>401</a>
 <a href=#402 id=402 data-nosnippet>402</a>        <span class="kw">impl</span>&lt;O: ByteOrder&gt; core::ops::<span class="macro-nonterminal">$trait_assign</span>&lt;<span class="macro-nonterminal">$native</span>&gt; <span class="kw">for </span><span class="macro-nonterminal">$name</span>&lt;O&gt; {
 <a href=#403 id=403 data-nosnippet>403</a>            <span class="attr">#[inline(always)]
 <a href=#404 id=404 data-nosnippet>404</a>            </span><span class="kw">fn </span><span class="macro-nonterminal">$method_assign</span>(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rhs: <span class="macro-nonterminal">$native</span>) {
-<a href=#405 id=405 data-nosnippet>405</a>                <span class="kw-2">*</span><span class="self">self </span>= core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>::<span class="macro-nonterminal">$method</span>(<span class="kw-2">*</span><span class="self">self</span>, rhs);
+<a href=#405 id=405 data-nosnippet>405</a>                <span class="kw-2">*</span><span class="self">self </span>= core::ops::<span class="macro-nonterminal">$trait</span>::<span class="macro-nonterminal">$method</span>(<span class="kw-2">*</span><span class="self">self</span>, rhs);
 <a href=#406 id=406 data-nosnippet>406</a>            }
 <a href=#407 id=407 data-nosnippet>407</a>        }
 <a href=#408 id=408 data-nosnippet>408</a>    };
@@ -873,8 +873,8 @@
 <a href=#873 id=873 data-nosnippet>873</a><span class="comment">// FIXME(https://github.com/rust-lang/rust/issues/72447): Use the endianness
 <a href=#874 id=874 data-nosnippet>874</a>// conversion methods directly once those are const-stable.
 <a href=#875 id=875 data-nosnippet>875</a></span><span class="macro">macro_rules!</span> define_float_conversion {
-<a href=#876 id=876 data-nosnippet>876</a>    (<span class="macro-nonterminal">$ty</span>:ty, <span class="macro-nonterminal">$bits</span>:ident, <span class="macro-nonterminal">$bytes</span>:expr, <span class="macro-nonterminal">$</span><span class="kw">mod</span>:<span class="macro-nonterminal">ident</span>) =&gt; {
-<a href=#877 id=877 data-nosnippet>877</a>        <span class="kw">mod </span><span class="macro-nonterminal">$</span><span class="kw">mod </span>{
+<a href=#876 id=876 data-nosnippet>876</a>    (<span class="macro-nonterminal">$ty</span>:ty, <span class="macro-nonterminal">$bits</span>:ident, <span class="macro-nonterminal">$bytes</span>:expr, <span class="macro-nonterminal">$mod</span>:ident) =&gt; {
+<a href=#877 id=877 data-nosnippet>877</a>        <span class="kw">mod </span><span class="macro-nonterminal">$mod </span>{
 <a href=#878 id=878 data-nosnippet>878</a>            <span class="kw">use super</span>::<span class="kw-2">*</span>;
 <a href=#879 id=879 data-nosnippet>879</a>
 <a href=#880 id=880 data-nosnippet>880</a>            <span class="macro">define_float_conversion!</span>(<span class="macro-nonterminal">$ty</span>, <span class="macro-nonterminal">$bits</span>, <span class="macro-nonterminal">$bytes</span>, from_be_bytes, to_be_bytes);
@@ -938,36 +938,36 @@
 <a href=#938 id=938 data-nosnippet>938</a>);
 <a href=#939 id=939 data-nosnippet>939</a>
 <a href=#940 id=940 data-nosnippet>940</a><span class="macro">macro_rules!</span> module {
-<a href=#941 id=941 data-nosnippet>941</a>    (<span class="macro-nonterminal">$name</span>:ident, <span class="macro-nonterminal">$</span><span class="kw">trait</span>:<span class="macro-nonterminal">ident</span>, <span class="macro-nonterminal">$endianness_str</span>:expr) =&gt; {
+<a href=#941 id=941 data-nosnippet>941</a>    (<span class="macro-nonterminal">$name</span>:ident, <span class="macro-nonterminal">$trait</span>:ident, <span class="macro-nonterminal">$endianness_str</span>:expr) =&gt; {
 <a href=#942 id=942 data-nosnippet>942</a>        <span class="doccomment">/// Numeric primitives stored in
 <a href=#943 id=943 data-nosnippet>943</a>        </span><span class="attr">#[doc = <span class="macro-nonterminal">$endianness_str</span>]
 <a href=#944 id=944 data-nosnippet>944</a>        </span><span class="doccomment">/// byte order.
 <a href=#945 id=945 data-nosnippet>945</a>        </span><span class="kw">pub mod </span><span class="macro-nonterminal">$name </span>{
-<a href=#946 id=946 data-nosnippet>946</a>            <span class="kw">use super</span>::<span class="macro-nonterminal">$</span><span class="kw">trait</span>;
+<a href=#946 id=946 data-nosnippet>946</a>            <span class="kw">use super</span>::<span class="macro-nonterminal">$trait</span>;
 <a href=#947 id=947 data-nosnippet>947</a>
-<a href=#948 id=948 data-nosnippet>948</a>            <span class="macro">module!</span>(@<span class="macro-nonterminal">ty </span>U16,  <span class="macro-nonterminal">$</span><span class="kw">trait</span>, <span class="string">"16-bit unsigned integer"</span>, <span class="macro-nonterminal">$endianness_str</span>);
-<a href=#949 id=949 data-nosnippet>949</a>            <span class="macro">module!</span>(@ty U32,  <span class="macro-nonterminal">$</span><span class="kw">trait</span>, <span class="string">"32-bit unsigned integer"</span>, <span class="macro-nonterminal">$endianness_str</span>);
-<a href=#950 id=950 data-nosnippet>950</a>            <span class="macro">module!</span>(@ty U64,  <span class="macro-nonterminal">$</span><span class="kw">trait</span>, <span class="string">"64-bit unsigned integer"</span>, <span class="macro-nonterminal">$endianness_str</span>);
-<a href=#951 id=951 data-nosnippet>951</a>            <span class="macro">module!</span>(@ty U128, <span class="macro-nonterminal">$</span><span class="kw">trait</span>, <span class="string">"128-bit unsigned integer"</span>, <span class="macro-nonterminal">$endianness_str</span>);
-<a href=#952 id=952 data-nosnippet>952</a>            <span class="macro">module!</span>(@ty I16,  <span class="macro-nonterminal">$</span><span class="kw">trait</span>, <span class="string">"16-bit signed integer"</span>, <span class="macro-nonterminal">$endianness_str</span>);
-<a href=#953 id=953 data-nosnippet>953</a>            <span class="macro">module!</span>(@ty I32,  <span class="macro-nonterminal">$</span><span class="kw">trait</span>, <span class="string">"32-bit signed integer"</span>, <span class="macro-nonterminal">$endianness_str</span>);
-<a href=#954 id=954 data-nosnippet>954</a>            <span class="macro">module!</span>(@ty I64,  <span class="macro-nonterminal">$</span><span class="kw">trait</span>, <span class="string">"64-bit signed integer"</span>, <span class="macro-nonterminal">$endianness_str</span>);
-<a href=#955 id=955 data-nosnippet>955</a>            <span class="macro">module!</span>(@ty I128, <span class="macro-nonterminal">$</span><span class="kw">trait</span>, <span class="string">"128-bit signed integer"</span>, <span class="macro-nonterminal">$endianness_str</span>);
-<a href=#956 id=956 data-nosnippet>956</a>            <span class="macro">module!</span>(@ty F32,  <span class="macro-nonterminal">$</span><span class="kw">trait</span>, <span class="string">"32-bit floating point number"</span>, <span class="macro-nonterminal">$endianness_str</span>);
-<a href=#957 id=957 data-nosnippet>957</a>            <span class="macro">module!</span>(@ty F64,  <span class="macro-nonterminal">$</span><span class="kw">trait</span>, <span class="string">"64-bit floating point number"</span>, <span class="macro-nonterminal">$endianness_str</span>);
+<a href=#948 id=948 data-nosnippet>948</a>            <span class="macro">module!</span>(@ty U16,  <span class="macro-nonterminal">$trait</span>, <span class="string">"16-bit unsigned integer"</span>, <span class="macro-nonterminal">$endianness_str</span>);
+<a href=#949 id=949 data-nosnippet>949</a>            <span class="macro">module!</span>(@ty U32,  <span class="macro-nonterminal">$trait</span>, <span class="string">"32-bit unsigned integer"</span>, <span class="macro-nonterminal">$endianness_str</span>);
+<a href=#950 id=950 data-nosnippet>950</a>            <span class="macro">module!</span>(@ty U64,  <span class="macro-nonterminal">$trait</span>, <span class="string">"64-bit unsigned integer"</span>, <span class="macro-nonterminal">$endianness_str</span>);
+<a href=#951 id=951 data-nosnippet>951</a>            <span class="macro">module!</span>(@ty U128, <span class="macro-nonterminal">$trait</span>, <span class="string">"128-bit unsigned integer"</span>, <span class="macro-nonterminal">$endianness_str</span>);
+<a href=#952 id=952 data-nosnippet>952</a>            <span class="macro">module!</span>(@ty I16,  <span class="macro-nonterminal">$trait</span>, <span class="string">"16-bit signed integer"</span>, <span class="macro-nonterminal">$endianness_str</span>);
+<a href=#953 id=953 data-nosnippet>953</a>            <span class="macro">module!</span>(@ty I32,  <span class="macro-nonterminal">$trait</span>, <span class="string">"32-bit signed integer"</span>, <span class="macro-nonterminal">$endianness_str</span>);
+<a href=#954 id=954 data-nosnippet>954</a>            <span class="macro">module!</span>(@ty I64,  <span class="macro-nonterminal">$trait</span>, <span class="string">"64-bit signed integer"</span>, <span class="macro-nonterminal">$endianness_str</span>);
+<a href=#955 id=955 data-nosnippet>955</a>            <span class="macro">module!</span>(@ty I128, <span class="macro-nonterminal">$trait</span>, <span class="string">"128-bit signed integer"</span>, <span class="macro-nonterminal">$endianness_str</span>);
+<a href=#956 id=956 data-nosnippet>956</a>            <span class="macro">module!</span>(@ty F32,  <span class="macro-nonterminal">$trait</span>, <span class="string">"32-bit floating point number"</span>, <span class="macro-nonterminal">$endianness_str</span>);
+<a href=#957 id=957 data-nosnippet>957</a>            <span class="macro">module!</span>(@ty F64,  <span class="macro-nonterminal">$trait</span>, <span class="string">"64-bit floating point number"</span>, <span class="macro-nonterminal">$endianness_str</span>);
 <a href=#958 id=958 data-nosnippet>958</a>        }
 <a href=#959 id=959 data-nosnippet>959</a>    };
-<a href=#960 id=960 data-nosnippet>960</a>    (@ty <span class="macro-nonterminal">$ty</span>:ident, <span class="macro-nonterminal">$</span><span class="kw">trait</span>:<span class="macro-nonterminal">ident</span>, <span class="macro-nonterminal">$desc_str</span>:expr, <span class="macro-nonterminal">$endianness_str</span>:expr) =&gt; {
+<a href=#960 id=960 data-nosnippet>960</a>    (@ty <span class="macro-nonterminal">$ty</span>:ident, <span class="macro-nonterminal">$trait</span>:ident, <span class="macro-nonterminal">$desc_str</span>:expr, <span class="macro-nonterminal">$endianness_str</span>:expr) =&gt; {
 <a href=#961 id=961 data-nosnippet>961</a>        <span class="doccomment">/// A
 <a href=#962 id=962 data-nosnippet>962</a>        </span><span class="attr">#[doc = <span class="macro-nonterminal">$desc_str</span>]
 <a href=#963 id=963 data-nosnippet>963</a>        </span><span class="doccomment">/// stored in
 <a href=#964 id=964 data-nosnippet>964</a>        </span><span class="attr">#[doc = <span class="macro-nonterminal">$endianness_str</span>]
 <a href=#965 id=965 data-nosnippet>965</a>        </span><span class="doccomment">/// byte order.
-<a href=#966 id=966 data-nosnippet>966</a>        </span><span class="kw">pub type </span><span class="macro-nonterminal">$ty </span>= <span class="kw">crate</span>::byteorder::<span class="macro-nonterminal">$ty</span>&lt;<span class="macro-nonterminal">$</span><span class="kw">trait</span>&gt;;
+<a href=#966 id=966 data-nosnippet>966</a>        </span><span class="kw">pub type </span><span class="macro-nonterminal">$ty </span>= <span class="kw">crate</span>::byteorder::<span class="macro-nonterminal">$ty</span>&lt;<span class="macro-nonterminal">$trait</span>&gt;;
 <a href=#967 id=967 data-nosnippet>967</a>    };
 <a href=#968 id=968 data-nosnippet>968</a>}
 <a href=#969 id=969 data-nosnippet>969</a>
-<a href=#970 id=970 data-nosnippet>970</a><span class="macro">module!</span>(<span class="macro-nonterminal">big_endian</span>, BigEndian, <span class="string">"big-endian"</span>);
+<a href=#970 id=970 data-nosnippet>970</a><span class="macro">module!</span>(big_endian, BigEndian, <span class="string">"big-endian"</span>);
 <a href=#971 id=971 data-nosnippet>971</a><span class="macro">module!</span>(little_endian, LittleEndian, <span class="string">"little-endian"</span>);
 <a href=#972 id=972 data-nosnippet>972</a><span class="macro">module!</span>(network_endian, NetworkEndian, <span class="string">"network-endian"</span>);
 <a href=#973 id=973 data-nosnippet>973</a><span class="macro">module!</span>(native_endian, NativeEndian, <span class="string">"native-endian"</span>);
@@ -1207,37 +1207,37 @@
 <a href=#1207 id=1207 data-nosnippet>1207</a>    <span class="macro">impl_traits!</span>(F64, f64, signed, @float);
 <a href=#1208 id=1208 data-nosnippet>1208</a>
 <a href=#1209 id=1209 data-nosnippet>1209</a>    <span class="macro">macro_rules!</span> call_for_unsigned_types {
-<a href=#1210 id=1210 data-nosnippet>1210</a>        (<span class="macro-nonterminal">$</span><span class="kw">fn</span>:<span class="macro-nonterminal">ident</span>, <span class="macro-nonterminal">$byteorder</span>:ident) =&gt; {
-<a href=#1211 id=1211 data-nosnippet>1211</a>            <span class="macro-nonterminal">$</span><span class="kw">fn</span>::&lt;<span class="macro-nonterminal">U16</span>&lt;<span class="macro-nonterminal">$byteorder</span>&gt;&gt;();
-<a href=#1212 id=1212 data-nosnippet>1212</a>            <span class="macro-nonterminal">$</span><span class="kw">fn</span>::&lt;<span class="macro-nonterminal">U32</span>&lt;<span class="macro-nonterminal">$byteorder</span>&gt;&gt;();
-<a href=#1213 id=1213 data-nosnippet>1213</a>            <span class="macro-nonterminal">$</span><span class="kw">fn</span>::&lt;<span class="macro-nonterminal">U64</span>&lt;<span class="macro-nonterminal">$byteorder</span>&gt;&gt;();
-<a href=#1214 id=1214 data-nosnippet>1214</a>            <span class="macro-nonterminal">$</span><span class="kw">fn</span>::&lt;<span class="macro-nonterminal">U128</span>&lt;<span class="macro-nonterminal">$byteorder</span>&gt;&gt;();
-<a href=#1215 id=1215 data-nosnippet>1215</a>            <span class="macro-nonterminal">$</span><span class="kw">fn</span>::&lt;<span class="macro-nonterminal">Usize</span>&lt;<span class="macro-nonterminal">$byteorder</span>&gt;&gt;();
+<a href=#1210 id=1210 data-nosnippet>1210</a>        (<span class="macro-nonterminal">$fn</span>:ident, <span class="macro-nonterminal">$byteorder</span>:ident) =&gt; {
+<a href=#1211 id=1211 data-nosnippet>1211</a>            <span class="macro-nonterminal">$fn</span>::&lt;U16&lt;<span class="macro-nonterminal">$byteorder</span>&gt;&gt;();
+<a href=#1212 id=1212 data-nosnippet>1212</a>            <span class="macro-nonterminal">$fn</span>::&lt;U32&lt;<span class="macro-nonterminal">$byteorder</span>&gt;&gt;();
+<a href=#1213 id=1213 data-nosnippet>1213</a>            <span class="macro-nonterminal">$fn</span>::&lt;U64&lt;<span class="macro-nonterminal">$byteorder</span>&gt;&gt;();
+<a href=#1214 id=1214 data-nosnippet>1214</a>            <span class="macro-nonterminal">$fn</span>::&lt;U128&lt;<span class="macro-nonterminal">$byteorder</span>&gt;&gt;();
+<a href=#1215 id=1215 data-nosnippet>1215</a>            <span class="macro-nonterminal">$fn</span>::&lt;Usize&lt;<span class="macro-nonterminal">$byteorder</span>&gt;&gt;();
 <a href=#1216 id=1216 data-nosnippet>1216</a>        };
 <a href=#1217 id=1217 data-nosnippet>1217</a>    }
 <a href=#1218 id=1218 data-nosnippet>1218</a>
 <a href=#1219 id=1219 data-nosnippet>1219</a>    <span class="macro">macro_rules!</span> call_for_signed_types {
-<a href=#1220 id=1220 data-nosnippet>1220</a>        (<span class="macro-nonterminal">$</span><span class="kw">fn</span>:<span class="macro-nonterminal">ident</span>, <span class="macro-nonterminal">$byteorder</span>:ident) =&gt; {
-<a href=#1221 id=1221 data-nosnippet>1221</a>            <span class="macro-nonterminal">$</span><span class="kw">fn</span>::&lt;<span class="macro-nonterminal">I16</span>&lt;<span class="macro-nonterminal">$byteorder</span>&gt;&gt;();
-<a href=#1222 id=1222 data-nosnippet>1222</a>            <span class="macro-nonterminal">$</span><span class="kw">fn</span>::&lt;<span class="macro-nonterminal">I32</span>&lt;<span class="macro-nonterminal">$byteorder</span>&gt;&gt;();
-<a href=#1223 id=1223 data-nosnippet>1223</a>            <span class="macro-nonterminal">$</span><span class="kw">fn</span>::&lt;<span class="macro-nonterminal">I64</span>&lt;<span class="macro-nonterminal">$byteorder</span>&gt;&gt;();
-<a href=#1224 id=1224 data-nosnippet>1224</a>            <span class="macro-nonterminal">$</span><span class="kw">fn</span>::&lt;<span class="macro-nonterminal">I128</span>&lt;<span class="macro-nonterminal">$byteorder</span>&gt;&gt;();
-<a href=#1225 id=1225 data-nosnippet>1225</a>            <span class="macro-nonterminal">$</span><span class="kw">fn</span>::&lt;<span class="macro-nonterminal">Isize</span>&lt;<span class="macro-nonterminal">$byteorder</span>&gt;&gt;();
+<a href=#1220 id=1220 data-nosnippet>1220</a>        (<span class="macro-nonterminal">$fn</span>:ident, <span class="macro-nonterminal">$byteorder</span>:ident) =&gt; {
+<a href=#1221 id=1221 data-nosnippet>1221</a>            <span class="macro-nonterminal">$fn</span>::&lt;I16&lt;<span class="macro-nonterminal">$byteorder</span>&gt;&gt;();
+<a href=#1222 id=1222 data-nosnippet>1222</a>            <span class="macro-nonterminal">$fn</span>::&lt;I32&lt;<span class="macro-nonterminal">$byteorder</span>&gt;&gt;();
+<a href=#1223 id=1223 data-nosnippet>1223</a>            <span class="macro-nonterminal">$fn</span>::&lt;I64&lt;<span class="macro-nonterminal">$byteorder</span>&gt;&gt;();
+<a href=#1224 id=1224 data-nosnippet>1224</a>            <span class="macro-nonterminal">$fn</span>::&lt;I128&lt;<span class="macro-nonterminal">$byteorder</span>&gt;&gt;();
+<a href=#1225 id=1225 data-nosnippet>1225</a>            <span class="macro-nonterminal">$fn</span>::&lt;Isize&lt;<span class="macro-nonterminal">$byteorder</span>&gt;&gt;();
 <a href=#1226 id=1226 data-nosnippet>1226</a>        };
 <a href=#1227 id=1227 data-nosnippet>1227</a>    }
 <a href=#1228 id=1228 data-nosnippet>1228</a>
 <a href=#1229 id=1229 data-nosnippet>1229</a>    <span class="macro">macro_rules!</span> call_for_float_types {
-<a href=#1230 id=1230 data-nosnippet>1230</a>        (<span class="macro-nonterminal">$</span><span class="kw">fn</span>:<span class="macro-nonterminal">ident</span>, <span class="macro-nonterminal">$byteorder</span>:ident) =&gt; {
-<a href=#1231 id=1231 data-nosnippet>1231</a>            <span class="macro-nonterminal">$</span><span class="kw">fn</span>::&lt;<span class="macro-nonterminal">F32</span>&lt;<span class="macro-nonterminal">$byteorder</span>&gt;&gt;();
-<a href=#1232 id=1232 data-nosnippet>1232</a>            <span class="macro-nonterminal">$</span><span class="kw">fn</span>::&lt;<span class="macro-nonterminal">F64</span>&lt;<span class="macro-nonterminal">$byteorder</span>&gt;&gt;();
+<a href=#1230 id=1230 data-nosnippet>1230</a>        (<span class="macro-nonterminal">$fn</span>:ident, <span class="macro-nonterminal">$byteorder</span>:ident) =&gt; {
+<a href=#1231 id=1231 data-nosnippet>1231</a>            <span class="macro-nonterminal">$fn</span>::&lt;F32&lt;<span class="macro-nonterminal">$byteorder</span>&gt;&gt;();
+<a href=#1232 id=1232 data-nosnippet>1232</a>            <span class="macro-nonterminal">$fn</span>::&lt;F64&lt;<span class="macro-nonterminal">$byteorder</span>&gt;&gt;();
 <a href=#1233 id=1233 data-nosnippet>1233</a>        };
 <a href=#1234 id=1234 data-nosnippet>1234</a>    }
 <a href=#1235 id=1235 data-nosnippet>1235</a>
 <a href=#1236 id=1236 data-nosnippet>1236</a>    <span class="macro">macro_rules!</span> call_for_all_types {
-<a href=#1237 id=1237 data-nosnippet>1237</a>        (<span class="macro-nonterminal">$</span><span class="kw">fn</span>:<span class="macro-nonterminal">ident</span>, <span class="macro-nonterminal">$byteorder</span>:ident) =&gt; {
-<a href=#1238 id=1238 data-nosnippet>1238</a>            <span class="macro">call_for_unsigned_types!</span>(<span class="macro-nonterminal">$</span><span class="kw">fn</span>, <span class="macro-nonterminal">$byteorder</span>);
-<a href=#1239 id=1239 data-nosnippet>1239</a>            <span class="macro">call_for_signed_types!</span>(<span class="macro-nonterminal">$</span><span class="kw">fn</span>, <span class="macro-nonterminal">$byteorder</span>);
-<a href=#1240 id=1240 data-nosnippet>1240</a>            <span class="macro">call_for_float_types!</span>(<span class="macro-nonterminal">$</span><span class="kw">fn</span>, <span class="macro-nonterminal">$byteorder</span>);
+<a href=#1237 id=1237 data-nosnippet>1237</a>        (<span class="macro-nonterminal">$fn</span>:ident, <span class="macro-nonterminal">$byteorder</span>:ident) =&gt; {
+<a href=#1238 id=1238 data-nosnippet>1238</a>            <span class="macro">call_for_unsigned_types!</span>(<span class="macro-nonterminal">$fn</span>, <span class="macro-nonterminal">$byteorder</span>);
+<a href=#1239 id=1239 data-nosnippet>1239</a>            <span class="macro">call_for_signed_types!</span>(<span class="macro-nonterminal">$fn</span>, <span class="macro-nonterminal">$byteorder</span>);
+<a href=#1240 id=1240 data-nosnippet>1240</a>            <span class="macro">call_for_float_types!</span>(<span class="macro-nonterminal">$fn</span>, <span class="macro-nonterminal">$byteorder</span>);
 <a href=#1241 id=1241 data-nosnippet>1241</a>        };
 <a href=#1242 id=1242 data-nosnippet>1242</a>    }
 <a href=#1243 id=1243 data-nosnippet>1243</a>
@@ -1430,7 +1430,7 @@
 <a href=#1430 id=1430 data-nosnippet>1430</a>        <span class="macro">macro_rules!</span> test {
 <a href=#1431 id=1431 data-nosnippet>1431</a>            (
 <a href=#1432 id=1432 data-nosnippet>1432</a>                @binary
-<a href=#1433 id=1433 data-nosnippet>1433</a>                <span class="macro-nonterminal">$</span><span class="kw">trait</span>:<span class="macro-nonterminal">ident</span>,
+<a href=#1433 id=1433 data-nosnippet>1433</a>                <span class="macro-nonterminal">$trait</span>:ident,
 <a href=#1434 id=1434 data-nosnippet>1434</a>                <span class="macro-nonterminal">$method</span>:ident $([<span class="macro-nonterminal">$checked_method</span>:ident])<span class="question-mark">?</span>,
 <a href=#1435 id=1435 data-nosnippet>1435</a>                <span class="macro-nonterminal">$trait_assign</span>:ident,
 <a href=#1436 id=1436 data-nosnippet>1436</a>                <span class="macro-nonterminal">$method_assign</span>:ident,
@@ -1439,10 +1439,10 @@
 <a href=#1439 id=1439 data-nosnippet>1439</a>                <span class="kw">fn </span>t&lt;T&gt;()
 <a href=#1440 id=1440 data-nosnippet>1440</a>                <span class="kw">where
 <a href=#1441 id=1441 data-nosnippet>1441</a>                    </span>T: ByteOrderType,
-<a href=#1442 id=1442 data-nosnippet>1442</a>                    T: core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>&lt;<span class="macro-nonterminal">T</span>, Output = T&gt;,
-<a href=#1443 id=1443 data-nosnippet>1443</a>                    T: core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>&lt;<span class="macro-nonterminal">T::Native</span>, Output = T&gt;,
-<a href=#1444 id=1444 data-nosnippet>1444</a>                    T::Native: core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>&lt;<span class="macro-nonterminal">T</span>, Output = T&gt;,
-<a href=#1445 id=1445 data-nosnippet>1445</a>                    T::Native: core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>&lt;<span class="macro-nonterminal">T::Native</span>, Output = T::Native&gt;,
+<a href=#1442 id=1442 data-nosnippet>1442</a>                    T: core::ops::<span class="macro-nonterminal">$trait</span>&lt;T, Output = T&gt;,
+<a href=#1443 id=1443 data-nosnippet>1443</a>                    T: core::ops::<span class="macro-nonterminal">$trait</span>&lt;T::Native, Output = T&gt;,
+<a href=#1444 id=1444 data-nosnippet>1444</a>                    T::Native: core::ops::<span class="macro-nonterminal">$trait</span>&lt;T, Output = T&gt;,
+<a href=#1445 id=1445 data-nosnippet>1445</a>                    T::Native: core::ops::<span class="macro-nonterminal">$trait</span>&lt;T::Native, Output = T::Native&gt;,
 <a href=#1446 id=1446 data-nosnippet>1446</a>
 <a href=#1447 id=1447 data-nosnippet>1447</a>                    T: core::ops::<span class="macro-nonterminal">$trait_assign</span>&lt;T&gt;,
 <a href=#1448 id=1448 data-nosnippet>1448</a>                    T: core::ops::<span class="macro-nonterminal">$trait_assign</span>&lt;T::Native&gt;,
@@ -1450,10 +1450,10 @@
 <a href=#1450 id=1450 data-nosnippet>1450</a>                    T::Native: core::ops::<span class="macro-nonterminal">$trait_assign</span>&lt;T::Native&gt;,
 <a href=#1451 id=1451 data-nosnippet>1451</a>                {
 <a href=#1452 id=1452 data-nosnippet>1452</a>                    test::&lt;T, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>&gt;(
-<a href=#1453 id=1453 data-nosnippet>1453</a>                        core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>::<span class="macro-nonterminal">$method</span>,
-<a href=#1454 id=1454 data-nosnippet>1454</a>                        core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>::<span class="macro-nonterminal">$method</span>,
-<a href=#1455 id=1455 data-nosnippet>1455</a>                        core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>::<span class="macro-nonterminal">$method</span>,
-<a href=#1456 id=1456 data-nosnippet>1456</a>                        core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>::<span class="macro-nonterminal">$method</span>,
+<a href=#1453 id=1453 data-nosnippet>1453</a>                        core::ops::<span class="macro-nonterminal">$trait</span>::<span class="macro-nonterminal">$method</span>,
+<a href=#1454 id=1454 data-nosnippet>1454</a>                        core::ops::<span class="macro-nonterminal">$trait</span>::<span class="macro-nonterminal">$method</span>,
+<a href=#1455 id=1455 data-nosnippet>1455</a>                        core::ops::<span class="macro-nonterminal">$trait</span>::<span class="macro-nonterminal">$method</span>,
+<a href=#1456 id=1456 data-nosnippet>1456</a>                        core::ops::<span class="macro-nonterminal">$trait</span>::<span class="macro-nonterminal">$method</span>,
 <a href=#1457 id=1457 data-nosnippet>1457</a>                        {
 <a href=#1458 id=1458 data-nosnippet>1458</a>                            <span class="attr">#[allow(unused_mut, unused_assignments)]
 <a href=#1459 id=1459 data-nosnippet>1459</a>                            </span><span class="kw">let </span><span class="kw-2">mut </span>op_native_checked = <span class="prelude-val">None</span>::&lt;<span class="kw">fn</span>(T::Native, T::Native) -&gt; <span class="prelude-ty">Option</span>&lt;T::Native&gt;&gt;;
@@ -1471,35 +1471,35 @@
 <a href=#1471 id=1471 data-nosnippet>1471</a>                }
 <a href=#1472 id=1472 data-nosnippet>1472</a>
 <a href=#1473 id=1473 data-nosnippet>1473</a>                $(
-<a href=#1474 id=1474 data-nosnippet>1474</a>                    <span class="macro-nonterminal">$</span><span class="macro">call_for_macros!</span>(<span class="macro-nonterminal">t</span>, NativeEndian);
-<a href=#1475 id=1475 data-nosnippet>1475</a>                    <span class="macro-nonterminal">$</span><span class="macro">call_for_macros!</span>(<span class="macro-nonterminal">t</span>, NonNativeEndian);
+<a href=#1474 id=1474 data-nosnippet>1474</a>                    <span class="macro-nonterminal">$call_for_macros</span>!(t, NativeEndian);
+<a href=#1475 id=1475 data-nosnippet>1475</a>                    <span class="macro-nonterminal">$call_for_macros</span>!(t, NonNativeEndian);
 <a href=#1476 id=1476 data-nosnippet>1476</a>                )*
 <a href=#1477 id=1477 data-nosnippet>1477</a>            }};
 <a href=#1478 id=1478 data-nosnippet>1478</a>            (
 <a href=#1479 id=1479 data-nosnippet>1479</a>                @unary
-<a href=#1480 id=1480 data-nosnippet>1480</a>                <span class="macro-nonterminal">$</span><span class="kw">trait</span>:<span class="macro-nonterminal">ident</span>,
+<a href=#1480 id=1480 data-nosnippet>1480</a>                <span class="macro-nonterminal">$trait</span>:ident,
 <a href=#1481 id=1481 data-nosnippet>1481</a>                <span class="macro-nonterminal">$method</span>:ident,
 <a href=#1482 id=1482 data-nosnippet>1482</a>                $(<span class="macro-nonterminal">$call_for_macros</span>:ident),*
 <a href=#1483 id=1483 data-nosnippet>1483</a>            ) =&gt; {{
 <a href=#1484 id=1484 data-nosnippet>1484</a>                <span class="kw">fn </span>t&lt;T&gt;()
 <a href=#1485 id=1485 data-nosnippet>1485</a>                <span class="kw">where
 <a href=#1486 id=1486 data-nosnippet>1486</a>                    </span>T: ByteOrderType,
-<a href=#1487 id=1487 data-nosnippet>1487</a>                    T: core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>&lt;<span class="macro-nonterminal">Output </span>= T&gt;,
-<a href=#1488 id=1488 data-nosnippet>1488</a>                    T::Native: core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>&lt;<span class="macro-nonterminal">Output </span>= T::Native&gt;,
+<a href=#1487 id=1487 data-nosnippet>1487</a>                    T: core::ops::<span class="macro-nonterminal">$trait</span>&lt;Output = T&gt;,
+<a href=#1488 id=1488 data-nosnippet>1488</a>                    T::Native: core::ops::<span class="macro-nonterminal">$trait</span>&lt;Output = T::Native&gt;,
 <a href=#1489 id=1489 data-nosnippet>1489</a>                {
 <a href=#1490 id=1490 data-nosnippet>1490</a>                    test::&lt;T, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>&gt;(
-<a href=#1491 id=1491 data-nosnippet>1491</a>                        |slf, _rhs| core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>::<span class="macro-nonterminal">$method</span>(slf),
-<a href=#1492 id=1492 data-nosnippet>1492</a>                        |slf, _rhs| core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>::<span class="macro-nonterminal">$method</span>(slf),
-<a href=#1493 id=1493 data-nosnippet>1493</a>                        |slf, _rhs| core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>::<span class="macro-nonterminal">$method</span>(slf).into(),
-<a href=#1494 id=1494 data-nosnippet>1494</a>                        |slf, _rhs| core::ops::<span class="macro-nonterminal">$</span><span class="kw">trait</span>::<span class="macro-nonterminal">$method</span>(slf),
+<a href=#1491 id=1491 data-nosnippet>1491</a>                        |slf, _rhs| core::ops::<span class="macro-nonterminal">$trait</span>::<span class="macro-nonterminal">$method</span>(slf),
+<a href=#1492 id=1492 data-nosnippet>1492</a>                        |slf, _rhs| core::ops::<span class="macro-nonterminal">$trait</span>::<span class="macro-nonterminal">$method</span>(slf),
+<a href=#1493 id=1493 data-nosnippet>1493</a>                        |slf, _rhs| core::ops::<span class="macro-nonterminal">$trait</span>::<span class="macro-nonterminal">$method</span>(slf).into(),
+<a href=#1494 id=1494 data-nosnippet>1494</a>                        |slf, _rhs| core::ops::<span class="macro-nonterminal">$trait</span>::<span class="macro-nonterminal">$method</span>(slf),
 <a href=#1495 id=1495 data-nosnippet>1495</a>                        <span class="prelude-val">None</span>::&lt;<span class="kw">fn</span>(T::Native, T::Native) -&gt; <span class="prelude-ty">Option</span>&lt;T::Native&gt;&gt;,
 <a href=#1496 id=1496 data-nosnippet>1496</a>                        <span class="prelude-val">None</span>::&lt;(<span class="kw">fn</span>(<span class="kw-2">&amp;mut </span>T, T), <span class="kw">fn</span>(<span class="kw-2">&amp;mut </span>T, T::Native), <span class="kw">fn</span>(<span class="kw-2">&amp;mut </span>T::Native, T))&gt;,
 <a href=#1497 id=1497 data-nosnippet>1497</a>                    );
 <a href=#1498 id=1498 data-nosnippet>1498</a>                }
 <a href=#1499 id=1499 data-nosnippet>1499</a>
 <a href=#1500 id=1500 data-nosnippet>1500</a>                $(
-<a href=#1501 id=1501 data-nosnippet>1501</a>                    <span class="macro-nonterminal">$</span><span class="macro">call_for_macros!</span>(<span class="macro-nonterminal">t</span>, NativeEndian);
-<a href=#1502 id=1502 data-nosnippet>1502</a>                    <span class="macro-nonterminal">$</span><span class="macro">call_for_macros!</span>(<span class="macro-nonterminal">t</span>, NonNativeEndian);
+<a href=#1501 id=1501 data-nosnippet>1501</a>                    <span class="macro-nonterminal">$call_for_macros</span>!(t, NativeEndian);
+<a href=#1502 id=1502 data-nosnippet>1502</a>                    <span class="macro-nonterminal">$call_for_macros</span>!(t, NonNativeEndian);
 <a href=#1503 id=1503 data-nosnippet>1503</a>                )*
 <a href=#1504 id=1504 data-nosnippet>1504</a>            }};
 <a href=#1505 id=1505 data-nosnippet>1505</a>        }

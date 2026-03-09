@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tracing-attributes-0.1.31/src/attr.rs`."><title>attr.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tracing_attributes" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (bd3ac0330 2025-11-01)" data-channel="nightly" data-search-js="search-5c29b3b5.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="icon" href="https://raw.githubusercontent.com/tokio-rs/tracing/main/assets/favicon.ico"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">tracing_attributes/</div>attr.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>std::collections::HashSet;
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tracing-attributes-0.1.31/src/attr.rs`."><title>attr.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tracing_attributes" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (01867557c 2025-11-12)" data-channel="nightly" data-search-js="search-8e3fad08.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="icon" href="https://raw.githubusercontent.com/tokio-rs/tracing/main/assets/favicon.ico"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">tracing_attributes/</div>attr.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>std::collections::HashSet;
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span>syn::{punctuated::Punctuated, Expr, Ident, LitInt, LitStr, Path, Token};
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span>proc_macro2::TokenStream;
@@ -76,7 +76,7 @@
 <a href=#76 id=76 data-nosnippet>76</a><span class="kw">impl </span>Parse <span class="kw">for </span>InstrumentArgs {
 <a href=#77 id=77 data-nosnippet>77</a>    <span class="kw">fn </span>parse(input: ParseStream&lt;<span class="lifetime">'_</span>&gt;) -&gt; syn::Result&lt;<span class="self">Self</span>&gt; {
 <a href=#78 id=78 data-nosnippet>78</a>        <span class="kw">let </span><span class="kw-2">mut </span>args = <span class="self">Self</span>::default();
-<a href=#79 id=79 data-nosnippet>79</a>        <span class="macro">while !</span>input.is_empty() {
+<a href=#79 id=79 data-nosnippet>79</a>        <span class="kw">while </span>!input.is_empty() {
 <a href=#80 id=80 data-nosnippet>80</a>            <span class="kw">let </span>lookahead = input.lookahead1();
 <a href=#81 id=81 data-nosnippet>81</a>            <span class="kw">if </span>lookahead.peek(kw::name) {
 <a href=#82 id=82 data-nosnippet>82</a>                <span class="kw">if </span>args.name.is_some() {
@@ -118,7 +118,7 @@
 <a href=#118 id=118 data-nosnippet>118</a>                }
 <a href=#119 id=119 data-nosnippet>119</a>                args.level = <span class="prelude-val">Some</span>(input.parse()<span class="question-mark">?</span>);
 <a href=#120 id=120 data-nosnippet>120</a>            } <span class="kw">else if </span>lookahead.peek(kw::skip) {
-<a href=#121 id=121 data-nosnippet>121</a>                <span class="macro">if !</span>args.skips.is_empty() {
+<a href=#121 id=121 data-nosnippet>121</a>                <span class="kw">if </span>!args.skips.is_empty() {
 <a href=#122 id=122 data-nosnippet>122</a>                    <span class="kw">return </span><span class="prelude-val">Err</span>(input.error(<span class="string">"expected only a single `skip` argument"</span>));
 <a href=#123 id=123 data-nosnippet>123</a>                }
 <a href=#124 id=124 data-nosnippet>124</a>                <span class="kw">if </span>args.skip_all {
@@ -130,7 +130,7 @@
 <a href=#130 id=130 data-nosnippet>130</a>                <span class="kw">if </span>args.skip_all {
 <a href=#131 id=131 data-nosnippet>131</a>                    <span class="kw">return </span><span class="prelude-val">Err</span>(input.error(<span class="string">"expected only a single `skip_all` argument"</span>));
 <a href=#132 id=132 data-nosnippet>132</a>                }
-<a href=#133 id=133 data-nosnippet>133</a>                <span class="macro">if !</span>args.skips.is_empty() {
+<a href=#133 id=133 data-nosnippet>133</a>                <span class="kw">if </span>!args.skips.is_empty() {
 <a href=#134 id=134 data-nosnippet>134</a>                    <span class="kw">return </span><span class="prelude-val">Err</span>(input.error(<span class="string">"expected either `skip` or `skip_all` argument"</span>));
 <a href=#135 id=135 data-nosnippet>135</a>                }
 <a href=#136 id=136 data-nosnippet>136</a>                <span class="kw">let _ </span>= input.parse::&lt;kw::skip_all&gt;()<span class="question-mark">?</span>;
@@ -173,7 +173,7 @@
 <a href=#173 id=173 data-nosnippet>173</a>
 <a href=#174 id=174 data-nosnippet>174</a><span class="kw">impl </span>Parse <span class="kw">for </span>EventArgs {
 <a href=#175 id=175 data-nosnippet>175</a>    <span class="kw">fn </span>parse(input: ParseStream&lt;<span class="lifetime">'_</span>&gt;) -&gt; syn::Result&lt;<span class="self">Self</span>&gt; {
-<a href=#176 id=176 data-nosnippet>176</a>        <span class="macro">if !</span>input.peek(syn::token::Paren) {
+<a href=#176 id=176 data-nosnippet>176</a>        <span class="kw">if </span>!input.peek(syn::token::Paren) {
 <a href=#177 id=177 data-nosnippet>177</a>            <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="self">Self</span>::default());
 <a href=#178 id=178 data-nosnippet>178</a>        }
 <a href=#179 id=179 data-nosnippet>179</a>        <span class="kw">let </span>content;
@@ -202,7 +202,7 @@
 <a href=#202 id=202 data-nosnippet>202</a>                <span class="prelude-val">Ok</span>(())
 <a href=#203 id=203 data-nosnippet>203</a>            };
 <a href=#204 id=204 data-nosnippet>204</a>        parse_one_arg()<span class="question-mark">?</span>;
-<a href=#205 id=205 data-nosnippet>205</a>        <span class="macro">if !</span>content.is_empty() {
+<a href=#205 id=205 data-nosnippet>205</a>        <span class="kw">if </span>!content.is_empty() {
 <a href=#206 id=206 data-nosnippet>206</a>            <span class="kw">if </span>content.lookahead1().peek(<span class="macro">Token!</span>[,]) {
 <a href=#207 id=207 data-nosnippet>207</a>                <span class="kw">let _ </span>= content.parse::&lt;<span class="macro">Token!</span>[,]&gt;()<span class="question-mark">?</span>;
 <a href=#208 id=208 data-nosnippet>208</a>                parse_one_arg()<span class="question-mark">?</span>;

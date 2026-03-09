@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/erased-serde-0.4.9/src/de.rs`."><title>de.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="erased_serde" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (bd3ac0330 2025-11-01)" data-channel="nightly" data-search-js="search-5c29b3b5.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">erased_serde/</div>de.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span><span class="kw">crate</span>::any::Any;
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/erased-serde-0.4.9/src/de.rs`."><title>de.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="erased_serde" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (01867557c 2025-11-12)" data-channel="nightly" data-search-js="search-8e3fad08.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">erased_serde/</div>de.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span><span class="kw">crate</span>::any::Any;
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span><span class="kw">crate</span>::error::{erase_de <span class="kw">as </span>erase, unerase_de <span class="kw">as </span>unerase, Error};
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span><span class="kw">crate</span>::map::{OptionExt, ResultExt};
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span><span class="kw">crate</span>::sealed::deserializer::Sealed;
@@ -846,11 +846,11 @@
 <a href=#846 id=846 data-nosnippet>846</a>}
 <a href=#847 id=847 data-nosnippet>847</a>
 <a href=#848 id=848 data-nosnippet>848</a><span class="macro">macro_rules!</span> impl_deserializer_for_trait_object {
-<a href=#849 id=849 data-nosnippet>849</a>    ({$(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>:<span class="macro-nonterminal">tt</span>)<span class="kw-2">*</span>} <span class="macro-nonterminal">$ty</span>:ty) =&gt; {
+<a href=#849 id=849 data-nosnippet>849</a>    ({$(<span class="macro-nonterminal">$mut</span>:tt)<span class="kw-2">*</span>} <span class="macro-nonterminal">$ty</span>:ty) =&gt; {
 <a href=#850 id=850 data-nosnippet>850</a>        <span class="kw">impl</span>&lt;<span class="lifetime">'de</span>&gt; serde::Deserializer&lt;<span class="lifetime">'de</span>&gt; <span class="kw">for </span><span class="macro-nonterminal">$ty </span>{
 <a href=#851 id=851 data-nosnippet>851</a>            <span class="kw">type </span>Error = Error;
 <a href=#852 id=852 data-nosnippet>852</a>
-<a href=#853 id=853 data-nosnippet>853</a>            <span class="kw">fn </span>deserialize_any&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#853 id=853 data-nosnippet>853</a>            <span class="kw">fn </span>deserialize_any&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#854 id=854 data-nosnippet>854</a>            <span class="kw">where
 <a href=#855 id=855 data-nosnippet>855</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#856 id=856 data-nosnippet>856</a>            {
@@ -858,7 +858,7 @@
 <a href=#858 id=858 data-nosnippet>858</a>                <span class="kw">unsafe </span>{ <span class="self">self</span>.erased_deserialize_any(<span class="kw-2">&amp;mut </span>erased).unsafe_map(Out::take) }
 <a href=#859 id=859 data-nosnippet>859</a>            }
 <a href=#860 id=860 data-nosnippet>860</a>
-<a href=#861 id=861 data-nosnippet>861</a>            <span class="kw">fn </span>deserialize_bool&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#861 id=861 data-nosnippet>861</a>            <span class="kw">fn </span>deserialize_bool&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#862 id=862 data-nosnippet>862</a>            <span class="kw">where
 <a href=#863 id=863 data-nosnippet>863</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#864 id=864 data-nosnippet>864</a>            {
@@ -866,7 +866,7 @@
 <a href=#866 id=866 data-nosnippet>866</a>                <span class="kw">unsafe </span>{ <span class="self">self</span>.erased_deserialize_bool(<span class="kw-2">&amp;mut </span>erased).unsafe_map(Out::take) }
 <a href=#867 id=867 data-nosnippet>867</a>            }
 <a href=#868 id=868 data-nosnippet>868</a>
-<a href=#869 id=869 data-nosnippet>869</a>            <span class="kw">fn </span>deserialize_i8&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#869 id=869 data-nosnippet>869</a>            <span class="kw">fn </span>deserialize_i8&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#870 id=870 data-nosnippet>870</a>            <span class="kw">where
 <a href=#871 id=871 data-nosnippet>871</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#872 id=872 data-nosnippet>872</a>            {
@@ -874,7 +874,7 @@
 <a href=#874 id=874 data-nosnippet>874</a>                <span class="kw">unsafe </span>{ <span class="self">self</span>.erased_deserialize_i8(<span class="kw-2">&amp;mut </span>erased).unsafe_map(Out::take) }
 <a href=#875 id=875 data-nosnippet>875</a>            }
 <a href=#876 id=876 data-nosnippet>876</a>
-<a href=#877 id=877 data-nosnippet>877</a>            <span class="kw">fn </span>deserialize_i16&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#877 id=877 data-nosnippet>877</a>            <span class="kw">fn </span>deserialize_i16&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#878 id=878 data-nosnippet>878</a>            <span class="kw">where
 <a href=#879 id=879 data-nosnippet>879</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#880 id=880 data-nosnippet>880</a>            {
@@ -882,7 +882,7 @@
 <a href=#882 id=882 data-nosnippet>882</a>                <span class="kw">unsafe </span>{ <span class="self">self</span>.erased_deserialize_i16(<span class="kw-2">&amp;mut </span>erased).unsafe_map(Out::take) }
 <a href=#883 id=883 data-nosnippet>883</a>            }
 <a href=#884 id=884 data-nosnippet>884</a>
-<a href=#885 id=885 data-nosnippet>885</a>            <span class="kw">fn </span>deserialize_i32&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#885 id=885 data-nosnippet>885</a>            <span class="kw">fn </span>deserialize_i32&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#886 id=886 data-nosnippet>886</a>            <span class="kw">where
 <a href=#887 id=887 data-nosnippet>887</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#888 id=888 data-nosnippet>888</a>            {
@@ -890,7 +890,7 @@
 <a href=#890 id=890 data-nosnippet>890</a>                <span class="kw">unsafe </span>{ <span class="self">self</span>.erased_deserialize_i32(<span class="kw-2">&amp;mut </span>erased).unsafe_map(Out::take) }
 <a href=#891 id=891 data-nosnippet>891</a>            }
 <a href=#892 id=892 data-nosnippet>892</a>
-<a href=#893 id=893 data-nosnippet>893</a>            <span class="kw">fn </span>deserialize_i64&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#893 id=893 data-nosnippet>893</a>            <span class="kw">fn </span>deserialize_i64&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#894 id=894 data-nosnippet>894</a>            <span class="kw">where
 <a href=#895 id=895 data-nosnippet>895</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#896 id=896 data-nosnippet>896</a>            {
@@ -898,7 +898,7 @@
 <a href=#898 id=898 data-nosnippet>898</a>                <span class="kw">unsafe </span>{ <span class="self">self</span>.erased_deserialize_i64(<span class="kw-2">&amp;mut </span>erased).unsafe_map(Out::take) }
 <a href=#899 id=899 data-nosnippet>899</a>            }
 <a href=#900 id=900 data-nosnippet>900</a>
-<a href=#901 id=901 data-nosnippet>901</a>            <span class="kw">fn </span>deserialize_i128&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#901 id=901 data-nosnippet>901</a>            <span class="kw">fn </span>deserialize_i128&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#902 id=902 data-nosnippet>902</a>            <span class="kw">where
 <a href=#903 id=903 data-nosnippet>903</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#904 id=904 data-nosnippet>904</a>            {
@@ -906,7 +906,7 @@
 <a href=#906 id=906 data-nosnippet>906</a>                <span class="kw">unsafe </span>{ <span class="self">self</span>.erased_deserialize_i128(<span class="kw-2">&amp;mut </span>erased).unsafe_map(Out::take) }
 <a href=#907 id=907 data-nosnippet>907</a>            }
 <a href=#908 id=908 data-nosnippet>908</a>
-<a href=#909 id=909 data-nosnippet>909</a>            <span class="kw">fn </span>deserialize_u8&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#909 id=909 data-nosnippet>909</a>            <span class="kw">fn </span>deserialize_u8&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#910 id=910 data-nosnippet>910</a>            <span class="kw">where
 <a href=#911 id=911 data-nosnippet>911</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#912 id=912 data-nosnippet>912</a>            {
@@ -914,7 +914,7 @@
 <a href=#914 id=914 data-nosnippet>914</a>                <span class="kw">unsafe </span>{ <span class="self">self</span>.erased_deserialize_u8(<span class="kw-2">&amp;mut </span>erased).unsafe_map(Out::take) }
 <a href=#915 id=915 data-nosnippet>915</a>            }
 <a href=#916 id=916 data-nosnippet>916</a>
-<a href=#917 id=917 data-nosnippet>917</a>            <span class="kw">fn </span>deserialize_u16&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#917 id=917 data-nosnippet>917</a>            <span class="kw">fn </span>deserialize_u16&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#918 id=918 data-nosnippet>918</a>            <span class="kw">where
 <a href=#919 id=919 data-nosnippet>919</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#920 id=920 data-nosnippet>920</a>            {
@@ -922,7 +922,7 @@
 <a href=#922 id=922 data-nosnippet>922</a>                <span class="kw">unsafe </span>{ <span class="self">self</span>.erased_deserialize_u16(<span class="kw-2">&amp;mut </span>erased).unsafe_map(Out::take) }
 <a href=#923 id=923 data-nosnippet>923</a>            }
 <a href=#924 id=924 data-nosnippet>924</a>
-<a href=#925 id=925 data-nosnippet>925</a>            <span class="kw">fn </span>deserialize_u32&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#925 id=925 data-nosnippet>925</a>            <span class="kw">fn </span>deserialize_u32&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#926 id=926 data-nosnippet>926</a>            <span class="kw">where
 <a href=#927 id=927 data-nosnippet>927</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#928 id=928 data-nosnippet>928</a>            {
@@ -930,7 +930,7 @@
 <a href=#930 id=930 data-nosnippet>930</a>                <span class="kw">unsafe </span>{ <span class="self">self</span>.erased_deserialize_u32(<span class="kw-2">&amp;mut </span>erased).unsafe_map(Out::take) }
 <a href=#931 id=931 data-nosnippet>931</a>            }
 <a href=#932 id=932 data-nosnippet>932</a>
-<a href=#933 id=933 data-nosnippet>933</a>            <span class="kw">fn </span>deserialize_u64&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#933 id=933 data-nosnippet>933</a>            <span class="kw">fn </span>deserialize_u64&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#934 id=934 data-nosnippet>934</a>            <span class="kw">where
 <a href=#935 id=935 data-nosnippet>935</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#936 id=936 data-nosnippet>936</a>            {
@@ -938,7 +938,7 @@
 <a href=#938 id=938 data-nosnippet>938</a>                <span class="kw">unsafe </span>{ <span class="self">self</span>.erased_deserialize_u64(<span class="kw-2">&amp;mut </span>erased).unsafe_map(Out::take) }
 <a href=#939 id=939 data-nosnippet>939</a>            }
 <a href=#940 id=940 data-nosnippet>940</a>
-<a href=#941 id=941 data-nosnippet>941</a>            <span class="kw">fn </span>deserialize_u128&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#941 id=941 data-nosnippet>941</a>            <span class="kw">fn </span>deserialize_u128&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#942 id=942 data-nosnippet>942</a>            <span class="kw">where
 <a href=#943 id=943 data-nosnippet>943</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#944 id=944 data-nosnippet>944</a>            {
@@ -946,7 +946,7 @@
 <a href=#946 id=946 data-nosnippet>946</a>                <span class="kw">unsafe </span>{ <span class="self">self</span>.erased_deserialize_u128(<span class="kw-2">&amp;mut </span>erased).unsafe_map(Out::take) }
 <a href=#947 id=947 data-nosnippet>947</a>            }
 <a href=#948 id=948 data-nosnippet>948</a>
-<a href=#949 id=949 data-nosnippet>949</a>            <span class="kw">fn </span>deserialize_f32&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#949 id=949 data-nosnippet>949</a>            <span class="kw">fn </span>deserialize_f32&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#950 id=950 data-nosnippet>950</a>            <span class="kw">where
 <a href=#951 id=951 data-nosnippet>951</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#952 id=952 data-nosnippet>952</a>            {
@@ -954,7 +954,7 @@
 <a href=#954 id=954 data-nosnippet>954</a>                <span class="kw">unsafe </span>{ <span class="self">self</span>.erased_deserialize_f32(<span class="kw-2">&amp;mut </span>erased).unsafe_map(Out::take) }
 <a href=#955 id=955 data-nosnippet>955</a>            }
 <a href=#956 id=956 data-nosnippet>956</a>
-<a href=#957 id=957 data-nosnippet>957</a>            <span class="kw">fn </span>deserialize_f64&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#957 id=957 data-nosnippet>957</a>            <span class="kw">fn </span>deserialize_f64&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#958 id=958 data-nosnippet>958</a>            <span class="kw">where
 <a href=#959 id=959 data-nosnippet>959</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#960 id=960 data-nosnippet>960</a>            {
@@ -962,7 +962,7 @@
 <a href=#962 id=962 data-nosnippet>962</a>                <span class="kw">unsafe </span>{ <span class="self">self</span>.erased_deserialize_f64(<span class="kw-2">&amp;mut </span>erased).unsafe_map(Out::take) }
 <a href=#963 id=963 data-nosnippet>963</a>            }
 <a href=#964 id=964 data-nosnippet>964</a>
-<a href=#965 id=965 data-nosnippet>965</a>            <span class="kw">fn </span>deserialize_char&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#965 id=965 data-nosnippet>965</a>            <span class="kw">fn </span>deserialize_char&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#966 id=966 data-nosnippet>966</a>            <span class="kw">where
 <a href=#967 id=967 data-nosnippet>967</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#968 id=968 data-nosnippet>968</a>            {
@@ -970,7 +970,7 @@
 <a href=#970 id=970 data-nosnippet>970</a>                <span class="kw">unsafe </span>{ <span class="self">self</span>.erased_deserialize_char(<span class="kw-2">&amp;mut </span>erased).unsafe_map(Out::take) }
 <a href=#971 id=971 data-nosnippet>971</a>            }
 <a href=#972 id=972 data-nosnippet>972</a>
-<a href=#973 id=973 data-nosnippet>973</a>            <span class="kw">fn </span>deserialize_str&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#973 id=973 data-nosnippet>973</a>            <span class="kw">fn </span>deserialize_str&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#974 id=974 data-nosnippet>974</a>            <span class="kw">where
 <a href=#975 id=975 data-nosnippet>975</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#976 id=976 data-nosnippet>976</a>            {
@@ -978,7 +978,7 @@
 <a href=#978 id=978 data-nosnippet>978</a>                <span class="kw">unsafe </span>{ <span class="self">self</span>.erased_deserialize_str(<span class="kw-2">&amp;mut </span>erased).unsafe_map(Out::take) }
 <a href=#979 id=979 data-nosnippet>979</a>            }
 <a href=#980 id=980 data-nosnippet>980</a>
-<a href=#981 id=981 data-nosnippet>981</a>            <span class="kw">fn </span>deserialize_string&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#981 id=981 data-nosnippet>981</a>            <span class="kw">fn </span>deserialize_string&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#982 id=982 data-nosnippet>982</a>            <span class="kw">where
 <a href=#983 id=983 data-nosnippet>983</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#984 id=984 data-nosnippet>984</a>            {
@@ -986,7 +986,7 @@
 <a href=#986 id=986 data-nosnippet>986</a>                <span class="kw">unsafe </span>{ <span class="self">self</span>.erased_deserialize_string(<span class="kw-2">&amp;mut </span>erased).unsafe_map(Out::take) }
 <a href=#987 id=987 data-nosnippet>987</a>            }
 <a href=#988 id=988 data-nosnippet>988</a>
-<a href=#989 id=989 data-nosnippet>989</a>            <span class="kw">fn </span>deserialize_bytes&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#989 id=989 data-nosnippet>989</a>            <span class="kw">fn </span>deserialize_bytes&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#990 id=990 data-nosnippet>990</a>            <span class="kw">where
 <a href=#991 id=991 data-nosnippet>991</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#992 id=992 data-nosnippet>992</a>            {
@@ -994,7 +994,7 @@
 <a href=#994 id=994 data-nosnippet>994</a>                <span class="kw">unsafe </span>{ <span class="self">self</span>.erased_deserialize_bytes(<span class="kw-2">&amp;mut </span>erased).unsafe_map(Out::take) }
 <a href=#995 id=995 data-nosnippet>995</a>            }
 <a href=#996 id=996 data-nosnippet>996</a>
-<a href=#997 id=997 data-nosnippet>997</a>            <span class="kw">fn </span>deserialize_byte_buf&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#997 id=997 data-nosnippet>997</a>            <span class="kw">fn </span>deserialize_byte_buf&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#998 id=998 data-nosnippet>998</a>            <span class="kw">where
 <a href=#999 id=999 data-nosnippet>999</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#1000 id=1000 data-nosnippet>1000</a>            {
@@ -1002,7 +1002,7 @@
 <a href=#1002 id=1002 data-nosnippet>1002</a>                <span class="kw">unsafe </span>{ <span class="self">self</span>.erased_deserialize_byte_buf(<span class="kw-2">&amp;mut </span>erased).unsafe_map(Out::take) }
 <a href=#1003 id=1003 data-nosnippet>1003</a>            }
 <a href=#1004 id=1004 data-nosnippet>1004</a>
-<a href=#1005 id=1005 data-nosnippet>1005</a>            <span class="kw">fn </span>deserialize_option&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#1005 id=1005 data-nosnippet>1005</a>            <span class="kw">fn </span>deserialize_option&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#1006 id=1006 data-nosnippet>1006</a>            <span class="kw">where
 <a href=#1007 id=1007 data-nosnippet>1007</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#1008 id=1008 data-nosnippet>1008</a>            {
@@ -1010,7 +1010,7 @@
 <a href=#1010 id=1010 data-nosnippet>1010</a>                <span class="kw">unsafe </span>{ <span class="self">self</span>.erased_deserialize_option(<span class="kw-2">&amp;mut </span>erased).unsafe_map(Out::take) }
 <a href=#1011 id=1011 data-nosnippet>1011</a>            }
 <a href=#1012 id=1012 data-nosnippet>1012</a>
-<a href=#1013 id=1013 data-nosnippet>1013</a>            <span class="kw">fn </span>deserialize_unit&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#1013 id=1013 data-nosnippet>1013</a>            <span class="kw">fn </span>deserialize_unit&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#1014 id=1014 data-nosnippet>1014</a>            <span class="kw">where
 <a href=#1015 id=1015 data-nosnippet>1015</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#1016 id=1016 data-nosnippet>1016</a>            {
@@ -1018,7 +1018,7 @@
 <a href=#1018 id=1018 data-nosnippet>1018</a>                <span class="kw">unsafe </span>{ <span class="self">self</span>.erased_deserialize_unit(<span class="kw-2">&amp;mut </span>erased).unsafe_map(Out::take) }
 <a href=#1019 id=1019 data-nosnippet>1019</a>            }
 <a href=#1020 id=1020 data-nosnippet>1020</a>
-<a href=#1021 id=1021 data-nosnippet>1021</a>            <span class="kw">fn </span>deserialize_unit_struct&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#1021 id=1021 data-nosnippet>1021</a>            <span class="kw">fn </span>deserialize_unit_struct&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#1022 id=1022 data-nosnippet>1022</a>            <span class="kw">where
 <a href=#1023 id=1023 data-nosnippet>1023</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#1024 id=1024 data-nosnippet>1024</a>            {
@@ -1026,7 +1026,7 @@
 <a href=#1026 id=1026 data-nosnippet>1026</a>                <span class="kw">unsafe </span>{ <span class="self">self</span>.erased_deserialize_unit_struct(name, <span class="kw-2">&amp;mut </span>erased).unsafe_map(Out::take) }
 <a href=#1027 id=1027 data-nosnippet>1027</a>            }
 <a href=#1028 id=1028 data-nosnippet>1028</a>
-<a href=#1029 id=1029 data-nosnippet>1029</a>            <span class="kw">fn </span>deserialize_newtype_struct&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#1029 id=1029 data-nosnippet>1029</a>            <span class="kw">fn </span>deserialize_newtype_struct&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#1030 id=1030 data-nosnippet>1030</a>            <span class="kw">where
 <a href=#1031 id=1031 data-nosnippet>1031</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#1032 id=1032 data-nosnippet>1032</a>            {
@@ -1034,7 +1034,7 @@
 <a href=#1034 id=1034 data-nosnippet>1034</a>                <span class="kw">unsafe </span>{ <span class="self">self</span>.erased_deserialize_newtype_struct(name, <span class="kw-2">&amp;mut </span>erased).unsafe_map(Out::take) }
 <a href=#1035 id=1035 data-nosnippet>1035</a>            }
 <a href=#1036 id=1036 data-nosnippet>1036</a>
-<a href=#1037 id=1037 data-nosnippet>1037</a>            <span class="kw">fn </span>deserialize_seq&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#1037 id=1037 data-nosnippet>1037</a>            <span class="kw">fn </span>deserialize_seq&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#1038 id=1038 data-nosnippet>1038</a>            <span class="kw">where
 <a href=#1039 id=1039 data-nosnippet>1039</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#1040 id=1040 data-nosnippet>1040</a>            {
@@ -1042,7 +1042,7 @@
 <a href=#1042 id=1042 data-nosnippet>1042</a>                <span class="kw">unsafe </span>{ <span class="self">self</span>.erased_deserialize_seq(<span class="kw-2">&amp;mut </span>erased).unsafe_map(Out::take) }
 <a href=#1043 id=1043 data-nosnippet>1043</a>            }
 <a href=#1044 id=1044 data-nosnippet>1044</a>
-<a href=#1045 id=1045 data-nosnippet>1045</a>            <span class="kw">fn </span>deserialize_tuple&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, len: usize, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#1045 id=1045 data-nosnippet>1045</a>            <span class="kw">fn </span>deserialize_tuple&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, len: usize, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#1046 id=1046 data-nosnippet>1046</a>            <span class="kw">where
 <a href=#1047 id=1047 data-nosnippet>1047</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#1048 id=1048 data-nosnippet>1048</a>            {
@@ -1050,7 +1050,7 @@
 <a href=#1050 id=1050 data-nosnippet>1050</a>                <span class="kw">unsafe </span>{ <span class="self">self</span>.erased_deserialize_tuple(len, <span class="kw-2">&amp;mut </span>erased).unsafe_map(Out::take) }
 <a href=#1051 id=1051 data-nosnippet>1051</a>            }
 <a href=#1052 id=1052 data-nosnippet>1052</a>
-<a href=#1053 id=1053 data-nosnippet>1053</a>            <span class="kw">fn </span>deserialize_tuple_struct&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, len: usize, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#1053 id=1053 data-nosnippet>1053</a>            <span class="kw">fn </span>deserialize_tuple_struct&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, len: usize, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#1054 id=1054 data-nosnippet>1054</a>            <span class="kw">where
 <a href=#1055 id=1055 data-nosnippet>1055</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#1056 id=1056 data-nosnippet>1056</a>            {
@@ -1058,7 +1058,7 @@
 <a href=#1058 id=1058 data-nosnippet>1058</a>                <span class="kw">unsafe </span>{ <span class="self">self</span>.erased_deserialize_tuple_struct(name, len, <span class="kw-2">&amp;mut </span>erased).unsafe_map(Out::take) }
 <a href=#1059 id=1059 data-nosnippet>1059</a>            }
 <a href=#1060 id=1060 data-nosnippet>1060</a>
-<a href=#1061 id=1061 data-nosnippet>1061</a>            <span class="kw">fn </span>deserialize_map&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#1061 id=1061 data-nosnippet>1061</a>            <span class="kw">fn </span>deserialize_map&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#1062 id=1062 data-nosnippet>1062</a>            <span class="kw">where
 <a href=#1063 id=1063 data-nosnippet>1063</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#1064 id=1064 data-nosnippet>1064</a>            {
@@ -1066,7 +1066,7 @@
 <a href=#1066 id=1066 data-nosnippet>1066</a>                <span class="kw">unsafe </span>{ <span class="self">self</span>.erased_deserialize_map(<span class="kw-2">&amp;mut </span>erased).unsafe_map(Out::take) }
 <a href=#1067 id=1067 data-nosnippet>1067</a>            }
 <a href=#1068 id=1068 data-nosnippet>1068</a>
-<a href=#1069 id=1069 data-nosnippet>1069</a>            <span class="kw">fn </span>deserialize_struct&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, fields: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>[<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str], visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#1069 id=1069 data-nosnippet>1069</a>            <span class="kw">fn </span>deserialize_struct&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, fields: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>[<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str], visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#1070 id=1070 data-nosnippet>1070</a>            <span class="kw">where
 <a href=#1071 id=1071 data-nosnippet>1071</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#1072 id=1072 data-nosnippet>1072</a>            {
@@ -1074,7 +1074,7 @@
 <a href=#1074 id=1074 data-nosnippet>1074</a>                <span class="kw">unsafe </span>{ <span class="self">self</span>.erased_deserialize_struct(name, fields, <span class="kw-2">&amp;mut </span>erased).unsafe_map(Out::take) }
 <a href=#1075 id=1075 data-nosnippet>1075</a>            }
 <a href=#1076 id=1076 data-nosnippet>1076</a>
-<a href=#1077 id=1077 data-nosnippet>1077</a>            <span class="kw">fn </span>deserialize_identifier&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#1077 id=1077 data-nosnippet>1077</a>            <span class="kw">fn </span>deserialize_identifier&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#1078 id=1078 data-nosnippet>1078</a>            <span class="kw">where
 <a href=#1079 id=1079 data-nosnippet>1079</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#1080 id=1080 data-nosnippet>1080</a>            {
@@ -1082,7 +1082,7 @@
 <a href=#1082 id=1082 data-nosnippet>1082</a>                <span class="kw">unsafe </span>{ <span class="self">self</span>.erased_deserialize_identifier(<span class="kw-2">&amp;mut </span>erased).unsafe_map(Out::take) }
 <a href=#1083 id=1083 data-nosnippet>1083</a>            }
 <a href=#1084 id=1084 data-nosnippet>1084</a>
-<a href=#1085 id=1085 data-nosnippet>1085</a>            <span class="kw">fn </span>deserialize_enum&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, variants: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>[<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str], visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#1085 id=1085 data-nosnippet>1085</a>            <span class="kw">fn </span>deserialize_enum&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, variants: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>[<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str], visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#1086 id=1086 data-nosnippet>1086</a>            <span class="kw">where
 <a href=#1087 id=1087 data-nosnippet>1087</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#1088 id=1088 data-nosnippet>1088</a>            {
@@ -1090,7 +1090,7 @@
 <a href=#1090 id=1090 data-nosnippet>1090</a>                <span class="kw">unsafe </span>{ <span class="self">self</span>.erased_deserialize_enum(name, variants, <span class="kw-2">&amp;mut </span>erased).unsafe_map(Out::take) }
 <a href=#1091 id=1091 data-nosnippet>1091</a>            }
 <a href=#1092 id=1092 data-nosnippet>1092</a>
-<a href=#1093 id=1093 data-nosnippet>1093</a>            <span class="kw">fn </span>deserialize_ignored_any&lt;V&gt;($(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)* <span class="macro-nonterminal">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+<a href=#1093 id=1093 data-nosnippet>1093</a>            <span class="kw">fn </span>deserialize_ignored_any&lt;V&gt;($(<span class="macro-nonterminal">$mut</span>)* <span class="self">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
 <a href=#1094 id=1094 data-nosnippet>1094</a>            <span class="kw">where
 <a href=#1095 id=1095 data-nosnippet>1095</a>                </span>V: serde::de::Visitor&lt;<span class="lifetime">'de</span>&gt;,
 <a href=#1096 id=1096 data-nosnippet>1096</a>            {
@@ -1438,9 +1438,9 @@
 <a href=#1438 id=1438 data-nosnippet>1438</a><span class="comment">// IMPL ERASED SERDE FOR ERASED SERDE //////////////////////////////////////////
 <a href=#1439 id=1439 data-nosnippet>1439</a>
 <a href=#1440 id=1440 data-nosnippet>1440</a></span><span class="macro">macro_rules!</span> deref_erased_deserializer {
-<a href=#1441 id=1441 data-nosnippet>1441</a>    (&lt;<span class="lifetime">'de </span>$(, <span class="macro-nonterminal">$T</span>:ident)<span class="kw-2">*</span>&gt; Deserializer&lt;<span class="lifetime">'de</span>&gt; <span class="kw">for </span><span class="macro-nonterminal">$ty</span>:ty $(<span class="kw">where </span>$(<span class="macro-nonterminal">$</span><span class="kw">where</span>:<span class="macro-nonterminal">tt</span>)<span class="kw-2">*</span>)<span class="question-mark">?</span>) =&gt; {
-<a href=#1442 id=1442 data-nosnippet>1442</a>        <span class="kw">impl</span>&lt;<span class="lifetime">'de </span>$(, <span class="macro-nonterminal">$T</span>)<span class="kw-2">*</span>&gt; Deserializer&lt;<span class="lifetime">'de</span>&gt; <span class="kw">for </span><span class="macro-nonterminal">$ty </span>$(<span class="kw">where </span>$(<span class="macro-nonterminal">$</span><span class="kw">where</span>)<span class="kw-2">*</span>)<span class="question-mark">? </span>{
-<a href=#1443 id=1443 data-nosnippet>1443</a>            <span class="kw">fn </span><span class="macro-nonterminal">erased_deserialize_any</span>(<span class="kw-2">&amp;mut </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Visitor&lt;<span class="lifetime">'de</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Out, Error&gt; {
+<a href=#1441 id=1441 data-nosnippet>1441</a>    (&lt;<span class="lifetime">'de </span>$(, <span class="macro-nonterminal">$T</span>:ident)<span class="kw-2">*</span>&gt; Deserializer&lt;<span class="lifetime">'de</span>&gt; <span class="kw">for </span><span class="macro-nonterminal">$ty</span>:ty $(<span class="kw">where </span>$(<span class="macro-nonterminal">$where</span>:tt)<span class="kw-2">*</span>)<span class="question-mark">?</span>) =&gt; {
+<a href=#1442 id=1442 data-nosnippet>1442</a>        <span class="kw">impl</span>&lt;<span class="lifetime">'de </span>$(, <span class="macro-nonterminal">$T</span>)<span class="kw-2">*</span>&gt; Deserializer&lt;<span class="lifetime">'de</span>&gt; <span class="kw">for </span><span class="macro-nonterminal">$ty </span>$(<span class="kw">where </span>$(<span class="macro-nonterminal">$where</span>)<span class="kw-2">*</span>)<span class="question-mark">? </span>{
+<a href=#1443 id=1443 data-nosnippet>1443</a>            <span class="kw">fn </span>erased_deserialize_any(<span class="kw-2">&amp;mut </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Visitor&lt;<span class="lifetime">'de</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Out, Error&gt; {
 <a href=#1444 id=1444 data-nosnippet>1444</a>                (<span class="kw-2">**</span><span class="self">self</span>).erased_deserialize_any(visitor)
 <a href=#1445 id=1445 data-nosnippet>1445</a>            }
 <a href=#1446 id=1446 data-nosnippet>1446</a>
@@ -1569,11 +1569,11 @@
 <a href=#1569 id=1569 data-nosnippet>1569</a>            }
 <a href=#1570 id=1570 data-nosnippet>1570</a>        }
 <a href=#1571 id=1571 data-nosnippet>1571</a>
-<a href=#1572 id=1572 data-nosnippet>1572</a>        <span class="kw">impl</span>&lt;<span class="lifetime">'de </span>$(, <span class="macro-nonterminal">$T</span>)<span class="kw-2">*</span>&gt; Sealed <span class="kw">for </span><span class="macro-nonterminal">$ty </span>$(<span class="kw">where </span>$(<span class="macro-nonterminal">$</span><span class="kw">where</span>)<span class="kw-2">*</span>)<span class="question-mark">? </span>{}
+<a href=#1572 id=1572 data-nosnippet>1572</a>        <span class="kw">impl</span>&lt;<span class="lifetime">'de </span>$(, <span class="macro-nonterminal">$T</span>)<span class="kw-2">*</span>&gt; Sealed <span class="kw">for </span><span class="macro-nonterminal">$ty </span>$(<span class="kw">where </span>$(<span class="macro-nonterminal">$where</span>)<span class="kw-2">*</span>)<span class="question-mark">? </span>{}
 <a href=#1573 id=1573 data-nosnippet>1573</a>    };
 <a href=#1574 id=1574 data-nosnippet>1574</a>}
 <a href=#1575 id=1575 data-nosnippet>1575</a>
-<a href=#1576 id=1576 data-nosnippet>1576</a><span class="macro">deref_erased_deserializer!</span>(&lt;<span class="lifetime">'de</span>, <span class="macro-nonterminal">T</span>&gt; Deserializer&lt;<span class="lifetime">'de</span>&gt; <span class="kw">for </span><span class="kw-2">&amp;mut </span>T <span class="kw">where </span>T: <span class="question-mark">?</span>Sized + Deserializer&lt;<span class="lifetime">'de</span>&gt;);
+<a href=#1576 id=1576 data-nosnippet>1576</a><span class="macro">deref_erased_deserializer!</span>(&lt;<span class="lifetime">'de</span>, T&gt; Deserializer&lt;<span class="lifetime">'de</span>&gt; <span class="kw">for </span><span class="kw-2">&amp;mut </span>T <span class="kw">where </span>T: <span class="question-mark">?</span>Sized + Deserializer&lt;<span class="lifetime">'de</span>&gt;);
 <a href=#1577 id=1577 data-nosnippet>1577</a><span class="macro">deref_erased_deserializer!</span>(&lt;<span class="lifetime">'de</span>, T&gt; Deserializer&lt;<span class="lifetime">'de</span>&gt; <span class="kw">for </span>Box&lt;T&gt; <span class="kw">where </span>T: <span class="question-mark">?</span>Sized + Deserializer&lt;<span class="lifetime">'de</span>&gt;);
 <a href=#1578 id=1578 data-nosnippet>1578</a>
 <a href=#1579 id=1579 data-nosnippet>1579</a><span class="comment">// TEST ////////////////////////////////////////////////////////////////////////

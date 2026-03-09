@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.8/src/parser.rs`."><title>parser.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="url" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (bd3ac0330 2025-11-01)" data-channel="nightly" data-search-js="search-5c29b3b5.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">url/</div>parser.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// Copyright 2013-2016 The rust-url developers.
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/url-2.5.8/src/parser.rs`."><title>parser.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="url" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (01867557c 2025-11-12)" data-channel="nightly" data-search-js="search-8e3fad08.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">url/</div>parser.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// Copyright 2013-2016 The rust-url developers.
 <a href=#2 id=2 data-nosnippet>2</a>//
 <a href=#3 id=3 data-nosnippet>3</a>// Licensed under the Apache License, Version 2.0 &lt;LICENSE-APACHE or
 <a href=#4 id=4 data-nosnippet>4</a>// http://www.apache.org/licenses/LICENSE-2.0&gt; or the MIT license
@@ -287,7 +287,7 @@
 <a href=#287 id=287 data-nosnippet>287</a>            <span class="kw">let </span>utf8 = <span class="self">self</span>.chars.as_str();
 <a href=#288 id=288 data-nosnippet>288</a>            <span class="kw">match </span><span class="self">self</span>.chars.next() {
 <a href=#289 id=289 data-nosnippet>289</a>                <span class="prelude-val">Some</span>(c) =&gt; {
-<a href=#290 id=290 data-nosnippet>290</a>                    <span class="macro">if !</span>ascii_tab_or_new_line(c) {
+<a href=#290 id=290 data-nosnippet>290</a>                    <span class="kw">if </span>!ascii_tab_or_new_line(c) {
 <a href=#291 id=291 data-nosnippet>291</a>                        <span class="kw">return </span><span class="prelude-val">Some</span>((c, <span class="kw-2">&amp;</span>utf8[..c.len_utf8()]));
 <a href=#292 id=292 data-nosnippet>292</a>                    }
 <a href=#293 id=293 data-nosnippet>293</a>                }
@@ -403,7 +403,7 @@
 <a href=#403 id=403 data-nosnippet>403</a>
 <a href=#404 id=404 data-nosnippet>404</a>    <span class="kw">pub fn </span>parse_scheme&lt;<span class="lifetime">'i</span>&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw-2">mut </span>input: Input&lt;<span class="lifetime">'i</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Input&lt;<span class="lifetime">'i</span>&gt;, ()&gt; {
 <a href=#405 id=405 data-nosnippet>405</a>        <span class="comment">// starts_with will also fail for empty strings so we can skip that comparison for perf
-<a href=#406 id=406 data-nosnippet>406</a>        </span><span class="macro">if !</span>input.starts_with(ascii_alpha) {
+<a href=#406 id=406 data-nosnippet>406</a>        </span><span class="kw">if </span>!input.starts_with(ascii_alpha) {
 <a href=#407 id=407 data-nosnippet>407</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(());
 <a href=#408 id=408 data-nosnippet>408</a>        }
 <a href=#409 id=409 data-nosnippet>409</a>        <span class="macro">debug_assert!</span>(<span class="self">self</span>.serialization.is_empty());
@@ -543,7 +543,7 @@
 <a href=#543 id=543 data-nosnippet>543</a>
 <a href=#544 id=544 data-nosnippet>544</a>                <span class="comment">// For file URLs that have a host and whose path starts
 <a href=#545 id=545 data-nosnippet>545</a>                // with the windows drive letter we just remove the host.
-<a href=#546 id=546 data-nosnippet>546</a>                </span><span class="macro">if !</span>has_host {
+<a href=#546 id=546 data-nosnippet>546</a>                </span><span class="kw">if </span>!has_host {
 <a href=#547 id=547 data-nosnippet>547</a>                    <span class="self">self</span>.serialization
 <a href=#548 id=548 data-nosnippet>548</a>                        .drain(host_start <span class="kw">as </span>usize..host_end <span class="kw">as </span>usize);
 <a href=#549 id=549 data-nosnippet>549</a>                    host_end = host_start;
@@ -569,7 +569,7 @@
 <a href=#569 id=569 data-nosnippet>569</a>                <span class="kw">let </span>host_start = <span class="string">"file://"</span>.len();
 <a href=#570 id=570 data-nosnippet>570</a>                <span class="kw">let </span><span class="kw-2">mut </span>host_end = host_start;
 <a href=#571 id=571 data-nosnippet>571</a>                <span class="kw">let </span><span class="kw-2">mut </span>host = HostInternal::None;
-<a href=#572 id=572 data-nosnippet>572</a>                <span class="macro">if !</span>starts_with_windows_drive_letter_segment(<span class="kw-2">&amp;</span>input_after_first_char) {
+<a href=#572 id=572 data-nosnippet>572</a>                <span class="kw">if </span>!starts_with_windows_drive_letter_segment(<span class="kw-2">&amp;</span>input_after_first_char) {
 <a href=#573 id=573 data-nosnippet>573</a>                    <span class="kw">if let </span><span class="prelude-val">Some</span>(base_url) = base_file_url {
 <a href=#574 id=574 data-nosnippet>574</a>                        <span class="kw">let </span>first_segment = base_url.path_segments().unwrap().next().unwrap();
 <a href=#575 id=575 data-nosnippet>575</a>                        <span class="kw">if </span>is_normalized_windows_drive_letter(first_segment) {
@@ -649,7 +649,7 @@
 <a href=#649 id=649 data-nosnippet>649</a>                }
 <a href=#650 id=650 data-nosnippet>650</a>                <span class="prelude-val">Some</span>(<span class="string">'#'</span>) =&gt; <span class="self">self</span>.fragment_only(base_url, input),
 <a href=#651 id=651 data-nosnippet>651</a>                <span class="kw">_ </span>=&gt; {
-<a href=#652 id=652 data-nosnippet>652</a>                    <span class="macro">if !</span>starts_with_windows_drive_letter_segment(<span class="kw-2">&amp;</span>input) {
+<a href=#652 id=652 data-nosnippet>652</a>                    <span class="kw">if </span>!starts_with_windows_drive_letter_segment(<span class="kw-2">&amp;</span>input) {
 <a href=#653 id=653 data-nosnippet>653</a>                        <span class="kw">let </span>before_query = <span class="kw">match </span>(base_url.query_start, base_url.fragment_start) {
 <a href=#654 id=654 data-nosnippet>654</a>                            (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>) =&gt; <span class="kw-2">&amp;*</span>base_url.serialization,
 <a href=#655 id=655 data-nosnippet>655</a>                            (<span class="prelude-val">Some</span>(i), <span class="kw">_</span>) | (<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(i)) =&gt; base_url.slice(..i),
@@ -933,7 +933,7 @@
 <a href=#933 id=933 data-nosnippet>933</a>                    has_password = <span class="bool-val">true</span>;
 <a href=#934 id=934 data-nosnippet>934</a>                }
 <a href=#935 id=935 data-nosnippet>935</a>            } <span class="kw">else </span>{
-<a href=#936 id=936 data-nosnippet>936</a>                <span class="macro">if !</span>has_password {
+<a href=#936 id=936 data-nosnippet>936</a>                <span class="kw">if </span>!has_password {
 <a href=#937 id=937 data-nosnippet>937</a>                    has_username = <span class="bool-val">true</span>;
 <a href=#938 id=938 data-nosnippet>938</a>                }
 <a href=#939 id=939 data-nosnippet>939</a>                <span class="self">self</span>.check_url_code_point(c, <span class="kw-2">&amp;</span>input);
@@ -1004,7 +1004,7 @@
 <a href=#1004 id=1004 data-nosnippet>1004</a>        <span class="kw">let </span><span class="kw-2">mut </span>bytes = <span class="number">0</span>;
 <a href=#1005 id=1005 data-nosnippet>1005</a>        <span class="kw">for </span>c <span class="kw">in </span>input_str.chars() {
 <a href=#1006 id=1006 data-nosnippet>1006</a>            <span class="kw">match </span>c {
-<a href=#1007 id=1007 data-nosnippet>1007</a>                <span class="string">':' </span><span class="macro">if !</span>inside_square_brackets =&gt; <span class="kw">break</span>,
+<a href=#1007 id=1007 data-nosnippet>1007</a>                <span class="string">':' </span><span class="kw">if </span>!inside_square_brackets =&gt; <span class="kw">break</span>,
 <a href=#1008 id=1008 data-nosnippet>1008</a>                <span class="string">'\\' </span><span class="kw">if </span>scheme_type.is_special() =&gt; <span class="kw">break</span>,
 <a href=#1009 id=1009 data-nosnippet>1009</a>                <span class="string">'/' </span>| <span class="string">'?' </span>| <span class="string">'#' </span>=&gt; <span class="kw">break</span>,
 <a href=#1010 id=1010 data-nosnippet>1010</a>                <span class="macro">ascii_tab_or_new_line_pattern!</span>() =&gt; {
@@ -1035,7 +1035,7 @@
 <a href=#1035 id=1035 data-nosnippet>1035</a>        <span class="kw">if </span>scheme_type == SchemeType::SpecialNotFile &amp;&amp; host_str.is_empty() {
 <a href=#1036 id=1036 data-nosnippet>1036</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(ParseError::EmptyHost);
 <a href=#1037 id=1037 data-nosnippet>1037</a>        }
-<a href=#1038 id=1038 data-nosnippet>1038</a>        <span class="macro">if !</span>scheme_type.is_special() {
+<a href=#1038 id=1038 data-nosnippet>1038</a>        <span class="kw">if </span>!scheme_type.is_special() {
 <a href=#1039 id=1039 data-nosnippet>1039</a>            <span class="kw">let </span>host = Host::parse_opaque_cow(host_str)<span class="question-mark">?</span>;
 <a href=#1040 id=1040 data-nosnippet>1040</a>            <span class="kw">return </span><span class="prelude-val">Ok</span>((host, input));
 <a href=#1041 id=1041 data-nosnippet>1041</a>        }
@@ -1136,12 +1136,12 @@
 <a href=#1136 id=1136 data-nosnippet>1136</a>            input = remaining;
 <a href=#1137 id=1137 data-nosnippet>1137</a>        }
 <a href=#1138 id=1138 data-nosnippet>1138</a>
-<a href=#1139 id=1139 data-nosnippet>1139</a>        <span class="macro">if !</span>has_any_digit &amp;&amp; context == Context::Setter &amp;&amp; !input.is_empty() {
+<a href=#1139 id=1139 data-nosnippet>1139</a>        <span class="kw">if </span>!has_any_digit &amp;&amp; context == Context::Setter &amp;&amp; !input.is_empty() {
 <a href=#1140 id=1140 data-nosnippet>1140</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(ParseError::InvalidPort);
 <a href=#1141 id=1141 data-nosnippet>1141</a>        }
 <a href=#1142 id=1142 data-nosnippet>1142</a>
 <a href=#1143 id=1143 data-nosnippet>1143</a>        <span class="kw">let </span><span class="kw-2">mut </span>opt_port = <span class="prelude-val">Some</span>(port <span class="kw">as </span>u16);
-<a href=#1144 id=1144 data-nosnippet>1144</a>        <span class="macro">if !</span>has_any_digit || opt_port == default_port() {
+<a href=#1144 id=1144 data-nosnippet>1144</a>        <span class="kw">if </span>!has_any_digit || opt_port == default_port() {
 <a href=#1145 id=1145 data-nosnippet>1145</a>            opt_port = <span class="prelude-val">None</span>;
 <a href=#1146 id=1146 data-nosnippet>1146</a>        }
 <a href=#1147 id=1147 data-nosnippet>1147</a>        <span class="prelude-val">Ok</span>((opt_port, input))
@@ -1162,7 +1162,7 @@
 <a href=#1162 id=1162 data-nosnippet>1162</a>                </span><span class="self">self</span>.log_violation(SyntaxViolation::Backslash);
 <a href=#1163 id=1163 data-nosnippet>1163</a>            }
 <a href=#1164 id=1164 data-nosnippet>1164</a>            <span class="comment">// A special URL always has a non-empty path.
-<a href=#1165 id=1165 data-nosnippet>1165</a>            </span><span class="macro">if !</span><span class="self">self</span>.serialization.ends_with(<span class="string">'/'</span>) {
+<a href=#1165 id=1165 data-nosnippet>1165</a>            </span><span class="kw">if </span>!<span class="self">self</span>.serialization.ends_with(<span class="string">'/'</span>) {
 <a href=#1166 id=1166 data-nosnippet>1166</a>                <span class="self">self</span>.serialization.push(<span class="string">'/'</span>);
 <a href=#1167 id=1167 data-nosnippet>1167</a>                <span class="comment">// We have already made sure the forward slash is present.
 <a href=#1168 id=1168 data-nosnippet>1168</a>                </span><span class="kw">if </span>maybe_c == <span class="prelude-val">Some</span>(<span class="string">'/'</span>) || maybe_c == <span class="prelude-val">Some</span>(<span class="string">'\\'</span>) {
@@ -1336,7 +1336,7 @@
 <a href=#1336 id=1336 data-nosnippet>1336</a>                // nor url is special and c is U+005C (\), append the empty string to url’s path.
 <a href=#1337 id=1337 data-nosnippet>1337</a>                </span><span class="string">"." </span>| <span class="string">"%2e" </span>| <span class="string">"%2E" </span>=&gt; {
 <a href=#1338 id=1338 data-nosnippet>1338</a>                    <span class="self">self</span>.serialization.truncate(segment_start);
-<a href=#1339 id=1339 data-nosnippet>1339</a>                    <span class="macro">if !</span><span class="self">self</span>.serialization.ends_with(<span class="string">'/'</span>) {
+<a href=#1339 id=1339 data-nosnippet>1339</a>                    <span class="kw">if </span>!<span class="self">self</span>.serialization.ends_with(<span class="string">'/'</span>) {
 <a href=#1340 id=1340 data-nosnippet>1340</a>                        <span class="self">self</span>.serialization.push(<span class="string">'/'</span>);
 <a href=#1341 id=1341 data-nosnippet>1341</a>                    }
 <a href=#1342 id=1342 data-nosnippet>1342</a>                }
@@ -1364,7 +1364,7 @@
 <a href=#1364 id=1364 data-nosnippet>1364</a>                    }
 <a href=#1365 id=1365 data-nosnippet>1365</a>                }
 <a href=#1366 id=1366 data-nosnippet>1366</a>            }
-<a href=#1367 id=1367 data-nosnippet>1367</a>            <span class="macro">if !</span>ends_with_slash {
+<a href=#1367 id=1367 data-nosnippet>1367</a>            <span class="kw">if </span>!ends_with_slash {
 <a href=#1368 id=1368 data-nosnippet>1368</a>                <span class="kw">break</span>;
 <a href=#1369 id=1369 data-nosnippet>1369</a>            }
 <a href=#1370 id=1370 data-nosnippet>1370</a>        }
@@ -1416,7 +1416,7 @@
 <a href=#1416 id=1416 data-nosnippet>1416</a>            <span class="comment">// + 1 since rfind returns the position before the slash.
 <a href=#1417 id=1417 data-nosnippet>1417</a>            </span><span class="kw">let </span>segment_start = path_start + slash_position + <span class="number">1</span>;
 <a href=#1418 id=1418 data-nosnippet>1418</a>            <span class="comment">// Don’t pop a Windows drive letter
-<a href=#1419 id=1419 data-nosnippet>1419</a>            </span><span class="macro">if !</span>(scheme_type.is_file()
+<a href=#1419 id=1419 data-nosnippet>1419</a>            </span><span class="kw">if </span>!(scheme_type.is_file()
 <a href=#1420 id=1420 data-nosnippet>1420</a>                &amp;&amp; is_normalized_windows_drive_letter(<span class="kw-2">&amp;</span><span class="self">self</span>.serialization[segment_start..]))
 <a href=#1421 id=1421 data-nosnippet>1421</a>            {
 <a href=#1422 id=1422 data-nosnippet>1422</a>                <span class="self">self</span>.serialization.truncate(segment_start);
@@ -1704,12 +1704,12 @@
 <a href=#1704 id=1704 data-nosnippet>1704</a><span class="kw">fn </span>check_url_code_point(vfn: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Fn(SyntaxViolation), c: char, input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;) {
 <a href=#1705 id=1705 data-nosnippet>1705</a>    <span class="kw">if </span>c == <span class="string">'%' </span>{
 <a href=#1706 id=1706 data-nosnippet>1706</a>        <span class="kw">let </span><span class="kw-2">mut </span>input = input.clone();
-<a href=#1707 id=1707 data-nosnippet>1707</a>        <span class="macro">if !matches!</span>((input.next(), input.next()), (<span class="prelude-val">Some</span>(a), <span class="prelude-val">Some</span>(b))
+<a href=#1707 id=1707 data-nosnippet>1707</a>        <span class="kw">if </span>!<span class="macro">matches!</span>((input.next(), input.next()), (<span class="prelude-val">Some</span>(a), <span class="prelude-val">Some</span>(b))
 <a href=#1708 id=1708 data-nosnippet>1708</a>                             <span class="kw">if </span>a.is_ascii_hexdigit() &amp;&amp; b.is_ascii_hexdigit())
 <a href=#1709 id=1709 data-nosnippet>1709</a>        {
 <a href=#1710 id=1710 data-nosnippet>1710</a>            vfn(SyntaxViolation::PercentDecode)
 <a href=#1711 id=1711 data-nosnippet>1711</a>        }
-<a href=#1712 id=1712 data-nosnippet>1712</a>    } <span class="kw">else </span><span class="macro">if !</span>is_url_code_point(c) {
+<a href=#1712 id=1712 data-nosnippet>1712</a>    } <span class="kw">else if </span>!is_url_code_point(c) {
 <a href=#1713 id=1713 data-nosnippet>1713</a>        vfn(SyntaxViolation::NonUrlCodePoint)
 <a href=#1714 id=1714 data-nosnippet>1714</a>    }
 <a href=#1715 id=1715 data-nosnippet>1715</a>}

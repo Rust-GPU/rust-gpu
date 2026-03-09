@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-syntax-0.8.9/src/ast/parse.rs`."><title>parse.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_syntax" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (bd3ac0330 2025-11-01)" data-channel="nightly" data-search-js="search-5c29b3b5.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">regex_syntax/ast/</div>parse.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/*!
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-syntax-0.8.9/src/ast/parse.rs`."><title>parse.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_syntax" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (01867557c 2025-11-12)" data-channel="nightly" data-search-js="search-8e3fad08.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">regex_syntax/ast/</div>parse.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/*!
 <a href=#2 id=2 data-nosnippet>2</a>This module provides a regular expression parser.
 <a href=#3 id=3 data-nosnippet>3</a>*/
 <a href=#4 id=4 data-nosnippet>4</a>
@@ -539,7 +539,7 @@
 <a href=#539 id=539 data-nosnippet>539</a>    /// subsequent spaces. Return true if and only if the parser is not at
 <a href=#540 id=540 data-nosnippet>540</a>    /// EOF.
 <a href=#541 id=541 data-nosnippet>541</a>    </span><span class="kw">fn </span>bump_and_bump_space(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-<a href=#542 id=542 data-nosnippet>542</a>        <span class="macro">if !</span><span class="self">self</span>.bump() {
+<a href=#542 id=542 data-nosnippet>542</a>        <span class="kw">if </span>!<span class="self">self</span>.bump() {
 <a href=#543 id=543 data-nosnippet>543</a>            <span class="kw">return </span><span class="bool-val">false</span>;
 <a href=#544 id=544 data-nosnippet>544</a>        }
 <a href=#545 id=545 data-nosnippet>545</a>        <span class="self">self</span>.bump_space();
@@ -556,17 +556,17 @@
 <a href=#556 id=556 data-nosnippet>556</a>    /// arbitrary whitespace is permitted when the `x` flag is enabled. For
 <a href=#557 id=557 data-nosnippet>557</a>    /// example, `{   5  , 6}` is equivalent to `{5,6}`.
 <a href=#558 id=558 data-nosnippet>558</a>    </span><span class="kw">fn </span>bump_space(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-<a href=#559 id=559 data-nosnippet>559</a>        <span class="macro">if !</span><span class="self">self</span>.ignore_whitespace() {
+<a href=#559 id=559 data-nosnippet>559</a>        <span class="kw">if </span>!<span class="self">self</span>.ignore_whitespace() {
 <a href=#560 id=560 data-nosnippet>560</a>            <span class="kw">return</span>;
 <a href=#561 id=561 data-nosnippet>561</a>        }
-<a href=#562 id=562 data-nosnippet>562</a>        <span class="macro">while !</span><span class="self">self</span>.is_eof() {
+<a href=#562 id=562 data-nosnippet>562</a>        <span class="kw">while </span>!<span class="self">self</span>.is_eof() {
 <a href=#563 id=563 data-nosnippet>563</a>            <span class="kw">if </span><span class="self">self</span>.char().is_whitespace() {
 <a href=#564 id=564 data-nosnippet>564</a>                <span class="self">self</span>.bump();
 <a href=#565 id=565 data-nosnippet>565</a>            } <span class="kw">else if </span><span class="self">self</span>.char() == <span class="string">'#' </span>{
 <a href=#566 id=566 data-nosnippet>566</a>                <span class="kw">let </span>start = <span class="self">self</span>.pos();
 <a href=#567 id=567 data-nosnippet>567</a>                <span class="kw">let </span><span class="kw-2">mut </span>comment_text = String::new();
 <a href=#568 id=568 data-nosnippet>568</a>                <span class="self">self</span>.bump();
-<a href=#569 id=569 data-nosnippet>569</a>                <span class="macro">while !</span><span class="self">self</span>.is_eof() {
+<a href=#569 id=569 data-nosnippet>569</a>                <span class="kw">while </span>!<span class="self">self</span>.is_eof() {
 <a href=#570 id=570 data-nosnippet>570</a>                    <span class="kw">let </span>c = <span class="self">self</span>.char();
 <a href=#571 id=571 data-nosnippet>571</a>                    <span class="self">self</span>.bump();
 <a href=#572 id=572 data-nosnippet>572</a>                    <span class="kw">if </span>c == <span class="string">'\n' </span>{
@@ -598,7 +598,7 @@
 <a href=#598 id=598 data-nosnippet>598</a>    <span class="doccomment">/// Like peek, but will ignore spaces when the parser is in whitespace
 <a href=#599 id=599 data-nosnippet>599</a>    /// insensitive mode.
 <a href=#600 id=600 data-nosnippet>600</a>    </span><span class="kw">fn </span>peek_space(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;char&gt; {
-<a href=#601 id=601 data-nosnippet>601</a>        <span class="macro">if !</span><span class="self">self</span>.ignore_whitespace() {
+<a href=#601 id=601 data-nosnippet>601</a>        <span class="kw">if </span>!<span class="self">self</span>.ignore_whitespace() {
 <a href=#602 id=602 data-nosnippet>602</a>            <span class="kw">return </span><span class="self">self</span>.peek();
 <a href=#603 id=603 data-nosnippet>603</a>        }
 <a href=#604 id=604 data-nosnippet>604</a>        <span class="kw">if </span><span class="self">self</span>.is_eof() {
@@ -609,7 +609,7 @@
 <a href=#609 id=609 data-nosnippet>609</a>        <span class="kw">for </span>(i, c) <span class="kw">in </span><span class="self">self</span>.pattern()[start..].char_indices() {
 <a href=#610 id=610 data-nosnippet>610</a>            <span class="kw">if </span>c.is_whitespace() {
 <a href=#611 id=611 data-nosnippet>611</a>                <span class="kw">continue</span>;
-<a href=#612 id=612 data-nosnippet>612</a>            } <span class="kw">else </span><span class="macro">if !</span>in_comment &amp;&amp; c == <span class="string">'#' </span>{
+<a href=#612 id=612 data-nosnippet>612</a>            } <span class="kw">else if </span>!in_comment &amp;&amp; c == <span class="string">'#' </span>{
 <a href=#613 id=613 data-nosnippet>613</a>                in_comment = <span class="bool-val">true</span>;
 <a href=#614 id=614 data-nosnippet>614</a>            } <span class="kw">else if </span>in_comment &amp;&amp; c == <span class="string">'\n' </span>{
 <a href=#615 id=615 data-nosnippet>615</a>                in_comment = <span class="bool-val">false</span>;
@@ -1122,7 +1122,7 @@
 <a href=#1122 id=1122 data-nosnippet>1122</a>            }
 <a href=#1123 id=1123 data-nosnippet>1123</a>            <span class="kw">_ </span>=&gt; {}
 <a href=#1124 id=1124 data-nosnippet>1124</a>        }
-<a href=#1125 id=1125 data-nosnippet>1125</a>        <span class="macro">if !</span><span class="self">self</span>.bump_and_bump_space() {
+<a href=#1125 id=1125 data-nosnippet>1125</a>        <span class="kw">if </span>!<span class="self">self</span>.bump_and_bump_space() {
 <a href=#1126 id=1126 data-nosnippet>1126</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="self">self</span>.error(
 <a href=#1127 id=1127 data-nosnippet>1127</a>                Span::new(start, <span class="self">self</span>.pos()),
 <a href=#1128 id=1128 data-nosnippet>1128</a>                ast::ErrorKind::RepetitionCountUnclosed,
@@ -1140,7 +1140,7 @@
 <a href=#1140 id=1140 data-nosnippet>1140</a>            ));
 <a href=#1141 id=1141 data-nosnippet>1141</a>        }
 <a href=#1142 id=1142 data-nosnippet>1142</a>        <span class="kw">let </span>range = <span class="kw">if </span><span class="self">self</span>.char() == <span class="string">',' </span>{
-<a href=#1143 id=1143 data-nosnippet>1143</a>            <span class="macro">if !</span><span class="self">self</span>.bump_and_bump_space() {
+<a href=#1143 id=1143 data-nosnippet>1143</a>            <span class="kw">if </span>!<span class="self">self</span>.bump_and_bump_space() {
 <a href=#1144 id=1144 data-nosnippet>1144</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="self">self</span>.error(
 <a href=#1145 id=1145 data-nosnippet>1145</a>                    Span::new(start, <span class="self">self</span>.pos()),
 <a href=#1146 id=1146 data-nosnippet>1146</a>                    ast::ErrorKind::RepetitionCountUnclosed,
@@ -1188,7 +1188,7 @@
 <a href=#1188 id=1188 data-nosnippet>1188</a>        }
 <a href=#1189 id=1189 data-nosnippet>1189</a>
 <a href=#1190 id=1190 data-nosnippet>1190</a>        <span class="kw">let </span>op_span = Span::new(start, <span class="self">self</span>.pos());
-<a href=#1191 id=1191 data-nosnippet>1191</a>        <span class="macro">if !</span>range.is_valid() {
+<a href=#1191 id=1191 data-nosnippet>1191</a>        <span class="kw">if </span>!range.is_valid() {
 <a href=#1192 id=1192 data-nosnippet>1192</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(
 <a href=#1193 id=1193 data-nosnippet>1193</a>                <span class="self">self</span>.error(op_span, ast::ErrorKind::RepetitionCountInvalid)
 <a href=#1194 id=1194 data-nosnippet>1194</a>            );
@@ -1308,13 +1308,13 @@
 <a href=#1308 id=1308 data-nosnippet>1308</a>            <span class="kw">if </span><span class="self">self</span>.char() == <span class="string">'&gt;' </span>{
 <a href=#1309 id=1309 data-nosnippet>1309</a>                <span class="kw">break</span>;
 <a href=#1310 id=1310 data-nosnippet>1310</a>            }
-<a href=#1311 id=1311 data-nosnippet>1311</a>            <span class="macro">if !</span>is_capture_char(<span class="self">self</span>.char(), <span class="self">self</span>.pos() == start) {
+<a href=#1311 id=1311 data-nosnippet>1311</a>            <span class="kw">if </span>!is_capture_char(<span class="self">self</span>.char(), <span class="self">self</span>.pos() == start) {
 <a href=#1312 id=1312 data-nosnippet>1312</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="self">self</span>.error(
 <a href=#1313 id=1313 data-nosnippet>1313</a>                    <span class="self">self</span>.span_char(),
 <a href=#1314 id=1314 data-nosnippet>1314</a>                    ast::ErrorKind::GroupNameInvalid,
 <a href=#1315 id=1315 data-nosnippet>1315</a>                ));
 <a href=#1316 id=1316 data-nosnippet>1316</a>            }
-<a href=#1317 id=1317 data-nosnippet>1317</a>            <span class="macro">if !</span><span class="self">self</span>.bump() {
+<a href=#1317 id=1317 data-nosnippet>1317</a>            <span class="kw">if </span>!<span class="self">self</span>.bump() {
 <a href=#1318 id=1318 data-nosnippet>1318</a>                <span class="kw">break</span>;
 <a href=#1319 id=1319 data-nosnippet>1319</a>            }
 <a href=#1320 id=1320 data-nosnippet>1320</a>        }
@@ -1389,7 +1389,7 @@
 <a href=#1389 id=1389 data-nosnippet>1389</a>                    ));
 <a href=#1390 id=1390 data-nosnippet>1390</a>                }
 <a href=#1391 id=1391 data-nosnippet>1391</a>            }
-<a href=#1392 id=1392 data-nosnippet>1392</a>            <span class="macro">if !</span><span class="self">self</span>.bump() {
+<a href=#1392 id=1392 data-nosnippet>1392</a>            <span class="kw">if </span>!<span class="self">self</span>.bump() {
 <a href=#1393 id=1393 data-nosnippet>1393</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(
 <a href=#1394 id=1394 data-nosnippet>1394</a>                    <span class="self">self</span>.error(<span class="self">self</span>.span(), ast::ErrorKind::FlagUnexpectedEof)
 <a href=#1395 id=1395 data-nosnippet>1395</a>                );
@@ -1479,7 +1479,7 @@
 <a href=#1479 id=1479 data-nosnippet>1479</a>    </span><span class="kw">fn </span>parse_escape(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Primitive&gt; {
 <a href=#1480 id=1480 data-nosnippet>1480</a>        <span class="macro">assert_eq!</span>(<span class="self">self</span>.char(), <span class="string">'\\'</span>);
 <a href=#1481 id=1481 data-nosnippet>1481</a>        <span class="kw">let </span>start = <span class="self">self</span>.pos();
-<a href=#1482 id=1482 data-nosnippet>1482</a>        <span class="macro">if !</span><span class="self">self</span>.bump() {
+<a href=#1482 id=1482 data-nosnippet>1482</a>        <span class="kw">if </span>!<span class="self">self</span>.bump() {
 <a href=#1483 id=1483 data-nosnippet>1483</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="self">self</span>.error(
 <a href=#1484 id=1484 data-nosnippet>1484</a>                Span::new(start, <span class="self">self</span>.pos()),
 <a href=#1485 id=1485 data-nosnippet>1485</a>                ast::ErrorKind::EscapeUnexpectedEof,
@@ -1489,7 +1489,7 @@
 <a href=#1489 id=1489 data-nosnippet>1489</a>        <span class="comment">// Put some of the more complicated routines into helpers.
 <a href=#1490 id=1490 data-nosnippet>1490</a>        </span><span class="kw">match </span>c {
 <a href=#1491 id=1491 data-nosnippet>1491</a>            <span class="string">'0'</span>..=<span class="string">'7' </span>=&gt; {
-<a href=#1492 id=1492 data-nosnippet>1492</a>                <span class="macro">if !</span><span class="self">self</span>.parser().octal {
+<a href=#1492 id=1492 data-nosnippet>1492</a>                <span class="kw">if </span>!<span class="self">self</span>.parser().octal {
 <a href=#1493 id=1493 data-nosnippet>1493</a>                    <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="self">self</span>.error(
 <a href=#1494 id=1494 data-nosnippet>1494</a>                        Span::new(start, <span class="self">self</span>.span_char().end),
 <a href=#1495 id=1495 data-nosnippet>1495</a>                        ast::ErrorKind::UnsupportedBackreference,
@@ -1499,7 +1499,7 @@
 <a href=#1499 id=1499 data-nosnippet>1499</a>                lit.span.start = start;
 <a href=#1500 id=1500 data-nosnippet>1500</a>                <span class="kw">return </span><span class="prelude-val">Ok</span>(Primitive::Literal(lit));
 <a href=#1501 id=1501 data-nosnippet>1501</a>            }
-<a href=#1502 id=1502 data-nosnippet>1502</a>            <span class="string">'8'</span>..=<span class="string">'9' </span><span class="macro">if !</span><span class="self">self</span>.parser().octal =&gt; {
+<a href=#1502 id=1502 data-nosnippet>1502</a>            <span class="string">'8'</span>..=<span class="string">'9' </span><span class="kw">if </span>!<span class="self">self</span>.parser().octal =&gt; {
 <a href=#1503 id=1503 data-nosnippet>1503</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="self">self</span>.error(
 <a href=#1504 id=1504 data-nosnippet>1504</a>                    Span::new(start, <span class="self">self</span>.span_char().end),
 <a href=#1505 id=1505 data-nosnippet>1505</a>                    ast::ErrorKind::UnsupportedBackreference,
@@ -1569,7 +1569,7 @@
 <a href=#1569 id=1569 data-nosnippet>1569</a>                };
 <a href=#1570 id=1570 data-nosnippet>1570</a>                <span class="comment">// After a \b, we "try" to parse things like \b{start} for
 <a href=#1571 id=1571 data-nosnippet>1571</a>                // special word boundary assertions.
-<a href=#1572 id=1572 data-nosnippet>1572</a>                </span><span class="macro">if !</span><span class="self">self</span>.is_eof() &amp;&amp; <span class="self">self</span>.char() == <span class="string">'{' </span>{
+<a href=#1572 id=1572 data-nosnippet>1572</a>                </span><span class="kw">if </span>!<span class="self">self</span>.is_eof() &amp;&amp; <span class="self">self</span>.char() == <span class="string">'{' </span>{
 <a href=#1573 id=1573 data-nosnippet>1573</a>                    <span class="kw">if let </span><span class="prelude-val">Some</span>(kind) =
 <a href=#1574 id=1574 data-nosnippet>1574</a>                        <span class="self">self</span>.maybe_parse_special_word_boundary(start)<span class="question-mark">?
 <a href=#1575 id=1575 data-nosnippet>1575</a>                    </span>{
@@ -1625,7 +1625,7 @@
 <a href=#1625 id=1625 data-nosnippet>1625</a>            <span class="kw">_ </span>=&gt; <span class="bool-val">false</span>,
 <a href=#1626 id=1626 data-nosnippet>1626</a>        };
 <a href=#1627 id=1627 data-nosnippet>1627</a>        <span class="kw">let </span>start = <span class="self">self</span>.pos();
-<a href=#1628 id=1628 data-nosnippet>1628</a>        <span class="macro">if !</span><span class="self">self</span>.bump_and_bump_space() {
+<a href=#1628 id=1628 data-nosnippet>1628</a>        <span class="kw">if </span>!<span class="self">self</span>.bump_and_bump_space() {
 <a href=#1629 id=1629 data-nosnippet>1629</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="self">self</span>.error(
 <a href=#1630 id=1630 data-nosnippet>1630</a>                Span::new(wb_start, <span class="self">self</span>.pos()),
 <a href=#1631 id=1631 data-nosnippet>1631</a>                ast::ErrorKind::SpecialWordOrRepetitionUnexpectedEof,
@@ -1636,7 +1636,7 @@
 <a href=#1636 id=1636 data-nosnippet>1636</a>        // character isn't in [-A-Za-z] (i.e., this can't be a special word
 <a href=#1637 id=1637 data-nosnippet>1637</a>        // boundary), then we bail and let the counted repetition parser deal
 <a href=#1638 id=1638 data-nosnippet>1638</a>        // with this.
-<a href=#1639 id=1639 data-nosnippet>1639</a>        </span><span class="macro">if !</span>is_valid_char(<span class="self">self</span>.char()) {
+<a href=#1639 id=1639 data-nosnippet>1639</a>        </span><span class="kw">if </span>!is_valid_char(<span class="self">self</span>.char()) {
 <a href=#1640 id=1640 data-nosnippet>1640</a>            <span class="self">self</span>.parser().pos.set(start);
 <a href=#1641 id=1641 data-nosnippet>1641</a>            <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
 <a href=#1642 id=1642 data-nosnippet>1642</a>        }
@@ -1644,7 +1644,7 @@
 <a href=#1644 id=1644 data-nosnippet>1644</a>        <span class="comment">// Now collect up our chars until we see a '}'.
 <a href=#1645 id=1645 data-nosnippet>1645</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>scratch = <span class="self">self</span>.parser().scratch.borrow_mut();
 <a href=#1646 id=1646 data-nosnippet>1646</a>        scratch.clear();
-<a href=#1647 id=1647 data-nosnippet>1647</a>        <span class="macro">while !</span><span class="self">self</span>.is_eof() &amp;&amp; is_valid_char(<span class="self">self</span>.char()) {
+<a href=#1647 id=1647 data-nosnippet>1647</a>        <span class="kw">while </span>!<span class="self">self</span>.is_eof() &amp;&amp; is_valid_char(<span class="self">self</span>.char()) {
 <a href=#1648 id=1648 data-nosnippet>1648</a>            scratch.push(<span class="self">self</span>.char());
 <a href=#1649 id=1649 data-nosnippet>1649</a>            <span class="self">self</span>.bump_and_bump_space();
 <a href=#1650 id=1650 data-nosnippet>1650</a>        }
@@ -1720,7 +1720,7 @@
 <a href=#1720 id=1720 data-nosnippet>1720</a>            <span class="string">'u' </span>=&gt; ast::HexLiteralKind::UnicodeShort,
 <a href=#1721 id=1721 data-nosnippet>1721</a>            <span class="kw">_ </span>=&gt; ast::HexLiteralKind::UnicodeLong,
 <a href=#1722 id=1722 data-nosnippet>1722</a>        };
-<a href=#1723 id=1723 data-nosnippet>1723</a>        <span class="macro">if !</span><span class="self">self</span>.bump_and_bump_space() {
+<a href=#1723 id=1723 data-nosnippet>1723</a>        <span class="kw">if </span>!<span class="self">self</span>.bump_and_bump_space() {
 <a href=#1724 id=1724 data-nosnippet>1724</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(
 <a href=#1725 id=1725 data-nosnippet>1725</a>                <span class="self">self</span>.error(<span class="self">self</span>.span(), ast::ErrorKind::EscapeUnexpectedEof)
 <a href=#1726 id=1726 data-nosnippet>1726</a>            );
@@ -1753,7 +1753,7 @@
 <a href=#1753 id=1753 data-nosnippet>1753</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="self">self
 <a href=#1754 id=1754 data-nosnippet>1754</a>                    </span>.error(<span class="self">self</span>.span(), ast::ErrorKind::EscapeUnexpectedEof));
 <a href=#1755 id=1755 data-nosnippet>1755</a>            }
-<a href=#1756 id=1756 data-nosnippet>1756</a>            <span class="macro">if !</span>is_hex(<span class="self">self</span>.char()) {
+<a href=#1756 id=1756 data-nosnippet>1756</a>            <span class="kw">if </span>!is_hex(<span class="self">self</span>.char()) {
 <a href=#1757 id=1757 data-nosnippet>1757</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="self">self</span>.error(
 <a href=#1758 id=1758 data-nosnippet>1758</a>                    <span class="self">self</span>.span_char(),
 <a href=#1759 id=1759 data-nosnippet>1759</a>                    ast::ErrorKind::EscapeHexInvalidDigit,
@@ -1793,7 +1793,7 @@
 <a href=#1793 id=1793 data-nosnippet>1793</a>        <span class="kw">let </span>brace_pos = <span class="self">self</span>.pos();
 <a href=#1794 id=1794 data-nosnippet>1794</a>        <span class="kw">let </span>start = <span class="self">self</span>.span_char().end;
 <a href=#1795 id=1795 data-nosnippet>1795</a>        <span class="kw">while </span><span class="self">self</span>.bump_and_bump_space() &amp;&amp; <span class="self">self</span>.char() != <span class="string">'}' </span>{
-<a href=#1796 id=1796 data-nosnippet>1796</a>            <span class="macro">if !</span>is_hex(<span class="self">self</span>.char()) {
+<a href=#1796 id=1796 data-nosnippet>1796</a>            <span class="kw">if </span>!is_hex(<span class="self">self</span>.char()) {
 <a href=#1797 id=1797 data-nosnippet>1797</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="self">self</span>.error(
 <a href=#1798 id=1798 data-nosnippet>1798</a>                    <span class="self">self</span>.span_char(),
 <a href=#1799 id=1799 data-nosnippet>1799</a>                    ast::ErrorKind::EscapeHexInvalidDigit,
@@ -1844,16 +1844,16 @@
 <a href=#1844 id=1844 data-nosnippet>1844</a>        <span class="kw">let </span><span class="kw-2">mut </span>scratch = <span class="self">self</span>.parser().scratch.borrow_mut();
 <a href=#1845 id=1845 data-nosnippet>1845</a>        scratch.clear();
 <a href=#1846 id=1846 data-nosnippet>1846</a>
-<a href=#1847 id=1847 data-nosnippet>1847</a>        <span class="macro">while !</span><span class="self">self</span>.is_eof() &amp;&amp; <span class="self">self</span>.char().is_whitespace() {
+<a href=#1847 id=1847 data-nosnippet>1847</a>        <span class="kw">while </span>!<span class="self">self</span>.is_eof() &amp;&amp; <span class="self">self</span>.char().is_whitespace() {
 <a href=#1848 id=1848 data-nosnippet>1848</a>            <span class="self">self</span>.bump();
 <a href=#1849 id=1849 data-nosnippet>1849</a>        }
 <a href=#1850 id=1850 data-nosnippet>1850</a>        <span class="kw">let </span>start = <span class="self">self</span>.pos();
-<a href=#1851 id=1851 data-nosnippet>1851</a>        <span class="macro">while !</span><span class="self">self</span>.is_eof() &amp;&amp; <span class="string">'0' </span>&lt;= <span class="self">self</span>.char() &amp;&amp; <span class="self">self</span>.char() &lt;= <span class="string">'9' </span>{
+<a href=#1851 id=1851 data-nosnippet>1851</a>        <span class="kw">while </span>!<span class="self">self</span>.is_eof() &amp;&amp; <span class="string">'0' </span>&lt;= <span class="self">self</span>.char() &amp;&amp; <span class="self">self</span>.char() &lt;= <span class="string">'9' </span>{
 <a href=#1852 id=1852 data-nosnippet>1852</a>            scratch.push(<span class="self">self</span>.char());
 <a href=#1853 id=1853 data-nosnippet>1853</a>            <span class="self">self</span>.bump_and_bump_space();
 <a href=#1854 id=1854 data-nosnippet>1854</a>        }
 <a href=#1855 id=1855 data-nosnippet>1855</a>        <span class="kw">let </span>span = Span::new(start, <span class="self">self</span>.pos());
-<a href=#1856 id=1856 data-nosnippet>1856</a>        <span class="macro">while !</span><span class="self">self</span>.is_eof() &amp;&amp; <span class="self">self</span>.char().is_whitespace() {
+<a href=#1856 id=1856 data-nosnippet>1856</a>        <span class="kw">while </span>!<span class="self">self</span>.is_eof() &amp;&amp; <span class="self">self</span>.char().is_whitespace() {
 <a href=#1857 id=1857 data-nosnippet>1857</a>            <span class="self">self</span>.bump_and_bump_space();
 <a href=#1858 id=1858 data-nosnippet>1858</a>        }
 <a href=#1859 id=1859 data-nosnippet>1859</a>        <span class="kw">let </span>digits = scratch.as_str();
@@ -1890,7 +1890,7 @@
 <a href=#1890 id=1890 data-nosnippet>1890</a>                    // attempt to treat this as the beginning of an ASCII
 <a href=#1891 id=1891 data-nosnippet>1891</a>                    // class. If ASCII class parsing fails, then the parser
 <a href=#1892 id=1892 data-nosnippet>1892</a>                    // backs up to `[`.
-<a href=#1893 id=1893 data-nosnippet>1893</a>                    </span><span class="macro">if !</span><span class="self">self</span>.parser().stack_class.borrow().is_empty() {
+<a href=#1893 id=1893 data-nosnippet>1893</a>                    </span><span class="kw">if </span>!<span class="self">self</span>.parser().stack_class.borrow().is_empty() {
 <a href=#1894 id=1894 data-nosnippet>1894</a>                        <span class="kw">if let </span><span class="prelude-val">Some</span>(cls) = <span class="self">self</span>.maybe_parse_ascii_class() {
 <a href=#1895 id=1895 data-nosnippet>1895</a>                            union.push(ast::ClassSetItem::Ascii(cls));
 <a href=#1896 id=1896 data-nosnippet>1896</a>                            <span class="kw">continue</span>;
@@ -1960,7 +1960,7 @@
 <a href=#1960 id=1960 data-nosnippet>1960</a>        }
 <a href=#1961 id=1961 data-nosnippet>1961</a>        <span class="comment">// OK, now we're parsing a range, so bump past the `-` and parse the
 <a href=#1962 id=1962 data-nosnippet>1962</a>        // second half of the range.
-<a href=#1963 id=1963 data-nosnippet>1963</a>        </span><span class="macro">if !</span><span class="self">self</span>.bump_and_bump_space() {
+<a href=#1963 id=1963 data-nosnippet>1963</a>        </span><span class="kw">if </span>!<span class="self">self</span>.bump_and_bump_space() {
 <a href=#1964 id=1964 data-nosnippet>1964</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="self">self</span>.unclosed_class_error());
 <a href=#1965 id=1965 data-nosnippet>1965</a>        }
 <a href=#1966 id=1966 data-nosnippet>1966</a>        <span class="kw">let </span>prim2 = <span class="self">self</span>.parse_set_class_item()<span class="question-mark">?</span>;
@@ -1969,7 +1969,7 @@
 <a href=#1969 id=1969 data-nosnippet>1969</a>            start: prim1.into_class_literal(<span class="self">self</span>)<span class="question-mark">?</span>,
 <a href=#1970 id=1970 data-nosnippet>1970</a>            end: prim2.into_class_literal(<span class="self">self</span>)<span class="question-mark">?</span>,
 <a href=#1971 id=1971 data-nosnippet>1971</a>        };
-<a href=#1972 id=1972 data-nosnippet>1972</a>        <span class="macro">if !</span>range.is_valid() {
+<a href=#1972 id=1972 data-nosnippet>1972</a>        <span class="kw">if </span>!range.is_valid() {
 <a href=#1973 id=1973 data-nosnippet>1973</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(
 <a href=#1974 id=1974 data-nosnippet>1974</a>                <span class="self">self</span>.error(range.span, ast::ErrorKind::ClassRangeInvalid)
 <a href=#1975 id=1975 data-nosnippet>1975</a>            );
@@ -2024,7 +2024,7 @@
 <a href=#2024 id=2024 data-nosnippet>2024</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;(ast::ClassBracketed, ast::ClassSetUnion)&gt; {
 <a href=#2025 id=2025 data-nosnippet>2025</a>        <span class="macro">assert_eq!</span>(<span class="self">self</span>.char(), <span class="string">'['</span>);
 <a href=#2026 id=2026 data-nosnippet>2026</a>        <span class="kw">let </span>start = <span class="self">self</span>.pos();
-<a href=#2027 id=2027 data-nosnippet>2027</a>        <span class="macro">if !</span><span class="self">self</span>.bump_and_bump_space() {
+<a href=#2027 id=2027 data-nosnippet>2027</a>        <span class="kw">if </span>!<span class="self">self</span>.bump_and_bump_space() {
 <a href=#2028 id=2028 data-nosnippet>2028</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="self">self</span>.error(
 <a href=#2029 id=2029 data-nosnippet>2029</a>                Span::new(start, <span class="self">self</span>.pos()),
 <a href=#2030 id=2030 data-nosnippet>2030</a>                ast::ErrorKind::ClassUnclosed,
@@ -2034,7 +2034,7 @@
 <a href=#2034 id=2034 data-nosnippet>2034</a>        <span class="kw">let </span>negated = <span class="kw">if </span><span class="self">self</span>.char() != <span class="string">'^' </span>{
 <a href=#2035 id=2035 data-nosnippet>2035</a>            <span class="bool-val">false
 <a href=#2036 id=2036 data-nosnippet>2036</a>        </span>} <span class="kw">else </span>{
-<a href=#2037 id=2037 data-nosnippet>2037</a>            <span class="macro">if !</span><span class="self">self</span>.bump_and_bump_space() {
+<a href=#2037 id=2037 data-nosnippet>2037</a>            <span class="kw">if </span>!<span class="self">self</span>.bump_and_bump_space() {
 <a href=#2038 id=2038 data-nosnippet>2038</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="self">self</span>.error(
 <a href=#2039 id=2039 data-nosnippet>2039</a>                    Span::new(start, <span class="self">self</span>.pos()),
 <a href=#2040 id=2040 data-nosnippet>2040</a>                    ast::ErrorKind::ClassUnclosed,
@@ -2051,7 +2051,7 @@
 <a href=#2051 id=2051 data-nosnippet>2051</a>                kind: ast::LiteralKind::Verbatim,
 <a href=#2052 id=2052 data-nosnippet>2052</a>                c: <span class="string">'-'</span>,
 <a href=#2053 id=2053 data-nosnippet>2053</a>            }));
-<a href=#2054 id=2054 data-nosnippet>2054</a>            <span class="macro">if !</span><span class="self">self</span>.bump_and_bump_space() {
+<a href=#2054 id=2054 data-nosnippet>2054</a>            <span class="kw">if </span>!<span class="self">self</span>.bump_and_bump_space() {
 <a href=#2055 id=2055 data-nosnippet>2055</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="self">self</span>.error(
 <a href=#2056 id=2056 data-nosnippet>2056</a>                    Span::new(start, start),
 <a href=#2057 id=2057 data-nosnippet>2057</a>                    ast::ErrorKind::ClassUnclosed,
@@ -2066,7 +2066,7 @@
 <a href=#2066 id=2066 data-nosnippet>2066</a>                kind: ast::LiteralKind::Verbatim,
 <a href=#2067 id=2067 data-nosnippet>2067</a>                c: <span class="string">']'</span>,
 <a href=#2068 id=2068 data-nosnippet>2068</a>            }));
-<a href=#2069 id=2069 data-nosnippet>2069</a>            <span class="macro">if !</span><span class="self">self</span>.bump_and_bump_space() {
+<a href=#2069 id=2069 data-nosnippet>2069</a>            <span class="kw">if </span>!<span class="self">self</span>.bump_and_bump_space() {
 <a href=#2070 id=2070 data-nosnippet>2070</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="self">self</span>.error(
 <a href=#2071 id=2071 data-nosnippet>2071</a>                    Span::new(start, <span class="self">self</span>.pos()),
 <a href=#2072 id=2072 data-nosnippet>2072</a>                    ast::ErrorKind::ClassUnclosed,
@@ -2117,17 +2117,17 @@
 <a href=#2117 id=2117 data-nosnippet>2117</a>        <span class="comment">// If parsing fails, then we back up the parser to this starting point.
 <a href=#2118 id=2118 data-nosnippet>2118</a>        </span><span class="kw">let </span>start = <span class="self">self</span>.pos();
 <a href=#2119 id=2119 data-nosnippet>2119</a>        <span class="kw">let </span><span class="kw-2">mut </span>negated = <span class="bool-val">false</span>;
-<a href=#2120 id=2120 data-nosnippet>2120</a>        <span class="macro">if !</span><span class="self">self</span>.bump() || <span class="self">self</span>.char() != <span class="string">':' </span>{
+<a href=#2120 id=2120 data-nosnippet>2120</a>        <span class="kw">if </span>!<span class="self">self</span>.bump() || <span class="self">self</span>.char() != <span class="string">':' </span>{
 <a href=#2121 id=2121 data-nosnippet>2121</a>            <span class="self">self</span>.parser().pos.set(start);
 <a href=#2122 id=2122 data-nosnippet>2122</a>            <span class="kw">return </span><span class="prelude-val">None</span>;
 <a href=#2123 id=2123 data-nosnippet>2123</a>        }
-<a href=#2124 id=2124 data-nosnippet>2124</a>        <span class="macro">if !</span><span class="self">self</span>.bump() {
+<a href=#2124 id=2124 data-nosnippet>2124</a>        <span class="kw">if </span>!<span class="self">self</span>.bump() {
 <a href=#2125 id=2125 data-nosnippet>2125</a>            <span class="self">self</span>.parser().pos.set(start);
 <a href=#2126 id=2126 data-nosnippet>2126</a>            <span class="kw">return </span><span class="prelude-val">None</span>;
 <a href=#2127 id=2127 data-nosnippet>2127</a>        }
 <a href=#2128 id=2128 data-nosnippet>2128</a>        <span class="kw">if </span><span class="self">self</span>.char() == <span class="string">'^' </span>{
 <a href=#2129 id=2129 data-nosnippet>2129</a>            negated = <span class="bool-val">true</span>;
-<a href=#2130 id=2130 data-nosnippet>2130</a>            <span class="macro">if !</span><span class="self">self</span>.bump() {
+<a href=#2130 id=2130 data-nosnippet>2130</a>            <span class="kw">if </span>!<span class="self">self</span>.bump() {
 <a href=#2131 id=2131 data-nosnippet>2131</a>                <span class="self">self</span>.parser().pos.set(start);
 <a href=#2132 id=2132 data-nosnippet>2132</a>                <span class="kw">return </span><span class="prelude-val">None</span>;
 <a href=#2133 id=2133 data-nosnippet>2133</a>            }
@@ -2139,7 +2139,7 @@
 <a href=#2139 id=2139 data-nosnippet>2139</a>            <span class="kw">return </span><span class="prelude-val">None</span>;
 <a href=#2140 id=2140 data-nosnippet>2140</a>        }
 <a href=#2141 id=2141 data-nosnippet>2141</a>        <span class="kw">let </span>name = <span class="kw-2">&amp;</span><span class="self">self</span>.pattern()[name_start..<span class="self">self</span>.offset()];
-<a href=#2142 id=2142 data-nosnippet>2142</a>        <span class="macro">if !</span><span class="self">self</span>.bump_if(<span class="string">":]"</span>) {
+<a href=#2142 id=2142 data-nosnippet>2142</a>        <span class="kw">if </span>!<span class="self">self</span>.bump_if(<span class="string">":]"</span>) {
 <a href=#2143 id=2143 data-nosnippet>2143</a>            <span class="self">self</span>.parser().pos.set(start);
 <a href=#2144 id=2144 data-nosnippet>2144</a>            <span class="kw">return </span><span class="prelude-val">None</span>;
 <a href=#2145 id=2145 data-nosnippet>2145</a>        }
@@ -2171,7 +2171,7 @@
 <a href=#2171 id=2171 data-nosnippet>2171</a>        scratch.clear();
 <a href=#2172 id=2172 data-nosnippet>2172</a>
 <a href=#2173 id=2173 data-nosnippet>2173</a>        <span class="kw">let </span>negated = <span class="self">self</span>.char() == <span class="string">'P'</span>;
-<a href=#2174 id=2174 data-nosnippet>2174</a>        <span class="macro">if !</span><span class="self">self</span>.bump_and_bump_space() {
+<a href=#2174 id=2174 data-nosnippet>2174</a>        <span class="kw">if </span>!<span class="self">self</span>.bump_and_bump_space() {
 <a href=#2175 id=2175 data-nosnippet>2175</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(
 <a href=#2176 id=2176 data-nosnippet>2176</a>                <span class="self">self</span>.error(<span class="self">self</span>.span(), ast::ErrorKind::EscapeUnexpectedEof)
 <a href=#2177 id=2177 data-nosnippet>2177</a>            );
@@ -2447,7 +2447,7 @@
 <a href=#2447 id=2447 data-nosnippet>2447</a>        (<span class="macro-nonterminal">$left</span>:expr, <span class="macro-nonterminal">$right</span>:expr) =&gt; {{
 <a href=#2448 id=2448 data-nosnippet>2448</a>            <span class="kw">match </span>(<span class="kw-2">&amp;</span><span class="macro-nonterminal">$left</span>, <span class="kw-2">&amp;</span><span class="macro-nonterminal">$right</span>) {
 <a href=#2449 id=2449 data-nosnippet>2449</a>                (left_val, right_val) =&gt; {
-<a href=#2450 id=2450 data-nosnippet>2450</a>                    <span class="macro">if !</span>(<span class="kw-2">*</span>left_val == <span class="kw-2">*</span>right_val) {
+<a href=#2450 id=2450 data-nosnippet>2450</a>                    <span class="kw">if </span>!(<span class="kw-2">*</span>left_val == <span class="kw-2">*</span>right_val) {
 <a href=#2451 id=2451 data-nosnippet>2451</a>                        <span class="macro">panic!</span>(
 <a href=#2452 id=2452 data-nosnippet>2452</a>                            <span class="string">"assertion failed: `(left == right)`\n\n\
 <a href=#2453 id=2453 data-nosnippet>2453</a>                             left:  `{:?}`\nright: `{:?}`\n\n"</span>,

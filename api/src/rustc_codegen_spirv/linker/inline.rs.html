@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/linker/inline.rs`."><title>inline.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (bd3ac0330 2025-11-01)" data-channel="nightly" data-search-js="search-5c29b3b5.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/linker/</div>inline.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! This algorithm is not intended to be an optimization, it is rather for legalization.
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/linker/inline.rs`."><title>inline.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (01867557c 2025-11-12)" data-channel="nightly" data-search-js="search-8e3fad08.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/linker/</div>inline.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! This algorithm is not intended to be an optimization, it is rather for legalization.
 <a href=#2 id=2 data-nosnippet>2</a>//! Specifically, spir-v disallows things like a `StorageClass::Function` pointer to a
 <a href=#3 id=3 data-nosnippet>3</a>//! `StorageClass::Input` pointer. Our frontend definitely allows it, though, this is like taking a
 <a href=#4 id=4 data-nosnippet>4</a>//! `&amp;Input&lt;T&gt;` in a function! So, we inline all functions that take these "illegal" pointers, then
@@ -206,7 +206,7 @@
 <a href=#206 id=206 data-nosnippet>206</a>    <span class="kw">let </span><span class="kw-2">mut </span>finished = <span class="macro">vec!</span>[<span class="bool-val">false</span>; module.functions.len()];
 <a href=#207 id=207 data-nosnippet>207</a>    <span class="kw">let </span><span class="kw-2">mut </span>has_recursion = <span class="prelude-val">None</span>;
 <a href=#208 id=208 data-nosnippet>208</a>    <span class="kw">for </span>index <span class="kw">in </span><span class="number">0</span>..module.functions.len() {
-<a href=#209 id=209 data-nosnippet>209</a>        <span class="macro">if !</span>discovered[index] &amp;&amp; !finished[index] {
+<a href=#209 id=209 data-nosnippet>209</a>        <span class="kw">if </span>!discovered[index] &amp;&amp; !finished[index] {
 <a href=#210 id=210 data-nosnippet>210</a>            visit(
 <a href=#211 id=211 data-nosnippet>211</a>                sess,
 <a href=#212 id=212 data-nosnippet>212</a>                module,
@@ -241,7 +241,7 @@
 <a href=#241 id=241 data-nosnippet>241</a>                <span class="kw">break</span>;
 <a href=#242 id=242 data-nosnippet>242</a>            }
 <a href=#243 id=243 data-nosnippet>243</a>
-<a href=#244 id=244 data-nosnippet>244</a>            <span class="macro">if !</span>finished[next] {
+<a href=#244 id=244 data-nosnippet>244</a>            <span class="kw">if </span>!finished[next] {
 <a href=#245 id=245 data-nosnippet>245</a>                visit(
 <a href=#246 id=246 data-nosnippet>246</a>                    sess,
 <a href=#247 id=247 data-nosnippet>247</a>                    module,
@@ -398,7 +398,7 @@
 <a href=#398 id=398 data-nosnippet>398</a>    <span class="kw">let </span>ret_ty = legal_globals
 <a href=#399 id=399 data-nosnippet>399</a>        .get(<span class="kw-2">&amp;</span>callee_def.result_type.unwrap())
 <a href=#400 id=400 data-nosnippet>400</a>        .ok_or(MustInlineToLegalize(<span class="string">"illegal return type"</span>))<span class="question-mark">?</span>;
-<a href=#401 id=401 data-nosnippet>401</a>    <span class="macro">if !</span>ret_ty.legal_as_fn_ret_ty() {
+<a href=#401 id=401 data-nosnippet>401</a>    <span class="kw">if </span>!ret_ty.legal_as_fn_ret_ty() {
 <a href=#402 id=402 data-nosnippet>402</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(MustInlineToLegalize(<span class="string">"illegal (pointer) return type"</span>));
 <a href=#403 id=403 data-nosnippet>403</a>    }
 <a href=#404 id=404 data-nosnippet>404</a>
@@ -406,7 +406,7 @@
 <a href=#406 id=406 data-nosnippet>406</a>        <span class="kw">let </span>param_ty = legal_globals
 <a href=#407 id=407 data-nosnippet>407</a>            .get(param.result_type.as_ref().unwrap())
 <a href=#408 id=408 data-nosnippet>408</a>            .ok_or(MustInlineToLegalize(<span class="string">"illegal parameter type"</span>))<span class="question-mark">?</span>;
-<a href=#409 id=409 data-nosnippet>409</a>        <span class="macro">if !</span>param_ty.legal_as_fn_param_ty() {
+<a href=#409 id=409 data-nosnippet>409</a>        <span class="kw">if </span>!param_ty.legal_as_fn_param_ty() {
 <a href=#410 id=410 data-nosnippet>410</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(MustInlineToLegalize(<span class="string">"illegal (pointer) parameter type"</span>));
 <a href=#411 id=411 data-nosnippet>411</a>        }
 <a href=#412 id=412 data-nosnippet>412</a>
@@ -446,7 +446,7 @@
 <a href=#446 id=446 data-nosnippet>446</a>                        )
 <a href=#447 id=447 data-nosnippet>447</a>                        .map(|caller_inst| caller_inst.result_id.unwrap());
 <a href=#448 id=448 data-nosnippet>448</a>
-<a href=#449 id=449 data-nosnippet>449</a>                    <span class="macro">if !</span>caller_param_and_var_ids.any(|id| ptr_arg == id) {
+<a href=#449 id=449 data-nosnippet>449</a>                    <span class="kw">if </span>!caller_param_and_var_ids.any(|id| ptr_arg == id) {
 <a href=#450 id=450 data-nosnippet>450</a>                        <span class="kw">return </span><span class="prelude-val">Err</span>(MustInlineToLegalize(<span class="string">"illegal (pointer) argument"</span>));
 <a href=#451 id=451 data-nosnippet>451</a>                    }
 <a href=#452 id=452 data-nosnippet>452</a>                }
@@ -531,7 +531,7 @@
 <a href=#531 id=531 data-nosnippet>531</a>            <span class="comment">// If we successfully inlined a block, then repeat processing on the same block, in
 <a href=#532 id=532 data-nosnippet>532</a>            // case the newly inlined block has more inlined calls.
 <a href=#533 id=533 data-nosnippet>533</a>            // TODO: This is quadratic
-<a href=#534 id=534 data-nosnippet>534</a>            </span><span class="macro">if !</span><span class="self">self</span>.inline_block(function, block_idx, functions) {
+<a href=#534 id=534 data-nosnippet>534</a>            </span><span class="kw">if </span>!<span class="self">self</span>.inline_block(function, block_idx, functions) {
 <a href=#535 id=535 data-nosnippet>535</a>                <span class="comment">// TODO(eddyb) skip past the inlined callee without rescanning it.
 <a href=#536 id=536 data-nosnippet>536</a>                </span>block_idx += <span class="number">1</span>;
 <a href=#537 id=537 data-nosnippet>537</a>            }
@@ -1108,7 +1108,7 @@
 <a href=#1108 id=1108 data-nosnippet>1108</a>                <span class="kw">continue </span><span class="lifetime">'outer</span>;
 <a href=#1109 id=1109 data-nosnippet>1109</a>            }
 <a href=#1110 id=1110 data-nosnippet>1110</a>            <span class="kw">let </span>pred = preds[<span class="number">0</span>];
-<a href=#1111 id=1111 data-nosnippet>1111</a>            <span class="macro">if !</span>function.blocks[pred].instructions.is_empty() {
+<a href=#1111 id=1111 data-nosnippet>1111</a>            <span class="kw">if </span>!function.blocks[pred].instructions.is_empty() {
 <a href=#1112 id=1112 data-nosnippet>1112</a>                <span class="kw">break </span>pred;
 <a href=#1113 id=1113 data-nosnippet>1113</a>            }
 <a href=#1114 id=1114 data-nosnippet>1114</a>            preds = <span class="kw-2">&amp;</span>all_preds[pred];

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-automata-0.4.14/src/util/determinize/state.rs`."><title>state.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (bd3ac0330 2025-11-01)" data-channel="nightly" data-search-js="search-5c29b3b5.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../../static.files/src-script-813739b1.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">regex_automata/util/determinize/</div>state.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/*!
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-automata-0.4.14/src/util/determinize/state.rs`."><title>state.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (01867557c 2025-11-12)" data-channel="nightly" data-search-js="search-8e3fad08.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../../static.files/src-script-813739b1.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">regex_automata/util/determinize/</div>state.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/*!
 <a href=#2 id=2 data-nosnippet>2</a>This module defines a DFA state representation and builders for constructing
 <a href=#3 id=3 data-nosnippet>3</a>DFA states.
 <a href=#4 id=4 data-nosnippet>4</a>
@@ -460,9 +460,9 @@
 <a href=#460 id=460 data-nosnippet>460</a>    ///
 <a href=#461 id=461 data-nosnippet>461</a>    /// If this state is not a match state, then this always returns 0.
 <a href=#462 id=462 data-nosnippet>462</a>    </span><span class="kw">fn </span>match_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-<a href=#463 id=463 data-nosnippet>463</a>        <span class="macro">if !</span><span class="self">self</span>.is_match() {
+<a href=#463 id=463 data-nosnippet>463</a>        <span class="kw">if </span>!<span class="self">self</span>.is_match() {
 <a href=#464 id=464 data-nosnippet>464</a>            <span class="number">0
-<a href=#465 id=465 data-nosnippet>465</a>        </span>} <span class="kw">else </span><span class="macro">if !</span><span class="self">self</span>.has_pattern_ids() {
+<a href=#465 id=465 data-nosnippet>465</a>        </span>} <span class="kw">else if </span>!<span class="self">self</span>.has_pattern_ids() {
 <a href=#466 id=466 data-nosnippet>466</a>            <span class="number">1
 <a href=#467 id=467 data-nosnippet>467</a>        </span>} <span class="kw">else </span>{
 <a href=#468 id=468 data-nosnippet>468</a>            <span class="self">self</span>.encoded_pattern_len()
@@ -474,7 +474,7 @@
 <a href=#474 id=474 data-nosnippet>474</a>    /// If the given index is greater than or equal to `match_len()` for this
 <a href=#475 id=475 data-nosnippet>475</a>    /// state, then this could panic or return incorrect results.
 <a href=#476 id=476 data-nosnippet>476</a>    </span><span class="kw">fn </span>match_pattern(<span class="kw-2">&amp;</span><span class="self">self</span>, index: usize) -&gt; PatternID {
-<a href=#477 id=477 data-nosnippet>477</a>        <span class="macro">if !</span><span class="self">self</span>.has_pattern_ids() {
+<a href=#477 id=477 data-nosnippet>477</a>        <span class="kw">if </span>!<span class="self">self</span>.has_pattern_ids() {
 <a href=#478 id=478 data-nosnippet>478</a>            PatternID::ZERO
 <a href=#479 id=479 data-nosnippet>479</a>        } <span class="kw">else </span>{
 <a href=#480 id=480 data-nosnippet>480</a>            <span class="kw">let </span>offset = <span class="number">13 </span>+ index * PatternID::SIZE;
@@ -487,7 +487,7 @@
 <a href=#487 id=487 data-nosnippet>487</a>    <span class="doccomment">/// Returns a copy of all match pattern IDs in this state. If this state
 <a href=#488 id=488 data-nosnippet>488</a>    /// is not a match state, then this returns None.
 <a href=#489 id=489 data-nosnippet>489</a>    </span><span class="kw">fn </span>match_pattern_ids(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;PatternID&gt;&gt; {
-<a href=#490 id=490 data-nosnippet>490</a>        <span class="macro">if !</span><span class="self">self</span>.is_match() {
+<a href=#490 id=490 data-nosnippet>490</a>        <span class="kw">if </span>!<span class="self">self</span>.is_match() {
 <a href=#491 id=491 data-nosnippet>491</a>            <span class="kw">return </span><span class="prelude-val">None</span>;
 <a href=#492 id=492 data-nosnippet>492</a>        }
 <a href=#493 id=493 data-nosnippet>493</a>        <span class="kw">let </span><span class="kw-2">mut </span>pids = <span class="macro">alloc::vec!</span>[];
@@ -497,19 +497,19 @@
 <a href=#497 id=497 data-nosnippet>497</a>
 <a href=#498 id=498 data-nosnippet>498</a>    <span class="doccomment">/// Calls the given function on every pattern ID in this state.
 <a href=#499 id=499 data-nosnippet>499</a>    </span><span class="kw">fn </span>iter_match_pattern_ids&lt;F: FnMut(PatternID)&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>f: F) {
-<a href=#500 id=500 data-nosnippet>500</a>        <span class="macro">if !</span><span class="self">self</span>.is_match() {
+<a href=#500 id=500 data-nosnippet>500</a>        <span class="kw">if </span>!<span class="self">self</span>.is_match() {
 <a href=#501 id=501 data-nosnippet>501</a>            <span class="kw">return</span>;
 <a href=#502 id=502 data-nosnippet>502</a>        }
 <a href=#503 id=503 data-nosnippet>503</a>        <span class="comment">// As an optimization for a very common case, when this is a match
 <a href=#504 id=504 data-nosnippet>504</a>        // state for an NFA with only one pattern, we don't actually write the
 <a href=#505 id=505 data-nosnippet>505</a>        // pattern ID to the state representation. Instead, we know it must
 <a href=#506 id=506 data-nosnippet>506</a>        // be there since it is the only possible choice.
-<a href=#507 id=507 data-nosnippet>507</a>        </span><span class="macro">if !</span><span class="self">self</span>.has_pattern_ids() {
+<a href=#507 id=507 data-nosnippet>507</a>        </span><span class="kw">if </span>!<span class="self">self</span>.has_pattern_ids() {
 <a href=#508 id=508 data-nosnippet>508</a>            f(PatternID::ZERO);
 <a href=#509 id=509 data-nosnippet>509</a>            <span class="kw">return</span>;
 <a href=#510 id=510 data-nosnippet>510</a>        }
 <a href=#511 id=511 data-nosnippet>511</a>        <span class="kw">let </span><span class="kw-2">mut </span>pids = <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>[<span class="number">13</span>..<span class="self">self</span>.pattern_offset_end()];
-<a href=#512 id=512 data-nosnippet>512</a>        <span class="macro">while !</span>pids.is_empty() {
+<a href=#512 id=512 data-nosnippet>512</a>        <span class="kw">while </span>!pids.is_empty() {
 <a href=#513 id=513 data-nosnippet>513</a>            <span class="kw">let </span>pid = wire::read_u32(pids);
 <a href=#514 id=514 data-nosnippet>514</a>            pids = <span class="kw-2">&amp;</span>pids[PatternID::SIZE..];
 <a href=#515 id=515 data-nosnippet>515</a>            <span class="comment">// This is OK since we only ever serialize valid PatternIDs to
@@ -523,7 +523,7 @@
 <a href=#523 id=523 data-nosnippet>523</a>    </span><span class="kw">fn </span>iter_nfa_state_ids&lt;F: FnMut(StateID)&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>f: F) {
 <a href=#524 id=524 data-nosnippet>524</a>        <span class="kw">let </span><span class="kw-2">mut </span>sids = <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>[<span class="self">self</span>.pattern_offset_end()..];
 <a href=#525 id=525 data-nosnippet>525</a>        <span class="kw">let </span><span class="kw-2">mut </span>prev = <span class="number">0i32</span>;
-<a href=#526 id=526 data-nosnippet>526</a>        <span class="macro">while !</span>sids.is_empty() {
+<a href=#526 id=526 data-nosnippet>526</a>        <span class="kw">while </span>!sids.is_empty() {
 <a href=#527 id=527 data-nosnippet>527</a>            <span class="kw">let </span>(delta, nr) = read_vari32(sids);
 <a href=#528 id=528 data-nosnippet>528</a>            sids = <span class="kw-2">&amp;</span>sids[nr..];
 <a href=#529 id=529 data-nosnippet>529</a>            <span class="kw">let </span>sid = prev + delta;
@@ -553,7 +553,7 @@
 <a href=#553 id=553 data-nosnippet>553</a>    /// ID `PatternID::ZERO` is not encoded when it's the only pattern ID in
 <a href=#554 id=554 data-nosnippet>554</a>    /// the match state (the overwhelming common case).
 <a href=#555 id=555 data-nosnippet>555</a>    </span><span class="kw">fn </span>encoded_pattern_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-<a href=#556 id=556 data-nosnippet>556</a>        <span class="macro">if !</span><span class="self">self</span>.has_pattern_ids() {
+<a href=#556 id=556 data-nosnippet>556</a>        <span class="kw">if </span>!<span class="self">self</span>.has_pattern_ids() {
 <a href=#557 id=557 data-nosnippet>557</a>            <span class="kw">return </span><span class="number">0</span>;
 <a href=#558 id=558 data-nosnippet>558</a>        }
 <a href=#559 id=559 data-nosnippet>559</a>        <span class="comment">// This unwrap is OK since the total number of patterns is always
@@ -665,7 +665,7 @@
 <a href=#665 id=665 data-nosnippet>665</a>        // In order to know whether pattern IDs need to be explicitly read or
 <a href=#666 id=666 data-nosnippet>666</a>        // not, we use another internal-only bit, 'has_pattern_ids', to
 <a href=#667 id=667 data-nosnippet>667</a>        // indicate whether they have been explicitly written or not.
-<a href=#668 id=668 data-nosnippet>668</a>        </span><span class="macro">if !</span><span class="self">self</span>.repr().has_pattern_ids() {
+<a href=#668 id=668 data-nosnippet>668</a>        </span><span class="kw">if </span>!<span class="self">self</span>.repr().has_pattern_ids() {
 <a href=#669 id=669 data-nosnippet>669</a>            <span class="kw">if </span>pid == PatternID::ZERO {
 <a href=#670 id=670 data-nosnippet>670</a>                <span class="self">self</span>.set_is_match();
 <a href=#671 id=671 data-nosnippet>671</a>                <span class="kw">return</span>;
@@ -700,7 +700,7 @@
 <a href=#700 id=700 data-nosnippet>700</a>    /// StateBuilderNFA.
 <a href=#701 id=701 data-nosnippet>701</a>    </span><span class="kw">fn </span>close_match_pattern_ids(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
 <a href=#702 id=702 data-nosnippet>702</a>        <span class="comment">// If we never wrote any pattern IDs, then there's nothing to do here.
-<a href=#703 id=703 data-nosnippet>703</a>        </span><span class="macro">if !</span><span class="self">self</span>.repr().has_pattern_ids() {
+<a href=#703 id=703 data-nosnippet>703</a>        </span><span class="kw">if </span>!<span class="self">self</span>.repr().has_pattern_ids() {
 <a href=#704 id=704 data-nosnippet>704</a>            <span class="kw">return</span>;
 <a href=#705 id=705 data-nosnippet>705</a>        }
 <a href=#706 id=706 data-nosnippet>706</a>        <span class="kw">let </span>patsize = PatternID::SIZE;

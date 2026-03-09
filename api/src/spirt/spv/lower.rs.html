@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spirt-0.4.0/src/spv/lower.rs`."><title>lower.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="spirt" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (bd3ac0330 2025-11-01)" data-channel="nightly" data-search-js="search-5c29b3b5.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">spirt/spv/</div>lower.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! SPIR-V to SPIR-T lowering.
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spirt-0.4.0/src/spv/lower.rs`."><title>lower.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="spirt" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (01867557c 2025-11-12)" data-channel="nightly" data-search-js="search-8e3fad08.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">spirt/spv/</div>lower.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! SPIR-V to SPIR-T lowering.
 <a href=#2 id=2 data-nosnippet>2</a>
 <a href=#3 id=3 data-nosnippet>3</a></span><span class="kw">use </span><span class="kw">crate</span>::spv::{<span class="self">self</span>, spec};
 <a href=#4 id=4 data-nosnippet>4</a><span class="comment">// FIXME(eddyb) import more to avoid `crate::` everywhere.
@@ -804,11 +804,11 @@
 <a href=#804 id=804 data-nosnippet>804</a>            }
 <a href=#805 id=805 data-nosnippet>805</a>        }
 <a href=#806 id=806 data-nosnippet>806</a>
-<a href=#807 id=807 data-nosnippet>807</a>        <span class="macro">if !</span>has_memory_model {
+<a href=#807 id=807 data-nosnippet>807</a>        <span class="kw">if </span>!has_memory_model {
 <a href=#808 id=808 data-nosnippet>808</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">"missing OpMemoryModel"</span>));
 <a href=#809 id=809 data-nosnippet>809</a>        }
 <a href=#810 id=810 data-nosnippet>810</a>
-<a href=#811 id=811 data-nosnippet>811</a>        <span class="macro">if !</span>pending_attrs.is_empty() {
+<a href=#811 id=811 data-nosnippet>811</a>        <span class="kw">if </span>!pending_attrs.is_empty() {
 <a href=#812 id=812 data-nosnippet>812</a>            <span class="kw">let </span>ids = pending_attrs.keys().collect::&lt;BTreeSet&lt;<span class="kw">_</span>&gt;&gt;();
 <a href=#813 id=813 data-nosnippet>813</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"decorated IDs never defined: {ids:?}"</span>)));
 <a href=#814 id=814 data-nosnippet>814</a>        }
@@ -1372,7 +1372,7 @@
 <a href=#1372 id=1372 data-nosnippet>1372</a>                    <span class="kw">for </span><span class="kw-2">&amp;</span>id <span class="kw">in </span>ids {
 <a href=#1373 id=1373 data-nosnippet>1373</a>                        <span class="kw">match </span>lookup_global_or_local_id_for_data_or_control_inst_input(id)<span class="question-mark">? </span>{
 <a href=#1374 id=1374 data-nosnippet>1374</a>                            LocalIdDef::Value(v) =&gt; {
-<a href=#1375 id=1375 data-nosnippet>1375</a>                                <span class="macro">if !</span>targets.is_empty() {
+<a href=#1375 id=1375 data-nosnippet>1375</a>                                <span class="kw">if </span>!targets.is_empty() {
 <a href=#1376 id=1376 data-nosnippet>1376</a>                                    <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(
 <a href=#1377 id=1377 data-nosnippet>1377</a>                                        <span class="string">"out of order: value operand \
 <a href=#1378 id=1378 data-nosnippet>1378</a>                                         after target label ID"</span>,
@@ -1424,7 +1424,7 @@
 <a href=#1424 id=1424 data-nosnippet>1424</a>                            target_inputs,
 <a href=#1425 id=1425 data-nosnippet>1425</a>                        });
 <a href=#1426 id=1426 data-nosnippet>1426</a>                } <span class="kw">else if </span>opcode == wk.OpPhi {
-<a href=#1427 id=1427 data-nosnippet>1427</a>                    <span class="macro">if !</span>current_block_control_region_def.children.is_empty() {
+<a href=#1427 id=1427 data-nosnippet>1427</a>                    <span class="kw">if </span>!current_block_control_region_def.children.is_empty() {
 <a href=#1428 id=1428 data-nosnippet>1428</a>                        <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(
 <a href=#1429 id=1429 data-nosnippet>1429</a>                            <span class="string">"out of order: `OpPhi`s should come before \
 <a href=#1430 id=1430 data-nosnippet>1430</a>                             the rest of the block's instructions"</span>,
@@ -1440,7 +1440,7 @@
 <a href=#1440 id=1440 data-nosnippet>1440</a>                            next_raw_inst.without_ids.opcode == wk.OpLabel
 <a href=#1441 id=1441 data-nosnippet>1441</a>                        });
 <a href=#1442 id=1442 data-nosnippet>1442</a>
-<a href=#1443 id=1443 data-nosnippet>1443</a>                    <span class="macro">if !</span>is_second_to_last_in_block {
+<a href=#1443 id=1443 data-nosnippet>1443</a>                    <span class="kw">if </span>!is_second_to_last_in_block {
 <a href=#1444 id=1444 data-nosnippet>1444</a>                        <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(
 <a href=#1445 id=1445 data-nosnippet>1445</a>                            <span class="string">"out of order: a merge instruction should be the last \
 <a href=#1446 id=1446 data-nosnippet>1446</a>                             instruction before the block's terminator"</span>,
@@ -1605,7 +1605,7 @@
 <a href=#1605 id=1605 data-nosnippet>1605</a>
 <a href=#1606 id=1606 data-nosnippet>1606</a>            <span class="comment">// FIXME(eddyb) all functions should have the appropriate number of
 <a href=#1607 id=1607 data-nosnippet>1607</a>            // `OpFunctionParameter`, even imports.
-<a href=#1608 id=1608 data-nosnippet>1608</a>            </span><span class="macro">if !</span>params.is_empty() {
+<a href=#1608 id=1608 data-nosnippet>1608</a>            </span><span class="kw">if </span>!params.is_empty() {
 <a href=#1609 id=1609 data-nosnippet>1609</a>                <span class="kw">if </span>func_decl.params.len() != params.len() {
 <a href=#1610 id=1610 data-nosnippet>1610</a>                    <span class="comment">// FIXME(remove) embed IDs in errors by moving them to the
 <a href=#1611 id=1611 data-nosnippet>1611</a>                    // `let invalid = |...| ...;` closure that wraps insts.
@@ -1646,7 +1646,7 @@
 <a href=#1646 id=1646 data-nosnippet>1646</a>                }
 <a href=#1647 id=1647 data-nosnippet>1647</a>            }
 <a href=#1648 id=1648 data-nosnippet>1648</a>
-<a href=#1649 id=1649 data-nosnippet>1649</a>            <span class="macro">if !</span>phi_to_values.is_empty() {
+<a href=#1649 id=1649 data-nosnippet>1649</a>            <span class="kw">if </span>!phi_to_values.is_empty() {
 <a href=#1650 id=1650 data-nosnippet>1650</a>                <span class="kw">let </span><span class="kw-2">mut </span>edges = phi_to_values
 <a href=#1651 id=1651 data-nosnippet>1651</a>                    .keys()
 <a href=#1652 id=1652 data-nosnippet>1652</a>                    .map(|key| <span class="macro">format!</span>(<span class="string">"%{} -&gt; %{}"</span>, key.source_block_id, key.target_block_id))

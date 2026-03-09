@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/work/rust-gpu/rust-gpu/target/debug/build/rustc_codegen_spirv-3e58461cfd82a9a7/out/pqp_cg_ssa/src/back/linker.rs`."><title>linker.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../../../../../../../../../../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../../../../../../../../../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../../../../../../../../../../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../../../../../../../../../../../../../" data-static-root-path="../../../../../../../../../../../../../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (bd3ac0330 2025-11-01)" data-channel="nightly" data-search-js="search-5c29b3b5.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../../../../../../../../../../../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../../../../../../../../../../../../../static.files/src-script-813739b1.js"></script><script defer src="../../../../../../../../../../../../../../../src-files.js"></script><script defer src="../../../../../../../../../../../../../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../../../../../../../../../../../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../../../../../../../../../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../../../../../../../../../../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/Users/runner/work/rust-gpu/rust-gpu/target/debug/build/rustc_codegen_spirv-3e58461cfd82a9a7/out/pqp_cg_ssa/src/back/</div>linker.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>std::ffi::{OsStr, OsString};
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/work/rust-gpu/rust-gpu/target/debug/build/rustc_codegen_spirv-3e58461cfd82a9a7/out/pqp_cg_ssa/src/back/linker.rs`."><title>linker.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../../../../../../../../../../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../../../../../../../../../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../../../../../../../../../../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../../../../../../../../../../../../../" data-static-root-path="../../../../../../../../../../../../../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (01867557c 2025-11-12)" data-channel="nightly" data-search-js="search-8e3fad08.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../../../../../../../../../../../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../../../../../../../../../../../../../static.files/src-script-813739b1.js"></script><script defer src="../../../../../../../../../../../../../../../src-files.js"></script><script defer src="../../../../../../../../../../../../../../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../../../../../../../../../../../../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../../../../../../../../../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../../../../../../../../../../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/Users/runner/work/rust-gpu/rust-gpu/target/debug/build/rustc_codegen_spirv-3e58461cfd82a9a7/out/pqp_cg_ssa/src/back/</div>linker.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>std::ffi::{OsStr, OsString};
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span>std::fs::{<span class="self">self</span>, File};
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span>std::io::prelude::<span class="kw-2">*</span>;
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span>std::path::{Path, PathBuf};
@@ -17,7 +17,7 @@
 <a href=#17 id=17 data-nosnippet>17</a><span class="kw">use </span>rustc_middle::ty::TyCtxt;
 <a href=#18 id=18 data-nosnippet>18</a><span class="kw">use </span>rustc_session::Session;
 <a href=#19 id=19 data-nosnippet>19</a><span class="kw">use </span>rustc_session::config::{<span class="self">self</span>, CrateType, DebugInfo, LinkerPluginLto, Lto, OptLevel, Strip};
-<a href=#20 id=20 data-nosnippet>20</a><span class="kw">use </span>rustc_target::spec::{Cc, LinkOutputKind, LinkerFlavor, Lld};
+<a href=#20 id=20 data-nosnippet>20</a><span class="kw">use </span>rustc_target::spec::{Abi, Arch, Cc, LinkOutputKind, LinkerFlavor, Lld, Os};
 <a href=#21 id=21 data-nosnippet>21</a><span class="kw">use </span>tracing::{debug, warn};
 <a href=#22 id=22 data-nosnippet>22</a>
 <a href=#23 id=23 data-nosnippet>23</a><span class="kw">use </span><span class="kw">super</span>::command::Command;
@@ -53,7 +53,7 @@
 <a href=#53 id=53 data-nosnippet>53</a>    target_cpu: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
 <a href=#54 id=54 data-nosnippet>54</a>    codegen_backend: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
 <a href=#55 id=55 data-nosnippet>55</a>) -&gt; Box&lt;<span class="kw">dyn </span>Linker + <span class="lifetime">'a</span>&gt; {
-<a href=#56 id=56 data-nosnippet>56</a>    <span class="kw">let </span>msvc_tool = find_msvc_tools::find_tool(<span class="kw-2">&amp;</span>sess.target.arch, <span class="string">"link.exe"</span>);
+<a href=#56 id=56 data-nosnippet>56</a>    <span class="kw">let </span>msvc_tool = find_msvc_tools::find_tool(sess.target.arch.desc(), <span class="string">"link.exe"</span>);
 <a href=#57 id=57 data-nosnippet>57</a>
 <a href=#58 id=58 data-nosnippet>58</a>    <span class="comment">// If our linker looks like a batch script on Windows then to execute this
 <a href=#59 id=59 data-nosnippet>59</a>    // we'll need to spawn `cmd` explicitly. This is primarily done to handle
@@ -83,15 +83,15 @@
 <a href=#83 id=83 data-nosnippet>83</a>    // To comply with the Windows App Certification Kit,
 <a href=#84 id=84 data-nosnippet>84</a>    // MSVC needs to link with the Store versions of the runtime libraries (vcruntime, msvcrt, etc).
 <a href=#85 id=85 data-nosnippet>85</a>    </span><span class="kw">let </span>t = <span class="kw-2">&amp;</span>sess.target;
-<a href=#86 id=86 data-nosnippet>86</a>    <span class="kw">if </span><span class="macro">matches!</span>(flavor, LinkerFlavor::Msvc(..)) &amp;&amp; t.vendor == <span class="string">"uwp" </span>{
+<a href=#86 id=86 data-nosnippet>86</a>    <span class="kw">if </span><span class="macro">matches!</span>(flavor, LinkerFlavor::Msvc(..)) &amp;&amp; t.abi == Abi::Uwp {
 <a href=#87 id=87 data-nosnippet>87</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>tool) = msvc_tool {
 <a href=#88 id=88 data-nosnippet>88</a>            <span class="kw">let </span>original_path = tool.path();
 <a href=#89 id=89 data-nosnippet>89</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(root_lib_path) = original_path.ancestors().nth(<span class="number">4</span>) {
-<a href=#90 id=90 data-nosnippet>90</a>                <span class="kw">let </span>arch = <span class="kw">match </span>t.arch.as_ref() {
-<a href=#91 id=91 data-nosnippet>91</a>                    <span class="string">"x86_64" </span>=&gt; <span class="prelude-val">Some</span>(<span class="string">"x64"</span>),
-<a href=#92 id=92 data-nosnippet>92</a>                    <span class="string">"x86" </span>=&gt; <span class="prelude-val">Some</span>(<span class="string">"x86"</span>),
-<a href=#93 id=93 data-nosnippet>93</a>                    <span class="string">"aarch64" </span>=&gt; <span class="prelude-val">Some</span>(<span class="string">"arm64"</span>),
-<a href=#94 id=94 data-nosnippet>94</a>                    <span class="string">"arm" </span>=&gt; <span class="prelude-val">Some</span>(<span class="string">"arm"</span>),
+<a href=#90 id=90 data-nosnippet>90</a>                <span class="kw">let </span>arch = <span class="kw">match </span>t.arch {
+<a href=#91 id=91 data-nosnippet>91</a>                    Arch::X86_64 =&gt; <span class="prelude-val">Some</span>(<span class="string">"x64"</span>),
+<a href=#92 id=92 data-nosnippet>92</a>                    Arch::X86 =&gt; <span class="prelude-val">Some</span>(<span class="string">"x86"</span>),
+<a href=#93 id=93 data-nosnippet>93</a>                    Arch::AArch64 =&gt; <span class="prelude-val">Some</span>(<span class="string">"arm64"</span>),
+<a href=#94 id=94 data-nosnippet>94</a>                    Arch::Arm =&gt; <span class="prelude-val">Some</span>(<span class="string">"arm"</span>),
 <a href=#95 id=95 data-nosnippet>95</a>                    <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
 <a href=#96 id=96 data-nosnippet>96</a>                };
 <a href=#97 id=97 data-nosnippet>97</a>                <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>a) = arch {
@@ -127,19 +127,19 @@
 <a href=#127 id=127 data-nosnippet>127</a>        }
 <a href=#128 id=128 data-nosnippet>128</a>    }
 <a href=#129 id=129 data-nosnippet>129</a>
-<a href=#130 id=130 data-nosnippet>130</a>    <span class="macro">if !</span>msvc_changed_path &amp;&amp; <span class="kw">let </span><span class="prelude-val">Some</span>(path) = env::var_os(<span class="string">"PATH"</span>) {
+<a href=#130 id=130 data-nosnippet>130</a>    <span class="kw">if </span>!msvc_changed_path &amp;&amp; <span class="kw">let </span><span class="prelude-val">Some</span>(path) = env::var_os(<span class="string">"PATH"</span>) {
 <a href=#131 id=131 data-nosnippet>131</a>        new_path.extend(env::split_paths(<span class="kw-2">&amp;</span>path));
 <a href=#132 id=132 data-nosnippet>132</a>    }
 <a href=#133 id=133 data-nosnippet>133</a>    cmd.env(<span class="string">"PATH"</span>, env::join_paths(new_path).unwrap());
 <a href=#134 id=134 data-nosnippet>134</a>
 <a href=#135 id=135 data-nosnippet>135</a>    <span class="comment">// FIXME: Move `/LIBPATH` addition for uwp targets from the linker construction
 <a href=#136 id=136 data-nosnippet>136</a>    // to the linker args construction.
-<a href=#137 id=137 data-nosnippet>137</a>    </span><span class="macro">assert!</span>(cmd.get_args().is_empty() || sess.target.vendor == <span class="string">"uwp"</span>);
+<a href=#137 id=137 data-nosnippet>137</a>    </span><span class="macro">assert!</span>(cmd.get_args().is_empty() || sess.target.abi == Abi::Uwp);
 <a href=#138 id=138 data-nosnippet>138</a>    <span class="kw">match </span>flavor {
-<a href=#139 id=139 data-nosnippet>139</a>        LinkerFlavor::Unix(Cc::No) <span class="kw">if </span>sess.target.os == <span class="string">"l4re" </span>=&gt; {
+<a href=#139 id=139 data-nosnippet>139</a>        LinkerFlavor::Unix(Cc::No) <span class="kw">if </span>sess.target.os == Os::L4Re =&gt; {
 <a href=#140 id=140 data-nosnippet>140</a>            Box::new(L4Bender::new(cmd, sess)) <span class="kw">as </span>Box&lt;<span class="kw">dyn </span>Linker&gt;
 <a href=#141 id=141 data-nosnippet>141</a>        }
-<a href=#142 id=142 data-nosnippet>142</a>        LinkerFlavor::Unix(Cc::No) <span class="kw">if </span>sess.target.os == <span class="string">"aix" </span>=&gt; {
+<a href=#142 id=142 data-nosnippet>142</a>        LinkerFlavor::Unix(Cc::No) <span class="kw">if </span>sess.target.os == Os::Aix =&gt; {
 <a href=#143 id=143 data-nosnippet>143</a>            Box::new(AixLinker::new(cmd, sess)) <span class="kw">as </span>Box&lt;<span class="kw">dyn </span>Linker&gt;
 <a href=#144 id=144 data-nosnippet>144</a>        }
 <a href=#145 id=145 data-nosnippet>145</a>        LinkerFlavor::WasmLld(Cc::No) =&gt; Box::new(WasmLd::new(cmd, sess)) <span class="kw">as </span>Box&lt;<span class="kw">dyn </span>Linker&gt;,
@@ -214,7 +214,7 @@
 <a href=#214 id=214 data-nosnippet>214</a><span class="doccomment">/// Arguments for the underlying linker.
 <a href=#215 id=215 data-nosnippet>215</a>/// Add options to pass them through cc wrapper if `Linker` is a cc wrapper.
 <a href=#216 id=216 data-nosnippet>216</a></span><span class="kw">fn </span>link_args&lt;L: Linker + <span class="question-mark">?</span>Sized&gt;(l: <span class="kw-2">&amp;mut </span>L, args: <span class="kw">impl </span>IntoIterator&lt;Item: AsRef&lt;OsStr&gt;&gt;) -&gt; <span class="kw-2">&amp;mut </span>L {
-<a href=#217 id=217 data-nosnippet>217</a>    <span class="macro">if !</span>l.is_cc() {
+<a href=#217 id=217 data-nosnippet>217</a>    <span class="kw">if </span>!l.is_cc() {
 <a href=#218 id=218 data-nosnippet>218</a>        verbatim_args(l, args);
 <a href=#219 id=219 data-nosnippet>219</a>    } <span class="kw">else </span>{
 <a href=#220 id=220 data-nosnippet>220</a>        convert_link_args_to_cc_args(l.cmd(), args);
@@ -389,7 +389,7 @@
 <a href=#389 id=389 data-nosnippet>389</a>    // was flagged "static" (most defaults are dynamic) to ensure that if
 <a href=#390 id=390 data-nosnippet>390</a>    // libfoo.a and libfoo.so both exist that the right one is chosen.
 <a href=#391 id=391 data-nosnippet>391</a>    </span><span class="kw">fn </span>hint_static(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-<a href=#392 id=392 data-nosnippet>392</a>        <span class="macro">if !</span><span class="self">self</span>.takes_hints() {
+<a href=#392 id=392 data-nosnippet>392</a>        <span class="kw">if </span>!<span class="self">self</span>.takes_hints() {
 <a href=#393 id=393 data-nosnippet>393</a>            <span class="kw">return</span>;
 <a href=#394 id=394 data-nosnippet>394</a>        }
 <a href=#395 id=395 data-nosnippet>395</a>        <span class="kw">if </span><span class="self">self</span>.<span class="macro">hinted_static !</span>= <span class="prelude-val">Some</span>(<span class="bool-val">true</span>) {
@@ -399,7 +399,7 @@
 <a href=#399 id=399 data-nosnippet>399</a>    }
 <a href=#400 id=400 data-nosnippet>400</a>
 <a href=#401 id=401 data-nosnippet>401</a>    <span class="kw">fn </span>hint_dynamic(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-<a href=#402 id=402 data-nosnippet>402</a>        <span class="macro">if !</span><span class="self">self</span>.takes_hints() {
+<a href=#402 id=402 data-nosnippet>402</a>        <span class="kw">if </span>!<span class="self">self</span>.takes_hints() {
 <a href=#403 id=403 data-nosnippet>403</a>            <span class="kw">return</span>;
 <a href=#404 id=404 data-nosnippet>404</a>        }
 <a href=#405 id=405 data-nosnippet>405</a>        <span class="kw">if </span><span class="self">self</span>.<span class="macro">hinted_static !</span>= <span class="prelude-val">Some</span>(<span class="bool-val">false</span>) {
@@ -484,7 +484,7 @@
 <a href=#484 id=484 data-nosnippet>484</a>    }
 <a href=#485 id=485 data-nosnippet>485</a>
 <a href=#486 id=486 data-nosnippet>486</a>    <span class="kw">fn </span>with_as_needed(<span class="kw-2">&amp;mut </span><span class="self">self</span>, as_needed: bool, f: <span class="kw">impl </span>FnOnce(<span class="kw-2">&amp;mut </span><span class="self">Self</span>)) {
-<a href=#487 id=487 data-nosnippet>487</a>        <span class="macro">if !</span>as_needed {
+<a href=#487 id=487 data-nosnippet>487</a>        <span class="kw">if </span>!as_needed {
 <a href=#488 id=488 data-nosnippet>488</a>            <span class="kw">if </span><span class="self">self</span>.sess.target.is_like_darwin {
 <a href=#489 id=489 data-nosnippet>489</a>                <span class="comment">// FIXME(81490): ld64 doesn't support these flags but macOS 11
 <a href=#490 id=490 data-nosnippet>490</a>                // has -needed-l{} / -needed_library {}
@@ -499,7 +499,7 @@
 <a href=#499 id=499 data-nosnippet>499</a>
 <a href=#500 id=500 data-nosnippet>500</a>        f(<span class="self">self</span>);
 <a href=#501 id=501 data-nosnippet>501</a>
-<a href=#502 id=502 data-nosnippet>502</a>        <span class="macro">if !</span>as_needed {
+<a href=#502 id=502 data-nosnippet>502</a>        <span class="kw">if </span>!as_needed {
 <a href=#503 id=503 data-nosnippet>503</a>            <span class="kw">if </span><span class="self">self</span>.sess.target.is_like_darwin {
 <a href=#504 id=504 data-nosnippet>504</a>                <span class="comment">// See above FIXME comment
 <a href=#505 id=505 data-nosnippet>505</a>            </span>} <span class="kw">else if </span><span class="self">self</span>.is_gnu &amp;&amp; !<span class="self">self</span>.sess.target.is_like_windows {
@@ -526,13 +526,13 @@
 <a href=#526 id=526 data-nosnippet>526</a>    ) {
 <a href=#527 id=527 data-nosnippet>527</a>        <span class="kw">match </span>output_kind {
 <a href=#528 id=528 data-nosnippet>528</a>            LinkOutputKind::DynamicNoPicExe =&gt; {
-<a href=#529 id=529 data-nosnippet>529</a>                <span class="macro">if !</span><span class="self">self</span>.is_ld &amp;&amp; <span class="self">self</span>.is_gnu {
+<a href=#529 id=529 data-nosnippet>529</a>                <span class="kw">if </span>!<span class="self">self</span>.is_ld &amp;&amp; <span class="self">self</span>.is_gnu {
 <a href=#530 id=530 data-nosnippet>530</a>                    <span class="self">self</span>.cc_arg(<span class="string">"-no-pie"</span>);
 <a href=#531 id=531 data-nosnippet>531</a>                }
 <a href=#532 id=532 data-nosnippet>532</a>            }
 <a href=#533 id=533 data-nosnippet>533</a>            LinkOutputKind::DynamicPicExe =&gt; {
 <a href=#534 id=534 data-nosnippet>534</a>                <span class="comment">// noop on windows w/ gcc &amp; ld, error w/ lld
-<a href=#535 id=535 data-nosnippet>535</a>                </span><span class="macro">if !</span><span class="self">self</span>.sess.target.is_like_windows {
+<a href=#535 id=535 data-nosnippet>535</a>                </span><span class="kw">if </span>!<span class="self">self</span>.sess.target.is_like_windows {
 <a href=#536 id=536 data-nosnippet>536</a>                    <span class="comment">// `-pie` works for both gcc wrapper and ld.
 <a href=#537 id=537 data-nosnippet>537</a>                    </span><span class="self">self</span>.link_or_cc_arg(<span class="string">"-pie"</span>);
 <a href=#538 id=538 data-nosnippet>538</a>                }
@@ -540,12 +540,12 @@
 <a href=#540 id=540 data-nosnippet>540</a>            LinkOutputKind::StaticNoPicExe =&gt; {
 <a href=#541 id=541 data-nosnippet>541</a>                <span class="comment">// `-static` works for both gcc wrapper and ld.
 <a href=#542 id=542 data-nosnippet>542</a>                </span><span class="self">self</span>.link_or_cc_arg(<span class="string">"-static"</span>);
-<a href=#543 id=543 data-nosnippet>543</a>                <span class="macro">if !</span><span class="self">self</span>.is_ld &amp;&amp; <span class="self">self</span>.is_gnu {
+<a href=#543 id=543 data-nosnippet>543</a>                <span class="kw">if </span>!<span class="self">self</span>.is_ld &amp;&amp; <span class="self">self</span>.is_gnu {
 <a href=#544 id=544 data-nosnippet>544</a>                    <span class="self">self</span>.cc_arg(<span class="string">"-no-pie"</span>);
 <a href=#545 id=545 data-nosnippet>545</a>                }
 <a href=#546 id=546 data-nosnippet>546</a>            }
 <a href=#547 id=547 data-nosnippet>547</a>            LinkOutputKind::StaticPicExe =&gt; {
-<a href=#548 id=548 data-nosnippet>548</a>                <span class="macro">if !</span><span class="self">self</span>.is_ld {
+<a href=#548 id=548 data-nosnippet>548</a>                <span class="kw">if </span>!<span class="self">self</span>.is_ld {
 <a href=#549 id=549 data-nosnippet>549</a>                    <span class="comment">// Note that combination `-static -pie` doesn't work as expected
 <a href=#550 id=550 data-nosnippet>550</a>                    // for the gcc wrapper, `-static` in that case suppresses `-pie`.
 <a href=#551 id=551 data-nosnippet>551</a>                    </span><span class="self">self</span>.cc_arg(<span class="string">"-static-pie"</span>);
@@ -573,8 +573,8 @@
 <a href=#573 id=573 data-nosnippet>573</a>        // any `#[link]` attributes in the `libc` crate, see #72782 for details.
 <a href=#574 id=574 data-nosnippet>574</a>        // FIXME: Switch to using `#[link]` attributes in the `libc` crate
 <a href=#575 id=575 data-nosnippet>575</a>        // similarly to other targets.
-<a href=#576 id=576 data-nosnippet>576</a>        </span><span class="kw">if </span><span class="self">self</span>.sess.target.os == <span class="string">"vxworks"
-<a href=#577 id=577 data-nosnippet>577</a>            </span>&amp;&amp; <span class="macro">matches!</span>(
+<a href=#576 id=576 data-nosnippet>576</a>        </span><span class="kw">if </span><span class="self">self</span>.sess.target.os == Os::VxWorks
+<a href=#577 id=577 data-nosnippet>577</a>            &amp;&amp; <span class="macro">matches!</span>(
 <a href=#578 id=578 data-nosnippet>578</a>                output_kind,
 <a href=#579 id=579 data-nosnippet>579</a>                LinkOutputKind::StaticNoPicExe
 <a href=#580 id=580 data-nosnippet>580</a>                    | LinkOutputKind::StaticPicExe
@@ -589,13 +589,13 @@
 <a href=#589 id=589 data-nosnippet>589</a>        //
 <a href=#590 id=590 data-nosnippet>590</a>        // Currently this makes sense only when using avr-gcc as a linker, since
 <a href=#591 id=591 data-nosnippet>591</a>        // it brings a couple of hand-written important intrinsics from libgcc.
-<a href=#592 id=592 data-nosnippet>592</a>        </span><span class="kw">if </span><span class="self">self</span>.sess.target.arch == <span class="string">"avr" </span>&amp;&amp; !<span class="self">self</span>.uses_lld {
+<a href=#592 id=592 data-nosnippet>592</a>        </span><span class="kw">if </span><span class="self">self</span>.sess.target.arch == Arch::Avr &amp;&amp; !<span class="self">self</span>.uses_lld {
 <a href=#593 id=593 data-nosnippet>593</a>            <span class="self">self</span>.verbatim_arg(<span class="macro">format!</span>(<span class="string">"-mmcu={}"</span>, <span class="self">self</span>.target_cpu));
 <a href=#594 id=594 data-nosnippet>594</a>        }
 <a href=#595 id=595 data-nosnippet>595</a>    }
 <a href=#596 id=596 data-nosnippet>596</a>
 <a href=#597 id=597 data-nosnippet>597</a>    <span class="kw">fn </span>link_dylib_by_name(<span class="kw-2">&amp;mut </span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str, verbatim: bool, as_needed: bool) {
-<a href=#598 id=598 data-nosnippet>598</a>        <span class="kw">if </span><span class="self">self</span>.sess.target.os == <span class="string">"illumos" </span>&amp;&amp; name == <span class="string">"c" </span>{
+<a href=#598 id=598 data-nosnippet>598</a>        <span class="kw">if </span><span class="self">self</span>.sess.target.os == Os::Illumos &amp;&amp; name == <span class="string">"c" </span>{
 <a href=#599 id=599 data-nosnippet>599</a>            <span class="comment">// libc will be added via late_link_args on illumos so that it will
 <a href=#600 id=600 data-nosnippet>600</a>            // appear last in the library search order.
 <a href=#601 id=601 data-nosnippet>601</a>            // FIXME: This should be replaced by a more complete and generic
@@ -619,7 +619,7 @@
 <a href=#619 id=619 data-nosnippet>619</a>
 <a href=#620 id=620 data-nosnippet>620</a>    <span class="kw">fn </span>link_framework_by_name(<span class="kw-2">&amp;mut </span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str, _verbatim: bool, as_needed: bool) {
 <a href=#621 id=621 data-nosnippet>621</a>        <span class="self">self</span>.hint_dynamic();
-<a href=#622 id=622 data-nosnippet>622</a>        <span class="macro">if !</span>as_needed {
+<a href=#622 id=622 data-nosnippet>622</a>        <span class="kw">if </span>!as_needed {
 <a href=#623 id=623 data-nosnippet>623</a>            <span class="comment">// FIXME(81490): ld64 as of macOS 11 supports the -needed_framework
 <a href=#624 id=624 data-nosnippet>624</a>            // flag but we have no way to detect that here.
 <a href=#625 id=625 data-nosnippet>625</a>            // self.link_or_cc_arg("-needed_framework").link_or_cc_arg(name);
@@ -631,7 +631,7 @@
 <a href=#631 id=631 data-nosnippet>631</a>    <span class="kw">fn </span>link_staticlib_by_name(<span class="kw-2">&amp;mut </span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str, verbatim: bool, whole_archive: bool) {
 <a href=#632 id=632 data-nosnippet>632</a>        <span class="self">self</span>.hint_static();
 <a href=#633 id=633 data-nosnippet>633</a>        <span class="kw">let </span>colon = <span class="kw">if </span>verbatim &amp;&amp; <span class="self">self</span>.is_gnu { <span class="string">":" </span>} <span class="kw">else </span>{ <span class="string">"" </span>};
-<a href=#634 id=634 data-nosnippet>634</a>        <span class="macro">if !</span>whole_archive {
+<a href=#634 id=634 data-nosnippet>634</a>        <span class="kw">if </span>!whole_archive {
 <a href=#635 id=635 data-nosnippet>635</a>            <span class="self">self</span>.link_or_cc_arg(<span class="macro">format!</span>(<span class="string">"-l{colon}{name}"</span>));
 <a href=#636 id=636 data-nosnippet>636</a>        } <span class="kw">else if </span><span class="self">self</span>.sess.target.is_like_darwin {
 <a href=#637 id=637 data-nosnippet>637</a>            <span class="comment">// -force_load is the macOS equivalent of --whole-archive, but it
@@ -647,7 +647,7 @@
 <a href=#647 id=647 data-nosnippet>647</a>
 <a href=#648 id=648 data-nosnippet>648</a>    <span class="kw">fn </span>link_staticlib_by_path(<span class="kw-2">&amp;mut </span><span class="self">self</span>, path: <span class="kw-2">&amp;</span>Path, whole_archive: bool) {
 <a href=#649 id=649 data-nosnippet>649</a>        <span class="self">self</span>.hint_static();
-<a href=#650 id=650 data-nosnippet>650</a>        <span class="macro">if !</span>whole_archive {
+<a href=#650 id=650 data-nosnippet>650</a>        <span class="kw">if </span>!whole_archive {
 <a href=#651 id=651 data-nosnippet>651</a>            <span class="self">self</span>.link_or_cc_arg(path);
 <a href=#652 id=652 data-nosnippet>652</a>        } <span class="kw">else if </span><span class="self">self</span>.sess.target.is_like_darwin {
 <a href=#653 id=653 data-nosnippet>653</a>            <span class="self">self</span>.link_arg(<span class="string">"-force_load"</span>).link_arg(path);
@@ -698,7 +698,7 @@
 <a href=#698 id=698 data-nosnippet>698</a>    }
 <a href=#699 id=699 data-nosnippet>699</a>
 <a href=#700 id=700 data-nosnippet>700</a>    <span class="kw">fn </span>optimize(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-<a href=#701 id=701 data-nosnippet>701</a>        <span class="macro">if !</span><span class="self">self</span>.is_gnu &amp;&amp; !<span class="self">self</span>.sess.target.is_like_wasm {
+<a href=#701 id=701 data-nosnippet>701</a>        <span class="kw">if </span>!<span class="self">self</span>.is_gnu &amp;&amp; !<span class="self">self</span>.sess.target.is_like_wasm {
 <a href=#702 id=702 data-nosnippet>702</a>            <span class="kw">return</span>;
 <a href=#703 id=703 data-nosnippet>703</a>        }
 <a href=#704 id=704 data-nosnippet>704</a>
@@ -712,7 +712,7 @@
 <a href=#712 id=712 data-nosnippet>712</a>    }
 <a href=#713 id=713 data-nosnippet>713</a>
 <a href=#714 id=714 data-nosnippet>714</a>    <span class="kw">fn </span>pgo_gen(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-<a href=#715 id=715 data-nosnippet>715</a>        <span class="macro">if !</span><span class="self">self</span>.is_gnu {
+<a href=#715 id=715 data-nosnippet>715</a>        <span class="kw">if </span>!<span class="self">self</span>.is_gnu {
 <a href=#716 id=716 data-nosnippet>716</a>            <span class="kw">return</span>;
 <a href=#717 id=717 data-nosnippet>717</a>        }
 <a href=#718 id=718 data-nosnippet>718</a>
@@ -747,7 +747,7 @@
 <a href=#747 id=747 data-nosnippet>747</a>                // it does support --strip-all as a compatibility alias for -s.
 <a href=#748 id=748 data-nosnippet>748</a>                // The --strip-debug case is handled by running an external
 <a href=#749 id=749 data-nosnippet>749</a>                // `strip` utility as a separate step after linking.
-<a href=#750 id=750 data-nosnippet>750</a>                </span><span class="macro">if !</span><span class="self">self</span>.sess.target.is_like_solaris {
+<a href=#750 id=750 data-nosnippet>750</a>                </span><span class="kw">if </span>!<span class="self">self</span>.sess.target.is_like_solaris {
 <a href=#751 id=751 data-nosnippet>751</a>                    <span class="self">self</span>.link_arg(<span class="string">"--strip-debug"</span>);
 <a href=#752 id=752 data-nosnippet>752</a>                }
 <a href=#753 id=753 data-nosnippet>753</a>            }
@@ -767,13 +767,13 @@
 <a href=#767 id=767 data-nosnippet>767</a>    }
 <a href=#768 id=768 data-nosnippet>768</a>
 <a href=#769 id=769 data-nosnippet>769</a>    <span class="kw">fn </span>no_crt_objects(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-<a href=#770 id=770 data-nosnippet>770</a>        <span class="macro">if !</span><span class="self">self</span>.is_ld {
+<a href=#770 id=770 data-nosnippet>770</a>        <span class="kw">if </span>!<span class="self">self</span>.is_ld {
 <a href=#771 id=771 data-nosnippet>771</a>            <span class="self">self</span>.cc_arg(<span class="string">"-nostartfiles"</span>);
 <a href=#772 id=772 data-nosnippet>772</a>        }
 <a href=#773 id=773 data-nosnippet>773</a>    }
 <a href=#774 id=774 data-nosnippet>774</a>
 <a href=#775 id=775 data-nosnippet>775</a>    <span class="kw">fn </span>no_default_libraries(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-<a href=#776 id=776 data-nosnippet>776</a>        <span class="macro">if !</span><span class="self">self</span>.is_ld {
+<a href=#776 id=776 data-nosnippet>776</a>        <span class="kw">if </span>!<span class="self">self</span>.is_ld {
 <a href=#777 id=777 data-nosnippet>777</a>            <span class="self">self</span>.cc_arg(<span class="string">"-nodefaultlibs"</span>);
 <a href=#778 id=778 data-nosnippet>778</a>        }
 <a href=#779 id=779 data-nosnippet>779</a>    }
@@ -799,7 +799,7 @@
 <a href=#799 id=799 data-nosnippet>799</a>        // The object files have far more public symbols than we actually want to export,
 <a href=#800 id=800 data-nosnippet>800</a>        // so we hide them all here.
 <a href=#801 id=801 data-nosnippet>801</a>
-<a href=#802 id=802 data-nosnippet>802</a>        </span><span class="macro">if !</span><span class="self">self</span>.sess.target.limit_rdylib_exports {
+<a href=#802 id=802 data-nosnippet>802</a>        </span><span class="kw">if </span>!<span class="self">self</span>.sess.target.limit_rdylib_exports {
 <a href=#803 id=803 data-nosnippet>803</a>            <span class="kw">return</span>;
 <a href=#804 id=804 data-nosnippet>804</a>        }
 <a href=#805 id=805 data-nosnippet>805</a>
@@ -862,7 +862,7 @@
 <a href=#862 id=862 data-nosnippet>862</a>            </span><span class="kw">let </span>res: io::Result&lt;()&gt; = <span class="kw">try </span>{
 <a href=#863 id=863 data-nosnippet>863</a>                <span class="kw">let </span><span class="kw-2">mut </span>f = File::create_buffered(<span class="kw-2">&amp;</span>path)<span class="question-mark">?</span>;
 <a href=#864 id=864 data-nosnippet>864</a>                <span class="macro">writeln!</span>(f, <span class="string">"{{"</span>)<span class="question-mark">?</span>;
-<a href=#865 id=865 data-nosnippet>865</a>                <span class="macro">if !</span>symbols.is_empty() {
+<a href=#865 id=865 data-nosnippet>865</a>                <span class="kw">if </span>!symbols.is_empty() {
 <a href=#866 id=866 data-nosnippet>866</a>                    <span class="macro">writeln!</span>(f, <span class="string">"  global:"</span>)<span class="question-mark">?</span>;
 <a href=#867 id=867 data-nosnippet>867</a>                    <span class="kw">for </span>(sym, <span class="kw">_</span>) <span class="kw">in </span>symbols {
 <a href=#868 id=868 data-nosnippet>868</a>                        <span class="macro">debug!</span>(<span class="string">"    {sym};"</span>);
@@ -996,7 +996,7 @@
 <a href=#996 id=996 data-nosnippet>996</a>    }
 <a href=#997 id=997 data-nosnippet>997</a>
 <a href=#998 id=998 data-nosnippet>998</a>    <span class="kw">fn </span>link_staticlib_by_path(<span class="kw-2">&amp;mut </span><span class="self">self</span>, path: <span class="kw-2">&amp;</span>Path, whole_archive: bool) {
-<a href=#999 id=999 data-nosnippet>999</a>        <span class="macro">if !</span>whole_archive {
+<a href=#999 id=999 data-nosnippet>999</a>        <span class="kw">if </span>!whole_archive {
 <a href=#1000 id=1000 data-nosnippet>1000</a>            <span class="self">self</span>.link_arg(path);
 <a href=#1001 id=1001 data-nosnippet>1001</a>        } <span class="kw">else </span>{
 <a href=#1002 id=1002 data-nosnippet>1002</a>            <span class="kw">let </span><span class="kw-2">mut </span>arg = OsString::from(<span class="string">"/WHOLEARCHIVE:"</span>);
@@ -1132,7 +1132,7 @@
 <a href=#1132 id=1132 data-nosnippet>1132</a>        </span><span class="kw">if </span>crate_type == CrateType::Executable {
 <a href=#1133 id=1133 data-nosnippet>1133</a>            <span class="kw">let </span>should_export_executable_symbols =
 <a href=#1134 id=1134 data-nosnippet>1134</a>                <span class="self">self</span>.sess.opts.unstable_opts.export_executable_symbols;
-<a href=#1135 id=1135 data-nosnippet>1135</a>            <span class="macro">if !</span>should_export_executable_symbols {
+<a href=#1135 id=1135 data-nosnippet>1135</a>            <span class="kw">if </span>!should_export_executable_symbols {
 <a href=#1136 id=1136 data-nosnippet>1136</a>                <span class="kw">return</span>;
 <a href=#1137 id=1137 data-nosnippet>1137</a>            }
 <a href=#1138 id=1138 data-nosnippet>1138</a>        }
@@ -1361,7 +1361,7 @@
 <a href=#1361 id=1361 data-nosnippet>1361</a>    }
 <a href=#1362 id=1362 data-nosnippet>1362</a>
 <a href=#1363 id=1363 data-nosnippet>1363</a>    <span class="kw">fn </span>link_staticlib_by_name(<span class="kw-2">&amp;mut </span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str, _verbatim: bool, whole_archive: bool) {
-<a href=#1364 id=1364 data-nosnippet>1364</a>        <span class="macro">if !</span>whole_archive {
+<a href=#1364 id=1364 data-nosnippet>1364</a>        <span class="kw">if </span>!whole_archive {
 <a href=#1365 id=1365 data-nosnippet>1365</a>            <span class="self">self</span>.link_or_cc_args(<span class="kw-2">&amp;</span>[<span class="string">"-l"</span>, name]);
 <a href=#1366 id=1366 data-nosnippet>1366</a>        } <span class="kw">else </span>{
 <a href=#1367 id=1367 data-nosnippet>1367</a>            <span class="self">self</span>.link_arg(<span class="string">"--whole-archive"</span>)
@@ -1371,7 +1371,7 @@
 <a href=#1371 id=1371 data-nosnippet>1371</a>    }
 <a href=#1372 id=1372 data-nosnippet>1372</a>
 <a href=#1373 id=1373 data-nosnippet>1373</a>    <span class="kw">fn </span>link_staticlib_by_path(<span class="kw-2">&amp;mut </span><span class="self">self</span>, path: <span class="kw-2">&amp;</span>Path, whole_archive: bool) {
-<a href=#1374 id=1374 data-nosnippet>1374</a>        <span class="macro">if !</span>whole_archive {
+<a href=#1374 id=1374 data-nosnippet>1374</a>        <span class="kw">if </span>!whole_archive {
 <a href=#1375 id=1375 data-nosnippet>1375</a>            <span class="self">self</span>.link_or_cc_arg(path);
 <a href=#1376 id=1376 data-nosnippet>1376</a>        } <span class="kw">else </span>{
 <a href=#1377 id=1377 data-nosnippet>1377</a>            <span class="self">self</span>.link_arg(<span class="string">"--whole-archive"</span>).link_or_cc_arg(path).link_arg(<span class="string">"--no-whole-archive"</span>);
@@ -1439,7 +1439,7 @@
 <a href=#1439 id=1439 data-nosnippet>1439</a>        // symbols explicitly passed via the `--export` flags above and hides all
 <a href=#1440 id=1440 data-nosnippet>1440</a>        // others. Various bits and pieces of wasm32-unknown-unknown tooling use
 <a href=#1441 id=1441 data-nosnippet>1441</a>        // this, so be sure these symbols make their way out of the linker as well.
-<a href=#1442 id=1442 data-nosnippet>1442</a>        </span><span class="kw">if </span><span class="self">self</span>.sess.target.os == <span class="string">"unknown" </span>|| <span class="self">self</span>.sess.target.os == <span class="string">"none" </span>{
+<a href=#1442 id=1442 data-nosnippet>1442</a>        </span><span class="kw">if </span><span class="macro">matches!</span>(<span class="self">self</span>.sess.target.os, Os::Unknown | Os::None) {
 <a href=#1443 id=1443 data-nosnippet>1443</a>            <span class="self">self</span>.link_args(<span class="kw-2">&amp;</span>[<span class="string">"--export=__heap_base"</span>, <span class="string">"--export=__data_end"</span>]);
 <a href=#1444 id=1444 data-nosnippet>1444</a>        }
 <a href=#1445 id=1445 data-nosnippet>1445</a>    }
@@ -1497,7 +1497,7 @@
 <a href=#1497 id=1497 data-nosnippet>1497</a>
 <a href=#1498 id=1498 data-nosnippet>1498</a>    <span class="kw">fn </span>link_staticlib_by_name(<span class="kw-2">&amp;mut </span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str, _verbatim: bool, whole_archive: bool) {
 <a href=#1499 id=1499 data-nosnippet>1499</a>        <span class="self">self</span>.hint_static();
-<a href=#1500 id=1500 data-nosnippet>1500</a>        <span class="macro">if !</span>whole_archive {
+<a href=#1500 id=1500 data-nosnippet>1500</a>        <span class="kw">if </span>!whole_archive {
 <a href=#1501 id=1501 data-nosnippet>1501</a>            <span class="self">self</span>.link_arg(<span class="macro">format!</span>(<span class="string">"-PC{name}"</span>));
 <a href=#1502 id=1502 data-nosnippet>1502</a>        } <span class="kw">else </span>{
 <a href=#1503 id=1503 data-nosnippet>1503</a>            <span class="self">self</span>.link_arg(<span class="string">"--whole-archive"</span>)
@@ -1508,7 +1508,7 @@
 <a href=#1508 id=1508 data-nosnippet>1508</a>
 <a href=#1509 id=1509 data-nosnippet>1509</a>    <span class="kw">fn </span>link_staticlib_by_path(<span class="kw-2">&amp;mut </span><span class="self">self</span>, path: <span class="kw-2">&amp;</span>Path, whole_archive: bool) {
 <a href=#1510 id=1510 data-nosnippet>1510</a>        <span class="self">self</span>.hint_static();
-<a href=#1511 id=1511 data-nosnippet>1511</a>        <span class="macro">if !</span>whole_archive {
+<a href=#1511 id=1511 data-nosnippet>1511</a>        <span class="kw">if </span>!whole_archive {
 <a href=#1512 id=1512 data-nosnippet>1512</a>            <span class="self">self</span>.link_or_cc_arg(path);
 <a href=#1513 id=1513 data-nosnippet>1513</a>        } <span class="kw">else </span>{
 <a href=#1514 id=1514 data-nosnippet>1514</a>            <span class="self">self</span>.link_arg(<span class="string">"--whole-archive"</span>).link_or_cc_arg(path).link_arg(<span class="string">"--no-whole-archive"</span>);
@@ -1528,7 +1528,7 @@
 <a href=#1528 id=1528 data-nosnippet>1528</a>    }
 <a href=#1529 id=1529 data-nosnippet>1529</a>
 <a href=#1530 id=1530 data-nosnippet>1530</a>    <span class="kw">fn </span>gc_sections(<span class="kw-2">&amp;mut </span><span class="self">self</span>, keep_metadata: bool) {
-<a href=#1531 id=1531 data-nosnippet>1531</a>        <span class="macro">if !</span>keep_metadata {
+<a href=#1531 id=1531 data-nosnippet>1531</a>        <span class="kw">if </span>!keep_metadata {
 <a href=#1532 id=1532 data-nosnippet>1532</a>            <span class="self">self</span>.link_arg(<span class="string">"--gc-sections"</span>);
 <a href=#1533 id=1533 data-nosnippet>1533</a>        }
 <a href=#1534 id=1534 data-nosnippet>1534</a>    }
@@ -1589,7 +1589,7 @@
 <a href=#1589 id=1589 data-nosnippet>1589</a>    }
 <a href=#1590 id=1590 data-nosnippet>1590</a>
 <a href=#1591 id=1591 data-nosnippet>1591</a>    <span class="kw">fn </span>hint_static(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-<a href=#1592 id=1592 data-nosnippet>1592</a>        <span class="macro">if !</span><span class="self">self</span>.hinted_static {
+<a href=#1592 id=1592 data-nosnippet>1592</a>        <span class="kw">if </span>!<span class="self">self</span>.hinted_static {
 <a href=#1593 id=1593 data-nosnippet>1593</a>            <span class="self">self</span>.link_or_cc_arg(<span class="string">"-static"</span>);
 <a href=#1594 id=1594 data-nosnippet>1594</a>            <span class="self">self</span>.hinted_static = <span class="bool-val">true</span>;
 <a href=#1595 id=1595 data-nosnippet>1595</a>        }
@@ -1666,7 +1666,7 @@
 <a href=#1666 id=1666 data-nosnippet>1666</a>
 <a href=#1667 id=1667 data-nosnippet>1667</a>    <span class="kw">fn </span>link_staticlib_by_name(<span class="kw-2">&amp;mut </span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str, verbatim: bool, whole_archive: bool) {
 <a href=#1668 id=1668 data-nosnippet>1668</a>        <span class="self">self</span>.hint_static();
-<a href=#1669 id=1669 data-nosnippet>1669</a>        <span class="macro">if !</span>whole_archive {
+<a href=#1669 id=1669 data-nosnippet>1669</a>        <span class="kw">if </span>!whole_archive {
 <a href=#1670 id=1670 data-nosnippet>1670</a>            <span class="self">self</span>.link_or_cc_arg(<span class="kw">if </span>verbatim { String::from(name) } <span class="kw">else </span>{ <span class="macro">format!</span>(<span class="string">"-l{name}"</span>) });
 <a href=#1671 id=1671 data-nosnippet>1671</a>        } <span class="kw">else </span>{
 <a href=#1672 id=1672 data-nosnippet>1672</a>            <span class="kw">let </span><span class="kw-2">mut </span>arg = OsString::from(<span class="string">"-bkeepfile:"</span>);
@@ -1677,7 +1677,7 @@
 <a href=#1677 id=1677 data-nosnippet>1677</a>
 <a href=#1678 id=1678 data-nosnippet>1678</a>    <span class="kw">fn </span>link_staticlib_by_path(<span class="kw-2">&amp;mut </span><span class="self">self</span>, path: <span class="kw-2">&amp;</span>Path, whole_archive: bool) {
 <a href=#1679 id=1679 data-nosnippet>1679</a>        <span class="self">self</span>.hint_static();
-<a href=#1680 id=1680 data-nosnippet>1680</a>        <span class="macro">if !</span>whole_archive {
+<a href=#1680 id=1680 data-nosnippet>1680</a>        <span class="kw">if </span>!whole_archive {
 <a href=#1681 id=1681 data-nosnippet>1681</a>            <span class="self">self</span>.link_or_cc_arg(path);
 <a href=#1682 id=1682 data-nosnippet>1682</a>        } <span class="kw">else </span>{
 <a href=#1683 id=1683 data-nosnippet>1683</a>            <span class="kw">let </span><span class="kw-2">mut </span>arg = OsString::from(<span class="string">"-bkeepfile:"</span>);
@@ -1836,7 +1836,7 @@
 <a href=#1836 id=1836 data-nosnippet>1836</a>
 <a href=#1837 id=1837 data-nosnippet>1837</a><span class="kw">fn </span>exported_symbols_for_proc_macro_crate(tcx: TyCtxt&lt;<span class="lifetime">'_</span>&gt;) -&gt; Vec&lt;(String, SymbolExportKind)&gt; {
 <a href=#1838 id=1838 data-nosnippet>1838</a>    <span class="comment">// `exported_symbols` will be empty when !should_codegen.
-<a href=#1839 id=1839 data-nosnippet>1839</a>    </span><span class="macro">if !</span>tcx.sess.opts.output_types.should_codegen() {
+<a href=#1839 id=1839 data-nosnippet>1839</a>    </span><span class="kw">if </span>!tcx.sess.opts.output_types.should_codegen() {
 <a href=#1840 id=1840 data-nosnippet>1840</a>        <span class="kw">return </span>Vec::new();
 <a href=#1841 id=1841 data-nosnippet>1841</a>    }
 <a href=#1842 id=1842 data-nosnippet>1842</a>

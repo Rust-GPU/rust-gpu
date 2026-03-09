@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aho-corasick-1.1.4/src/automaton.rs`."><title>automaton.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="aho_corasick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (bd3ac0330 2025-11-01)" data-channel="nightly" data-search-js="search-5c29b3b5.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aho_corasick/</div>automaton.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/*!
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/aho-corasick-1.1.4/src/automaton.rs`."><title>automaton.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="aho_corasick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (01867557c 2025-11-12)" data-channel="nightly" data-search-js="search-8e3fad08.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">aho_corasick/</div>automaton.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/*!
 <a href=#2 id=2 data-nosnippet>2</a>Provides [`Automaton`] trait for abstracting over Aho-Corasick automata.
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a>The `Automaton` trait provides a way to write generic code over any
@@ -401,7 +401,7 @@
 <a href=#401 id=401 data-nosnippet>401</a>    <span class="kw">where
 <a href=#402 id=402 data-nosnippet>402</a>        </span><span class="self">Self</span>: Sized,
 <a href=#403 id=403 data-nosnippet>403</a>    {
-<a href=#404 id=404 data-nosnippet>404</a>        <span class="macro">if !</span><span class="self">self</span>.match_kind().is_standard() {
+<a href=#404 id=404 data-nosnippet>404</a>        <span class="kw">if </span>!<span class="self">self</span>.match_kind().is_standard() {
 <a href=#405 id=405 data-nosnippet>405</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(MatchError::unsupported_overlapping(
 <a href=#406 id=406 data-nosnippet>406</a>                <span class="self">self</span>.match_kind(),
 <a href=#407 id=407 data-nosnippet>407</a>            ));
@@ -506,14 +506,14 @@
 <a href=#506 id=506 data-nosnippet>506</a>            // in an Aho-Corasick automaton, we might get matches that split
 <a href=#507 id=507 data-nosnippet>507</a>            // a codepoint, or even matches of a partial codepoint. When that
 <a href=#508 id=508 data-nosnippet>508</a>            // happens, we just skip the match.
-<a href=#509 id=509 data-nosnippet>509</a>            </span><span class="macro">if !</span>haystack.is_char_boundary(m.start())
+<a href=#509 id=509 data-nosnippet>509</a>            </span><span class="kw">if </span>!haystack.is_char_boundary(m.start())
 <a href=#510 id=510 data-nosnippet>510</a>                || !haystack.is_char_boundary(m.end())
 <a href=#511 id=511 data-nosnippet>511</a>            {
 <a href=#512 id=512 data-nosnippet>512</a>                <span class="kw">continue</span>;
 <a href=#513 id=513 data-nosnippet>513</a>            }
 <a href=#514 id=514 data-nosnippet>514</a>            dst.push_str(<span class="kw-2">&amp;</span>haystack[last_match..m.start()]);
 <a href=#515 id=515 data-nosnippet>515</a>            last_match = m.end();
-<a href=#516 id=516 data-nosnippet>516</a>            <span class="macro">if !</span>replace_with(<span class="kw-2">&amp;</span>m, <span class="kw-2">&amp;</span>haystack[m.start()..m.end()], dst) {
+<a href=#516 id=516 data-nosnippet>516</a>            <span class="kw">if </span>!replace_with(<span class="kw-2">&amp;</span>m, <span class="kw-2">&amp;</span>haystack[m.start()..m.end()], dst) {
 <a href=#517 id=517 data-nosnippet>517</a>                <span class="kw">break</span>;
 <a href=#518 id=518 data-nosnippet>518</a>            };
 <a href=#519 id=519 data-nosnippet>519</a>        }
@@ -541,7 +541,7 @@
 <a href=#541 id=541 data-nosnippet>541</a>        <span class="kw">for </span>m <span class="kw">in </span><span class="self">self</span>.try_find_iter(Input::new(haystack))<span class="question-mark">? </span>{
 <a href=#542 id=542 data-nosnippet>542</a>            dst.extend(<span class="kw-2">&amp;</span>haystack[last_match..m.start()]);
 <a href=#543 id=543 data-nosnippet>543</a>            last_match = m.end();
-<a href=#544 id=544 data-nosnippet>544</a>            <span class="macro">if !</span>replace_with(<span class="kw-2">&amp;</span>m, <span class="kw-2">&amp;</span>haystack[m.start()..m.end()], dst) {
+<a href=#544 id=544 data-nosnippet>544</a>            <span class="kw">if </span>!replace_with(<span class="kw-2">&amp;</span>m, <span class="kw-2">&amp;</span>haystack[m.start()..m.end()], dst) {
 <a href=#545 id=545 data-nosnippet>545</a>                <span class="kw">break</span>;
 <a href=#546 id=546 data-nosnippet>546</a>            };
 <a href=#547 id=547 data-nosnippet>547</a>        }
@@ -1084,7 +1084,7 @@
 <a href=#1084 id=1084 data-nosnippet>1084</a>        // refills. Which this code doesn't really handle. It does preserve
 <a href=#1085 id=1085 data-nosnippet>1085</a>        // *some* state across buffer refills, basically ensuring that a match
 <a href=#1086 id=1086 data-nosnippet>1086</a>        // span is always in memory.
-<a href=#1087 id=1087 data-nosnippet>1087</a>        </span><span class="macro">if !</span>aut.match_kind().is_standard() {
+<a href=#1087 id=1087 data-nosnippet>1087</a>        </span><span class="kw">if </span>!aut.match_kind().is_standard() {
 <a href=#1088 id=1088 data-nosnippet>1088</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(MatchError::unsupported_stream(aut.match_kind()));
 <a href=#1089 id=1089 data-nosnippet>1089</a>        }
 <a href=#1090 id=1090 data-nosnippet>1090</a>        <span class="comment">// This is kind of a cop-out, but empty matches are SUPER annoying.
@@ -1376,7 +1376,7 @@
 <a href=#1376 id=1376 data-nosnippet>1376</a>                // still carry matches only reachable via a failure transition.
 <a href=#1377 id=1377 data-nosnippet>1377</a>                // Why? Because removing them seems difficult, although I
 <a href=#1378 id=1378 data-nosnippet>1378</a>                // haven't given it a lot of thought.
-<a href=#1379 id=1379 data-nosnippet>1379</a>                </span><span class="macro">if !</span>(anchored.is_anchored() &amp;&amp; m.start() &gt; input.start()) {
+<a href=#1379 id=1379 data-nosnippet>1379</a>                </span><span class="kw">if </span>!(anchored.is_anchored() &amp;&amp; m.start() &gt; input.start()) {
 <a href=#1380 id=1380 data-nosnippet>1380</a>                    mat = <span class="prelude-val">Some</span>(m);
 <a href=#1381 id=1381 data-nosnippet>1381</a>                    <span class="kw">if </span>earliest {
 <a href=#1382 id=1382 data-nosnippet>1382</a>                        <span class="kw">return </span><span class="prelude-val">Ok</span>(mat);

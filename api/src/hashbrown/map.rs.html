@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashbrown-0.16.1/src/map.rs`."><title>map.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="hashbrown" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (bd3ac0330 2025-11-01)" data-channel="nightly" data-search-js="search-5c29b3b5.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">hashbrown/</div>map.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span><span class="kw">crate</span>::raw::{
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/hashbrown-0.16.1/src/map.rs`."><title>map.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="hashbrown" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (01867557c 2025-11-12)" data-channel="nightly" data-search-js="search-8e3fad08.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">hashbrown/</div>map.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span><span class="kw">crate</span>::raw::{
 <a href=#2 id=2 data-nosnippet>2</a>    Allocator, Bucket, Global, RawDrain, RawExtractIf, RawIntoIter, RawIter, RawTable,
 <a href=#3 id=3 data-nosnippet>3</a>};
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use crate</span>::{DefaultHashBuilder, Equivalent, TryReserveError};
@@ -922,7 +922,7 @@
 <a href=#922 id=922 data-nosnippet>922</a>        </span><span class="kw">unsafe </span>{
 <a href=#923 id=923 data-nosnippet>923</a>            <span class="kw">for </span>item <span class="kw">in </span><span class="self">self</span>.table.iter() {
 <a href=#924 id=924 data-nosnippet>924</a>                <span class="kw">let </span><span class="kw-2">&amp;mut </span>(<span class="kw-2">ref </span>key, <span class="kw-2">ref mut </span>value) = item.as_mut();
-<a href=#925 id=925 data-nosnippet>925</a>                <span class="macro">if !</span>f(key, value) {
+<a href=#925 id=925 data-nosnippet>925</a>                <span class="kw">if </span>!f(key, value) {
 <a href=#926 id=926 data-nosnippet>926</a>                    <span class="self">self</span>.table.erase(item);
 <a href=#927 id=927 data-nosnippet>927</a>                }
 <a href=#928 id=928 data-nosnippet>928</a>            }
@@ -1306,7 +1306,7 @@
 <a href=#1306 id=1306 data-nosnippet>1306</a>        </span>Q: Hash + Equivalent&lt;K&gt; + <span class="question-mark">?</span>Sized,
 <a href=#1307 id=1307 data-nosnippet>1307</a>    {
 <a href=#1308 id=1308 data-nosnippet>1308</a>        <span class="comment">// Avoid `Option::map` because it bloats LLVM IR.
-<a href=#1309 id=1309 data-nosnippet>1309</a>        </span><span class="macro">if !</span><span class="self">self</span>.table.is_empty() {
+<a href=#1309 id=1309 data-nosnippet>1309</a>        </span><span class="kw">if </span>!<span class="self">self</span>.table.is_empty() {
 <a href=#1310 id=1310 data-nosnippet>1310</a>            <span class="kw">let </span>hash = make_hash::&lt;Q, S&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>.hash_builder, k);
 <a href=#1311 id=1311 data-nosnippet>1311</a>            <span class="kw">match </span><span class="self">self</span>.table.get(hash, equivalent_key(k)) {
 <a href=#1312 id=1312 data-nosnippet>1312</a>                <span class="prelude-val">Some</span>((<span class="kw">_</span>, v)) =&gt; <span class="prelude-val">Some</span>(v),
@@ -1342,7 +1342,7 @@
 <a href=#1342 id=1342 data-nosnippet>1342</a>        </span>Q: Hash + Equivalent&lt;K&gt; + <span class="question-mark">?</span>Sized,
 <a href=#1343 id=1343 data-nosnippet>1343</a>    {
 <a href=#1344 id=1344 data-nosnippet>1344</a>        <span class="comment">// Avoid `Option::map` because it bloats LLVM IR.
-<a href=#1345 id=1345 data-nosnippet>1345</a>        </span><span class="macro">if !</span><span class="self">self</span>.table.is_empty() {
+<a href=#1345 id=1345 data-nosnippet>1345</a>        </span><span class="kw">if </span>!<span class="self">self</span>.table.is_empty() {
 <a href=#1346 id=1346 data-nosnippet>1346</a>            <span class="kw">let </span>hash = make_hash::&lt;Q, S&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>.hash_builder, k);
 <a href=#1347 id=1347 data-nosnippet>1347</a>            <span class="kw">match </span><span class="self">self</span>.table.get(hash, equivalent_key(k)) {
 <a href=#1348 id=1348 data-nosnippet>1348</a>                <span class="prelude-val">Some</span>((key, value)) =&gt; <span class="prelude-val">Some</span>((key, value)),
@@ -1382,7 +1382,7 @@
 <a href=#1382 id=1382 data-nosnippet>1382</a>        </span>Q: Hash + Equivalent&lt;K&gt; + <span class="question-mark">?</span>Sized,
 <a href=#1383 id=1383 data-nosnippet>1383</a>    {
 <a href=#1384 id=1384 data-nosnippet>1384</a>        <span class="comment">// Avoid `Option::map` because it bloats LLVM IR.
-<a href=#1385 id=1385 data-nosnippet>1385</a>        </span><span class="macro">if !</span><span class="self">self</span>.table.is_empty() {
+<a href=#1385 id=1385 data-nosnippet>1385</a>        </span><span class="kw">if </span>!<span class="self">self</span>.table.is_empty() {
 <a href=#1386 id=1386 data-nosnippet>1386</a>            <span class="kw">let </span>hash = make_hash::&lt;Q, S&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>.hash_builder, k);
 <a href=#1387 id=1387 data-nosnippet>1387</a>            <span class="kw">match </span><span class="self">self</span>.table.get_mut(hash, equivalent_key(k)) {
 <a href=#1388 id=1388 data-nosnippet>1388</a>                <span class="prelude-val">Some</span>(<span class="kw-2">&amp;mut </span>(<span class="kw-2">ref </span>key, <span class="kw-2">ref mut </span>value)) =&gt; <span class="prelude-val">Some</span>((key, value)),
@@ -1417,7 +1417,7 @@
 <a href=#1417 id=1417 data-nosnippet>1417</a>    <span class="kw">where
 <a href=#1418 id=1418 data-nosnippet>1418</a>        </span>Q: Hash + Equivalent&lt;K&gt; + <span class="question-mark">?</span>Sized,
 <a href=#1419 id=1419 data-nosnippet>1419</a>    {
-<a href=#1420 id=1420 data-nosnippet>1420</a>        <span class="macro">if !</span><span class="self">self</span>.table.is_empty() {
+<a href=#1420 id=1420 data-nosnippet>1420</a>        <span class="kw">if </span>!<span class="self">self</span>.table.is_empty() {
 <a href=#1421 id=1421 data-nosnippet>1421</a>            <span class="kw">let </span>hash = make_hash::&lt;Q, S&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>.hash_builder, k);
 <a href=#1422 id=1422 data-nosnippet>1422</a>            <span class="self">self</span>.table.get(hash, equivalent_key(k)).is_some()
 <a href=#1423 id=1423 data-nosnippet>1423</a>        } <span class="kw">else </span>{
@@ -1454,7 +1454,7 @@
 <a href=#1454 id=1454 data-nosnippet>1454</a>        </span>Q: Hash + Equivalent&lt;K&gt; + <span class="question-mark">?</span>Sized,
 <a href=#1455 id=1455 data-nosnippet>1455</a>    {
 <a href=#1456 id=1456 data-nosnippet>1456</a>        <span class="comment">// Avoid `Option::map` because it bloats LLVM IR.
-<a href=#1457 id=1457 data-nosnippet>1457</a>        </span><span class="macro">if !</span><span class="self">self</span>.table.is_empty() {
+<a href=#1457 id=1457 data-nosnippet>1457</a>        </span><span class="kw">if </span>!<span class="self">self</span>.table.is_empty() {
 <a href=#1458 id=1458 data-nosnippet>1458</a>            <span class="kw">let </span>hash = make_hash::&lt;Q, S&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>.hash_builder, k);
 <a href=#1459 id=1459 data-nosnippet>1459</a>            <span class="kw">match </span><span class="self">self</span>.table.get_mut(hash, equivalent_key(k)) {
 <a href=#1460 id=1460 data-nosnippet>1460</a>                <span class="prelude-val">Some</span>(<span class="kw-2">&amp;mut </span>(<span class="kw">_</span>, <span class="kw-2">ref mut </span>v)) =&gt; <span class="prelude-val">Some</span>(v),
@@ -6710,7 +6710,7 @@
 <a href=#6710 id=6710 data-nosnippet>6710</a>            }
 <a href=#6711 id=6711 data-nosnippet>6711</a>
 <a href=#6712 id=6712 data-nosnippet>6712</a>            <span class="kw">let </span>page_size = result <span class="kw">as </span>usize;
-<a href=#6713 id=6713 data-nosnippet>6713</a>            <span class="macro">if !</span>page_size.is_power_of_two() {
+<a href=#6713 id=6713 data-nosnippet>6713</a>            <span class="kw">if </span>!page_size.is_power_of_two() {
 <a href=#6714 id=6714 data-nosnippet>6714</a>                <span class="prelude-val">Err</span>(AllocError)
 <a href=#6715 id=6715 data-nosnippet>6715</a>            } <span class="kw">else </span>{
 <a href=#6716 id=6716 data-nosnippet>6716</a>                <span class="prelude-val">Ok</span>(<span class="self">Self </span>{ page_size })

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/work/rust-gpu/rust-gpu/target/debug/build/rustc_codegen_spirv-3e58461cfd82a9a7/out/pqp_cg_ssa/src/mir/naked_asm.rs`."><title>naked_asm.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../../../../../../../../../../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../../../../../../../../../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../../../../../../../../../../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../../../../../../../../../../../../../" data-static-root-path="../../../../../../../../../../../../../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (bd3ac0330 2025-11-01)" data-channel="nightly" data-search-js="search-5c29b3b5.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../../../../../../../../../../../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../../../../../../../../../../../../../static.files/src-script-813739b1.js"></script><script defer src="../../../../../../../../../../../../../../../src-files.js"></script><script defer src="../../../../../../../../../../../../../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../../../../../../../../../../../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../../../../../../../../../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../../../../../../../../../../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/Users/runner/work/rust-gpu/rust-gpu/target/debug/build/rustc_codegen_spirv-3e58461cfd82a9a7/out/pqp_cg_ssa/src/mir/</div>naked_asm.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>rustc_abi::{BackendRepr, Float, Integer, Primitive, RegKind};
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/work/rust-gpu/rust-gpu/target/debug/build/rustc_codegen_spirv-3e58461cfd82a9a7/out/pqp_cg_ssa/src/mir/naked_asm.rs`."><title>naked_asm.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../../../../../../../../../../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../../../../../../../../../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../../../../../../../../../../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../../../../../../../../../../../../../" data-static-root-path="../../../../../../../../../../../../../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (01867557c 2025-11-12)" data-channel="nightly" data-search-js="search-8e3fad08.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../../../../../../../../../../../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../../../../../../../../../../../../../static.files/src-script-813739b1.js"></script><script defer src="../../../../../../../../../../../../../../../src-files.js"></script><script defer src="../../../../../../../../../../../../../../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../../../../../../../../../../../../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../../../../../../../../../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../../../../../../../../../../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/Users/runner/work/rust-gpu/rust-gpu/target/debug/build/rustc_codegen_spirv-3e58461cfd82a9a7/out/pqp_cg_ssa/src/mir/</div>naked_asm.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>rustc_abi::{BackendRepr, Float, Integer, Primitive, RegKind};
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span>rustc_hir::attrs::{InstructionSetAttr, Linkage};
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span>rustc_middle::mir::mono::{MonoItemData, Visibility};
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span>rustc_middle::mir::{InlineAsmOperand, START_BLOCK};
@@ -7,7 +7,7 @@
 <a href=#7 id=7 data-nosnippet>7</a><span class="kw">use </span>rustc_middle::{bug, ty};
 <a href=#8 id=8 data-nosnippet>8</a><span class="kw">use </span>rustc_span::sym;
 <a href=#9 id=9 data-nosnippet>9</a><span class="kw">use </span>rustc_target::callconv::{ArgAbi, FnAbi, PassMode};
-<a href=#10 id=10 data-nosnippet>10</a><span class="kw">use </span>rustc_target::spec::BinaryFormat;
+<a href=#10 id=10 data-nosnippet>10</a><span class="kw">use </span>rustc_target::spec::{Arch, BinaryFormat};
 <a href=#11 id=11 data-nosnippet>11</a>
 <a href=#12 id=12 data-nosnippet>12</a><span class="kw">use </span><span class="kw">crate</span>::maybe_pqp_cg_ssa::common;
 <a href=#13 id=13 data-nosnippet>13</a><span class="kw">use </span><span class="kw">crate</span>::maybe_pqp_cg_ssa::mir::AsmCodegenMethods;
@@ -125,7 +125,7 @@
 <a href=#125 id=125 data-nosnippet>125</a>
 <a href=#126 id=126 data-nosnippet>126</a>    <span class="kw">let </span>asm_binary_format = <span class="kw-2">&amp;</span>tcx.sess.target.binary_format;
 <a href=#127 id=127 data-nosnippet>127</a>
-<a href=#128 id=128 data-nosnippet>128</a>    <span class="kw">let </span>is_arm = tcx.sess.target.arch == <span class="string">"arm"</span>;
+<a href=#128 id=128 data-nosnippet>128</a>    <span class="kw">let </span>is_arm = tcx.sess.target.arch == Arch::Arm;
 <a href=#129 id=129 data-nosnippet>129</a>    <span class="kw">let </span>is_thumb = tcx.sess.unstable_target_features.contains(<span class="kw-2">&amp;</span>sym::thumb_mode);
 <a href=#130 id=130 data-nosnippet>130</a>
 <a href=#131 id=131 data-nosnippet>131</a>    <span class="kw">let </span>attrs = tcx.codegen_instance_attrs(instance.def);
@@ -222,7 +222,7 @@
 <a href=#222 id=222 data-nosnippet>222</a>                Visibility::Hidden =&gt; <span class="macro">writeln!</span>(begin, <span class="string">".hidden {asm_name}"</span>).unwrap(),
 <a href=#223 id=223 data-nosnippet>223</a>            }
 <a href=#224 id=224 data-nosnippet>224</a>            <span class="macro">writeln!</span>(begin, <span class="string">".type {asm_name}, {function}"</span>).unwrap();
-<a href=#225 id=225 data-nosnippet>225</a>            <span class="macro">if !</span>arch_prefix.is_empty() {
+<a href=#225 id=225 data-nosnippet>225</a>            <span class="kw">if </span>!arch_prefix.is_empty() {
 <a href=#226 id=226 data-nosnippet>226</a>                <span class="macro">writeln!</span>(begin, <span class="string">"{}"</span>, arch_prefix).unwrap();
 <a href=#227 id=227 data-nosnippet>227</a>            }
 <a href=#228 id=228 data-nosnippet>228</a>            <span class="macro">writeln!</span>(begin, <span class="string">"{asm_name}:"</span>).unwrap();
@@ -233,7 +233,7 @@
 <a href=#233 id=233 data-nosnippet>233</a>            </span><span class="macro">writeln!</span>(end, <span class="string">".Lfunc_end_{asm_name}:"</span>).unwrap();
 <a href=#234 id=234 data-nosnippet>234</a>            <span class="macro">writeln!</span>(end, <span class="string">".size {asm_name}, . - {asm_name}"</span>).unwrap();
 <a href=#235 id=235 data-nosnippet>235</a>            <span class="macro">writeln!</span>(end, <span class="string">".popsection"</span>).unwrap();
-<a href=#236 id=236 data-nosnippet>236</a>            <span class="macro">if !</span>arch_suffix.is_empty() {
+<a href=#236 id=236 data-nosnippet>236</a>            <span class="kw">if </span>!arch_suffix.is_empty() {
 <a href=#237 id=237 data-nosnippet>237</a>                <span class="macro">writeln!</span>(end, <span class="string">"{}"</span>, arch_suffix).unwrap();
 <a href=#238 id=238 data-nosnippet>238</a>            }
 <a href=#239 id=239 data-nosnippet>239</a>        }
@@ -251,7 +251,7 @@
 <a href=#251 id=251 data-nosnippet>251</a>            <span class="macro">writeln!</span>(end).unwrap();
 <a href=#252 id=252 data-nosnippet>252</a>            <span class="macro">writeln!</span>(end, <span class="string">".Lfunc_end_{asm_name}:"</span>).unwrap();
 <a href=#253 id=253 data-nosnippet>253</a>            <span class="macro">writeln!</span>(end, <span class="string">".popsection"</span>).unwrap();
-<a href=#254 id=254 data-nosnippet>254</a>            <span class="macro">if !</span>arch_suffix.is_empty() {
+<a href=#254 id=254 data-nosnippet>254</a>            <span class="kw">if </span>!arch_suffix.is_empty() {
 <a href=#255 id=255 data-nosnippet>255</a>                <span class="macro">writeln!</span>(end, <span class="string">"{}"</span>, arch_suffix).unwrap();
 <a href=#256 id=256 data-nosnippet>256</a>            }
 <a href=#257 id=257 data-nosnippet>257</a>        }
@@ -269,7 +269,7 @@
 <a href=#269 id=269 data-nosnippet>269</a>            <span class="macro">writeln!</span>(end).unwrap();
 <a href=#270 id=270 data-nosnippet>270</a>            <span class="macro">writeln!</span>(end, <span class="string">".Lfunc_end_{asm_name}:"</span>).unwrap();
 <a href=#271 id=271 data-nosnippet>271</a>            <span class="macro">writeln!</span>(end, <span class="string">".popsection"</span>).unwrap();
-<a href=#272 id=272 data-nosnippet>272</a>            <span class="macro">if !</span>arch_suffix.is_empty() {
+<a href=#272 id=272 data-nosnippet>272</a>            <span class="kw">if </span>!arch_suffix.is_empty() {
 <a href=#273 id=273 data-nosnippet>273</a>                <span class="macro">writeln!</span>(end, <span class="string">"{}"</span>, arch_suffix).unwrap();
 <a href=#274 id=274 data-nosnippet>274</a>            }
 <a href=#275 id=275 data-nosnippet>275</a>        }
@@ -283,7 +283,7 @@
 <a href=#283 id=283 data-nosnippet>283</a>                <span class="macro">writeln!</span>(begin, <span class="string">".hidden {asm_name}"</span>).unwrap();
 <a href=#284 id=284 data-nosnippet>284</a>            }
 <a href=#285 id=285 data-nosnippet>285</a>            <span class="macro">writeln!</span>(begin, <span class="string">".type {asm_name}, @function"</span>).unwrap();
-<a href=#286 id=286 data-nosnippet>286</a>            <span class="macro">if !</span>arch_prefix.is_empty() {
+<a href=#286 id=286 data-nosnippet>286</a>            <span class="kw">if </span>!arch_prefix.is_empty() {
 <a href=#287 id=287 data-nosnippet>287</a>                <span class="macro">writeln!</span>(begin, <span class="string">"{}"</span>, arch_prefix).unwrap();
 <a href=#288 id=288 data-nosnippet>288</a>            }
 <a href=#289 id=289 data-nosnippet>289</a>            <span class="macro">writeln!</span>(begin, <span class="string">"{asm_name}:"</span>).unwrap();
@@ -344,7 +344,7 @@
 <a href=#344 id=344 data-nosnippet>344</a>
 <a href=#345 id=345 data-nosnippet>345</a>    <span class="kw">if </span>hidden_return {
 <a href=#346 id=346 data-nosnippet>346</a>        signature.push_str(ptr_type);
-<a href=#347 id=347 data-nosnippet>347</a>        <span class="macro">if !</span>fn_abi.args.is_empty() {
+<a href=#347 id=347 data-nosnippet>347</a>        <span class="kw">if </span>!fn_abi.args.is_empty() {
 <a href=#348 id=348 data-nosnippet>348</a>            signature.push_str(<span class="string">", "</span>);
 <a href=#349 id=349 data-nosnippet>349</a>        }
 <a href=#350 id=350 data-nosnippet>350</a>    }
@@ -359,7 +359,7 @@
 <a href=#359 id=359 data-nosnippet>359</a>
 <a href=#360 id=360 data-nosnippet>360</a>    signature.push_str(<span class="string">") -&gt; ("</span>);
 <a href=#361 id=361 data-nosnippet>361</a>
-<a href=#362 id=362 data-nosnippet>362</a>    <span class="macro">if !</span>hidden_return {
+<a href=#362 id=362 data-nosnippet>362</a>    <span class="kw">if </span>!hidden_return {
 <a href=#363 id=363 data-nosnippet>363</a>        wasm_type(<span class="kw-2">&amp;mut </span>signature, <span class="kw-2">&amp;</span>fn_abi.ret, ptr_type);
 <a href=#364 id=364 data-nosnippet>364</a>    }
 <a href=#365 id=365 data-nosnippet>365</a>

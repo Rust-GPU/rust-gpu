@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/builder/spirv_asm.rs`."><title>spirv_asm.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (bd3ac0330 2025-11-01)" data-channel="nightly" data-search-js="search-5c29b3b5.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/builder/</div>spirv_asm.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/builder/spirv_asm.rs`."><title>spirv_asm.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (01867557c 2025-11-12)" data-channel="nightly" data-search-js="search-8e3fad08.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/builder/</div>spirv_asm.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
 <a href=#2 id=2 data-nosnippet>2</a></span><span class="kw">use </span><span class="kw">crate</span>::maybe_pqp_cg_ssa <span class="kw">as </span>rustc_codegen_ssa;
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span><span class="kw">super</span>::Builder;
@@ -102,7 +102,7 @@
 <a href=#102 id=102 data-nosnippet>102</a>    ) {
 <a href=#103 id=103 data-nosnippet>103</a>        <span class="kw">const </span>SUPPORTED_OPTIONS: InlineAsmOptions = InlineAsmOptions::NORETURN;
 <a href=#104 id=104 data-nosnippet>104</a>        <span class="kw">let </span>unsupported_options = options &amp; !SUPPORTED_OPTIONS;
-<a href=#105 id=105 data-nosnippet>105</a>        <span class="macro">if !</span>unsupported_options.is_empty() {
+<a href=#105 id=105 data-nosnippet>105</a>        <span class="kw">if </span>!unsupported_options.is_empty() {
 <a href=#106 id=106 data-nosnippet>106</a>            <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"asm flags not supported: {unsupported_options:?}"</span>));
 <a href=#107 id=107 data-nosnippet>107</a>        }
 <a href=#108 id=108 data-nosnippet>108</a>
@@ -262,7 +262,7 @@
 <a href=#262 id=262 data-nosnippet>262</a>            }
 <a href=#263 id=263 data-nosnippet>263</a>        }
 <a href=#264 id=264 data-nosnippet>264</a>        <span class="kw">for </span>(id, num) <span class="kw">in </span>id_map {
-<a href=#265 id=265 data-nosnippet>265</a>            <span class="macro">if !</span>defined_ids.contains(<span class="kw-2">&amp;</span>num) {
+<a href=#265 id=265 data-nosnippet>265</a>            <span class="kw">if </span>!defined_ids.contains(<span class="kw-2">&amp;</span>num) {
 <a href=#266 id=266 data-nosnippet>266</a>                <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"%{id} is used but not defined"</span>));
 <a href=#267 id=267 data-nosnippet>267</a>            }
 <a href=#268 id=268 data-nosnippet>268</a>        }
@@ -344,7 +344,7 @@
 <a href=#344 id=344 data-nosnippet>344</a>                    <span class="kw">let </span>end = <span class="kw">loop </span>{
 <a href=#345 id=345 data-nosnippet>345</a>                        <span class="kw">let </span>end = line.as_str();
 <a href=#346 id=346 data-nosnippet>346</a>                        <span class="kw">match </span>line.next() {
-<a href=#347 id=347 data-nosnippet>347</a>                            <span class="prelude-val">Some</span>(ch) <span class="macro">if !</span>ch.is_whitespace() =&gt; {}
+<a href=#347 id=347 data-nosnippet>347</a>                            <span class="prelude-val">Some</span>(ch) <span class="kw">if </span>!ch.is_whitespace() =&gt; {}
 <a href=#348 id=348 data-nosnippet>348</a>                            <span class="kw">_ </span>=&gt; <span class="kw">break </span>end,
 <a href=#349 id=349 data-nosnippet>349</a>                        }
 <a href=#350 id=350 data-nosnippet>350</a>                    };
@@ -650,7 +650,7 @@
 <a href=#650 id=650 data-nosnippet>650</a>
 <a href=#651 id=651 data-nosnippet>651</a>            <span class="kw">match </span>quantifier {
 <a href=#652 id=652 data-nosnippet>652</a>                OperandQuantifier::One =&gt; {
-<a href=#653 id=653 data-nosnippet>653</a>                    <span class="macro">if !</span><span class="self">self</span>.parse_one_operand(id_map, instruction, kind, <span class="kw-2">&amp;mut </span>tokens) {
+<a href=#653 id=653 data-nosnippet>653</a>                    <span class="kw">if </span>!<span class="self">self</span>.parse_one_operand(id_map, instruction, kind, <span class="kw-2">&amp;mut </span>tokens) {
 <a href=#654 id=654 data-nosnippet>654</a>                        <span class="self">self</span>.err(<span class="macro">format!</span>(
 <a href=#655 id=655 data-nosnippet>655</a>                            <span class="string">"expected operand after instruction: {}"</span>,
 <a href=#656 id=656 data-nosnippet>656</a>                            instruction.class.opname
@@ -674,7 +674,7 @@
 <a href=#674 id=674 data-nosnippet>674</a>            }
 <a href=#675 id=675 data-nosnippet>675</a>        }
 <a href=#676 id=676 data-nosnippet>676</a>
-<a href=#677 id=677 data-nosnippet>677</a>        <span class="macro">if !</span>saw_id_result &amp;&amp; instruction.result_id.is_some() {
+<a href=#677 id=677 data-nosnippet>677</a>        <span class="kw">if </span>!saw_id_result &amp;&amp; instruction.result_id.is_some() {
 <a href=#678 id=678 data-nosnippet>678</a>            <span class="self">self</span>.err(<span class="macro">format!</span>(
 <a href=#679 id=679 data-nosnippet>679</a>                <span class="string">"instruction {} does not expect a result id"</span>,
 <a href=#680 id=680 data-nosnippet>680</a>                instruction.class.opname
@@ -915,7 +915,7 @@
 <a href=#915 id=915 data-nosnippet>915</a>                <span class="kw">if let </span><span class="prelude-val">Some</span>(id) = word.strip_prefix(<span class="string">'%'</span>) {
 <a href=#916 id=916 data-nosnippet>916</a>                    <span class="prelude-val">Some</span>(OutRegister::Regular({
 <a href=#917 id=917 data-nosnippet>917</a>                        <span class="kw">let </span>num = <span class="kw-2">*</span>id_map.entry(id).or_insert_with(|| <span class="self">self</span>.emit().id());
-<a href=#918 id=918 data-nosnippet>918</a>                        <span class="macro">if !</span>defined_ids.insert(num) {
+<a href=#918 id=918 data-nosnippet>918</a>                        <span class="kw">if </span>!defined_ids.insert(num) {
 <a href=#919 id=919 data-nosnippet>919</a>                            <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"%{id} is defined more than once"</span>));
 <a href=#920 id=920 data-nosnippet>920</a>                        }
 <a href=#921 id=921 data-nosnippet>921</a>                        num

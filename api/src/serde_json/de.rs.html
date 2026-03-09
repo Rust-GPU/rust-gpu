@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/src/de.rs`."><title>de.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="serde_json" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (bd3ac0330 2025-11-01)" data-channel="nightly" data-search-js="search-5c29b3b5.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">serde_json/</div>de.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! Deserialize JSON data to a Rust data structure.
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/src/de.rs`."><title>de.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="serde_json" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (01867557c 2025-11-12)" data-channel="nightly" data-search-js="search-8e3fad08.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">serde_json/</div>de.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! Deserialize JSON data to a Rust data structure.
 <a href=#2 id=2 data-nosnippet>2</a>
 <a href=#3 id=3 data-nosnippet>3</a></span><span class="kw">use </span><span class="kw">crate</span>::error::{Error, ErrorCode, <span class="prelude-ty">Result</span>};
 <a href=#4 id=4 data-nosnippet>4</a><span class="attr">#[cfg(feature = <span class="string">"float_roundtrip"</span>)]
@@ -747,7 +747,7 @@
 <a href=#747 id=747 data-nosnippet>747</a>            at_least_one_digit = <span class="bool-val">true</span>;
 <a href=#748 id=748 data-nosnippet>748</a>        }
 <a href=#749 id=749 data-nosnippet>749</a>
-<a href=#750 id=750 data-nosnippet>750</a>        <span class="macro">if !</span>at_least_one_digit {
+<a href=#750 id=750 data-nosnippet>750</a>        <span class="kw">if </span>!at_least_one_digit {
 <a href=#751 id=751 data-nosnippet>751</a>            <span class="kw">match </span><span class="macro">tri!</span>(<span class="self">self</span>.peek()) {
 <a href=#752 id=752 data-nosnippet>752</a>                <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="self">self</span>.peek_error(ErrorCode::InvalidNumber)),
 <a href=#753 id=753 data-nosnippet>753</a>                <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="self">self</span>.peek_error(ErrorCode::EofWhileParsingValue)),
@@ -863,7 +863,7 @@
 <a href=#863 id=863 data-nosnippet>863</a>        positive_exp: bool,
 <a href=#864 id=864 data-nosnippet>864</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;f64&gt; {
 <a href=#865 id=865 data-nosnippet>865</a>        <span class="comment">// Error instead of +/- infinity.
-<a href=#866 id=866 data-nosnippet>866</a>        </span><span class="macro">if !</span>zero_significand &amp;&amp; positive_exp {
+<a href=#866 id=866 data-nosnippet>866</a>        </span><span class="kw">if </span>!zero_significand &amp;&amp; positive_exp {
 <a href=#867 id=867 data-nosnippet>867</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="self">self</span>.error(ErrorCode::NumberOutOfRange));
 <a href=#868 id=868 data-nosnippet>868</a>        }
 <a href=#869 id=869 data-nosnippet>869</a>
@@ -937,7 +937,7 @@
 <a href=#937 id=937 data-nosnippet>937</a>    <span class="attr">#[cfg(feature = <span class="string">"arbitrary_precision"</span>)]
 <a href=#938 id=938 data-nosnippet>938</a>    </span><span class="kw">fn </span>parse_any_number(<span class="kw-2">&amp;mut </span><span class="self">self</span>, positive: bool) -&gt; <span class="prelude-ty">Result</span>&lt;ParserNumber&gt; {
 <a href=#939 id=939 data-nosnippet>939</a>        <span class="kw">let </span><span class="kw-2">mut </span>buf = String::with_capacity(<span class="number">16</span>);
-<a href=#940 id=940 data-nosnippet>940</a>        <span class="macro">if !</span>positive {
+<a href=#940 id=940 data-nosnippet>940</a>        <span class="kw">if </span>!positive {
 <a href=#941 id=941 data-nosnippet>941</a>            buf.push(<span class="string">'-'</span>);
 <a href=#942 id=942 data-nosnippet>942</a>        }
 <a href=#943 id=943 data-nosnippet>943</a>        <span class="macro">tri!</span>(<span class="self">self</span>.scan_integer(<span class="kw-2">&amp;mut </span>buf));
@@ -1010,7 +1010,7 @@
 <a href=#1010 id=1010 data-nosnippet>1010</a>            at_least_one_digit = <span class="bool-val">true</span>;
 <a href=#1011 id=1011 data-nosnippet>1011</a>        }
 <a href=#1012 id=1012 data-nosnippet>1012</a>
-<a href=#1013 id=1013 data-nosnippet>1013</a>        <span class="macro">if !</span>at_least_one_digit {
+<a href=#1013 id=1013 data-nosnippet>1013</a>        <span class="kw">if </span>!at_least_one_digit {
 <a href=#1014 id=1014 data-nosnippet>1014</a>            <span class="kw">match </span><span class="macro">tri!</span>(<span class="self">self</span>.peek()) {
 <a href=#1015 id=1015 data-nosnippet>1015</a>                <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="self">self</span>.peek_error(ErrorCode::InvalidNumber)),
 <a href=#1016 id=1016 data-nosnippet>1016</a>                <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="self">self</span>.peek_error(ErrorCode::EofWhileParsingValue)),
@@ -1248,7 +1248,7 @@
 <a href=#1248 id=1248 data-nosnippet>1248</a>            at_least_one_digit = <span class="bool-val">true</span>;
 <a href=#1249 id=1249 data-nosnippet>1249</a>        }
 <a href=#1250 id=1250 data-nosnippet>1250</a>
-<a href=#1251 id=1251 data-nosnippet>1251</a>        <span class="macro">if !</span>at_least_one_digit {
+<a href=#1251 id=1251 data-nosnippet>1251</a>        <span class="kw">if </span>!at_least_one_digit {
 <a href=#1252 id=1252 data-nosnippet>1252</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="self">self</span>.peek_error(ErrorCode::InvalidNumber));
 <a href=#1253 id=1253 data-nosnippet>1253</a>        }
 <a href=#1254 id=1254 data-nosnippet>1254</a>
@@ -1363,7 +1363,7 @@
 <a href=#1363 id=1363 data-nosnippet>1363</a><span class="attr">#[cfg(feature = <span class="string">"unbounded_depth"</span>)]
 <a href=#1364 id=1364 data-nosnippet>1364</a></span><span class="macro">macro_rules!</span> if_checking_recursion_limit {
 <a href=#1365 id=1365 data-nosnippet>1365</a>    (<span class="macro-nonterminal">$this</span>:ident $(<span class="macro-nonterminal">$body</span>:tt)<span class="kw-2">*</span>) =&gt; {
-<a href=#1366 id=1366 data-nosnippet>1366</a>        <span class="macro">if !</span><span class="macro-nonterminal">$this</span>.disable_recursion_limit {
+<a href=#1366 id=1366 data-nosnippet>1366</a>        <span class="kw">if </span>!<span class="macro-nonterminal">$this</span>.disable_recursion_limit {
 <a href=#1367 id=1367 data-nosnippet>1367</a>            <span class="macro-nonterminal">$this </span>$(<span class="macro-nonterminal">$body</span>)*
 <a href=#1368 id=1368 data-nosnippet>1368</a>        }
 <a href=#1369 id=1369 data-nosnippet>1369</a>    };

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/syn-2.0.114/src/generics.rs`."><title>generics.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="syn" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (bd3ac0330 2025-11-01)" data-channel="nightly" data-search-js="search-5c29b3b5.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">syn/</div>generics.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span><span class="kw">crate</span>::attr::Attribute;
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/syn-2.0.114/src/generics.rs`."><title>generics.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="syn" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (01867557c 2025-11-12)" data-channel="nightly" data-search-js="search-8e3fad08.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">syn/</div>generics.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span><span class="kw">crate</span>::attr::Attribute;
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span><span class="kw">crate</span>::expr::Expr;
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span><span class="kw">crate</span>::ident::Ident;
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span><span class="kw">crate</span>::lifetime::Lifetime;
@@ -538,7 +538,7 @@
 <a href=#538 id=538 data-nosnippet>538</a>    <span class="attr">#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">"parsing"</span>)))]
 <a href=#539 id=539 data-nosnippet>539</a>    </span><span class="kw">impl </span>Parse <span class="kw">for </span>Generics {
 <a href=#540 id=540 data-nosnippet>540</a>        <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-<a href=#541 id=541 data-nosnippet>541</a>            <span class="macro">if !</span>input.peek(<span class="macro">Token!</span>[&lt;]) {
+<a href=#541 id=541 data-nosnippet>541</a>            <span class="kw">if </span>!input.peek(<span class="macro">Token!</span>[&lt;]) {
 <a href=#542 id=542 data-nosnippet>542</a>                <span class="kw">return </span><span class="prelude-val">Ok</span>(Generics::default());
 <a href=#543 id=543 data-nosnippet>543</a>            }
 <a href=#544 id=544 data-nosnippet>544</a>
@@ -650,7 +650,7 @@
 <a href=#650 id=650 data-nosnippet>650</a>                            }
 <a href=#651 id=651 data-nosnippet>651</a>                            <span class="kw">let </span>value = input.parse()<span class="question-mark">?</span>;
 <a href=#652 id=652 data-nosnippet>652</a>                            bounds.push_value(value);
-<a href=#653 id=653 data-nosnippet>653</a>                            <span class="macro">if !</span>input.peek(<span class="macro">Token!</span>[+]) {
+<a href=#653 id=653 data-nosnippet>653</a>                            <span class="kw">if </span>!input.peek(<span class="macro">Token!</span>[+]) {
 <a href=#654 id=654 data-nosnippet>654</a>                                <span class="kw">break</span>;
 <a href=#655 id=655 data-nosnippet>655</a>                            }
 <a href=#656 id=656 data-nosnippet>656</a>                            <span class="kw">let </span>punct = input.parse()<span class="question-mark">?</span>;
@@ -671,7 +671,7 @@
 <a href=#671 id=671 data-nosnippet>671</a>                lt_token: input.parse()<span class="question-mark">?</span>,
 <a href=#672 id=672 data-nosnippet>672</a>                lifetimes: {
 <a href=#673 id=673 data-nosnippet>673</a>                    <span class="kw">let </span><span class="kw-2">mut </span>lifetimes = Punctuated::new();
-<a href=#674 id=674 data-nosnippet>674</a>                    <span class="macro">while !</span>input.peek(<span class="macro">Token!</span>[&gt;]) {
+<a href=#674 id=674 data-nosnippet>674</a>                    <span class="kw">while </span>!input.peek(<span class="macro">Token!</span>[&gt;]) {
 <a href=#675 id=675 data-nosnippet>675</a>                        lifetimes.push_value(input.parse()<span class="question-mark">?</span>);
 <a href=#676 id=676 data-nosnippet>676</a>                        <span class="kw">if </span>input.peek(<span class="macro">Token!</span>[&gt;]) {
 <a href=#677 id=677 data-nosnippet>677</a>                            <span class="kw">break</span>;
@@ -718,7 +718,7 @@
 <a href=#718 id=718 data-nosnippet>718</a>                        <span class="kw">let </span>allow_const = <span class="bool-val">true</span>;
 <a href=#719 id=719 data-nosnippet>719</a>                        TypeParamBound::parse_single(input, allow_precise_capture, allow_const)<span class="question-mark">?
 <a href=#720 id=720 data-nosnippet>720</a>                    </span>});
-<a href=#721 id=721 data-nosnippet>721</a>                    <span class="macro">if !</span>input.peek(<span class="macro">Token!</span>[+]) {
+<a href=#721 id=721 data-nosnippet>721</a>                    <span class="kw">if </span>!input.peek(<span class="macro">Token!</span>[+]) {
 <a href=#722 id=722 data-nosnippet>722</a>                        <span class="kw">break</span>;
 <a href=#723 id=723 data-nosnippet>723</a>                    }
 <a href=#724 id=724 data-nosnippet>724</a>                    <span class="kw">let </span>punct: <span class="macro">Token!</span>[+] = input.parse()<span class="question-mark">?</span>;
@@ -807,11 +807,11 @@
 <a href=#807 id=807 data-nosnippet>807</a>            <span class="kw">loop </span>{
 <a href=#808 id=808 data-nosnippet>808</a>                <span class="kw">let </span>bound = <span class="self">Self</span>::parse_single(input, allow_precise_capture, allow_const)<span class="question-mark">?</span>;
 <a href=#809 id=809 data-nosnippet>809</a>                bounds.push_value(bound);
-<a href=#810 id=810 data-nosnippet>810</a>                <span class="macro">if !</span>(allow_plus &amp;&amp; input.peek(<span class="macro">Token!</span>[+])) {
+<a href=#810 id=810 data-nosnippet>810</a>                <span class="kw">if </span>!(allow_plus &amp;&amp; input.peek(<span class="macro">Token!</span>[+])) {
 <a href=#811 id=811 data-nosnippet>811</a>                    <span class="kw">break</span>;
 <a href=#812 id=812 data-nosnippet>812</a>                }
 <a href=#813 id=813 data-nosnippet>813</a>                bounds.push_punct(input.parse()<span class="question-mark">?</span>);
-<a href=#814 id=814 data-nosnippet>814</a>                <span class="macro">if !</span>(input.peek(Ident::peek_any)
+<a href=#814 id=814 data-nosnippet>814</a>                <span class="kw">if </span>!(input.peek(Ident::peek_any)
 <a href=#815 id=815 data-nosnippet>815</a>                    || input.peek(<span class="macro">Token!</span>[::])
 <a href=#816 id=816 data-nosnippet>816</a>                    || input.peek(<span class="macro">Token!</span>[<span class="question-mark">?</span>])
 <a href=#817 id=817 data-nosnippet>817</a>                    || input.peek(Lifetime)
@@ -843,13 +843,13 @@
 <a href=#843 id=843 data-nosnippet>843</a>                <span class="kw">let </span>conditionally_const;
 <a href=#844 id=844 data-nosnippet>844</a>                <span class="kw">let </span>bracket_token = <span class="macro">bracketed!</span>(conditionally_const <span class="kw">in </span>input);
 <a href=#845 id=845 data-nosnippet>845</a>                conditionally_const.parse::&lt;<span class="macro">Token!</span>[<span class="kw">const</span>]&gt;()<span class="question-mark">?</span>;
-<a href=#846 id=846 data-nosnippet>846</a>                <span class="macro">if !</span>allow_const {
+<a href=#846 id=846 data-nosnippet>846</a>                <span class="kw">if </span>!allow_const {
 <a href=#847 id=847 data-nosnippet>847</a>                    <span class="kw">let </span>msg = <span class="string">"`[const]` is not allowed here"</span>;
 <a href=#848 id=848 data-nosnippet>848</a>                    <span class="kw">return </span><span class="prelude-val">Err</span>(Error::new(bracket_token.span.join(), msg));
 <a href=#849 id=849 data-nosnippet>849</a>                }
 <a href=#850 id=850 data-nosnippet>850</a>            } <span class="kw">else if </span>is_unconditionally_const {
 <a href=#851 id=851 data-nosnippet>851</a>                <span class="kw">let </span>const_token: <span class="macro">Token!</span>[<span class="kw">const</span>] = input.parse()<span class="question-mark">?</span>;
-<a href=#852 id=852 data-nosnippet>852</a>                <span class="macro">if !</span>allow_const {
+<a href=#852 id=852 data-nosnippet>852</a>                <span class="kw">if </span>!allow_const {
 <a href=#853 id=853 data-nosnippet>853</a>                    <span class="kw">let </span>msg = <span class="string">"`const` is not allowed here"</span>;
 <a href=#854 id=854 data-nosnippet>854</a>                    <span class="kw">return </span><span class="prelude-val">Err</span>(Error::new(const_token.span, msg));
 <a href=#855 id=855 data-nosnippet>855</a>                }
@@ -954,7 +954,7 @@
 <a href=#954 id=954 data-nosnippet>954</a>                        }
 <a href=#955 id=955 data-nosnippet>955</a>                        <span class="kw">let </span>value = input.parse()<span class="question-mark">?</span>;
 <a href=#956 id=956 data-nosnippet>956</a>                        predicates.push_value(value);
-<a href=#957 id=957 data-nosnippet>957</a>                        <span class="macro">if !</span>input.peek(<span class="macro">Token!</span>[,]) {
+<a href=#957 id=957 data-nosnippet>957</a>                        <span class="kw">if </span>!input.peek(<span class="macro">Token!</span>[,]) {
 <a href=#958 id=958 data-nosnippet>958</a>                            <span class="kw">break</span>;
 <a href=#959 id=959 data-nosnippet>959</a>                        }
 <a href=#960 id=960 data-nosnippet>960</a>                        <span class="kw">let </span>punct = input.parse()<span class="question-mark">?</span>;
@@ -998,7 +998,7 @@
 <a href=#998 id=998 data-nosnippet>998</a>                            }
 <a href=#999 id=999 data-nosnippet>999</a>                            <span class="kw">let </span>value = input.parse()<span class="question-mark">?</span>;
 <a href=#1000 id=1000 data-nosnippet>1000</a>                            bounds.push_value(value);
-<a href=#1001 id=1001 data-nosnippet>1001</a>                            <span class="macro">if !</span>input.peek(<span class="macro">Token!</span>[+]) {
+<a href=#1001 id=1001 data-nosnippet>1001</a>                            <span class="kw">if </span>!input.peek(<span class="macro">Token!</span>[+]) {
 <a href=#1002 id=1002 data-nosnippet>1002</a>                                <span class="kw">break</span>;
 <a href=#1003 id=1003 data-nosnippet>1003</a>                            }
 <a href=#1004 id=1004 data-nosnippet>1004</a>                            <span class="kw">let </span>punct = input.parse()<span class="question-mark">?</span>;
@@ -1033,7 +1033,7 @@
 <a href=#1033 id=1033 data-nosnippet>1033</a>                                    allow_const,
 <a href=#1034 id=1034 data-nosnippet>1034</a>                                )<span class="question-mark">?
 <a href=#1035 id=1035 data-nosnippet>1035</a>                            </span>});
-<a href=#1036 id=1036 data-nosnippet>1036</a>                            <span class="macro">if !</span>input.peek(<span class="macro">Token!</span>[+]) {
+<a href=#1036 id=1036 data-nosnippet>1036</a>                            <span class="kw">if </span>!input.peek(<span class="macro">Token!</span>[+]) {
 <a href=#1037 id=1037 data-nosnippet>1037</a>                                <span class="kw">break</span>;
 <a href=#1038 id=1038 data-nosnippet>1038</a>                            }
 <a href=#1039 id=1039 data-nosnippet>1039</a>                            <span class="kw">let </span>punct = input.parse()<span class="question-mark">?</span>;
@@ -1182,7 +1182,7 @@
 <a href=#1182 id=1182 data-nosnippet>1182</a>            <span class="kw">for </span>param <span class="kw">in </span><span class="self">self</span>.params.pairs() {
 <a href=#1183 id=1183 data-nosnippet>1183</a>                <span class="kw">match </span>param.value() {
 <a href=#1184 id=1184 data-nosnippet>1184</a>                    GenericParam::Type(<span class="kw">_</span>) | GenericParam::Const(<span class="kw">_</span>) =&gt; {
-<a href=#1185 id=1185 data-nosnippet>1185</a>                        <span class="macro">if !</span>trailing_or_empty {
+<a href=#1185 id=1185 data-nosnippet>1185</a>                        <span class="kw">if </span>!trailing_or_empty {
 <a href=#1186 id=1186 data-nosnippet>1186</a>                            &lt;<span class="macro">Token!</span>[,]&gt;::default().to_tokens(tokens);
 <a href=#1187 id=1187 data-nosnippet>1187</a>                            trailing_or_empty = <span class="bool-val">true</span>;
 <a href=#1188 id=1188 data-nosnippet>1188</a>                        }
@@ -1217,7 +1217,7 @@
 <a href=#1217 id=1217 data-nosnippet>1217</a>                <span class="kw">if let </span>GenericParam::Lifetime(<span class="kw">_</span>) = <span class="kw-2">**</span>param.value() {
 <a href=#1218 id=1218 data-nosnippet>1218</a>                    <span class="kw">continue</span>;
 <a href=#1219 id=1219 data-nosnippet>1219</a>                }
-<a href=#1220 id=1220 data-nosnippet>1220</a>                <span class="macro">if !</span>trailing_or_empty {
+<a href=#1220 id=1220 data-nosnippet>1220</a>                <span class="kw">if </span>!trailing_or_empty {
 <a href=#1221 id=1221 data-nosnippet>1221</a>                    &lt;<span class="macro">Token!</span>[,]&gt;::default().to_tokens(tokens);
 <a href=#1222 id=1222 data-nosnippet>1222</a>                    trailing_or_empty = <span class="bool-val">true</span>;
 <a href=#1223 id=1223 data-nosnippet>1223</a>                }
@@ -1227,7 +1227,7 @@
 <a href=#1227 id=1227 data-nosnippet>1227</a>                        <span class="comment">// Leave off the type parameter defaults
 <a href=#1228 id=1228 data-nosnippet>1228</a>                        </span>tokens.append_all(param.attrs.outer());
 <a href=#1229 id=1229 data-nosnippet>1229</a>                        param.ident.to_tokens(tokens);
-<a href=#1230 id=1230 data-nosnippet>1230</a>                        <span class="macro">if !</span>param.bounds.is_empty() {
+<a href=#1230 id=1230 data-nosnippet>1230</a>                        <span class="kw">if </span>!param.bounds.is_empty() {
 <a href=#1231 id=1231 data-nosnippet>1231</a>                            TokensOrDefault(<span class="kw-2">&amp;</span>param.colon_token).to_tokens(tokens);
 <a href=#1232 id=1232 data-nosnippet>1232</a>                            param.bounds.to_tokens(tokens);
 <a href=#1233 id=1233 data-nosnippet>1233</a>                        }
@@ -1271,7 +1271,7 @@
 <a href=#1271 id=1271 data-nosnippet>1271</a>                <span class="kw">if let </span>GenericParam::Lifetime(<span class="kw">_</span>) = <span class="kw-2">**</span>param.value() {
 <a href=#1272 id=1272 data-nosnippet>1272</a>                    <span class="kw">continue</span>;
 <a href=#1273 id=1273 data-nosnippet>1273</a>                }
-<a href=#1274 id=1274 data-nosnippet>1274</a>                <span class="macro">if !</span>trailing_or_empty {
+<a href=#1274 id=1274 data-nosnippet>1274</a>                <span class="kw">if </span>!trailing_or_empty {
 <a href=#1275 id=1275 data-nosnippet>1275</a>                    &lt;<span class="macro">Token!</span>[,]&gt;::default().to_tokens(tokens);
 <a href=#1276 id=1276 data-nosnippet>1276</a>                    trailing_or_empty = <span class="bool-val">true</span>;
 <a href=#1277 id=1277 data-nosnippet>1277</a>                }
@@ -1295,7 +1295,7 @@
 <a href=#1295 id=1295 data-nosnippet>1295</a>
 <a href=#1296 id=1296 data-nosnippet>1296</a>    <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; ToTokens <span class="kw">for </span>Turbofish&lt;<span class="lifetime">'a</span>&gt; {
 <a href=#1297 id=1297 data-nosnippet>1297</a>        <span class="kw">fn </span>to_tokens(<span class="kw-2">&amp;</span><span class="self">self</span>, tokens: <span class="kw-2">&amp;mut </span>TokenStream) {
-<a href=#1298 id=1298 data-nosnippet>1298</a>            <span class="macro">if !</span><span class="self">self</span>.<span class="number">0</span>.params.is_empty() {
+<a href=#1298 id=1298 data-nosnippet>1298</a>            <span class="kw">if </span>!<span class="self">self</span>.<span class="number">0</span>.params.is_empty() {
 <a href=#1299 id=1299 data-nosnippet>1299</a>                &lt;<span class="macro">Token!</span>[::]&gt;::default().to_tokens(tokens);
 <a href=#1300 id=1300 data-nosnippet>1300</a>                TypeGenerics(<span class="self">self</span>.<span class="number">0</span>).to_tokens(tokens);
 <a href=#1301 id=1301 data-nosnippet>1301</a>            }
@@ -1317,7 +1317,7 @@
 <a href=#1317 id=1317 data-nosnippet>1317</a>        <span class="kw">fn </span>to_tokens(<span class="kw-2">&amp;</span><span class="self">self</span>, tokens: <span class="kw-2">&amp;mut </span>TokenStream) {
 <a href=#1318 id=1318 data-nosnippet>1318</a>            tokens.append_all(<span class="self">self</span>.attrs.outer());
 <a href=#1319 id=1319 data-nosnippet>1319</a>            <span class="self">self</span>.lifetime.to_tokens(tokens);
-<a href=#1320 id=1320 data-nosnippet>1320</a>            <span class="macro">if !</span><span class="self">self</span>.bounds.is_empty() {
+<a href=#1320 id=1320 data-nosnippet>1320</a>            <span class="kw">if </span>!<span class="self">self</span>.bounds.is_empty() {
 <a href=#1321 id=1321 data-nosnippet>1321</a>                TokensOrDefault(<span class="kw-2">&amp;</span><span class="self">self</span>.colon_token).to_tokens(tokens);
 <a href=#1322 id=1322 data-nosnippet>1322</a>                <span class="self">self</span>.bounds.to_tokens(tokens);
 <a href=#1323 id=1323 data-nosnippet>1323</a>            }
@@ -1329,7 +1329,7 @@
 <a href=#1329 id=1329 data-nosnippet>1329</a>        <span class="kw">fn </span>to_tokens(<span class="kw-2">&amp;</span><span class="self">self</span>, tokens: <span class="kw-2">&amp;mut </span>TokenStream) {
 <a href=#1330 id=1330 data-nosnippet>1330</a>            tokens.append_all(<span class="self">self</span>.attrs.outer());
 <a href=#1331 id=1331 data-nosnippet>1331</a>            <span class="self">self</span>.ident.to_tokens(tokens);
-<a href=#1332 id=1332 data-nosnippet>1332</a>            <span class="macro">if !</span><span class="self">self</span>.bounds.is_empty() {
+<a href=#1332 id=1332 data-nosnippet>1332</a>            <span class="kw">if </span>!<span class="self">self</span>.bounds.is_empty() {
 <a href=#1333 id=1333 data-nosnippet>1333</a>                TokensOrDefault(<span class="kw-2">&amp;</span><span class="self">self</span>.colon_token).to_tokens(tokens);
 <a href=#1334 id=1334 data-nosnippet>1334</a>                <span class="self">self</span>.bounds.to_tokens(tokens);
 <a href=#1335 id=1335 data-nosnippet>1335</a>            }
@@ -1383,7 +1383,7 @@
 <a href=#1383 id=1383 data-nosnippet>1383</a>    <span class="attr">#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">"printing"</span>)))]
 <a href=#1384 id=1384 data-nosnippet>1384</a>    </span><span class="kw">impl </span>ToTokens <span class="kw">for </span>WhereClause {
 <a href=#1385 id=1385 data-nosnippet>1385</a>        <span class="kw">fn </span>to_tokens(<span class="kw-2">&amp;</span><span class="self">self</span>, tokens: <span class="kw-2">&amp;mut </span>TokenStream) {
-<a href=#1386 id=1386 data-nosnippet>1386</a>            <span class="macro">if !</span><span class="self">self</span>.predicates.is_empty() {
+<a href=#1386 id=1386 data-nosnippet>1386</a>            <span class="kw">if </span>!<span class="self">self</span>.predicates.is_empty() {
 <a href=#1387 id=1387 data-nosnippet>1387</a>                <span class="self">self</span>.where_token.to_tokens(tokens);
 <a href=#1388 id=1388 data-nosnippet>1388</a>                <span class="self">self</span>.predicates.to_tokens(tokens);
 <a href=#1389 id=1389 data-nosnippet>1389</a>            }
@@ -1427,7 +1427,7 @@
 <a href=#1427 id=1427 data-nosnippet>1427</a>            }
 <a href=#1428 id=1428 data-nosnippet>1428</a>            <span class="kw">for </span>param <span class="kw">in </span><span class="self">self</span>.params.pairs() {
 <a href=#1429 id=1429 data-nosnippet>1429</a>                <span class="kw">if let </span>CapturedParam::Ident(<span class="kw">_</span>) = <span class="kw-2">**</span>param.value() {
-<a href=#1430 id=1430 data-nosnippet>1430</a>                    <span class="macro">if !</span>trailing_or_empty {
+<a href=#1430 id=1430 data-nosnippet>1430</a>                    <span class="kw">if </span>!trailing_or_empty {
 <a href=#1431 id=1431 data-nosnippet>1431</a>                        &lt;<span class="macro">Token!</span>[,]&gt;::default().to_tokens(tokens);
 <a href=#1432 id=1432 data-nosnippet>1432</a>                        trailing_or_empty = <span class="bool-val">true</span>;
 <a href=#1433 id=1433 data-nosnippet>1433</a>                    }

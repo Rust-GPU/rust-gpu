@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/object-0.37.3/src/write/elf/object.rs`."><title>object.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="object" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (bd3ac0330 2025-11-01)" data-channel="nightly" data-search-js="search-5c29b3b5.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../../static.files/src-script-813739b1.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">object/write/elf/</div>object.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>alloc::vec::Vec;
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/object-0.37.3/src/write/elf/object.rs`."><title>object.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="object" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (01867557c 2025-11-12)" data-channel="nightly" data-search-js="search-8e3fad08.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../../static.files/src-script-813739b1.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">object/write/elf/</div>object.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>alloc::vec::Vec;
 <a href=#2 id=2 data-nosnippet>2</a>
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span><span class="kw">crate</span>::write::elf::writer::<span class="kw-2">*</span>;
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span><span class="kw">crate</span>::write::string::StringId;
@@ -113,7 +113,7 @@
 <a href=#113 id=113 data-nosnippet>113</a>
 <a href=#114 id=114 data-nosnippet>114</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>elf_subsection_name(<span class="kw-2">&amp;</span><span class="self">self</span>, section: <span class="kw-2">&amp;</span>[u8], value: <span class="kw-2">&amp;</span>[u8]) -&gt; Vec&lt;u8&gt; {
 <a href=#115 id=115 data-nosnippet>115</a>        <span class="kw">let </span><span class="kw-2">mut </span>name = section.to_vec();
-<a href=#116 id=116 data-nosnippet>116</a>        <span class="macro">if !</span>value.is_empty() {
+<a href=#116 id=116 data-nosnippet>116</a>        <span class="kw">if </span>!value.is_empty() {
 <a href=#117 id=117 data-nosnippet>117</a>            name.push(<span class="string">b'.'</span>);
 <a href=#118 id=118 data-nosnippet>118</a>            name.extend_from_slice(value);
 <a href=#119 id=119 data-nosnippet>119</a>        }
@@ -551,7 +551,7 @@
 <a href=#551 id=551 data-nosnippet>551</a>                <span class="kw">let </span><span class="kw-2">mut </span>reloc_name = Vec::with_capacity(
 <a href=#552 id=552 data-nosnippet>552</a>                    <span class="kw">if </span>is_rela { <span class="string">".rela"</span>.len() } <span class="kw">else </span>{ <span class="string">".rel"</span>.len() } + section.name.len(),
 <a href=#553 id=553 data-nosnippet>553</a>                );
-<a href=#554 id=554 data-nosnippet>554</a>                <span class="macro">if !</span>section.relocations.is_empty() {
+<a href=#554 id=554 data-nosnippet>554</a>                <span class="kw">if </span>!section.relocations.is_empty() {
 <a href=#555 id=555 data-nosnippet>555</a>                    reloc_name.extend_from_slice(<span class="kw">if </span>is_rela {
 <a href=#556 id=556 data-nosnippet>556</a>                        <span class="kw-2">&amp;</span><span class="string">b".rela"</span>[..]
 <a href=#557 id=557 data-nosnippet>557</a>                    } <span class="kw">else </span>{
@@ -589,7 +589,7 @@
 <a href=#589 id=589 data-nosnippet>589</a>            <span class="kw">let </span>offset = writer.reserve(section.data.len(), section.align <span class="kw">as </span>usize);
 <a href=#590 id=590 data-nosnippet>590</a>            <span class="kw">let </span>str_id = writer.add_section_name(<span class="kw-2">&amp;</span>section.name);
 <a href=#591 id=591 data-nosnippet>591</a>            <span class="kw">let </span><span class="kw-2">mut </span>reloc_str_id = <span class="prelude-val">None</span>;
-<a href=#592 id=592 data-nosnippet>592</a>            <span class="macro">if !</span>section.relocations.is_empty() {
+<a href=#592 id=592 data-nosnippet>592</a>            <span class="kw">if </span>!section.relocations.is_empty() {
 <a href=#593 id=593 data-nosnippet>593</a>                writer.reserve_section_index();
 <a href=#594 id=594 data-nosnippet>594</a>                reloc_str_id = <span class="prelude-val">Some</span>(writer.add_section_name(reloc_name));
 <a href=#595 id=595 data-nosnippet>595</a>            }
@@ -615,7 +615,7 @@
 <a href=#615 id=615 data-nosnippet>615</a>        }
 <a href=#616 id=616 data-nosnippet>616</a>        <span class="kw">let </span>symtab_num_local = writer.symbol_count();
 <a href=#617 id=617 data-nosnippet>617</a>        <span class="kw">for </span>(index, symbol) <span class="kw">in </span><span class="self">self</span>.symbols.iter().enumerate() {
-<a href=#618 id=618 data-nosnippet>618</a>            <span class="macro">if !</span>symbol.is_local() {
+<a href=#618 id=618 data-nosnippet>618</a>            <span class="kw">if </span>!symbol.is_local() {
 <a href=#619 id=619 data-nosnippet>619</a>                <span class="kw">let </span>section_index = symbol.section.id().map(|s| section_offsets[s.<span class="number">0</span>].index);
 <a href=#620 id=620 data-nosnippet>620</a>                symbol_offsets[index].index = writer.reserve_symbol_index(section_index);
 <a href=#621 id=621 data-nosnippet>621</a>            }
@@ -766,7 +766,7 @@
 <a href=#766 id=766 data-nosnippet>766</a>            }
 <a href=#767 id=767 data-nosnippet>767</a>        }
 <a href=#768 id=768 data-nosnippet>768</a>        <span class="kw">for </span>(index, symbol) <span class="kw">in </span><span class="self">self</span>.symbols.iter().enumerate() {
-<a href=#769 id=769 data-nosnippet>769</a>            <span class="macro">if !</span>symbol.is_local() {
+<a href=#769 id=769 data-nosnippet>769</a>            <span class="kw">if </span>!symbol.is_local() {
 <a href=#770 id=770 data-nosnippet>770</a>                write_symbol(index, symbol)<span class="question-mark">?</span>;
 <a href=#771 id=771 data-nosnippet>771</a>            }
 <a href=#772 id=772 data-nosnippet>772</a>        }
@@ -775,7 +775,7 @@
 <a href=#775 id=775 data-nosnippet>775</a>
 <a href=#776 id=776 data-nosnippet>776</a>        <span class="comment">// Write relocations.
 <a href=#777 id=777 data-nosnippet>777</a>        </span><span class="kw">for </span>(index, section) <span class="kw">in </span><span class="self">self</span>.sections.iter().enumerate() {
-<a href=#778 id=778 data-nosnippet>778</a>            <span class="macro">if !</span>section.relocations.is_empty() {
+<a href=#778 id=778 data-nosnippet>778</a>            <span class="kw">if </span>!section.relocations.is_empty() {
 <a href=#779 id=779 data-nosnippet>779</a>                writer.write_align_relocation();
 <a href=#780 id=780 data-nosnippet>780</a>                <span class="macro">debug_assert_eq!</span>(section_offsets[index].reloc_offset, writer.len());
 <a href=#781 id=781 data-nosnippet>781</a>                <span class="kw">for </span>reloc <span class="kw">in </span><span class="kw-2">&amp;</span>section.relocations {
@@ -845,7 +845,7 @@
 <a href=#845 id=845 data-nosnippet>845</a>                sh_entsize,
 <a href=#846 id=846 data-nosnippet>846</a>            });
 <a href=#847 id=847 data-nosnippet>847</a>
-<a href=#848 id=848 data-nosnippet>848</a>            <span class="macro">if !</span>section.relocations.is_empty() {
+<a href=#848 id=848 data-nosnippet>848</a>            <span class="kw">if </span>!section.relocations.is_empty() {
 <a href=#849 id=849 data-nosnippet>849</a>                writer.write_relocation_section_header(
 <a href=#850 id=850 data-nosnippet>850</a>                    section_offsets[index].reloc_str_id.unwrap(),
 <a href=#851 id=851 data-nosnippet>851</a>                    section_offsets[index].index,

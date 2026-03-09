@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmparser-0.236.1/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="wasmparser" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (bd3ac0330 2025-11-01)" data-channel="nightly" data-search-js="search-5c29b3b5.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">wasmparser/</div>lib.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">/* Copyright 2017 Mozilla Foundation
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmparser-0.236.1/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="wasmparser" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (01867557c 2025-11-12)" data-channel="nightly" data-search-js="search-8e3fad08.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">wasmparser/</div>lib.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">/* Copyright 2017 Mozilla Foundation
 <a href=#2 id=2 data-nosnippet>2</a> *
 <a href=#3 id=3 data-nosnippet>3</a> * Licensed under the Apache License, Version 2.0 (the "License");
 <a href=#4 id=4 data-nosnippet>4</a> * you may not use this file except in compliance with the License.
@@ -69,8 +69,8 @@
 <a href=#69 id=69 data-nosnippet>69</a>/// This is used below to define more macros.
 <a href=#70 id=70 data-nosnippet>70</a></span><span class="macro">macro_rules!</span> _for_each_operator_group {
 <a href=#71 id=71 data-nosnippet>71</a>    (<span class="macro-nonterminal">$mac</span>:ident) =&gt; {
-<a href=#72 id=72 data-nosnippet>72</a>        <span class="macro-nonterminal">$</span><span class="macro">mac!</span> {
-<a href=#73 id=73 data-nosnippet>73</a>            @<span class="macro-nonterminal">mvp </span>{
+<a href=#72 id=72 data-nosnippet>72</a>        <span class="macro-nonterminal">$mac</span>! {
+<a href=#73 id=73 data-nosnippet>73</a>            @mvp {
 <a href=#74 id=74 data-nosnippet>74</a>                Unreachable =&gt; visit_unreachable (arity <span class="number">0 </span>-&gt; <span class="number">0</span>)
 <a href=#75 id=75 data-nosnippet>75</a>                Nop =&gt; visit_nop (arity <span class="number">0 </span>-&gt; <span class="number">0</span>)
 <a href=#76 id=76 data-nosnippet>76</a>                Block { blockty: <span class="macro-nonterminal">$crate::BlockType </span>} =&gt; visit_block (arity custom)
@@ -824,7 +824,7 @@
 <a href=#824 id=824 data-nosnippet>824</a>        #[doc(hidden)]
 <a href=#825 id=825 data-nosnippet>825</a>        </span><span class="macro">macro_rules!</span> _for_each_visit_operator_impl {
 <a href=#826 id=826 data-nosnippet>826</a>            (<span class="macro-nonterminal">$m</span>:ident) =&gt; {
-<a href=#827 id=827 data-nosnippet>827</a>                <span class="macro-nonterminal">$</span><span class="macro">m!</span> { $(<span class="macro-nonterminal">$t</span>)* }
+<a href=#827 id=827 data-nosnippet>827</a>                <span class="macro-nonterminal">$m</span>! { $(<span class="macro-nonterminal">$t</span>)* }
 <a href=#828 id=828 data-nosnippet>828</a>            }
 <a href=#829 id=829 data-nosnippet>829</a>        }
 <a href=#830 id=830 data-nosnippet>830</a>
@@ -853,7 +853,7 @@
 <a href=#853 id=853 data-nosnippet>853</a>        #[doc(hidden)]
 <a href=#854 id=854 data-nosnippet>854</a>        </span><span class="macro">macro_rules!</span> _for_each_operator_impl {
 <a href=#855 id=855 data-nosnippet>855</a>            (<span class="macro-nonterminal">$m</span>:ident) =&gt; {
-<a href=#856 id=856 data-nosnippet>856</a>                <span class="macro-nonterminal">$</span><span class="macro">m!</span> {
+<a href=#856 id=856 data-nosnippet>856</a>                <span class="macro-nonterminal">$m</span>! {
 <a href=#857 id=857 data-nosnippet>857</a>                    $(
 <a href=#858 id=858 data-nosnippet>858</a>                        $(
 <a href=#859 id=859 data-nosnippet>859</a>                            @<span class="macro-nonterminal">$proposal $op </span>$({$(<span class="macro-nonterminal">$arg</span>: <span class="macro-nonterminal">$argty</span>),<span class="kw-2">*</span>})<span class="question-mark">? </span>=&gt; <span class="macro-nonterminal">$visit </span>($(<span class="macro-nonterminal">$ann</span>)<span class="kw-2">*</span>)
@@ -919,7 +919,7 @@
 <a href=#919 id=919 data-nosnippet>919</a>        #[doc(hidden)]
 <a href=#920 id=920 data-nosnippet>920</a>        </span><span class="macro">macro_rules!</span> _for_each_visit_simd_operator_impl {
 <a href=#921 id=921 data-nosnippet>921</a>            (<span class="macro-nonterminal">$m</span>:ident) =&gt; {
-<a href=#922 id=922 data-nosnippet>922</a>                <span class="macro-nonterminal">$</span><span class="macro">m!</span> { $(<span class="macro-nonterminal">$t</span>)* }
+<a href=#922 id=922 data-nosnippet>922</a>                <span class="macro-nonterminal">$m</span>! { $(<span class="macro-nonterminal">$t</span>)* }
 <a href=#923 id=923 data-nosnippet>923</a>            }
 <a href=#924 id=924 data-nosnippet>924</a>        }
 <a href=#925 id=925 data-nosnippet>925</a>    };
@@ -1289,7 +1289,7 @@
 <a href=#1289 id=1289 data-nosnippet>1289</a><span class="attr">#[cfg(all(feature = <span class="string">"component-model"</span>, feature = <span class="string">"validate"</span>))] </span><span class="comment">// Only used in component-model code right now.
 <a href=#1290 id=1290 data-nosnippet>1290</a></span><span class="macro">macro_rules!</span> ensure {
 <a href=#1291 id=1291 data-nosnippet>1291</a>    (<span class="macro-nonterminal">$cond</span>:expr, $(<span class="macro-nonterminal">$arg</span>:tt)<span class="kw-2">*</span>) =&gt; {
-<a href=#1292 id=1292 data-nosnippet>1292</a>        <span class="macro">if !</span><span class="macro-nonterminal">$cond </span>{
+<a href=#1292 id=1292 data-nosnippet>1292</a>        <span class="kw">if </span>!<span class="macro-nonterminal">$cond </span>{
 <a href=#1293 id=1293 data-nosnippet>1293</a>            <span class="macro">bail!</span>($(<span class="macro-nonterminal">$arg</span>)<span class="kw-2">*</span>);
 <a href=#1294 id=1294 data-nosnippet>1294</a>        }
 <a href=#1295 id=1295 data-nosnippet>1295</a>    }

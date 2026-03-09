@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-syntax-0.8.9/src/hir/literal.rs`."><title>literal.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_syntax" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (bd3ac0330 2025-11-01)" data-channel="nightly" data-search-js="search-5c29b3b5.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">regex_syntax/hir/</div>literal.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/*!
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-syntax-0.8.9/src/hir/literal.rs`."><title>literal.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_syntax" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (01867557c 2025-11-12)" data-channel="nightly" data-search-js="search-8e3fad08.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">regex_syntax/hir/</div>literal.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/*!
 <a href=#2 id=2 data-nosnippet>2</a>Provides literal extraction from `Hir` expressions.
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a>An [`Extractor`] pulls literals out of [`Hir`] expressions and returns a
@@ -422,7 +422,7 @@
 <a href=#422 id=422 data-nosnippet>422</a>            // operation on it will itself always result in an
 <a href=#423 id=423 data-nosnippet>423</a>            // infinite sequence. Thus, it can never change and we can
 <a href=#424 id=424 data-nosnippet>424</a>            // short-circuit.
-<a href=#425 id=425 data-nosnippet>425</a>            </span><span class="macro">if !</span>seq.is_finite() {
+<a href=#425 id=425 data-nosnippet>425</a>            </span><span class="kw">if </span>!seq.is_finite() {
 <a href=#426 id=426 data-nosnippet>426</a>                <span class="kw">break</span>;
 <a href=#427 id=427 data-nosnippet>427</a>            }
 <a href=#428 id=428 data-nosnippet>428</a>            seq = <span class="self">self</span>.union(seq, <span class="kw-2">&amp;mut </span><span class="self">self</span>.extract(hir));
@@ -456,7 +456,7 @@
 <a href=#456 id=456 data-nosnippet>456</a>                    subseq.make_inexact();
 <a href=#457 id=457 data-nosnippet>457</a>                }
 <a href=#458 id=458 data-nosnippet>458</a>                <span class="kw">let </span><span class="kw-2">mut </span>empty = Seq::singleton(Literal::exact(<span class="macro">vec!</span>[]));
-<a href=#459 id=459 data-nosnippet>459</a>                <span class="macro">if !</span>greedy {
+<a href=#459 id=459 data-nosnippet>459</a>                <span class="kw">if </span>!greedy {
 <a href=#460 id=460 data-nosnippet>460</a>                    mem::swap(<span class="kw-2">&amp;mut </span>subseq, <span class="kw-2">&amp;mut </span>empty);
 <a href=#461 id=461 data-nosnippet>461</a>                }
 <a href=#462 id=462 data-nosnippet>462</a>                <span class="self">self</span>.union(subseq, <span class="kw-2">&amp;mut </span>empty)
@@ -963,7 +963,7 @@
 <a href=#963 id=963 data-nosnippet>963</a>        };
 <a href=#964 id=964 data-nosnippet>964</a>        <span class="kw">let </span>newcap = lits1.len().saturating_mul(lits2.len());
 <a href=#965 id=965 data-nosnippet>965</a>        <span class="kw">for </span>selflit <span class="kw">in </span>mem::replace(lits1, Vec::with_capacity(newcap)) {
-<a href=#966 id=966 data-nosnippet>966</a>            <span class="macro">if !</span>selflit.is_exact() {
+<a href=#966 id=966 data-nosnippet>966</a>            <span class="kw">if </span>!selflit.is_exact() {
 <a href=#967 id=967 data-nosnippet>967</a>                lits1.push(selflit);
 <a href=#968 id=968 data-nosnippet>968</a>                <span class="kw">continue</span>;
 <a href=#969 id=969 data-nosnippet>969</a>            }
@@ -973,7 +973,7 @@
 <a href=#973 id=973 data-nosnippet>973</a>                ));
 <a href=#974 id=974 data-nosnippet>974</a>                newlit.extend(<span class="kw-2">&amp;</span>selflit);
 <a href=#975 id=975 data-nosnippet>975</a>                newlit.extend(<span class="kw-2">&amp;</span>otherlit);
-<a href=#976 id=976 data-nosnippet>976</a>                <span class="macro">if !</span>otherlit.is_exact() {
+<a href=#976 id=976 data-nosnippet>976</a>                <span class="kw">if </span>!otherlit.is_exact() {
 <a href=#977 id=977 data-nosnippet>977</a>                    newlit.make_inexact();
 <a href=#978 id=978 data-nosnippet>978</a>                }
 <a href=#979 id=979 data-nosnippet>979</a>                lits1.push(newlit);
@@ -1108,7 +1108,7 @@
 <a href=#1108 id=1108 data-nosnippet>1108</a>        <span class="kw">let </span>selflits = mem::replace(lits1, Vec::with_capacity(newcap));
 <a href=#1109 id=1109 data-nosnippet>1109</a>        <span class="kw">for </span>(i, otherlit) <span class="kw">in </span>lits2.drain(..).enumerate() {
 <a href=#1110 id=1110 data-nosnippet>1110</a>            <span class="kw">for </span>selflit <span class="kw">in </span>selflits.iter() {
-<a href=#1111 id=1111 data-nosnippet>1111</a>                <span class="macro">if !</span>selflit.is_exact() {
+<a href=#1111 id=1111 data-nosnippet>1111</a>                <span class="kw">if </span>!selflit.is_exact() {
 <a href=#1112 id=1112 data-nosnippet>1112</a>                    <span class="comment">// If the suffix isn't exact, then we can't prepend
 <a href=#1113 id=1113 data-nosnippet>1113</a>                    // anything to it. However, we still want to keep it. But
 <a href=#1114 id=1114 data-nosnippet>1114</a>                    // we only want to keep one of them, to avoid duplication.
@@ -1124,7 +1124,7 @@
 <a href=#1124 id=1124 data-nosnippet>1124</a>                ));
 <a href=#1125 id=1125 data-nosnippet>1125</a>                newlit.extend(<span class="kw-2">&amp;</span>otherlit);
 <a href=#1126 id=1126 data-nosnippet>1126</a>                newlit.extend(<span class="kw-2">&amp;</span>selflit);
-<a href=#1127 id=1127 data-nosnippet>1127</a>                <span class="macro">if !</span>otherlit.is_exact() {
+<a href=#1127 id=1127 data-nosnippet>1127</a>                <span class="kw">if </span>!otherlit.is_exact() {
 <a href=#1128 id=1128 data-nosnippet>1128</a>                    newlit.make_inexact();
 <a href=#1129 id=1129 data-nosnippet>1129</a>                }
 <a href=#1130 id=1130 data-nosnippet>1130</a>                lits1.push(newlit);
@@ -1989,7 +1989,7 @@
 <a href=#1989 id=1989 data-nosnippet>1989</a>        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(exact) = exact {
 <a href=#1990 id=1990 data-nosnippet>1990</a>            <span class="comment">// If optimizing resulted in dropping our literals, then certainly
 <a href=#1991 id=1991 data-nosnippet>1991</a>            // backup and use the exact sequence that we had.
-<a href=#1992 id=1992 data-nosnippet>1992</a>            </span><span class="macro">if !</span><span class="self">self</span>.is_finite() {
+<a href=#1992 id=1992 data-nosnippet>1992</a>            </span><span class="kw">if </span>!<span class="self">self</span>.is_finite() {
 <a href=#1993 id=1993 data-nosnippet>1993</a>                <span class="kw-2">*</span><span class="self">self </span>= exact;
 <a href=#1994 id=1994 data-nosnippet>1994</a>                <span class="kw">return</span>;
 <a href=#1995 id=1995 data-nosnippet>1995</a>            }
@@ -2116,7 +2116,7 @@
 <a href=#2116 id=2116 data-nosnippet>2116</a>    /// If this literal is inexact, then this is a no-op.
 <a href=#2117 id=2117 data-nosnippet>2117</a>    </span><span class="attr">#[inline]
 <a href=#2118 id=2118 data-nosnippet>2118</a>    </span><span class="kw">pub fn </span>extend(<span class="kw-2">&amp;mut </span><span class="self">self</span>, lit: <span class="kw-2">&amp;</span>Literal) {
-<a href=#2119 id=2119 data-nosnippet>2119</a>        <span class="macro">if !</span><span class="self">self</span>.is_exact() {
+<a href=#2119 id=2119 data-nosnippet>2119</a>        <span class="kw">if </span>!<span class="self">self</span>.is_exact() {
 <a href=#2120 id=2120 data-nosnippet>2120</a>            <span class="kw">return</span>;
 <a href=#2121 id=2121 data-nosnippet>2121</a>        }
 <a href=#2122 id=2122 data-nosnippet>2122</a>        <span class="self">self</span>.bytes.extend_from_slice(<span class="kw-2">&amp;</span>lit.bytes);
@@ -2244,7 +2244,7 @@
 <a href=#2244 id=2244 data-nosnippet>2244</a>        literals.retain_mut(|lit| <span class="kw">match </span>trie.insert(lit.as_bytes()) {
 <a href=#2245 id=2245 data-nosnippet>2245</a>            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="bool-val">true</span>,
 <a href=#2246 id=2246 data-nosnippet>2246</a>            <span class="prelude-val">Err</span>(i) =&gt; {
-<a href=#2247 id=2247 data-nosnippet>2247</a>                <span class="macro">if !</span>keep_exact {
+<a href=#2247 id=2247 data-nosnippet>2247</a>                <span class="kw">if </span>!keep_exact {
 <a href=#2248 id=2248 data-nosnippet>2248</a>                    make_inexact.push(i.checked_sub(<span class="number">1</span>).unwrap());
 <a href=#2249 id=2249 data-nosnippet>2249</a>                }
 <a href=#2250 id=2250 data-nosnippet>2250</a>                <span class="bool-val">false
@@ -2293,7 +2293,7 @@
 <a href=#2293 id=2293 data-nosnippet>2293</a>
 <a href=#2294 id=2294 data-nosnippet>2294</a>    <span class="doccomment">/// Returns the root state ID, and if it doesn't exist, creates it.
 <a href=#2295 id=2295 data-nosnippet>2295</a>    </span><span class="kw">fn </span>root(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; usize {
-<a href=#2296 id=2296 data-nosnippet>2296</a>        <span class="macro">if !</span><span class="self">self</span>.states.is_empty() {
+<a href=#2296 id=2296 data-nosnippet>2296</a>        <span class="kw">if </span>!<span class="self">self</span>.states.is_empty() {
 <a href=#2297 id=2297 data-nosnippet>2297</a>            <span class="number">0
 <a href=#2298 id=2298 data-nosnippet>2298</a>        </span>} <span class="kw">else </span>{
 <a href=#2299 id=2299 data-nosnippet>2299</a>            <span class="self">self</span>.create_state()
