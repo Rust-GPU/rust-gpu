@@ -1,6 +1,6 @@
 #![allow(clippy::unimplemented)]
 
-use difftest::config::OutputType;
+use difftest_types::config::OutputType;
 use std::marker::PhantomData;
 
 /// Represents the magnitude of a difference between two values
