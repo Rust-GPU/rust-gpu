@@ -5,7 +5,7 @@ use crate::builder;
 use crate::codegen_cx::CodegenCx;
 use crate::spirv_type::SpirvType;
 use crate::symbols::Symbols;
-use crate::target::SpirvTarget;
+use crate::target::{SpirvTarget, SpirvTargetVariant, SpirvVersion};
 use crate::target_feature::TargetFeature;
 use rspirv::dr::{Builder, Instruction, Module, Operand};
 use rspirv::spirv::{
@@ -492,7 +492,7 @@ impl<'tcx> BuilderSpirv<'tcx> {
 
         add_cap(&mut builder, &mut enabled_capabilities, Capability::Shader);
         if memory_model == MemoryModel::Vulkan {
-            if version < (1, 5) {
+            if version < SpirvVersion::V1_5 {
                 add_ext(&mut builder, sym.spv_khr_vulkan_memory_model);
             }
             add_cap(

@@ -2,6 +2,7 @@
 use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 
 use crate::codegen_cx::{CodegenArgs, SpirvMetadata};
+use crate::target::{SpirvTarget, SpirvTargetVariant};
 use crate::{SpirvCodegenBackend, SpirvModuleBuffer, linker};
 use ar::{Archive, GnuBuilder, Header};
 use rspirv::binary::Assemble;
@@ -25,14 +26,12 @@ use rustc_session::config::{
 };
 use rustc_session::output::{check_file_is_writeable, invalid_output_for_target, out_filename};
 use rustc_span::Symbol;
-use spirv_tools::TargetEnv;
 use std::collections::BTreeMap;
 use std::ffi::{CString, OsStr};
 use std::fs::File;
 use std::io::{BufWriter, Read};
 use std::iter;
 use std::path::{Path, PathBuf};
-use std::str::FromStr;
 use std::sync::Arc;
 
 pub fn link(
@@ -339,8 +338,8 @@ fn do_spirv_opt(
         opt::{self, Optimizer},
     };
 
-    let target_env = TargetEnv::from_str(sess.target.options.env.desc()).ok();
-    let mut optimizer = opt::create(target_env);
+    let target = SpirvTarget::parse_env(sess.target.options.env.desc()).unwrap();
+    let mut optimizer = opt::create(Some(target.to_spirv_tools()));
 
     match sess.opts.optimize {
         OptLevel::No => {}
@@ -402,8 +401,8 @@ fn do_spirv_val(
 ) {
     use spirv_tools::val::{self, Validator};
 
-    let target_env = TargetEnv::from_str(sess.target.options.env.desc()).ok();
-    let validator = val::create(target_env);
+    let target = SpirvTarget::parse_env(sess.target.options.env.desc()).unwrap();
+    let validator = val::create(Some(target.to_spirv_tools()));
 
     if let Err(e) = validator.validate(spv_binary, Some(options)) {
         let mut err = sess.dcx().struct_err(e.to_string());
