@@ -3,7 +3,6 @@ use rspirv::binary::Assemble;
 use rspirv::dr::{Instruction, Module, Operand};
 use rspirv::spirv::{Op, Word};
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
-use rustc_middle::bug;
 use smallvec::SmallVec;
 use std::collections::hash_map;
 use std::mem;
@@ -104,24 +103,10 @@ fn gather_annotations(annotations: &[Instruction]) -> FxHashMap<Word, Vec<u32>> 
         .collect()
 }
 
-fn gather_names(debug_names: &[Instruction]) -> FxHashMap<Word, String> {
-    debug_names
-        .iter()
-        .filter(|inst| inst.class.opcode == Op::Name)
-        .map(|inst| {
-            (
-                inst.operands[0].unwrap_id_ref(),
-                inst.operands[1].unwrap_literal_string().to_owned(),
-            )
-        })
-        .collect()
-}
-
 fn make_dedupe_key(
     inst: &Instruction,
     unresolved_forward_pointers: &FxHashSet<Word>,
     annotations: &FxHashMap<Word, Vec<u32>>,
-    names: &FxHashMap<Word, String>,
 ) -> Vec<u32> {
     let mut data = vec![inst.class.opcode as u32];
 
@@ -144,29 +129,10 @@ fn make_dedupe_key(
             op.assemble_into(&mut data);
         }
     }
-    if let Some(id) = inst.result_id {
-        if let Some(annos) = annotations.get(&id) {
-            data.extend_from_slice(annos);
-        }
-        if inst.class.opcode == Op::Variable {
-            // Names only matter for OpVariable.
-            if let Some(name) = names.get(&id) {
-                // Jump through some hoops to shove a String into a Vec<u32>.
-                //
-                // FIXME(eddyb) this should `.assemble_into(&mut data)` the
-                // `Operand::LiteralString(...)` from the original `Op::Name`.
-                for chunk in name.as_bytes().chunks(4) {
-                    let slice = match *chunk {
-                        [a] => [a, 0, 0, 0],
-                        [a, b] => [a, b, 0, 0],
-                        [a, b, c] => [a, b, c, 0],
-                        [a, b, c, d] => [a, b, c, d],
-                        _ => bug!(),
-                    };
-                    data.push(u32::from_le_bytes(slice));
-                }
-            }
-        }
+    if let Some(id) = inst.result_id
+        && let Some(annos) = annotations.get(&id)
+    {
+        data.extend_from_slice(annos);
     }
 
     data
@@ -198,7 +164,6 @@ pub fn remove_duplicate_types(module: &mut Module) {
 
     // Collect a map from type ID to an annotation "key blob" (to append to the type key)
     let annotations = gather_annotations(&module.annotations);
-    let names = gather_names(&module.debug_names);
 
     for inst in &mut module.types_global_values {
         if inst.class.opcode == Op::TypeForwardPointer
@@ -222,7 +187,7 @@ pub fn remove_duplicate_types(module: &mut Module) {
         // all_inst_iter_mut pass below. However, the code is a lil bit cleaner this way I guess.
         rewrite_inst_with_rules(inst, &rewrite_rules);
 
-        let key = make_dedupe_key(inst, &unresolved_forward_pointers, &annotations, &names);
+        let key = make_dedupe_key(inst, &unresolved_forward_pointers, &annotations);
 
         match key_to_result_id.entry(key) {
             hash_map::Entry::Vacant(entry) => {

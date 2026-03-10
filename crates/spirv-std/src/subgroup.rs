@@ -63,6 +63,160 @@ pub enum GroupOperation {
     PartitionedExclusiveScanNV = 8,
 }
 
+/// The number of subgroups within the local workgroup. The value of this variable is at least 1, and is uniform across
+/// the invocation group.
+///
+/// * GLSL: [`gl_NumSubgroups`](https://github.com/KhronosGroup/GLSL/blob/main/extensions/khr/GL_KHR_shader_subgroup.txt)
+/// * WGSL: [`num_subgroups`](https://www.w3.org/TR/WGSL/#num-subgroups-builtin-value)
+/// * SPIR-V: [`NumSubgroups`](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#_builtin)
+#[doc(alias = "gl_NumSubgroups")]
+#[doc(alias = "WorkgroupId")]
+#[inline]
+#[gpu_only]
+pub fn num_subgroups() -> u32 {
+    crate::load_builtin!(NumSubgroups)
+}
+
+/// The index of the subgroup within the local workgroup. The value of this variable is in the range `0` to
+/// [`num_subgroups`]`-1`.
+///
+/// * GLSL: [`gl_SubgroupID`](https://github.com/KhronosGroup/GLSL/blob/main/extensions/khr/GL_KHR_shader_subgroup.txt)
+/// * WGSL: [`subgroup_id`](https://www.w3.org/TR/WGSL/#subgroup-id-builtin-value)
+/// * SPIR-V: [`SubgroupId`](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#_builtin)
+#[doc(alias = "gl_SubgroupID")]
+#[doc(alias = "SubgroupId")]
+#[inline]
+#[gpu_only]
+pub fn subgroup_id() -> u32 {
+    crate::load_builtin!(SubgroupId)
+}
+
+// custom: don't mention glsl extensions
+/// The number of invocations within a subgroup, and its value is always a power of 2. The maximum subgroup size
+/// supported is 128.
+///
+/// * GLSL: [`gl_SubgroupSize`](https://github.com/KhronosGroup/GLSL/blob/main/extensions/khr/GL_KHR_shader_subgroup.txt)
+/// * WGSL: [`subgroup_size`](https://www.w3.org/TR/WGSL/#subgroup-size-builtin-value)
+/// * SPIR-V: [`SubgroupSize`](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#_builtin)
+#[doc(alias = "gl_SubgroupSize")]
+#[doc(alias = "SubgroupId")]
+#[inline]
+#[gpu_only]
+pub fn subgroup_size() -> u32 {
+    crate::load_builtin!(SubgroupSize)
+}
+
+/// The index of an invocation within a subgroup. The value of this variable is in the range `0` to
+/// [`subgroup_size`]`-1`.
+///
+/// There is no direct relationship between [`subgroup_invocation_id`] and [`local_invocation_id`] or
+/// [`local_invocation_index`]. If the pipeline or shader object was created with full subgroups applications can
+/// compute their own local invocation index to serve the same purpose:
+///
+/// [`local_invocation_index`] = [`subgroup_invocation_id`] + [`subgroup_id`] × [`subgroup_size`]
+///
+/// If full subgroups are not enabled, some subgroups may be dispatched with inactive invocations that do not correspond
+/// to a local workgroup invocation, making the value of index unreliable.
+///
+/// * GLSL: [`gl_SubgroupInvocationID`](https://github.com/KhronosGroup/GLSL/blob/main/extensions/khr/GL_KHR_shader_subgroup.txt)
+/// * WGSL: [`subgroup_invocation_id`](https://www.w3.org/TR/WGSL/#subgroup-invocation-id-builtin-value)
+/// * SPIR-V: [`SubgroupLocalInvocationId`](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#_builtin)
+///
+/// [`local_invocation_id`]: crate::compute::local_invocation_id
+/// [`local_invocation_index`]: crate::compute::local_invocation_index
+#[doc(alias = "gl_SubgroupInvocationID")]
+#[doc(alias = "SubgroupLocalInvocationId")]
+#[inline]
+#[gpu_only]
+pub fn subgroup_invocation_id() -> u32 {
+    crate::load_builtin!(SubgroupLocalInvocationId)
+}
+
+/// Provides a bitmask of all invocations, with one bit per invocation, where `bit index == gl_SubgroupInvocationID`.
+///
+/// Bit 0 of the first vector component represents the first invocation, higher-order bits within a component and higher
+/// component numbers both represent, in order, higher invocations, and the last invocation is the highest-order bit
+/// needed, in the last component needed, to contiguously represent all bits of the invocations in a subgroup.
+///
+/// * GLSL: [`gl_SubgroupEqMask`](https://github.com/KhronosGroup/GLSL/blob/main/extensions/khr/GL_KHR_shader_subgroup.txt)
+/// * WGSL: None
+/// * SPIR-V: [`SubgroupEqMask`](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#_builtin)
+#[doc(alias = "gl_SubgroupEqMask")]
+#[doc(alias = "SubgroupEqMask")]
+#[inline]
+#[gpu_only]
+pub fn subgroup_eq_mask() -> SubgroupMask {
+    crate::load_builtin!(SubgroupEqMask)
+}
+
+/// Provides a bitmask of all invocations, with one bit per invocation, where `bit index >= gl_SubgroupInvocationID`.
+///
+/// Bit 0 of the first vector component represents the first invocation, higher-order bits within a component and higher
+/// component numbers both represent, in order, higher invocations, and the last invocation is the highest-order bit
+/// needed, in the last component needed, to contiguously represent all bits of the invocations in a subgroup.
+///
+/// * GLSL: [`gl_SubgroupGeMask`](https://github.com/KhronosGroup/GLSL/blob/main/extensions/khr/GL_KHR_shader_subgroup.txt)
+/// * WGSL: None
+/// * SPIR-V: [`SubgroupEqMask`](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#_builtin)
+#[doc(alias = "gl_SubgroupGeMask")]
+#[doc(alias = "SubgroupGeMask")]
+#[inline]
+#[gpu_only]
+pub fn subgroup_ge_mask() -> SubgroupMask {
+    crate::load_builtin!(SubgroupGeMask)
+}
+
+/// Provides a bitmask of all invocations, with one bit per invocation, where `bit index > gl_SubgroupInvocationID`.
+///
+/// Bit 0 of the first vector component represents the first invocation, higher-order bits within a component and higher
+/// component numbers both represent, in order, higher invocations, and the last invocation is the highest-order bit
+/// needed, in the last component needed, to contiguously represent all bits of the invocations in a subgroup.
+///
+/// * GLSL: [`gl_SubgroupGtMask`](https://github.com/KhronosGroup/GLSL/blob/main/extensions/khr/GL_KHR_shader_subgroup.txt)
+/// * WGSL: None
+/// * SPIR-V: [`SubgroupGtMask`](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#_builtin)
+#[doc(alias = "gl_SubgroupGtMask")]
+#[doc(alias = "SubgroupGtMask")]
+#[inline]
+#[gpu_only]
+pub fn subgroup_gt_mask() -> SubgroupMask {
+    crate::load_builtin!(SubgroupGtMask)
+}
+
+/// Provides a bitmask of all invocations, with one bit per invocation, where `bit index <= gl_SubgroupInvocationID`.
+///
+/// Bit 0 of the first vector component represents the first invocation, higher-order bits within a component and higher
+/// component numbers both represent, in order, higher invocations, and the last invocation is the highest-order bit
+/// needed, in the last component needed, to contiguously represent all bits of the invocations in a subgroup.
+///
+/// * GLSL: [`gl_SubgroupLeMask`](https://github.com/KhronosGroup/GLSL/blob/main/extensions/khr/GL_KHR_shader_subgroup.txt)
+/// * WGSL: None
+/// * SPIR-V: [`SubgroupLeMask`](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#_builtin)
+#[doc(alias = "gl_SubgroupLeMask")]
+#[doc(alias = "SubgroupLeMask")]
+#[inline]
+#[gpu_only]
+pub fn subgroup_le_mask() -> SubgroupMask {
+    crate::load_builtin!(SubgroupLeMask)
+}
+
+/// Provides a bitmask of all invocations, with one bit per invocation, where `bit index < gl_SubgroupInvocationID`.
+///
+/// Bit 0 of the first vector component represents the first invocation, higher-order bits within a component and higher
+/// component numbers both represent, in order, higher invocations, and the last invocation is the highest-order bit
+/// needed, in the last component needed, to contiguously represent all bits of the invocations in a subgroup.
+///
+/// * GLSL: [`gl_SubgroupLtMask`](https://github.com/KhronosGroup/GLSL/blob/main/extensions/khr/GL_KHR_shader_subgroup.txt)
+/// * WGSL: None
+/// * SPIR-V: [`SubgroupLtMask`](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#_builtin)
+#[doc(alias = "gl_SubgroupLtMask")]
+#[doc(alias = "SubgroupLtMask")]
+#[inline]
+#[gpu_only]
+pub fn subgroup_lt_mask() -> SubgroupMask {
+    crate::load_builtin!(SubgroupLtMask)
+}
+
 /// The function `subgroupBarrier()` enforces that all active invocations within a
 /// subgroup must execute this function before any are allowed to continue their
 /// execution, and the results of any memory stores performed using coherent
