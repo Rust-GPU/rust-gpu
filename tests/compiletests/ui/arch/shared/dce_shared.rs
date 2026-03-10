@@ -11,7 +11,7 @@
 // ignore-vulkan1.0
 // ignore-vulkan1.1
 
-use spirv_std::arch::workgroup_memory_barrier_with_group_sync;
+use spirv_std::barrier::workgroup_memory_barrier_with_group_sync;
 use spirv_std::glam::*;
 use spirv_std::spirv;
 

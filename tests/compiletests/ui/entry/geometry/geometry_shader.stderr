@@ -1,0 +1,51 @@
+OpCapability Shader
+OpCapability Geometry
+OpMemoryModel Logical Simple
+OpEntryPoint Geometry %1 "main" %2 %3
+OpExecutionMode %1 InputPoints
+OpExecutionMode %1 OutputTriangleStrip
+OpName %2 "position_in"
+OpName %3 "position_out"
+OpDecorate %2 BuiltIn Position
+OpDecorate %8 ArrayStride 16
+OpDecorate %3 BuiltIn Position
+%9 = OpTypeFloat 32
+%10 = OpTypeVector %9 4
+%11 = OpTypeInt 32 0
+%12 = OpConstant  %11  2
+%13 = OpTypeArray %10 %12
+%14 = OpTypePointer Input %13
+%15 = OpTypePointer Output %10
+%16 = OpTypeVoid
+%17 = OpTypeFunction %16
+%2 = OpVariable  %14  Input
+%8 = OpTypeArray %10 %12
+%18 = OpConstant  %9  -0.1
+%19 = OpConstant  %9  0
+%3 = OpVariable  %15  Output
+%20 = OpConstant  %9  0.1
+%1 = OpFunction  %16  None %17
+%21 = OpLabel
+%22 = OpLoad  %13  %2
+%23 = OpCompositeExtract  %10  %22 0
+%24 = OpCompositeExtract  %10  %22 1
+%25 = OpCompositeConstruct  %8  %23 %24
+%26 = OpCompositeExtract  %10  %25 0
+%27 = OpCompositeConstruct  %10  %18 %19 %19 %19
+%28 = OpFAdd  %10  %26 %27
+OpStore %3 %28
+OpEmitVertex
+%29 = OpCompositeExtract  %10  %25 1
+%30 = OpCompositeConstruct  %10  %20 %19 %19 %19
+%31 = OpFAdd  %10  %29 %30
+OpStore %3 %31
+OpEmitVertex
+%32 = OpCompositeExtract  %10  %25 1
+%33 = OpCompositeConstruct  %10  %19 %20 %19 %19
+%34 = OpFAdd  %10  %32 %33
+OpStore %3 %34
+OpEmitVertex
+OpEndPrimitive
+OpNoLine
+OpReturn
+OpFunctionEnd

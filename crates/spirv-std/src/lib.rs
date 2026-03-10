@@ -91,18 +91,25 @@ pub use macros::spirv;
 pub use macros::{debug_printf, debug_printfln};
 
 pub mod arch;
+pub mod atomic;
+pub mod barrier;
 pub mod byte_addressable_buffer;
 pub mod debug_printf;
 pub mod float;
+pub mod fragment;
+pub mod geometry;
 pub mod image;
 pub mod indirect_command;
-pub mod matrix;
 pub mod memory;
+pub mod mesh;
 pub mod ray_tracing;
 mod runtime_array;
 mod sampler;
 mod scalar;
 mod scalar_or_vector;
+pub mod shader_clock;
+pub mod subgroup;
+pub mod task;
 mod typed_buffer;
 mod vector;
 
