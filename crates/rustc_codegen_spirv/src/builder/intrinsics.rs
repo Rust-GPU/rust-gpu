@@ -15,7 +15,7 @@ use rustc_codegen_ssa::traits::{BuilderMethods, IntrinsicCallBuilderMethods};
 use rustc_middle::ty::layout::LayoutOf;
 use rustc_middle::ty::{FnDef, Instance, Ty, TyKind, TypingEnv};
 use rustc_middle::{bug, ty};
-use rustc_span::Span;
+use rustc_span::{Span, Symbol};
 use rustc_span::sym;
 
 fn int_type_width_signed(ty: Ty<'_>, cx: &CodegenCx<'_>) -> Option<(u64, bool)> {
@@ -83,10 +83,13 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
         let ret_ty = self.layout_of(sig.output()).spirv_type(self.span(), self);
 
         let value = match name {
-            // `sym::likely` no longer exists on newer rustc nightlies, but
-            // the intrinsic name is still `"likely"` in MIR. Ignore both branch
-            // hint intrinsics for now.
-            _ if name == sym::unlikely || name.as_str() == "likely" => args[0].immediate(),
+            // `sym::likely` no longer exists on newer rustc nightlies, but the
+            // intrinsic item name remains `likely`; ignore hint intrinsics.
+            _ if self.tcx.is_intrinsic(def_id, sym::unlikely)
+                || self.tcx.is_intrinsic(def_id, Symbol::intern("likely")) =>
+            {
+                args[0].immediate()
+            }
 
             sym::breakpoint => {
                 self.abort();
