@@ -700,10 +700,14 @@ impl CodegenArgs {
             remap.len() as u32 + 1
         }
 
-        use rspirv::binary::Disassemble;
+        use rspirv::binary::{Assemble, Disassemble};
+        use std::fmt::Display;
+        fn dis(insts: &(impl Assemble + Disassemble)) -> impl Display {
+            insts.disassemble() + "\n"
+        }
 
         if self.disassemble {
-            eprintln!("{}", module.disassemble());
+            eprint!("{}", dis(module));
         }
 
         if let Some(func) = &self.disassemble_fn {
@@ -718,7 +722,7 @@ impl CodegenArgs {
                     panic!(
                         "no function with the name `{}` found in:\n{}\n",
                         func,
-                        module.disassemble()
+                        dis(module)
                     )
                 })
                 .operands[0]
@@ -731,7 +735,7 @@ impl CodegenArgs {
                 .clone();
             // Compact to make IDs more stable
             compact_ids(&mut func);
-            eprintln!("{}", func.disassemble());
+            eprint!("{}", dis(&func));
         }
 
         if let Some(entry) = &self.disassemble_entry {
@@ -744,7 +748,7 @@ impl CodegenArgs {
                     panic!(
                         "no entry point with the name `{}` found in:\n{}\n",
                         entry,
-                        module.disassemble()
+                        dis(module)
                     )
                 })
                 .operands[1]
@@ -757,13 +761,16 @@ impl CodegenArgs {
                 .clone();
             // Compact to make IDs more stable
             compact_ids(&mut func);
-            eprintln!("{}", func.disassemble());
+            eprint!("{}", dis(&func));
         }
 
         if self.disassemble_globals {
-            for inst in module.global_inst_iter() {
-                eprintln!("{}", inst.disassemble());
-            }
+            let globals = Module {
+                header: None,
+                functions: Vec::new(),
+                ..module.clone()
+            };
+            eprint!("{}", dis(&globals));
         }
     }
 }
