@@ -19,12 +19,11 @@ use std::cell::Cell;
 
 use crate::maybe_pqp_cg_ssa::traits::BuilderMethods;
 
-// HACK(eddyb) Rust 2021 `panic!` always uses `format_args!`, even
-// in the simple case that used to pass a `&str` constant, which
-// would not remain reachable in the SPIR-V - but `format_args!` is
-// more complex and neither immediate (`fmt::Arguments` is too big)
-// nor simplified in MIR (e.g. promoted to a constant) in any way,
-// so we have to try and remove the `fmt::Arguments::new` call here.
+// HACK(eddyb) even after `core::fmt::Arguments::from_str` became common
+// for const-string panics, `core`/`std` still lower many panic paths
+// (e.g. `assert_unsafe_precondition!`) through `fmt::Arguments::new*`
+// constructors. We still need this decompiler to strip those builder
+// call sequences and recover panic messages/arguments when possible.
 #[derive(Default)]
 pub struct DecodedFormatArgs<'tcx> {
     /// If fully constant, the `pieces: &'a [&'static str]` input
@@ -302,6 +301,11 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
             }
         }
 
+        let value_id = |value: SpirvValue| match value.kind {
+            SpirvValueKind::Def(id) | SpirvValueKind::IllegalConst(id) => Some(id),
+            _ => None,
+        };
+
         // HACK(eddyb) `panic_explicit` doesn't take any regular arguments,
         // only an (implicit) `&'static panic::Location<'static>`.
         if args.len() == 1 {
@@ -314,20 +318,13 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
         }
 
         // HACK(eddyb) some entry-points only take a `&str`, not `fmt::Arguments`.
-        if let [
-            SpirvValue {
-                kind: SpirvValueKind::Def(a_id),
-                ty: a_ty,
-            },
-            SpirvValue {
-                kind: SpirvValueKind::Def(b_id),
-                ty: b_ty,
-            },
-            ref other_args @ ..,
-        ] = args[..]
+        if let [a, b, other_args @ ..] = args
+            && let (Some(a_id), Some(b_id)) = (value_id(*a), value_id(*b))
         {
-            // Optional `force_no_backtrace` and/or `&'static panic::Location<'static>`.
-            if other_args.len() <= 2
+            let [a_ty, b_ty] = [a.ty, b.ty];
+
+            // Optional panic flags and/or `&'static panic::Location<'static>`.
+            if other_args.len() <= 3
                 && let Some(const_msg) = const_str_as_utf8(&[a_id, b_id])
             {
                 decoded_format_args.const_pieces = Some([const_msg].into_iter().collect());
@@ -336,7 +333,7 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
 
             // Dynamic `&str` panic messages (e.g. `panic_display(&msg)` where
             // `msg` isn't a directly recoverable constant).
-            if other_args.len() <= 2
+            if other_args.len() <= 3
                 && matches!(cx.lookup_type(a_ty), SpirvType::Pointer { .. })
                 && matches!(cx.lookup_type(b_ty), SpirvType::Integer(..))
             {
@@ -350,23 +347,16 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
         // (`template: *const u8`, `args: *const fmt::rt::Argument`), instead of
         // being passed as one aggregate value.
         let split_fmt_args = match *args {
-            [
-                SpirvValue {
-                    kind: SpirvValueKind::Def(template_id),
-                    ty: template_ty_id,
-                },
-                SpirvValue {
-                    kind: SpirvValueKind::Def(rt_args_or_tagged_len_id),
-                    ty: rt_args_or_tagged_len_ty_id,
-                },
-                ref trailing @ ..,
-            ] if trailing.len() <= 2
-                && matches!(cx.lookup_type(template_ty_id), SpirvType::Pointer { .. })
-                && matches!(
-                    cx.lookup_type(rt_args_or_tagged_len_ty_id),
-                    SpirvType::Pointer { .. } | SpirvType::Integer(..)
-                )
-                && const_str_as_utf8(&[template_id, rt_args_or_tagged_len_id]).is_none() =>
+            [template, rt_args_or_tagged_len, ref trailing @ ..]
+                if trailing.len() <= 3
+                    && matches!(cx.lookup_type(template.ty), SpirvType::Pointer { .. })
+                    && matches!(
+                        cx.lookup_type(rt_args_or_tagged_len.ty),
+                        SpirvType::Pointer { .. } | SpirvType::Integer(..)
+                    )
+                    && let (Some(template_id), Some(rt_args_or_tagged_len_id)) =
+                        (value_id(template), value_id(rt_args_or_tagged_len))
+                    && const_str_as_utf8(&[template_id, rt_args_or_tagged_len_id]).is_none() =>
             {
                 let looks_like_bool = matches!(
                     cx.builder.lookup_const_by_id(rt_args_or_tagged_len_id),
@@ -377,9 +367,9 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                 } else {
                     Some((
                         template_id,
-                        template_ty_id,
+                        template.ty,
                         rt_args_or_tagged_len_id,
-                        rt_args_or_tagged_len_ty_id,
+                        rt_args_or_tagged_len.ty,
                     ))
                 }
             }
@@ -389,21 +379,8 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
         let format_args_id = if split_fmt_args.is_none() {
             match *args {
                 // HACK(eddyb) `panic_nounwind_fmt` takes an extra argument.
-                [
-                    SpirvValue {
-                        kind: SpirvValueKind::Def(format_args_id),
-                        ..
-                    },
-                    _, // `&'static panic::Location<'static>`
-                ]
-                | [
-                    SpirvValue {
-                        kind: SpirvValueKind::Def(format_args_id),
-                        ..
-                    },
-                    _, // `force_no_backtrace: bool`
-                    _, // `&'static panic::Location<'static>`
-                ] => format_args_id,
+                [format_args, ref trailing @ ..] if trailing.len() <= 3 => value_id(format_args)
+                    .ok_or_else(|| FormatArgsNotRecognized("panic entry-point call args".into()))?,
 
                 _ => {
                     return Err(FormatArgsNotRecognized(

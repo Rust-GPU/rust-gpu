@@ -19,7 +19,6 @@ use rustc_middle::ty::layout::{FnAbiOf, LayoutOf};
 use rustc_middle::ty::{self, Instance, TypeVisitableExt, TypingEnv};
 use rustc_span::Span;
 use rustc_span::def_id::DefId;
-use rustc_span::symbol::sym;
 
 fn attrs_to_spirv(attrs: &CodegenFnAttrs) -> FunctionControl {
     let mut control = FunctionControl::NONE;
@@ -225,25 +224,6 @@ impl<'tcx> CodegenCx<'tcx> {
         // (e.g. no `#[lang = "..."]` attribute), but this works well enough.
         if let Some(name) = demangled_symbol_name.strip_prefix("core::panicking::")
             && (name == "panic_explicit" || name.starts_with("panic_"))
-        {
-            self.panic_entry_points.borrow_mut().insert(def_id);
-        }
-        let is_nonlocal = !def_id.is_local();
-        let is_nonlocal_core = is_nonlocal && self.tcx.crate_name(def_id.krate) == sym::core;
-        let nonlocal_def_path = is_nonlocal.then(|| self.tcx.def_path_str(def_id));
-        let is_nonlocal_core_bounds_check = is_nonlocal_core
-            && nonlocal_def_path
-                .as_deref()
-                .is_some_and(|path| path.ends_with("::bounds_check"));
-        let is_nonlocal_core_precondition_check = is_nonlocal_core
-            && nonlocal_def_path
-                .as_deref()
-                .is_some_and(|path| path.ends_with("::precondition_check"));
-        let is_spirv_std_byte_addressable_bounds_check = nonlocal_def_path.as_deref()
-            == Some("spirv_std::byte_addressable_buffer::bounds_check");
-        if is_nonlocal_core_bounds_check
-            || is_nonlocal_core_precondition_check
-            || is_spirv_std_byte_addressable_bounds_check
         {
             self.panic_entry_points.borrow_mut().insert(def_id);
         }
