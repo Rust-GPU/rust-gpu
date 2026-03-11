@@ -1748,28 +1748,34 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             };
 
             // adopted partially from https://github.com/ziglang/zig/blob/master/src/codegen/spirv.zig
+            // FIXME(eddyb) ^^ find a working a permalink, and also inform them
+            // of the difference between these two approaches:
+            // - broken: https://alive2.llvm.org/ce/z/Q3Pchi
+            // - correct: https://alive2.llvm.org/ce/z/aWvThi
 
             // when adding, overflow could happen if
             // - rhs is positive and result < lhs; or
-            // - rhs is negative and result > lhs
-            // this is equivalent to (rhs < 0) == (result > lhs)
+            // - rhs is negative and result >= lhs
+            //   (`result == lhs` impossible, `>=` used as it's `!(result < lhs)`)
+            // this is equivalent to (rhs < 0) == (result >= lhs)
             //
             // when subtracting, overflow happens if
             // - rhs is positive and result > lhs; or
-            // - rhs is negative and result < lhs
-            // this is equivalent to (rhs < 0) == (result < lhs)
+            // - rhs is negative and result <= lhs
+            //   (`result == lhs` impossible, `<=` used as it's `!(result > lhs)`)
+            // this is equivalent to (rhs < 0) == (result <= lhs)
             let rhs_lt_zero = self.icmp(IntPredicate::IntSLT, rhs, self.constant_int(rhs.ty, 0));
-            let result_gt_lhs = self.icmp(
+            let result_ge_lhs = self.icmp(
                 match oop {
-                    OverflowOp::Add => IntPredicate::IntSGT,
-                    OverflowOp::Sub => IntPredicate::IntSLT,
+                    OverflowOp::Add => IntPredicate::IntSGE,
+                    OverflowOp::Sub => IntPredicate::IntSLE,
                     OverflowOp::Mul => unreachable!(),
                 },
                 result,
                 lhs,
             );
 
-            let overflowed = self.icmp(IntPredicate::IntEQ, rhs_lt_zero, result_gt_lhs);
+            let overflowed = self.icmp(IntPredicate::IntEQ, rhs_lt_zero, result_ge_lhs);
 
             return (result, overflowed);
         }
