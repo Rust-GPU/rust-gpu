@@ -83,10 +83,10 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
         let ret_ty = self.layout_of(sig.output()).spirv_type(self.span(), self);
 
         let value = match name {
-            _ if name == sym::unlikely || name.as_str() == "likely" => {
-                // Ignore these for now.
-                args[0].immediate()
-            }
+            // `sym::likely` no longer exists on newer rustc nightlies, but
+            // the intrinsic name is still `"likely"` in MIR. Ignore both branch
+            // hint intrinsics for now.
+            _ if name == sym::unlikely || name.as_str() == "likely" => args[0].immediate(),
 
             sym::breakpoint => {
                 self.abort();

@@ -1825,9 +1825,8 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         self.declare_func_local_var(self.type_array(self.type_i8(), size.bytes()), align)
     }
 
-    fn scalable_alloca(&mut self, elt: u64, align: Align, element_ty: Ty<'_>) -> Self::Value {
-        let _ = (elt, align, element_ty);
-        self.fatal("scalable alloca is not supported in SPIR-V backend")
+    fn scalable_alloca(&mut self, _elt: u64, _align: Align, _element_ty: Ty<'_>) -> Self::Value {
+        bug!("scalable alloca is not supported in SPIR-V backend")
     }
 
     fn load(&mut self, ty: Self::Type, ptr: Self::Value, _align: Align) -> Self::Value {
@@ -3062,15 +3061,15 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         _parent: Option<Self::Value>,
         _args: &[Self::Value],
     ) -> Self::Funclet {
-        todo!()
+        bug!("Funclets are not supported")
     }
 
     fn cleanup_ret(&mut self, _funclet: &Self::Funclet, _unwind: Option<Self::BasicBlock>) {
-        todo!()
+        bug!("Funclets are not supported")
     }
 
     fn catch_pad(&mut self, _parent: Self::Value, _args: &[Self::Value]) -> Self::Funclet {
-        todo!()
+        bug!("Funclets are not supported")
     }
 
     fn catch_switch(
@@ -3079,7 +3078,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         _unwind: Option<Self::BasicBlock>,
         _handlers: &[Self::BasicBlock],
     ) -> Self::Value {
-        todo!()
+        bug!("Funclets are not supported")
     }
 
     fn get_funclet_cleanuppad(&self, _funclet: &Self::Funclet) -> Self::Value {
