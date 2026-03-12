@@ -703,7 +703,9 @@ impl CodegenArgs {
         use rspirv::binary::{Assemble, Disassemble};
         use std::fmt::Display;
         fn dis(insts: &(impl Assemble + Disassemble)) -> impl Display {
-            insts.disassemble() + "\n"
+            let words = insts.assemble();
+            let module = rspirv2::module::Module::from_bytes(bytemuck::cast_slice(&words)).unwrap();
+            module.dis::<rspirv2::core::inst_set::CoreInstSet>(rspirv2::dis::DisOptions::like_rspirv()).unwrap().to_string()
         }
 
         if self.disassemble {
