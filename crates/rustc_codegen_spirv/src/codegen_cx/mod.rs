@@ -16,7 +16,7 @@ use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 
 use crate::target::SpirvTarget;
 use itertools::Itertools as _;
-use rspirv::binary::{Assemble, Disassemble};
+use rspirv::binary::Assemble;
 use rspirv::dr::{Module, Operand};
 use rspirv::spirv::{Decoration, LinkageType, Word};
 use rustc_abi::{AddressSpace, HasDataLayout, TargetDataLayout};
@@ -39,7 +39,6 @@ use rustc_target::callconv::FnAbi;
 use rustc_target::spec::{HasTargetSpec, Target, TargetTuple};
 use std::cell::RefCell;
 use std::collections::BTreeSet;
-use std::fmt::Display;
 use std::iter::once;
 use std::path::PathBuf;
 use std::rc::Rc;
@@ -749,8 +748,16 @@ impl CodegenArgs {
             remap.len() as u32 + 1
         }
 
-        fn dis(insts: &(impl Assemble + Disassemble)) -> impl Display {
-            insts.disassemble() + "\n"
+        fn dis(insts: &impl Assemble) -> String {
+            use rspirv2::core::inst_set::CoreInstSet;
+            use rspirv2::dis::DisOptions;
+            use rspirv2::module::Module;
+
+            let words = insts.assemble();
+            match Module::<CoreInstSet>::from_words_maybe_header(bytemuck::cast_slice(&words)) {
+                Ok(module) => module.dis(DisOptions::like_rspirv()).to_string(),
+                Err(err) => format!("rspirv2 parsing failed: {err}"),
+            }
         }
 
         if self.disassemble {
