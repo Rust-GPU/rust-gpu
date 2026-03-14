@@ -142,8 +142,13 @@ impl<'tcx> CodegenCx<'tcx> {
             self.set_linkage(fn_id, symbol_name.to_owned(), linkage);
         }
 
-        #[allow(deprecated)]
-        let attrs = AggregatedSpirvAttributes::parse(self, self.tcx.get_all_attrs(def_id));
+        let attrs = AggregatedSpirvAttributes::parse(
+            self,
+            self.tcx.get_attrs_by_path(
+                def_id,
+                &[self.sym.rust_gpu, self.sym.spirv_attr_with_version],
+            ),
+        );
         if let Some(entry) = attrs.entry.map(|attr| attr.value) {
             // HACK(eddyb) early insert to let `shader_entry_stub` call this
             // very function via `get_fn_addr`.

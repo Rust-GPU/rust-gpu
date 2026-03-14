@@ -103,7 +103,7 @@ pub(crate) fn provide(providers: &mut Providers) {
 
             // SPIR-V backend lowers arguments by-value and cannot handle
             // backend-specific indirection/casts at this layer.
-            if matches!(arg.mode, PassMode::Cast { .. } | PassMode::Indirect { .. }) {
+            if matches!(arg.mode, PassMode::Cast { .. }) {
                 arg.mode = PassMode::Direct(ArgAttributes::new());
             }
 
@@ -330,8 +330,18 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                 span = cx.tcx.def_span(adt.did());
             }
 
-            #[allow(deprecated)]
-            let attrs = AggregatedSpirvAttributes::parse(cx, cx.tcx.get_all_attrs(adt.did()));
+            let attrs = AggregatedSpirvAttributes::parse(
+                cx,
+                cx.tcx
+                    .get_attrs_by_path(
+                        adt.did(),
+                        &[cx.sym.rust_gpu, cx.sym.spirv_attr_with_version],
+                    )
+                    .chain(cx.tcx.get_attrs_by_path(
+                        adt.did(),
+                        &[cx.sym.rust_gpu, cx.sym.vector, cx.sym.v1],
+                    )),
+            );
 
             if let Some(intrinsic_type_attr) = attrs.intrinsic_type.map(|attr| attr.value)
                 && let Ok(spirv_type) =
@@ -435,7 +445,7 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                 }
                 .def(span, cx)
             }
-            BackendRepr::ScalableVector { .. } => cx
+            BackendRepr::SimdScalableVector { .. } => cx
                 .tcx
                 .dcx()
                 .fatal("scalable vectors are not supported in SPIR-V backend"),
@@ -662,7 +672,6 @@ fn trans_aggregate<'tcx>(cx: &CodegenCx<'tcx>, span: Span, ty: TyAndLayout<'tcx>
     }
 }
 
-#[cfg_attr(not(rustc_codegen_spirv_disable_pqp_cg_ssa), allow(unused))]
 // returns (field_offsets, size, align)
 pub fn auto_struct_layout(
     cx: &CodegenCx<'_>,

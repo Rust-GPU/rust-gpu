@@ -13,8 +13,7 @@ use rustc_middle::ty::layout::{
     FnAbiError, FnAbiOfHelpers, FnAbiRequest, LayoutError, LayoutOfHelpers, TyAndLayout,
 };
 use rustc_middle::{bug, span_bug};
-use rustc_span::source_map::Spanned;
-use rustc_span::{DUMMY_SP, Span};
+use rustc_span::{DUMMY_SP, Span, Spanned};
 use rustc_target::callconv::{CastTarget, FnAbi};
 
 impl<'tcx> LayoutOfHelpers<'tcx> for CodegenCx<'tcx> {
@@ -98,7 +97,7 @@ impl<'tcx> LayoutTypeCodegenMethods<'tcx> for CodegenCx<'tcx> {
     fn is_backend_immediate(&self, layout: TyAndLayout<'tcx>) -> bool {
         match layout.backend_repr {
             BackendRepr::Scalar(_)
-            | BackendRepr::ScalableVector { .. }
+            | BackendRepr::SimdScalableVector { .. }
             | BackendRepr::SimdVector { .. } => true,
             BackendRepr::ScalarPair(..) => false,
             BackendRepr::Memory { .. } => layout.is_zst(),
@@ -109,7 +108,7 @@ impl<'tcx> LayoutTypeCodegenMethods<'tcx> for CodegenCx<'tcx> {
         match layout.backend_repr {
             BackendRepr::ScalarPair(..) => true,
             BackendRepr::Scalar(_)
-            | BackendRepr::ScalableVector { .. }
+            | BackendRepr::SimdScalableVector { .. }
             | BackendRepr::SimdVector { .. }
             | BackendRepr::Memory { .. } => false,
         }

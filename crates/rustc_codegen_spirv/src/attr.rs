@@ -153,7 +153,10 @@ impl AggregatedSpirvAttributes {
     ///
     /// Any errors for malformed/duplicate attributes will have been reported
     /// prior to codegen, by the `attr` check pass.
-    pub fn parse<'tcx>(cx: &CodegenCx<'tcx>, attrs: &'tcx [Attribute]) -> Self {
+    pub fn parse<'tcx>(
+        cx: &CodegenCx<'tcx>,
+        attrs: impl IntoIterator<Item = &'tcx Attribute>,
+    ) -> Self {
         let mut aggregated_attrs = Self::default();
 
         // NOTE(eddyb) `span_delayed_bug` ensures that if attribute checking fails
@@ -527,12 +530,17 @@ pub(crate) fn provide(providers: &mut Providers) {
 type ParseAttrError = (Span, String);
 
 #[allow(clippy::get_first)]
-fn parse_attrs_for_checking<'a>(
-    sym: &'a Symbols,
-    attrs: &'a [Attribute],
-) -> impl Iterator<Item = Result<(Span, SpirvAttribute), ParseAttrError>> + 'a {
+fn parse_attrs_for_checking<'sym, 'attr, I>(
+    sym: &'sym Symbols,
+    attrs: I,
+) -> impl Iterator<Item = Result<(Span, SpirvAttribute), ParseAttrError>> + 'sym
+where
+    I: IntoIterator<Item = &'attr Attribute> + 'sym,
+    I::IntoIter: 'sym,
+    'attr: 'sym,
+{
     attrs
-        .iter()
+        .into_iter()
         .map(move |attr| {
             // parse the #[rust_gpu::spirv(...)] attr and return the inner list
             match attr {

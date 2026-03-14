@@ -15,7 +15,6 @@ use rspirv::{binary::Assemble, binary::Disassemble};
 use rustc_abi::Size;
 use rustc_arena::DroplessArena;
 use rustc_codegen_ssa::traits::ConstCodegenMethods as _;
-use rustc_data_structures::assert_matches;
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 use rustc_middle::bug;
 use rustc_middle::mir::interpret::ConstAllocation;
@@ -23,11 +22,11 @@ use rustc_middle::ty::TyCtxt;
 use rustc_span::source_map::SourceMap;
 use rustc_span::symbol::Symbol;
 use rustc_span::{DUMMY_SP, SourceFile, Span};
+use std::assert_matches;
 use std::cell::{RefCell, RefMut};
 use std::hash::{Hash, Hasher};
 use std::iter;
 use std::ops::Range;
-use std::str;
 use std::sync::Arc;
 use std::{fs::File, io::Write, path::Path};
 
@@ -884,23 +883,7 @@ impl<'tcx> BuilderSpirv<'tcx> {
                 // but sadly that `'_` is the lifetime of the temporary `Arc`,
                 // not `'tcx`, so we have to arena-allocate to get `&'tcx str`.
                 let file_name = sf.name.prefer_remapped_unconditionally().to_string_lossy();
-                let file_name = {
-                    // FIXME(eddyb) it should be possible to arena-allocate a
-                    // `&str` directly, but it would require upstream changes,
-                    // and strings are handled by string interning in `rustc`.
-                    fn arena_alloc_slice<'tcx, T: Copy>(
-                        dropless_arena: &'tcx DroplessArena,
-                        xs: &[T],
-                    ) -> &'tcx [T] {
-                        if xs.is_empty() {
-                            &[]
-                        } else {
-                            dropless_arena.alloc_slice(xs)
-                        }
-                    }
-                    str::from_utf8(arena_alloc_slice(self.dropless_arena, file_name.as_bytes()))
-                        .unwrap()
-                };
+                let file_name = self.dropless_arena.alloc_str(&file_name);
                 let file_name_op_string_id = builder.string(file_name.to_owned());
 
                 let file_contents = self
