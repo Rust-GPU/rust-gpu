@@ -879,14 +879,13 @@ impl<'a> InferOperandList<'a> {
 
             // Maybe filter this operand, but only *after* consuming the "generic" args for it.
             match self.transform {
-                None => {}
-
                 // Skip a non-ID operand.
-                Some(InferOperandListTransform::TypeOfId) => {
-                    if first_operand.id_ref_any().is_none() {
-                        continue;
-                    }
+                Some(InferOperandListTransform::TypeOfId)
+                    if first_operand.id_ref_any().is_none() =>
+                {
+                    continue;
                 }
+                None | Some(InferOperandListTransform::TypeOfId) => {}
             }
 
             // Maybe replace this operand with a different one.

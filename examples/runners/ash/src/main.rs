@@ -202,17 +202,15 @@ pub fn main() -> anyhow::Result<()> {
                         ..
                     } => match key {
                         winit::keyboard::NamedKey::Escape => event_loop_window_target.exit(),
-                        winit::keyboard::NamedKey::F5 => {
-                            if !recompiling_shaders {
-                                recompiling_shaders = true;
-                                let compiler_sender = compiler_sender.clone();
-                                thread::spawn(move || {
-                                    let shader_code = compile_shaders(&options.shader)
-                                        .context("Compiling shaders failed")
-                                        .unwrap();
-                                    compiler_sender.try_send(shader_code).unwrap();
-                                });
-                            }
+                        winit::keyboard::NamedKey::F5 if !recompiling_shaders => {
+                            recompiling_shaders = true;
+                            let compiler_sender = compiler_sender.clone();
+                            thread::spawn(move || {
+                                let shader_code = compile_shaders(&options.shader)
+                                    .context("Compiling shaders failed")
+                                    .unwrap();
+                                compiler_sender.try_send(shader_code).unwrap();
+                            });
                         }
                         winit::keyboard::NamedKey::ArrowUp
                         | winit::keyboard::NamedKey::ArrowDown => {

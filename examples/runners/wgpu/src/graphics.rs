@@ -262,14 +262,12 @@ async fn run(
             Event::WindowEvent {
                 event: WindowEvent::Resized(size),
                 ..
-            } => {
-                if size.width != 0 && size.height != 0 {
-                    // Recreate the swap chain with the new size
-                    if let Ok((surface, surface_config)) = &mut surface_with_config {
-                        surface_config.width = size.width;
-                        surface_config.height = size.height;
-                        surface.configure(&device, surface_config);
-                    }
+            } if size.width != 0 && size.height != 0 => {
+                // Recreate the swap chain with the new size
+                if let Ok((surface, surface_config)) = &mut surface_with_config {
+                    surface_config.width = size.width;
+                    surface_config.height = size.height;
+                    surface.configure(&device, surface_config);
                 }
             }
             Event::WindowEvent {

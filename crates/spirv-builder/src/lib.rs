@@ -1047,6 +1047,12 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
 
     let target_spec_dir = target_dir.join("target-specs");
     let target = TargetSpecVersion::target_arg(toolchain_rustc_version, &target, &target_spec_dir)?;
+    if Path::new(&target)
+        .extension()
+        .is_some_and(|ext| ext == "json")
+    {
+        cargo.arg("-Zjson-target-spec");
+    }
     cargo.arg("--target").arg(target);
 
     if !builder.shader_crate_features.default_features {

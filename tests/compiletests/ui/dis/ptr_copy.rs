@@ -1,5 +1,6 @@
 // revisions: normal via_intrinsic
 //[normal] build-fail
+// normalize-stderr-test "<\S*/library/core/src/" -> "<$$CORE_SRC/"
 // normalize-stderr-test "\S*/library/core/src/" -> "$$CORE_SRC/"
 //[via_intrinsic] build-pass
 // compile-flags: -C llvm-args=--disassemble-fn=ptr_copy::copy_via_raw_ptr

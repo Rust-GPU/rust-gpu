@@ -198,6 +198,7 @@ impl Runner {
                 "build",
                 "-p",
                 "compiletests-deps-helper",
+                "-Zjson-target-spec",
                 "-Zbuild-std=core",
                 "-Zbuild-std-features=compiler-builtins-mem",
                 "--target",

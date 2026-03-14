@@ -15,8 +15,8 @@ use rustc_codegen_ssa::traits::{BuilderMethods, IntrinsicCallBuilderMethods};
 use rustc_middle::ty::layout::LayoutOf;
 use rustc_middle::ty::{FnDef, Instance, Ty, TyKind, TypingEnv};
 use rustc_middle::{bug, ty};
-use rustc_span::Span;
 use rustc_span::sym;
+use rustc_span::{Span, Symbol};
 
 fn int_type_width_signed(ty: Ty<'_>, cx: &CodegenCx<'_>) -> Option<(u64, bool)> {
     match ty.kind() {
@@ -83,8 +83,11 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
         let ret_ty = self.layout_of(sig.output()).spirv_type(self.span(), self);
 
         let value = match name {
-            sym::likely | sym::unlikely => {
-                // Ignore these for now.
+            // `sym::likely` no longer exists on newer rustc nightlies, but the
+            // intrinsic item name remains `likely`; ignore hint intrinsics.
+            _ if self.tcx.is_intrinsic(def_id, sym::unlikely)
+                || self.tcx.is_intrinsic(def_id, Symbol::intern("likely")) =>
+            {
                 args[0].immediate()
             }
 
@@ -369,6 +372,15 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
         Ok(())
     }
 
+    fn codegen_llvm_intrinsic_call(
+        &mut self,
+        instance: ty::Instance<'tcx>,
+        _args: &[OperandRef<'tcx, Self::Value>],
+        _is_cleanup: bool,
+    ) -> Self::Value {
+        bug!("LLVM intrinsic call not supported in SPIR-V backend: {instance:?}")
+    }
+
     fn abort(&mut self) {
         self.abort_with_kind_and_message_debug_printf("abort", "intrinsics::abort() called", []);
     }
@@ -386,17 +398,20 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
         &mut self,
         _llvtable: Self::Value,
         _vtable_byte_offset: u64,
-        _typeid: Self::Metadata,
+        _typeid: &[u8],
     ) -> Self::Value {
         todo!()
     }
 
-    fn va_start(&mut self, _val: Self::Value) -> Self::Value {
-        todo!()
+    fn va_start(&mut self, val: Self::Value) -> Self::Value {
+        // SPIR-V backend has no variadic ABI support; keep the placeholder
+        // operand unchanged so MIR lowering can proceed without crashing.
+        val
     }
 
-    fn va_end(&mut self, _val: Self::Value) -> Self::Value {
-        todo!()
+    fn va_end(&mut self, val: Self::Value) -> Self::Value {
+        // See `va_start` above.
+        val
     }
 }
 

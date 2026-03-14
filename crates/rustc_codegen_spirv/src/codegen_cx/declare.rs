@@ -1,7 +1,7 @@
 // HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
 use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 
-use super::CodegenCx;
+use super::{CodegenCx, FmtArgsCtor};
 use crate::abi::ConvSpirvType;
 use crate::attr::AggregatedSpirvAttributes;
 use crate::builder_spirv::{SpirvConst, SpirvFunctionCursor, SpirvValue, SpirvValueExt};
@@ -9,11 +9,11 @@ use crate::custom_decorations::{CustomDecoration, SrcLocDecoration};
 use crate::spirv_type::SpirvType;
 use itertools::Itertools;
 use rspirv::spirv::{FunctionControl, LinkageType, StorageClass, Word};
-use rustc_abi::Align;
 use rustc_codegen_ssa::traits::{PreDefineCodegenMethods, StaticCodegenMethods};
 use rustc_hir::attrs::{InlineAttr, Linkage};
 use rustc_middle::bug;
 use rustc_middle::middle::codegen_fn_attrs::{CodegenFnAttrFlags, CodegenFnAttrs};
+use rustc_middle::mir::interpret::ConstAllocation;
 use rustc_middle::mir::mono::{MonoItem, Visibility};
 use rustc_middle::ty::layout::{FnAbiOf, LayoutOf};
 use rustc_middle::ty::{self, Instance, TypeVisitableExt, TypingEnv};
@@ -39,6 +39,15 @@ fn attrs_to_spirv(attrs: &CodegenFnAttrs) -> FunctionControl {
 }
 
 impl<'tcx> CodegenCx<'tcx> {
+    pub(crate) fn static_addr_of_constant(&self, cv: SpirvValue) -> SpirvValue {
+        self.def_constant(
+            self.type_ptr_to(cv.ty),
+            SpirvConst::PtrTo {
+                pointee: cv.def_cx(self),
+            },
+        )
+    }
+
     /// Returns a function if it already exists, or declares a header if it doesn't.
     pub fn get_fn_ext(&self, instance: Instance<'tcx>) -> SpirvFunctionCursor {
         assert!(!instance.args.has_infer());
@@ -133,7 +142,13 @@ impl<'tcx> CodegenCx<'tcx> {
             self.set_linkage(fn_id, symbol_name.to_owned(), linkage);
         }
 
-        let attrs = AggregatedSpirvAttributes::parse(self, self.tcx.get_all_attrs(def_id));
+        let attrs = AggregatedSpirvAttributes::parse(
+            self,
+            self.tcx.get_attrs_by_path(
+                def_id,
+                &[self.sym.rust_gpu, self.sym.spirv_attr_with_version],
+            ),
+        );
         if let Some(entry) = attrs.entry.map(|attr| attr.value) {
             // HACK(eddyb) early insert to let `shader_entry_stub` call this
             // very function via `get_fn_addr`.
@@ -212,18 +227,38 @@ impl<'tcx> CodegenCx<'tcx> {
 
         // HACK(eddyb) there is no good way to identify these definitions
         // (e.g. no `#[lang = "..."]` attribute), but this works well enough.
-        if let Some("panic_nounwind_fmt" | "panic_explicit") =
-            demangled_symbol_name.strip_prefix("core::panicking::")
+        if let Some(name) = demangled_symbol_name.strip_prefix("core::panicking::")
+            && (name == "panic_explicit" || name.starts_with("panic_"))
         {
             self.panic_entry_points.borrow_mut().insert(def_id);
+        }
+        if let Some(generics) = demangled_symbol_name
+            .strip_prefix("<core::fmt::Arguments>::new::<")
+            .and_then(|s| s.strip_suffix(">"))
+        {
+            let mut generics = generics.split(',').map(str::trim);
+            if let (Some(template_len), Some(rt_args_count), None) =
+                (generics.next(), generics.next(), generics.next())
+            {
+                self.fmt_args_new_fn_ids.borrow_mut().insert(
+                    fn_id,
+                    FmtArgsCtor::NewTemplate {
+                        template_len: template_len.parse().unwrap(),
+                        rt_args_count: rt_args_count.parse().unwrap(),
+                    },
+                );
+            }
         }
         if let Some(pieces_len) = demangled_symbol_name
             .strip_prefix("<core::fmt::Arguments>::new_const::<")
             .and_then(|s| s.strip_suffix(">"))
         {
-            self.fmt_args_new_fn_ids
-                .borrow_mut()
-                .insert(fn_id, (pieces_len.parse().unwrap(), 0));
+            self.fmt_args_new_fn_ids.borrow_mut().insert(
+                fn_id,
+                FmtArgsCtor::NewConst {
+                    pieces_len: pieces_len.parse().unwrap(),
+                },
+            );
         }
         if let Some(generics) = demangled_symbol_name
             .strip_prefix("<core::fmt::Arguments>::new_v1::<")
@@ -232,14 +267,23 @@ impl<'tcx> CodegenCx<'tcx> {
             let (pieces_len, rt_args_len) = generics.split_once(", ").unwrap();
             self.fmt_args_new_fn_ids.borrow_mut().insert(
                 fn_id,
-                (pieces_len.parse().unwrap(), rt_args_len.parse().unwrap()),
+                FmtArgsCtor::NewV1 {
+                    pieces_len: pieces_len.parse().unwrap(),
+                    rt_args_count: rt_args_len.parse().unwrap(),
+                },
             );
         }
         if demangled_symbol_name == "<core::fmt::Arguments>::new_v1_formatted" {
-            // HACK(eddyb) `!0` used as a placeholder value to indicate "dynamic".
             self.fmt_args_new_fn_ids
                 .borrow_mut()
-                .insert(fn_id, (!0, !0));
+                .insert(fn_id, FmtArgsCtor::NewV1FormattedDynamic);
+        }
+        if demangled_symbol_name == "<core::fmt::Arguments>::from_str"
+            || demangled_symbol_name == "<core::fmt::Arguments>::from_str_nonconst"
+        {
+            self.fmt_args_new_fn_ids
+                .borrow_mut()
+                .insert(fn_id, FmtArgsCtor::FromStr);
         }
 
         // HACK(eddyb) there is no good way to identify these definitions
@@ -267,6 +311,11 @@ impl<'tcx> CodegenCx<'tcx> {
                     .borrow_mut()
                     .insert(fn_id, (ty, spec));
             }
+        }
+        if demangled_symbol_name == "<core::fmt::rt::Argument>::from_usize" {
+            self.fmt_rt_arg_new_fn_ids_to_ty_and_spec
+                .borrow_mut()
+                .insert(fn_id, (self.tcx.types.usize, '?'));
         }
 
         declared
@@ -368,13 +417,8 @@ impl<'tcx> PreDefineCodegenMethods<'tcx> for CodegenCx<'tcx> {
 }
 
 impl<'tcx> StaticCodegenMethods for CodegenCx<'tcx> {
-    fn static_addr_of(&self, cv: Self::Value, _align: Align, _kind: Option<&str>) -> Self::Value {
-        self.def_constant(
-            self.type_ptr_to(cv.ty),
-            SpirvConst::PtrTo {
-                pointee: cv.def_cx(self),
-            },
-        )
+    fn static_addr_of(&self, alloc: ConstAllocation<'_>, _kind: Option<&str>) -> Self::Value {
+        self.static_addr_of_constant(self.const_data_from_alloc(alloc))
     }
 
     fn codegen_static(&mut self, def_id: DefId) {

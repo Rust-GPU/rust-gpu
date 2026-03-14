@@ -13,14 +13,15 @@ use rustc_abi::{
 use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::ErrorGuaranteed;
 use rustc_index::Idx;
-use rustc_middle::query::Providers;
 use rustc_middle::ty::layout::{FnAbiOf, LayoutOf, TyAndLayout};
 use rustc_middle::ty::{
     self, Const, CoroutineArgs, CoroutineArgsExt as _, FloatTy, IntTy, PolyFnSig, Ty, TyCtxt,
-    TyKind, UintTy,
+    TyKind, UintTy, ValTreeKindExt,
 };
 use rustc_middle::ty::{GenericArgsRef, ScalarInt};
+use rustc_middle::util::Providers;
 use rustc_middle::{bug, span_bug};
+use rustc_session::config::OptLevel;
 use rustc_span::DUMMY_SP;
 use rustc_span::def_id::DefId;
 use rustc_span::{Span, Symbol};
@@ -28,6 +29,19 @@ use rustc_target::callconv::{ArgAbi, ArgAttributes, FnAbi, PassMode};
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::fmt;
+
+fn rewrite_c_abi_to_rust<'tcx>(
+    fn_sig: ty::EarlyBinder<'tcx, ty::PolyFnSig<'tcx>>,
+) -> ty::EarlyBinder<'tcx, ty::PolyFnSig<'tcx>> {
+    fn_sig.map_bound(|outer| {
+        outer.map_bound(|mut inner| {
+            if let Abi::C { .. } = inner.abi {
+                inner.abi = Abi::Rust;
+            }
+            inner
+        })
+    })
+}
 
 pub(crate) fn provide(providers: &mut Providers) {
     // This is a lil weird: so, we obviously don't support C ABIs at all. However, libcore does declare some extern
@@ -44,18 +58,19 @@ pub(crate) fn provide(providers: &mut Providers) {
     // NOTE: this used to rewrite to `extern "unadjusted"`, but rustc now
     // validates `#[rustc_pass_indirectly_in_non_rustic_abis]` for non-Rust ABIs,
     // and `Unadjusted` does not satisfy that requirement.
-    providers.fn_sig = |tcx, def_id| {
+    providers.queries.fn_sig = |tcx, def_id| {
         // We can't capture the old fn_sig and just call that, because fn_sig is a `fn`, not a `Fn`, i.e. it can't
         // capture variables. Fortunately, the defaults are exposed (thanks rustdoc), so use that instead.
-        let result = (rustc_interface::DEFAULT_QUERY_PROVIDERS.fn_sig)(tcx, def_id);
-        result.map_bound(|outer| {
-            outer.map_bound(|mut inner| {
-                if let Abi::C { .. } = inner.abi {
-                    inner.abi = Abi::Rust;
-                }
-                inner
-            })
-        })
+        let result = (rustc_interface::DEFAULT_QUERY_PROVIDERS.queries.fn_sig)(tcx, def_id);
+        rewrite_c_abi_to_rust(result)
+    };
+    providers.extern_queries.fn_sig = |tcx, def_id| {
+        // We can't capture the old fn_sig and just call that, because fn_sig is a `fn`, not a `Fn`, i.e. it can't
+        // capture variables. Fortunately, the defaults are exposed (thanks rustdoc), so use that instead.
+        let result = (rustc_interface::DEFAULT_QUERY_PROVIDERS
+            .extern_queries
+            .fn_sig)(tcx, def_id);
+        rewrite_c_abi_to_rust(result)
     };
 
     // For the Rust ABI, `FnAbi` adjustments are backend-agnostic, but they will
@@ -67,7 +82,7 @@ pub(crate) fn provide(providers: &mut Providers) {
         fn_abi: &'tcx FnAbi<'tcx, Ty<'tcx>>,
     ) -> &'tcx FnAbi<'tcx, Ty<'tcx>> {
         let readjust_arg_abi = |arg: &ArgAbi<'tcx, Ty<'tcx>>| {
-            let mut arg = ArgAbi::new(&tcx, arg.layout, |_, _, _| ArgAttributes::new());
+            let mut arg = ArgAbi::new(&tcx, arg.layout, |_, _| ArgAttributes::new());
             // FIXME: this is bad! https://github.com/rust-lang/rust/issues/115666
             // <https://github.com/rust-lang/rust/commit/eaaa03faf77b157907894a4207d8378ecaec7b45>
             arg.make_direct_deprecated();
@@ -86,6 +101,12 @@ pub(crate) fn provide(providers: &mut Providers) {
                 arg.mode = PassMode::Ignore;
             }
 
+            // SPIR-V backend lowers arguments by-value and cannot handle
+            // backend-specific indirection/casts at this layer.
+            if matches!(arg.mode, PassMode::Cast { .. }) {
+                arg.mode = PassMode::Direct(ArgAttributes::new());
+            }
+
             arg
         };
         tcx.arena.alloc(FnAbi {
@@ -101,12 +122,30 @@ pub(crate) fn provide(providers: &mut Providers) {
             can_unwind: fn_abi.can_unwind,
         })
     }
-    providers.fn_abi_of_fn_ptr = |tcx, key| {
-        let result = (rustc_interface::DEFAULT_QUERY_PROVIDERS.fn_abi_of_fn_ptr)(tcx, key);
+    providers.queries.fn_abi_of_fn_ptr = |tcx, key| {
+        let result = (rustc_interface::DEFAULT_QUERY_PROVIDERS
+            .queries
+            .fn_abi_of_fn_ptr)(tcx, key);
         Ok(readjust_fn_abi(tcx, result?))
     };
-    providers.fn_abi_of_instance = |tcx, key| {
-        let result = (rustc_interface::DEFAULT_QUERY_PROVIDERS.fn_abi_of_instance)(tcx, key);
+    providers.queries.fn_abi_of_instance_no_deduced_attrs = |tcx, key| {
+        let result = (rustc_interface::DEFAULT_QUERY_PROVIDERS
+            .queries
+            .fn_abi_of_instance_no_deduced_attrs)(tcx, key);
+        // Keep this query in its original shape while `fn_abi_of_instance_raw`
+        // is being computed: rustc validates strict invariants there.
+        // Otherwise, if `fn_abi_of_instance` would route through this query
+        // directly (e.g. incremental or opt-level=0), apply SPIR-V readjustment.
+        if tcx.sess.opts.optimize != OptLevel::No && tcx.sess.opts.incremental.is_none() {
+            result
+        } else {
+            Ok(readjust_fn_abi(tcx, result?))
+        }
+    };
+    providers.queries.fn_abi_of_instance_raw = |tcx, key| {
+        let result = (rustc_interface::DEFAULT_QUERY_PROVIDERS
+            .queries
+            .fn_abi_of_instance_raw)(tcx, key);
         Ok(readjust_fn_abi(tcx, result?))
     };
 
@@ -116,7 +155,7 @@ pub(crate) fn provide(providers: &mut Providers) {
     //
     // FIXME(eddyb) same as the FIXME comment on `check_well_formed`:
     // need to migrate away from `#[repr(simd)]` ASAP.
-    providers.check_mono_item = |_, _| {};
+    providers.queries.check_mono_item = |_, _| {};
 }
 
 /// If a struct contains a pointer to itself, even indirectly, then doing a naiive recursive walk
@@ -291,7 +330,18 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                 span = cx.tcx.def_span(adt.did());
             }
 
-            let attrs = AggregatedSpirvAttributes::parse(cx, cx.tcx.get_all_attrs(adt.did()));
+            let attrs = AggregatedSpirvAttributes::parse(
+                cx,
+                cx.tcx
+                    .get_attrs_by_path(
+                        adt.did(),
+                        &[cx.sym.rust_gpu, cx.sym.spirv_attr_with_version],
+                    )
+                    .chain(cx.tcx.get_attrs_by_path(
+                        adt.did(),
+                        &[cx.sym.rust_gpu, cx.sym.vector, cx.sym.v1],
+                    )),
+            );
 
             if let Some(intrinsic_type_attr) = attrs.intrinsic_type.map(|attr| attr.value)
                 && let Ok(spirv_type) =
@@ -395,6 +445,10 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                 }
                 .def(span, cx)
             }
+            BackendRepr::SimdScalableVector { .. } => cx
+                .tcx
+                .dcx()
+                .fatal("scalable vectors are not supported in SPIR-V backend"),
             BackendRepr::Memory { sized: _ } => trans_aggregate(cx, span, *self),
         }
     }
@@ -614,22 +668,10 @@ fn trans_aggregate<'tcx>(cx: &CodegenCx<'tcx>, span: Span, ty: TyAndLayout<'tcx>
                 .def(span, cx)
             }
         }
-        FieldsShape::Arbitrary {
-            offsets: _,
-            memory_index: _,
-        } => trans_struct_or_union(cx, span, ty, None),
+        FieldsShape::Arbitrary { .. } => trans_struct_or_union(cx, span, ty, None),
     }
 }
 
-#[cfg_attr(
-    not(rustc_codegen_spirv_disable_pqp_cg_ssa),
-    expect(
-        unused,
-        reason = "actually used from \
-            `<rustc_codegen_ssa::traits::ConstCodegenMethods for CodegenCx<'_>>::const_struct`, \
-            but `rustc_codegen_ssa` being `pqp_cg_ssa` makes that trait unexported"
-    )
-)]
 // returns (field_offsets, size, align)
 pub fn auto_struct_layout(
     cx: &CodegenCx<'_>,
@@ -866,7 +908,8 @@ fn trans_intrinsic_type<'tcx>(
                 } = const_.to_value();
                 assert!(const_ty.is_integral());
                 const_val
-                    .try_to_scalar_int()
+                    .try_to_scalar()
+                    .and_then(|scalar| scalar.try_to_scalar_int().ok())
                     .and_then(P::from_scalar_int)
                     .ok_or_else(|| {
                         cx.tcx

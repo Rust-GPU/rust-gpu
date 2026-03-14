@@ -1,12 +1,10 @@
 use super::{LinkResult, link};
 use rspirv::dr::Module;
-use rustc_errors::registry::Registry;
 use rustc_session::CompilerIO;
 use rustc_session::config::{Input, OutputFilenames, OutputTypes};
 use rustc_span::FileName;
 use std::io::Write;
 use std::sync::{Arc, Mutex};
-use termcolor::{ColorSpec, WriteColor};
 
 // https://github.com/colin-kiegel/rust-pretty-assertions/issues/24
 #[derive(PartialEq, Eq)]
@@ -91,19 +89,6 @@ fn link_with_linker_opts(
             self.0.lock().unwrap().flush()
         }
     }
-    impl WriteColor for BufWriter {
-        fn supports_color(&self) -> bool {
-            false
-        }
-
-        fn set_color(&mut self, _spec: &ColorSpec) -> std::io::Result<()> {
-            Ok(())
-        }
-
-        fn reset(&mut self) -> std::io::Result<()> {
-            Ok(())
-        }
-    }
     let buf = BufWriter::default();
     let output = buf.clone();
 
@@ -119,8 +104,13 @@ fn link_with_linker_opts(
         let mut early_dcx =
             rustc_session::EarlyDiagCtxt::new(rustc_session::config::ErrorOutputType::default());
         let matches =
-            rustc_driver::handle_options(&early_dcx, &["".to_string(), "x.rs".to_string()])
-                .unwrap();
+            match rustc_driver::handle_options(&early_dcx, &["".to_string(), "x.rs".to_string()]) {
+                rustc_driver::HandledOptions::Normal(matches)
+                | rustc_driver::HandledOptions::HelpOnly(matches) => matches,
+                rustc_driver::HandledOptions::None => {
+                    unreachable!("failed to parse test rustc args")
+                }
+            };
         let sopts = rustc_session::config::build_session_options(&mut early_dcx, &matches);
 
         let target = "spirv-unknown-spv1.0"
@@ -148,12 +138,9 @@ fn link_with_linker_opts(
                     temps_dir: None,
                 },
                 Default::default(),
-                Registry::new(&[]),
-                Default::default(),
-                Default::default(),
                 target,
                 rustc_interface::util::rustc_version_str().unwrap_or("unknown"),
-                Default::default(),
+                None,
                 &rustc_driver_impl::USING_INTERNAL_FEATURES,
             );
 
@@ -162,11 +149,14 @@ fn link_with_linker_opts(
             sess.psess = {
                 let source_map = sess.psess.clone_source_map();
 
-                let emitter = rustc_errors::emitter::HumanEmitter::new(
-                    rustc_errors::AutoStream::new(Box::new(buf), rustc_errors::ColorChoice::Never),
-                    rustc_driver_impl::default_translator(),
-                )
-                .sm(Some(source_map.clone()));
+                let emitter =
+                    rustc_errors::annotate_snippet_emitter_writer::AnnotateSnippetEmitter::new(
+                        rustc_errors::AutoStream::new(
+                            Box::new(buf) as Box<dyn std::io::Write + Send>,
+                            rustc_errors::ColorChoice::Never,
+                        ),
+                    )
+                    .sm(Some(source_map.clone()));
 
                 rustc_session::parse::ParseSess::with_dcx(
                     rustc_errors::DiagCtxt::new(Box::new(emitter))

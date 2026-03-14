@@ -336,8 +336,9 @@ impl UseOrigin<'_> {
                 inst_attrs: _,
                 origin,
             } => {
-                let func_desc = special_func
-                    .map(|special_func| match special_func {
+                let func_desc = special_func.map_or_else(
+                    || name_from_attrs(*func_attrs, "function"),
+                    |special_func| match special_func {
                         SpecialFunc::Exported(&ExportKey::LinkName(name)) => {
                             format!("function export `{}`", &cx[name])
                         }
@@ -361,8 +362,8 @@ impl UseOrigin<'_> {
                             "" => "unnamed function".into(),
                             callee_name => format!("`{callee_name}`"),
                         },
-                    })
-                    .unwrap_or_else(|| name_from_attrs(*func_attrs, "function"));
+                    },
+                );
                 match origin {
                     IntraFuncUseOrigin::CallCallee => format!("called by {func_desc}"),
                     IntraFuncUseOrigin::Other => format!("used from within {func_desc}"),

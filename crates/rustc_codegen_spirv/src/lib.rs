@@ -1,10 +1,6 @@
 // HACK(eddyb) start of `rustc_codegen_ssa` crate-level attributes (see `build.rs`).
-#![allow(rustc::diagnostic_outside_of_impl)]
-#![allow(rustc::untranslatable_diagnostic)]
-#![feature(assert_matches)]
 #![feature(box_patterns)]
 #![feature(file_buffered)]
-#![feature(if_let_guard)]
 #![feature(negative_impls)]
 #![feature(string_from_utf8_lossy_owned)]
 #![feature(trait_alias)]
@@ -30,15 +26,17 @@
 //! [`spirv-tools`]: https://rust-gpu.github.io/rust-gpu/api/spirv_tools
 //! [`spirv-tools-sys`]: https://rust-gpu.github.io/rust-gpu/api/spirv_tools_sys
 #![feature(rustc_private)]
+// In `rustc_codegen_spirv_disable_pqp_cg_ssa` mode we stop `include!`ing the
+// patched `rustc_codegen_ssa`, so these copied crate-level feature gates can
+// become locally unused even though the default build still needs them.
+#![cfg_attr(rustc_codegen_spirv_disable_pqp_cg_ssa, allow(unused_features))]
 // crate-specific exceptions:
 #![allow(
-    unsafe_code,                // rustc_codegen_ssa requires unsafe functions in traits to be impl'd
     clippy::enum_glob_use,      // pretty useful pattern with some codegen'd enums (e.g. rspirv::spirv::Op)
     clippy::todo,               // still lots to implement :)
 
     // FIXME(eddyb) new warnings from 1.83 rustup, apply their suggested changes.
     mismatched_lifetime_syntaxes,
-    clippy::needless_lifetimes,
 )]
 
 // Unfortunately, this will not fail fast when compiling, but rather will wait for
@@ -139,19 +137,21 @@ use builder::Builder;
 use codegen_cx::CodegenCx;
 use maybe_pqp_cg_ssa::back::lto::{SerializedModule, ThinModule};
 use maybe_pqp_cg_ssa::back::write::{
-    CodegenContext, FatLtoInput, ModuleConfig, OngoingCodegen, TargetMachineFactoryConfig,
+    CodegenContext, FatLtoInput, ModuleConfig, OngoingCodegen, SharedEmitter,
+    TargetMachineFactoryFn,
 };
 use maybe_pqp_cg_ssa::base::maybe_create_entry_wrapper;
 use maybe_pqp_cg_ssa::mono_item::MonoItemExt;
 use maybe_pqp_cg_ssa::traits::{
-    CodegenBackend, ExtraBackendMethods, ModuleBufferMethods, ThinBufferMethods,
-    WriteBackendMethods,
+    CodegenBackend, ExtraBackendMethods, ModuleBufferMethods, WriteBackendMethods,
 };
-use maybe_pqp_cg_ssa::{CodegenResults, CompiledModule, ModuleCodegen, ModuleKind, TargetConfig};
+use maybe_pqp_cg_ssa::{
+    CompiledModule, CompiledModules, CrateInfo, ModuleCodegen, ModuleKind, TargetConfig,
+};
 use rspirv::binary::Assemble;
 use rustc_ast::expand::allocator::AllocatorMethod;
 use rustc_data_structures::fx::FxIndexMap;
-use rustc_errors::DiagCtxtHandle;
+use rustc_data_structures::profiling::SelfProfilerRef;
 use rustc_metadata::EncodedMetadata;
 use rustc_middle::dep_graph::{WorkProduct, WorkProductId};
 use rustc_middle::mir::mono::{MonoItem, MonoItemData};
@@ -167,7 +167,7 @@ use std::io::Cursor;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use tracing::{error, warn};
+use tracing::error;
 
 fn dump_mir(tcx: TyCtxt<'_>, mono_items: &[(MonoItem<'_>, MonoItemData)], path: &Path) {
     fs::create_dir_all(path.parent().unwrap()).unwrap();
@@ -191,10 +191,6 @@ impl CodegenBackend for SpirvCodegenBackend {
     fn init(&self, sess: &Session) {
         // Set up logging/tracing. See https://github.com/Rust-GPU/rust-gpu/issues/192.
         init_logging(sess);
-    }
-
-    fn locale_resource(&self) -> &'static str {
-        rustc_errors::DEFAULT_LOCALE_RESOURCE
     }
 
     fn target_config(&self, sess: &Session) -> TargetConfig {
@@ -230,23 +226,22 @@ impl CodegenBackend for SpirvCodegenBackend {
         // FIXME(eddyb) this is currently only passed back to us, specifically
         // into `target_machine_factory` (which is a noop), but it might make
         // sense to move some of the target feature parsing into here.
-        providers.global_backend_features = |_tcx, ()| vec![];
+        providers.queries.global_backend_features = |_tcx, ()| vec![];
 
         crate::abi::provide(providers);
-        crate::attr::provide(providers);
+        crate::attr::provide(&mut providers.queries);
     }
 
-    fn codegen_crate(&self, tcx: TyCtxt<'_>) -> Box<dyn Any> {
-        Box::new(maybe_pqp_cg_ssa::base::codegen_crate(
-            Self,
-            tcx,
-            tcx.sess
-                .opts
-                .cg
-                .target_cpu
-                .clone()
-                .unwrap_or_else(|| tcx.sess.target.cpu.to_string()),
-        ))
+    fn target_cpu(&self, sess: &Session) -> String {
+        sess.opts
+            .cg
+            .target_cpu
+            .clone()
+            .unwrap_or_else(|| sess.target.cpu.to_string())
+    }
+
+    fn codegen_crate<'tcx>(&self, tcx: TyCtxt<'tcx>, crate_info: &CrateInfo) -> Box<dyn Any> {
+        Box::new(maybe_pqp_cg_ssa::base::codegen_crate(Self, tcx, crate_info))
     }
 
     fn join_codegen(
@@ -254,7 +249,7 @@ impl CodegenBackend for SpirvCodegenBackend {
         ongoing_codegen: Box<dyn Any>,
         sess: &Session,
         _outputs: &OutputFilenames,
-    ) -> (CodegenResults, FxIndexMap<WorkProductId, WorkProduct>) {
+    ) -> (CompiledModules, FxIndexMap<WorkProductId, WorkProduct>) {
         ongoing_codegen
             .downcast::<OngoingCodegen<Self>>()
             .expect("Expected OngoingCodegen, found Box<Any>")
@@ -264,17 +259,19 @@ impl CodegenBackend for SpirvCodegenBackend {
     fn link(
         &self,
         sess: &Session,
-        codegen_results: CodegenResults,
+        compiled_modules: CompiledModules,
+        crate_info: CrateInfo,
         metadata: EncodedMetadata,
         outputs: &OutputFilenames,
     ) {
         let timer = sess.timer("link_crate");
         link::link(
             sess,
-            &codegen_results,
+            &compiled_modules,
+            &crate_info,
             &metadata,
             outputs,
-            codegen_results.crate_info.local_crate_name.as_str(),
+            crate_info.local_crate_name.as_str(),
         );
         drop(timer);
     }
@@ -296,15 +293,10 @@ impl ModuleBufferMethods for SpirvModuleBuffer {
         self.as_bytes()
     }
 }
-impl ThinBufferMethods for SpirvModuleBuffer {
-    fn data(&self) -> &[u8] {
-        self.as_bytes()
-    }
-}
 
 impl SpirvCodegenBackend {
     fn optimize_common(
-        _cgcx: &CodegenContext<Self>,
+        _cgcx: &CodegenContext,
         module: &mut ModuleCodegen<<Self as WriteBackendMethods>::Module>,
     ) {
         // Apply DCE ("dead code elimination") to modules before ever serializing
@@ -321,61 +313,60 @@ impl SpirvCodegenBackend {
 impl WriteBackendMethods for SpirvCodegenBackend {
     type Module = rspirv::dr::Module;
     type TargetMachine = ();
-    type TargetMachineError = String;
     type ModuleBuffer = SpirvModuleBuffer;
     type ThinData = ();
-    type ThinBuffer = SpirvModuleBuffer;
 
     // FIXME(eddyb) reuse the "merge" stage of `crate::linker` for this, or even
     // consider setting `requires_lto = true` in the target specs and moving the
     // entirety of `crate::linker` into this stage (lacking diagnostics may be
     // an issue - it's surprising `CodegenBackend::link` has `Session` at all).
-    fn run_and_optimize_fat_lto(
-        cgcx: &CodegenContext<Self>,
+    fn optimize_and_codegen_fat_lto(
+        cgcx: &CodegenContext,
+        _prof: &SelfProfilerRef,
+        _shared_emitter: &SharedEmitter,
+        _tm_factory: TargetMachineFactoryFn<Self>,
         _exported_symbols_for_lto: &[String],
         _each_linked_rlib_for_lto: &[PathBuf],
         _modules: Vec<FatLtoInput<Self>>,
-    ) -> ModuleCodegen<Self::Module> {
+    ) -> CompiledModule {
         assert!(
             cgcx.lto == rustc_session::config::Lto::Fat,
-            "`run_and_optimize_fat_lto` (for `WorkItemResult::NeedsFatLto`) should \
+            "`optimize_and_codegen_fat_lto` should \
              only be invoked due to `-Clto` (or equivalent)"
         );
         unreachable!("Rust-GPU does not support fat LTO")
     }
 
     fn run_thin_lto(
-        cgcx: &CodegenContext<Self>,
+        cgcx: &CodegenContext,
+        _prof: &SelfProfilerRef,
+        _dcx: rustc_errors::DiagCtxtHandle<'_>,
         // FIXME(bjorn3): Limit LTO exports to these symbols
         _exported_symbols_for_lto: &[String],
         _each_linked_rlib_for_lto: &[PathBuf], // njn: ?
-        modules: Vec<(String, Self::ThinBuffer)>,
+        modules: Vec<(String, Self::ModuleBuffer)>,
         cached_modules: Vec<(SerializedModule<Self::ModuleBuffer>, WorkProduct)>,
     ) -> (Vec<ThinModule<Self>>, Vec<WorkProduct>) {
         link::run_thin(cgcx, modules, cached_modules)
     }
 
-    fn print_pass_timings(&self) {
-        warn!("TODO: Implement print_pass_timings");
-    }
-
-    fn print_statistics(&self) {
-        warn!("TODO: Implement print_statistics");
-    }
-
     fn optimize(
-        cgcx: &CodegenContext<Self>,
-        _dcx: DiagCtxtHandle<'_>,
+        cgcx: &CodegenContext,
+        _prof: &SelfProfilerRef,
+        _shared_emitter: &SharedEmitter,
         module: &mut ModuleCodegen<Self::Module>,
         _config: &ModuleConfig,
     ) {
         Self::optimize_common(cgcx, module);
     }
 
-    fn optimize_thin(
-        cgcx: &CodegenContext<Self>,
+    fn optimize_and_codegen_thin(
+        cgcx: &CodegenContext,
+        prof: &SelfProfilerRef,
+        shared_emitter: &SharedEmitter,
+        _tm_factory: TargetMachineFactoryFn<Self>,
         thin_module: ThinModule<Self>,
-    ) -> ModuleCodegen<Self::Module> {
+    ) -> CompiledModule {
         // FIXME(eddyb) the inefficiency of Module -> [u8] -> Module roundtrips
         // comes from upstream and it applies to `rustc_codegen_llvm` as well,
         // eventually it should be properly addressed (for `ThinLocal` at least).
@@ -389,16 +380,19 @@ impl WriteBackendMethods for SpirvCodegenBackend {
             thin_lto_buffer: None,
         };
         Self::optimize_common(cgcx, &mut module);
-        module
+        Self::codegen(cgcx, prof, shared_emitter, module, &cgcx.module_config)
     }
 
     fn codegen(
-        cgcx: &CodegenContext<Self>,
+        cgcx: &CodegenContext,
+        _prof: &SelfProfilerRef,
+        _shared_emitter: &SharedEmitter,
         module: ModuleCodegen<Self::Module>,
         _config: &ModuleConfig,
     ) -> CompiledModule {
         let kind = module.kind;
-        let (name, module_buffer) = Self::serialize_module(module);
+        let name = module.name;
+        let module_buffer = Self::serialize_module(module.module_llvm, false);
 
         let path = cgcx.output_filenames.temp_path_for_cgu(
             OutputType::Object,
@@ -419,15 +413,17 @@ impl WriteBackendMethods for SpirvCodegenBackend {
         }
     }
 
-    fn prepare_thin(module: ModuleCodegen<Self::Module>) -> (String, Self::ThinBuffer) {
-        Self::serialize_module(module)
+    fn serialize_module(module: Self::Module, _is_thin: bool) -> Self::ModuleBuffer {
+        SpirvModuleBuffer(module.assemble())
     }
 
-    fn serialize_module(module: ModuleCodegen<Self::Module>) -> (String, Self::ModuleBuffer) {
-        (
-            module.name,
-            SpirvModuleBuffer(module.module_llvm.assemble()),
-        )
+    fn target_machine_factory(
+        &self,
+        _sess: &Session,
+        _opt_level: config::OptLevel,
+        _target_features: &[String],
+    ) -> TargetMachineFactoryFn<Self> {
+        Arc::new(|_, _| ())
     }
 }
 
@@ -498,15 +494,6 @@ impl ExtraBackendMethods for SpirvCodegenBackend {
             },
             0,
         )
-    }
-
-    fn target_machine_factory(
-        &self,
-        _sess: &Session,
-        _opt_level: config::OptLevel,
-        _target_features: &[String],
-    ) -> Arc<dyn Fn(TargetMachineFactoryConfig) -> Result<(), String> + Send + Sync + 'static> {
-        Arc::new(|_| Ok(()))
     }
 }
 

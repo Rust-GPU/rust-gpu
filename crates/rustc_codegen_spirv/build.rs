@@ -19,9 +19,9 @@ use std::{env, fs, mem};
 /// `cargo publish`. We need to figure out a way to do this properly, but let's hardcode it for now :/
 //const REQUIRED_RUST_TOOLCHAIN: &str = include_str!("../../rust-toolchain.toml");
 const REQUIRED_RUST_TOOLCHAIN: &str = r#"[toolchain]
-channel = "nightly-2025-11-13"
+channel = "nightly-2026-03-14"
 components = ["rust-src", "rustc-dev", "llvm-tools"]
-# commit_hash = 01867557cd7dbe256a031a7b8e28d05daecd75ab"#;
+# commit_hash = 1d8897a4e88051480b36c501e66809425c6e08ad"#;
 
 fn rustc_output(arg: &str) -> Result<String, Box<dyn Error>> {
     let rustc = env::var("RUSTC").unwrap_or_else(|_| "rustc".into());
@@ -321,9 +321,6 @@ pub(super) fn elf_e_flags(architecture: Architecture, sess: &Session) -> u32 {",
     // HACK(eddyb) write a file that can be `include!`d from `lib.rs`.
     let pqp_cg_ssa_top_level = all_extern_crates
         + r#"
-
-// HACK(eddyb) reexporting macro output for further macro use (can't patch macro).
-use maybe_pqp_cg_ssa::fluent_generated;
 
 #[allow(unused, clippy::all, clippy::pedantic, clippy::restriction)]
 #[path = "pqp_cg_ssa/src/lib.rs"]

@@ -43,6 +43,31 @@ use std::path::PathBuf;
 use std::rc::Rc;
 use std::str::FromStr;
 
+/// Tags the `core::fmt::Arguments` constructor behind a lowered call.
+///
+/// During panic-format decompilation we pattern-match constructor calls to
+/// recover `pieces` and runtime argument slices. This enum keeps that matching
+/// explicit and type-safe, replacing the old sentinel tuple encoding.
+#[derive(Clone, Copy, Debug)]
+pub enum FmtArgsCtor {
+    /// `Arguments::new(template, args)` (new format template encoding).
+    NewTemplate {
+        template_len: usize,
+        rt_args_count: usize,
+    },
+    /// `Arguments::new_const(pieces)`.
+    NewConst { pieces_len: usize },
+    /// `Arguments::new_v1(pieces, args)`.
+    NewV1 {
+        pieces_len: usize,
+        rt_args_count: usize,
+    },
+    /// `Arguments::new_v1_formatted(..)` where lengths come from call operands.
+    NewV1FormattedDynamic,
+    /// `Arguments::from_str(s)` / `Arguments::from_str_nonconst(s)`.
+    FromStr,
+}
+
 pub struct CodegenCx<'tcx> {
     pub tcx: TyCtxt<'tcx>,
     pub codegen_unit: &'tcx CodegenUnit<'tcx>,
@@ -73,8 +98,9 @@ pub struct CodegenCx<'tcx> {
     /// of these lang items, which we always replace with an "abort".
     pub panic_entry_points: RefCell<FxHashSet<DefId>>,
 
-    /// `core::fmt::Arguments::new_{v1,const}` instances (for Rust 2021 panics).
-    pub fmt_args_new_fn_ids: RefCell<FxHashMap<Word, (usize, usize)>>,
+    /// `core::fmt::Arguments::{new,new_const,new_v1,new_v1_formatted,from_str,from_str_nonconst}`
+    /// instances (for Rust 2021 panics).
+    pub fmt_args_new_fn_ids: RefCell<FxHashMap<Word, FmtArgsCtor>>,
 
     /// `core::fmt::rt::Argument::new_*::<T>` instances (for panics' `format_args!`),
     /// with their `T` type (i.e. of the value being formatted), and formatting
@@ -788,11 +814,11 @@ impl FromStr for ModuleOutputType {
 
 impl<'tcx> BackendTypes for CodegenCx<'tcx> {
     type Value = SpirvValue;
-    type Metadata = ();
     type Function = SpirvFunctionCursor;
 
     type BasicBlock = SpirvBlockCursor;
     type Type = Word;
+    type FunctionSignature = Word;
     // Funclet: A structure representing an active landing pad for the duration of a basic block. (??)
     // https://doc.rust-lang.org/nightly/nightly-rustc/rustc_codegen_llvm/common/struct.Funclet.html
     //
@@ -880,7 +906,7 @@ impl<'tcx> MiscCodegenMethods<'tcx> for CodegenCx<'tcx> {
         todo!()
     }
 
-    fn declare_c_main(&self, _fn_type: Self::Type) -> Option<Self::Function> {
+    fn declare_c_main(&self, _fn_type: Self::FunctionSignature) -> Option<Self::Function> {
         todo!()
     }
 }
