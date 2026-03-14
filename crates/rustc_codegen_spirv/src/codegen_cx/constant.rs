@@ -253,13 +253,13 @@ impl ConstCodegenMethods for CodegenCx<'_> {
                 let alloc_id = prov.alloc_id();
                 let (base_addr, _base_addr_space) = match self.tcx.global_alloc(alloc_id) {
                     GlobalAlloc::Memory(alloc) => {
-                        let _pointee = match self.lookup_type(ty) {
-                            SpirvType::Pointer { pointee } => pointee,
+                        match self.lookup_type(ty) {
+                            SpirvType::Pointer { .. } => {}
                             other => self.tcx.dcx().fatal(format!(
                                 "GlobalAlloc::Memory type not implemented: {}",
                                 other.debug(ty, self)
                             )),
-                        };
+                        }
                         let value = self.static_addr_of(alloc, None);
                         (value, AddressSpace::ZERO)
                     }
@@ -277,13 +277,13 @@ impl ConstCodegenMethods for CodegenCx<'_> {
                                 }),
                             )))
                             .unwrap_memory();
-                        let _pointee = match self.lookup_type(ty) {
-                            SpirvType::Pointer { pointee } => pointee,
+                        match self.lookup_type(ty) {
+                            SpirvType::Pointer { .. } => {}
                             other => self.tcx.dcx().fatal(format!(
                                 "GlobalAlloc::VTable type not implemented: {}",
                                 other.debug(ty, self)
                             )),
-                        };
+                        }
                         let value = self.static_addr_of(alloc, None);
                         (value, AddressSpace::ZERO)
                     }
@@ -347,6 +347,7 @@ impl<'tcx> CodegenCx<'tcx> {
                 self.builder.lookup_const_by_id(pointee)
             && let SpirvType::Pointer { pointee } = self.lookup_type(ty)
         {
+            let mut runtime_array_bitcast_error = None;
             let init = self.try_read_from_const_alloc(alloc, pointee).or_else(|| {
                 match self.lookup_type(pointee) {
                     // Reify unsized constants through a sized backing array,
@@ -359,6 +360,9 @@ impl<'tcx> CodegenCx<'tcx> {
 
                         let alloc_size = alloc.inner().size();
                         if alloc_size.bytes() % elem_size.bytes() != 0 {
+                            runtime_array_bitcast_error = Some(
+                                "const runtime array backing allocation size is not a multiple of the element size",
+                            );
                             return None;
                         }
 
@@ -377,6 +381,12 @@ impl<'tcx> CodegenCx<'tcx> {
                         pointee: init.def_cx(self),
                     },
                 );
+            }
+
+            if let Some(reason) = runtime_array_bitcast_error {
+                let result = val.def_cx(self).with_type(ty);
+                self.zombie_no_span(result.def_cx(self), reason);
+                return result;
             }
         }
 
