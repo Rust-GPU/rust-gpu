@@ -1,15 +1,10 @@
 // HACK(eddyb) start of `rustc_codegen_ssa` crate-level attributes (see `build.rs`).
-#![allow(rustc::diagnostic_outside_of_impl)]
-#![allow(rustc::untranslatable_diagnostic)]
-#![cfg_attr(bootstrap, feature(assert_matches))]
 #![feature(box_patterns)]
 #![feature(file_buffered)]
-#![cfg_attr(bootstrap, feature(if_let_guard))]
 #![feature(negative_impls)]
 #![feature(string_from_utf8_lossy_owned)]
 #![feature(trait_alias)]
 #![feature(try_blocks)]
-#![cfg_attr(rustc_codegen_spirv_disable_pqp_cg_ssa, allow(unused_features))]
 #![recursion_limit = "256"]
 // HACK(eddyb) end of `rustc_codegen_ssa` crate-level attributes (see `build.rs`).
 
@@ -31,15 +26,17 @@
 //! [`spirv-tools`]: https://rust-gpu.github.io/rust-gpu/api/spirv_tools
 //! [`spirv-tools-sys`]: https://rust-gpu.github.io/rust-gpu/api/spirv_tools_sys
 #![feature(rustc_private)]
+// In `rustc_codegen_spirv_disable_pqp_cg_ssa` mode we stop `include!`ing the
+// patched `rustc_codegen_ssa`, so these copied crate-level feature gates can
+// become locally unused even though the default build still needs them.
+#![cfg_attr(rustc_codegen_spirv_disable_pqp_cg_ssa, allow(unused_features))]
 // crate-specific exceptions:
 #![allow(
-    unsafe_code,                // rustc_codegen_ssa requires unsafe functions in traits to be impl'd
     clippy::enum_glob_use,      // pretty useful pattern with some codegen'd enums (e.g. rspirv::spirv::Op)
     clippy::todo,               // still lots to implement :)
 
     // FIXME(eddyb) new warnings from 1.83 rustup, apply their suggested changes.
     mismatched_lifetime_syntaxes,
-    clippy::needless_lifetimes,
 )]
 
 // Unfortunately, this will not fail fast when compiling, but rather will wait for
@@ -319,15 +316,6 @@ impl WriteBackendMethods for SpirvCodegenBackend {
     type ModuleBuffer = SpirvModuleBuffer;
     type ThinData = ();
 
-    fn target_machine_factory(
-        &self,
-        _sess: &Session,
-        _opt_level: config::OptLevel,
-        _target_features: &[String],
-    ) -> TargetMachineFactoryFn<Self> {
-        Arc::new(|_, _| ())
-    }
-
     // FIXME(eddyb) reuse the "merge" stage of `crate::linker` for this, or even
     // consider setting `requires_lto = true` in the target specs and moving the
     // entirety of `crate::linker` into this stage (lacking diagnostics may be
@@ -427,6 +415,15 @@ impl WriteBackendMethods for SpirvCodegenBackend {
 
     fn serialize_module(module: Self::Module, _is_thin: bool) -> Self::ModuleBuffer {
         SpirvModuleBuffer(module.assemble())
+    }
+
+    fn target_machine_factory(
+        &self,
+        _sess: &Session,
+        _opt_level: config::OptLevel,
+        _target_features: &[String],
+    ) -> TargetMachineFactoryFn<Self> {
+        Arc::new(|_, _| ())
     }
 }
 
