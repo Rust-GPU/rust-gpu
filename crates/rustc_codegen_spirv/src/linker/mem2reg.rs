@@ -232,6 +232,13 @@ struct VarInfo {
     indices: Vec<u32>,
 }
 
+/// Resolve an `OpAccessChain`/`OpInBoundsAccessChain` into a `VarInfo` with
+/// flattened indices. Returns `None` if any index is not a known u32 constant,
+/// which makes the parent variable ineligible for promotion.
+///
+/// Per the SPIR-V spec, access chain indices must be scalar integers
+/// (<https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#OpAccessChain>).
+/// The `constants` map only tracks u32 constants (matching what rustc emits).
 fn construct_access_chain_info(
     pointer_to_pointee: &FxHashMap<Word, Word>,
     constants: &FxHashMap<Word, u32>,
@@ -743,6 +750,10 @@ mod tests {
         let mut module = load(&bytes);
 
         let mut pointer_to_pointee = FxHashMap::default();
+        // Only u32 constants are collected — these are used exclusively for
+        // resolving OpAccessChain indices (which must be scalar integers per
+        // https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#OpAccessChain).
+        // Other constant types (f32, etc.) are store/load values, not indices.
         let mut constants = FxHashMap::default();
         let mut u32_type = None;
         for inst in &module.types_global_values {
@@ -1218,6 +1229,90 @@ mod tests {
     }
 
     #[test]
+    fn non_constant_access_chain_index_not_promoted() {
+        // An OpAccessChain with a runtime (non-constant) index makes the
+        // variable ineligible: construct_access_chain_info cannot resolve it.
+        let output = run_mem2reg(
+            "OpCapability Shader
+            OpMemoryModel Logical GLSL450
+            OpEntryPoint Fragment %main \"main\" %idx_in %out
+            OpExecutionMode %main OriginUpperLeft
+            %void = OpTypeVoid
+            %float = OpTypeFloat 32
+            %float_1 = OpConstant %float 1.0
+            %uint = OpTypeInt 32 0
+            %arr2 = OpTypeArray %float %uint
+            %ptr_func_arr = OpTypePointer Function %arr2
+            %ptr_func_float = OpTypePointer Function %float
+            %ptr_in_uint = OpTypePointer Input %uint
+            %ptr_out_float = OpTypePointer Output %float
+            %idx_in = OpVariable %ptr_in_uint Input
+            %out = OpVariable %ptr_out_float Output
+            %fn_void = OpTypeFunction %void
+            %main = OpFunction %void None %fn_void
+            %entry = OpLabel
+            %var = OpVariable %ptr_func_arr Function
+            %idx = OpLoad %uint %idx_in
+            %elem = OpAccessChain %ptr_func_float %var %idx
+            OpStore %elem %float_1
+            %val = OpLoad %float %elem
+            OpStore %out %val
+            OpReturn
+            OpFunctionEnd",
+        );
+        let has_func_var = output
+            .lines()
+            .any(|l| l.contains("OpVariable") && l.contains("Function"));
+        assert!(
+            has_func_var,
+            "Variable with dynamic access chain index should not be promoted\n{output}"
+        );
+    }
+
+    #[test]
+    fn non_u32_constant_access_chain_index_not_promoted() {
+        // Access chain indices must be scalar integers per the SPIR-V spec
+        // (https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#OpAccessChain),
+        // but the constants map only tracks u32. A u64 constant index is valid
+        // SPIR-V but is not resolved by mem2reg, so the variable stays.
+        let output = run_mem2reg(
+            "OpCapability Shader
+            OpCapability Int64
+            OpMemoryModel Logical GLSL450
+            OpEntryPoint Fragment %main \"main\" %out
+            OpExecutionMode %main OriginUpperLeft
+            %void = OpTypeVoid
+            %float = OpTypeFloat 32
+            %float_1 = OpConstant %float 1.0
+            %uint = OpTypeInt 32 0
+            %ulong = OpTypeInt 64 0
+            %ulong_0 = OpConstant %ulong 0
+            %arr2 = OpTypeArray %float %uint
+            %ptr_func_arr = OpTypePointer Function %arr2
+            %ptr_func_float = OpTypePointer Function %float
+            %ptr_out_float = OpTypePointer Output %float
+            %out = OpVariable %ptr_out_float Output
+            %fn_void = OpTypeFunction %void
+            %main = OpFunction %void None %fn_void
+            %entry = OpLabel
+            %var = OpVariable %ptr_func_arr Function
+            %elem = OpAccessChain %ptr_func_float %var %ulong_0
+            OpStore %elem %float_1
+            %val = OpLoad %float %elem
+            OpStore %out %val
+            OpReturn
+            OpFunctionEnd",
+        );
+        let has_func_var = output
+            .lines()
+            .any(|l| l.contains("OpVariable") && l.contains("Function"));
+        assert!(
+            has_func_var,
+            "Variable with u64 access chain index should not be promoted\n{output}"
+        );
+    }
+
+    #[test]
     fn phi_with_opline_interleaved() {
         // OpLine/OpNoLine can appear between OpPhi instructions per the SPIR-V
         // spec. Two variables with phis in the same merge block should both be
@@ -1324,48 +1419,6 @@ mod tests {
         );
         let phi_count = output.lines().filter(|l| l.contains("OpPhi")).count();
         assert_eq!(phi_count, 1, "Expected exactly one OpPhi\n{output}");
-    }
-
-    #[test]
-    fn non_constant_access_chain_index_not_promoted() {
-        // An OpAccessChain with a non-constant index makes the variable
-        // ineligible because construct_access_chain_info cannot resolve it.
-        let output = run_mem2reg(
-            "OpCapability Shader
-            OpMemoryModel Logical GLSL450
-            OpEntryPoint Fragment %main \"main\" %idx_in %out
-            OpExecutionMode %main OriginUpperLeft
-            %void = OpTypeVoid
-            %float = OpTypeFloat 32
-            %float_1 = OpConstant %float 1.0
-            %uint = OpTypeInt 32 0
-            %arr2 = OpTypeArray %float %uint
-            %ptr_func_arr = OpTypePointer Function %arr2
-            %ptr_func_float = OpTypePointer Function %float
-            %ptr_in_uint = OpTypePointer Input %uint
-            %ptr_out_float = OpTypePointer Output %float
-            %idx_in = OpVariable %ptr_in_uint Input
-            %out = OpVariable %ptr_out_float Output
-            %fn_void = OpTypeFunction %void
-            %main = OpFunction %void None %fn_void
-            %entry = OpLabel
-            %var = OpVariable %ptr_func_arr Function
-            %idx = OpLoad %uint %idx_in
-            %elem = OpAccessChain %ptr_func_float %var %idx
-            OpStore %elem %float_1
-            %val = OpLoad %float %elem
-            OpStore %out %val
-            OpReturn
-            OpFunctionEnd",
-        );
-        // The dynamic index prevents promotion.
-        let has_func_var = output
-            .lines()
-            .any(|l| l.contains("OpVariable") && l.contains("Function"));
-        assert!(
-            has_func_var,
-            "Variable with dynamic access chain index should not be promoted\n{output}"
-        );
     }
 
     #[test]
