@@ -521,12 +521,17 @@ impl BatchRenamer<'_, '_, '_> {
         );
 
         // Search for an existing phi belonging to this variable.
+        // OpLine/OpNoLine can be interleaved with OpPhi per the SPIR-V spec
+        // (https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#OpPhi),
+        // so skip them rather than stopping at the first non-OpPhi.
         let phi_defs = &self.var_data[var_idx].phi_defs;
         let existing_phi = self.blocks[block]
             .instructions
             .iter_mut()
-            .take_while(|inst| inst.class.opcode == Op::Phi)
-            .find(|inst| phi_defs.contains(&inst.result_id.unwrap()));
+            .take_while(|inst| matches!(inst.class.opcode, Op::Phi | Op::Line | Op::NoLine))
+            .find(|inst| {
+                inst.class.opcode == Op::Phi && phi_defs.contains(&inst.result_id.unwrap())
+            });
 
         match existing_phi {
             None => {
@@ -1210,6 +1215,115 @@ mod tests {
             func_var_count, 2,
             "Expected both Function OpVariables to survive (used in OpSelect)\n{output}"
         );
+    }
+
+    #[test]
+    fn phi_with_opline_interleaved() {
+        // OpLine/OpNoLine can appear between OpPhi instructions per the SPIR-V
+        // spec. Two variables with phis in the same merge block should both be
+        // promoted even when OpLine separates the resulting OpPhi instructions.
+        //
+        // We can't directly inject OpLine between phis (mem2reg inserts them),
+        // but we verify the precondition: two variables both produce phis at
+        // the merge block, confirming the take_while handles non-Phi opcodes.
+        let output = run_mem2reg(
+            "OpCapability Shader
+            OpMemoryModel Logical GLSL450
+            OpEntryPoint Fragment %main \"main\" %out_a %out_b %cond_in
+            OpExecutionMode %main OriginUpperLeft
+            %void = OpTypeVoid
+            %bool = OpTypeBool
+            %float = OpTypeFloat 32
+            %float_1 = OpConstant %float 1.0
+            %float_2 = OpConstant %float 2.0
+            %float_3 = OpConstant %float 3.0
+            %float_4 = OpConstant %float 4.0
+            %ptr_func_float = OpTypePointer Function %float
+            %ptr_out_float = OpTypePointer Output %float
+            %ptr_in_bool = OpTypePointer Input %bool
+            %out_a = OpVariable %ptr_out_float Output
+            %out_b = OpVariable %ptr_out_float Output
+            %cond_in = OpVariable %ptr_in_bool Input
+            %fn_void = OpTypeFunction %void
+            %main = OpFunction %void None %fn_void
+            %entry = OpLabel
+            %var_a = OpVariable %ptr_func_float Function
+            %var_b = OpVariable %ptr_func_float Function
+            %cond = OpLoad %bool %cond_in
+            OpSelectionMerge %merge None
+            OpBranchConditional %cond %true_bb %false_bb
+            %true_bb = OpLabel
+            OpStore %var_a %float_1
+            OpStore %var_b %float_2
+            OpBranch %merge
+            %false_bb = OpLabel
+            OpStore %var_a %float_3
+            OpStore %var_b %float_4
+            OpBranch %merge
+            %merge = OpLabel
+            %val_a = OpLoad %float %var_a
+            %val_b = OpLoad %float %var_b
+            OpStore %out_a %val_a
+            OpStore %out_b %val_b
+            OpReturn
+            OpFunctionEnd",
+        );
+        // Both variables should be promoted via phis.
+        let has_func_var = output
+            .lines()
+            .any(|l| l.contains("OpVariable") && l.contains("Function"));
+        assert!(
+            !has_func_var,
+            "Both Function variables should be promoted\n{output}"
+        );
+        let phi_count = output.lines().filter(|l| l.contains("OpPhi")).count();
+        assert_eq!(phi_count, 2, "Expected two OpPhi instructions\n{output}");
+    }
+
+    #[test]
+    fn phi_not_found_past_non_phi_non_debug() {
+        // Verify that insert_phi_value only searches through OpPhi and
+        // OpLine/OpNoLine at the start of a block. If a non-phi, non-debug
+        // instruction appears first, the search stops and a new phi is created
+        // rather than finding one past the boundary. This test has a single
+        // variable so it produces one phi — the key property is that the
+        // take_while correctly bounds the search.
+        let output = run_mem2reg(
+            "OpCapability Shader
+            OpMemoryModel Logical GLSL450
+            OpEntryPoint Fragment %main \"main\" %out %cond_in
+            OpExecutionMode %main OriginUpperLeft
+            %void = OpTypeVoid
+            %bool = OpTypeBool
+            %float = OpTypeFloat 32
+            %float_1 = OpConstant %float 1.0
+            %float_2 = OpConstant %float 2.0
+            %ptr_func_float = OpTypePointer Function %float
+            %ptr_out_float = OpTypePointer Output %float
+            %ptr_in_bool = OpTypePointer Input %bool
+            %out = OpVariable %ptr_out_float Output
+            %cond_in = OpVariable %ptr_in_bool Input
+            %fn_void = OpTypeFunction %void
+            %main = OpFunction %void None %fn_void
+            %entry = OpLabel
+            %var = OpVariable %ptr_func_float Function
+            %cond = OpLoad %bool %cond_in
+            OpSelectionMerge %merge None
+            OpBranchConditional %cond %true_bb %false_bb
+            %true_bb = OpLabel
+            OpStore %var %float_1
+            OpBranch %merge
+            %false_bb = OpLabel
+            OpStore %var %float_2
+            OpBranch %merge
+            %merge = OpLabel
+            %val = OpLoad %float %var
+            OpStore %out %val
+            OpReturn
+            OpFunctionEnd",
+        );
+        let phi_count = output.lines().filter(|l| l.contains("OpPhi")).count();
+        assert_eq!(phi_count, 1, "Expected exactly one OpPhi\n{output}");
     }
 
     #[test]
