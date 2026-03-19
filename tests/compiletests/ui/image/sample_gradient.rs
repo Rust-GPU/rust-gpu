@@ -1,4 +1,11 @@
 // Test `OpImageSampleExplicitLod` Grad
+// compile-flags: -C llvm-args=--disassemble
+// normalize-stderr-test "OpSource .*\n" -> ""
+// normalize-stderr-test "OpLine .*\n" -> ""
+// normalize-stderr-test "%\d+ = OpString .*\n" -> ""
+// normalize-stderr-test "; .*\n" -> ""
+// normalize-stderr-test "OpCapability VulkanMemoryModel\n" -> ""
+// normalize-stderr-test "OpMemoryModel Logical Vulkan" -> "OpMemoryModel Logical Simple"
 // build-pass
 
 use spirv_std::spirv;
