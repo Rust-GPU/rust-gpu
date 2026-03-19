@@ -101,12 +101,6 @@ pub(crate) fn provide(providers: &mut Providers) {
                 arg.mode = PassMode::Ignore;
             }
 
-            // SPIR-V backend lowers arguments by-value and cannot handle
-            // backend-specific indirection/casts at this layer.
-            if matches!(arg.mode, PassMode::Cast { .. }) {
-                arg.mode = PassMode::Direct(ArgAttributes::new());
-            }
-
             arg
         };
         tcx.arena.alloc(FnAbi {
