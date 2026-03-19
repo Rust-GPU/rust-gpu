@@ -1,0 +1,105 @@
+OpCapability Shader
+OpMemoryModel Logical Simple
+OpEntryPoint Fragment %1 "main" %2 %3 %4 %5 %6 %7
+OpExecutionMode %1 OriginUpperLeft
+OpName %2 "sampler"
+OpName %3 "image2d"
+OpName %4 "image2d_array"
+OpName %5 "cubemap"
+OpName %6 "sampled_image"
+OpName %7 "output"
+OpName %13 "<glam::f32::scalar::vec4::Vec4 as spirv_std::vector::VectorTruncateInto<glam::f32::scalar::vec4::Vec4>>::truncate_into"
+OpDecorate %2 Binding 3
+OpDecorate %2 DescriptorSet 3
+OpDecorate %3 Binding 0
+OpDecorate %3 DescriptorSet 0
+OpDecorate %4 Binding 1
+OpDecorate %4 DescriptorSet 1
+OpDecorate %5 Binding 2
+OpDecorate %5 DescriptorSet 2
+OpDecorate %6 Binding 4
+OpDecorate %6 DescriptorSet 4
+OpDecorate %7 Location 0
+%14 = OpTypeFloat 32
+%15 = OpTypeImage %14 2D 2 0 0 1 Unknown
+%16 = OpTypePointer UniformConstant %15
+%17 = OpTypeImage %14 2D 2 1 0 1 Unknown
+%18 = OpTypePointer UniformConstant %17
+%19 = OpTypeImage %14 3D 2 0 0 1 Unknown
+%20 = OpTypePointer UniformConstant %19
+%21 = OpTypeSampler
+%22 = OpTypePointer UniformConstant %21
+%23 = OpTypeSampledImage %15
+%24 = OpTypePointer UniformConstant %23
+%25 = OpTypeVector %14 4
+%26 = OpTypePointer Output %25
+%27 = OpTypeVoid
+%28 = OpTypeFunction %27
+%29 = OpTypeVector %14 3
+%30 = OpConstant  %14  0
+%31 = OpConstant  %14  1
+%32 = OpConstant  %14  0.5
+%2 = OpVariable  %22  UniformConstant
+%33 = OpTypeVector %14 2
+%3 = OpVariable  %16  UniformConstant
+%34 = OpTypeFunction %25 %25
+%4 = OpVariable  %18  UniformConstant
+%35 = OpTypeSampledImage %17
+%5 = OpVariable  %20  UniformConstant
+%36 = OpTypeSampledImage %19
+%6 = OpVariable  %24  UniformConstant
+%7 = OpVariable  %26  Output
+%1 = OpFunction  %27  None %28
+%37 = OpLabel
+%38 = OpCompositeConstruct  %29  %30 %31 %32
+%39 = OpLoad  %21  %2
+%40 = OpCompositeConstruct  %33  %30 %31
+%41 = OpLoad  %15  %3
+%42 = OpSampledImage  %23  %41 %39
+%43 = OpImageSampleExplicitLod  %25  %42 %40 Lod %30
+%44 = OpFunctionCall  %25  %13 %43
+%45 = OpLoad  %21  %2
+%46 = OpLoad  %17  %4
+%47 = OpSampledImage  %35  %46 %45
+%48 = OpImageSampleExplicitLod  %25  %47 %38 Lod %30
+%49 = OpFunctionCall  %25  %13 %48
+%50 = OpLoad  %21  %2
+%51 = OpLoad  %19  %5
+%52 = OpSampledImage  %36  %51 %50
+%53 = OpImageSampleExplicitLod  %25  %52 %38 Lod %30
+%54 = OpFunctionCall  %25  %13 %53
+%55 = OpCompositeConstruct  %33  %30 %31
+%56 = OpLoad  %23  %6
+%57 = OpImageSampleExplicitLod  %25  %56 %55 Lod %30
+%58 = OpFunctionCall  %25  %13 %57
+%59 = OpCompositeExtract  %14  %44 0
+%60 = OpCompositeExtract  %14  %49 0
+%61 = OpFAdd  %14  %59 %60
+%62 = OpCompositeExtract  %14  %44 1
+%63 = OpCompositeExtract  %14  %49 1
+%64 = OpFAdd  %14  %62 %63
+%65 = OpCompositeExtract  %14  %44 2
+%66 = OpCompositeExtract  %14  %49 2
+%67 = OpFAdd  %14  %65 %66
+%68 = OpCompositeExtract  %14  %44 3
+%69 = OpCompositeExtract  %14  %49 3
+%70 = OpFAdd  %14  %68 %69
+%71 = OpCompositeExtract  %14  %54 0
+%72 = OpFAdd  %14  %61 %71
+%73 = OpCompositeExtract  %14  %54 1
+%74 = OpFAdd  %14  %64 %73
+%75 = OpCompositeExtract  %14  %54 2
+%76 = OpFAdd  %14  %67 %75
+%77 = OpCompositeExtract  %14  %54 3
+%78 = OpFAdd  %14  %70 %77
+%79 = OpCompositeConstruct  %25  %72 %74 %76 %78
+%80 = OpFAdd  %25  %79 %58
+OpStore %7 %80
+OpNoLine
+OpReturn
+OpFunctionEnd
+%13 = OpFunction  %25  None %34
+%81 = OpFunctionParameter  %25
+%82 = OpLabel
+OpReturnValue %81
+OpFunctionEnd
