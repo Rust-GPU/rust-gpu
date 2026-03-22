@@ -346,48 +346,14 @@ impl<'tcx> CodegenCx<'tcx> {
             && let Some(SpirvConst::ConstDataFromAlloc(alloc)) =
                 self.builder.lookup_const_by_id(pointee)
             && let SpirvType::Pointer { pointee } = self.lookup_type(ty)
+            && let Some(init) = self.try_read_from_const_alloc(alloc, pointee)
         {
-            let mut runtime_array_bitcast_error = None;
-            let init = self.try_read_from_const_alloc(alloc, pointee).or_else(|| {
-                match self.lookup_type(pointee) {
-                    // Reify unsized constants through a sized backing array,
-                    // then keep the requested pointer type in `SpirvConst::PtrTo`.
-                    SpirvType::RuntimeArray { element } => {
-                        let elem_size = self.lookup_type(element).sizeof(self)?;
-                        if elem_size.bytes() == 0 {
-                            return None;
-                        }
-
-                        let alloc_size = alloc.inner().size();
-                        if alloc_size.bytes() % elem_size.bytes() != 0 {
-                            runtime_array_bitcast_error = Some(
-                                "const runtime array backing allocation size is not a multiple of the element size",
-                            );
-                            return None;
-                        }
-
-                        let count = alloc_size.bytes() / elem_size.bytes();
-                        let sized_ty = self.type_array(element, count);
-                        self.try_read_from_const_alloc(alloc, sized_ty)
-                    }
-                    _ => None,
-                }
-            });
-
-            if let Some(init) = init {
-                return self.def_constant(
-                    ty,
-                    SpirvConst::PtrTo {
-                        pointee: init.def_cx(self),
-                    },
-                );
-            }
-
-            if let Some(reason) = runtime_array_bitcast_error {
-                let result = val.def_cx(self).with_type(ty);
-                self.zombie_no_span(result.def_cx(self), reason);
-                return result;
-            }
+            return self.def_constant(
+                ty,
+                SpirvConst::PtrTo {
+                    pointee: init.def_cx(self),
+                },
+            );
         }
 
         if val.ty == ty {
