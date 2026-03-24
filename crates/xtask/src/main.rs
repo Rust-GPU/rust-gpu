@@ -6,9 +6,11 @@
     reason = "This is just a workflow tool"
 )]
 
-use std::ffi::OsStr;
 use anyhow::Context as _;
 use clap::Parser as _;
+use std::borrow::Cow;
+use std::ffi::OsStr;
+use std::path::{Path, PathBuf};
 
 /// Path to the shader crate
 const SHADER_CRATE_PATH: &str = "crates/shader-crate-template";
@@ -36,6 +38,9 @@ enum Cli {
         git: Option<String>,
     },
     UpdateExpect,
+    RustGpuRev {
+        rev: String,
+    },
 }
 
 /// run some cmd
@@ -254,61 +259,101 @@ impl DependencyVersion {
 
 /// Run the xtask.
 fn main() -> anyhow::Result<()> {
-    env_logger::builder().init();
-    let cli = Cli::parse();
-    match &cli {
-        Cli::TestBuild {
-            rust_gpu_version,
-            glam_version,
-        } => {
-            log::info!("installing cargo gpu");
-            cmd(["cargo", "install", "--path", "crates/cargo-gpu"])?;
+    env_logger::builder()
+        .filter_level(log::LevelFilter::Info)
+        .init();
+    Cli::parse().run()
+}
 
-            log::info!("setup project");
-            let mut overwriter = ShaderCrateTemplateCargoTomlWriter::default();
-            let dir = tempfile::TempDir::with_prefix("test-shader-output")?;
-            overwriter.replace_output_dir(dir.path())?;
-            if let Some(rust_gpu_version) = rust_gpu_version.as_ref() {
-                overwriter.set_spirv_std_version(rust_gpu_version)?;
+impl Cli {
+    fn run(&self) -> anyhow::Result<()> {
+        match &self {
+            Cli::TestBuild {
+                rust_gpu_version,
+                glam_version,
+            } => {
+                log::info!("installing cargo gpu");
+                cmd(["cargo", "install", "--path", "crates/cargo-gpu"])?;
+
+                log::info!("setup project");
+                let mut overwriter = ShaderCrateTemplateCargoTomlWriter::default();
+                let dir = tempfile::TempDir::with_prefix("test-shader-output")?;
+                overwriter.replace_output_dir(dir.path())?;
+                if let Some(rust_gpu_version) = rust_gpu_version.as_ref() {
+                    overwriter.set_spirv_std_version(rust_gpu_version)?;
+                }
+                if let Some(glam_version) = glam_version.as_ref() {
+                    overwriter.set_dependency_glam(glam_version)?;
+                }
+
+                log::info!("building with auto-install");
+                cmd([
+                    "cargo",
+                    "gpu",
+                    "build",
+                    "--shader-crate",
+                    SHADER_CRATE_PATH,
+                    "--auto-install-rust-toolchain",
+                    "--rebuild-codegen",
+                    "--force-overwrite-lockfiles-v4-to-v3",
+                ])?;
+
+                cmd(["ls", "-lah", dir.path().to_str().unwrap()])?;
+                //NOTE: manifest.json is the default value here, which should be valid
+                cmd(["cat", dir.path().join("manifest.json").to_str().unwrap()])?;
             }
-            if let Some(glam_version) = glam_version.as_ref() {
-                overwriter.set_dependency_glam(glam_version)?;
-            }
-
-            log::info!("building with auto-install");
-            cmd([
-                "cargo",
-                "gpu",
-                "build",
-                "--shader-crate",
-                SHADER_CRATE_PATH,
-                "--auto-install-rust-toolchain",
-                "--rebuild-codegen",
-                "--force-overwrite-lockfiles-v4-to-v3",
-            ])?;
-
-            cmd(["ls", "-lah", dir.path().to_str().unwrap()])?;
-            //NOTE: manifest.json is the default value here, which should be valid
-            cmd(["cat", dir.path().join("manifest.json").to_str().unwrap()])?;
-        }
-        Cli::SetDependency {
-            package,
-            version,
-            git,
-        } => {
-            let mut overwriter = ShaderCrateTemplateCargoTomlWriter::new(true);
-            overwriter.set_dependency(
+            Cli::SetDependency {
                 package,
-                &DependencyVersion::parse(version.clone(), git.clone())?,
-            )?;
+                version,
+                git,
+            } => {
+                let mut overwriter = ShaderCrateTemplateCargoTomlWriter::new(true);
+                overwriter.set_dependency(
+                    package,
+                    &DependencyVersion::parse(version.clone(), git.clone())?,
+                )?;
+            }
+            Cli::UpdateExpect => {
+                let status = std::process::Command::new("cargo")
+                    .args(["nextest", "run"])
+                    .env("UPDATE_EXPECT", "1")
+                    .status()?;
+                anyhow::ensure!(status.success());
+            }
+            Cli::RustGpuRev { rev } => {
+                let root = PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/../.."));
+                let rev_regex = regex_lite::Regex::new(r#"rev\s*=\s*"[0-9a-f]*""#)?;
+                let rev_replace = format!("rev = \"{rev}\"");
+                let replace_rev = |file: &Path, dep: &str| -> anyhow::Result<()> {
+                    log::info!("patching file `{}` dep `{dep}`", file.display());
+                    let content = std::fs::read_to_string(file)?;
+                    let content = content
+                        // unlike `.lines()`, includes the `\n` or `\r\n` at the end of the line
+                        .split_inclusive("\n")
+                        .map(|line| {
+                            if line.starts_with(dep) {
+                                let replace = rev_regex.replace(line, &rev_replace);
+                                assert!(
+                                    matches!(replace, Cow::Owned(..)),
+                                    "rev not found in line:\n{line}"
+                                );
+                                replace
+                            } else {
+                                Cow::Borrowed(line)
+                            }
+                        })
+                        .collect::<String>();
+                    std::fs::write(file, content.as_bytes())?;
+                    Ok(())
+                };
+                replace_rev(&root.join("Cargo.toml"), "spirv-builder")?;
+                replace_rev(
+                    &root.join("crates/shader-crate-template/Cargo.toml"),
+                    "spirv-std",
+                )?;
+                Cli::UpdateExpect.run()?;
+            }
         }
-        Cli::UpdateExpect => {
-            let status = std::process::Command::new("cargo")
-                .args(["nextest", "run"])
-                .env("UPDATE_EXPECT", "1")
-                .status()?;
-            anyhow::ensure!(status.success());
-        }
+        Ok(())
     }
-    Ok(())
 }
