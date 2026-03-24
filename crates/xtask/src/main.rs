@@ -6,6 +6,7 @@
     reason = "This is just a workflow tool"
 )]
 
+use std::ffi::OsStr;
 use anyhow::Context as _;
 use clap::Parser as _;
 
@@ -34,23 +35,17 @@ enum Cli {
         #[clap(long)]
         git: Option<String>,
     },
+    UpdateExpect,
 }
 
 /// run some cmd
-fn cmd(args: impl IntoIterator<Item = impl AsRef<str>>) -> anyhow::Result<()> {
+fn cmd(args: impl IntoIterator<Item = impl AsRef<OsStr>>) -> anyhow::Result<()> {
     let mut args = args.into_iter();
-    let mut cmd = std::process::Command::new(args.next().context("no args")?.as_ref());
-    for arg in args {
-        cmd.arg(arg.as_ref());
-    }
-
-    let output = cmd
-        .stdout(std::process::Stdio::inherit())
-        .stderr(std::process::Stdio::inherit())
-        .output()
+    let status = std::process::Command::new(args.next().context("no args")?.as_ref())
+        .args(args)
+        .status()
         .context("cmd failed")?;
-    anyhow::ensure!(output.status.success());
-
+    anyhow::ensure!(status.success());
     Ok(())
 }
 
@@ -306,6 +301,13 @@ fn main() -> anyhow::Result<()> {
                 package,
                 &DependencyVersion::parse(version.clone(), git.clone())?,
             )?;
+        }
+        Cli::UpdateExpect => {
+            let status = std::process::Command::new("cargo")
+                .args(["nextest", "run"])
+                .env("UPDATE_EXPECT", "1")
+                .status()?;
+            anyhow::ensure!(status.success());
         }
     }
     Ok(())

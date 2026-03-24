@@ -267,24 +267,18 @@ mod test {
     use crate::test::TestEnv;
     use cargo_metadata::{PackageBuilder, PackageId, Source};
     use cargo_util_schemas::manifest::PackageName;
+    use expect_test::expect;
 
     #[test_log::test]
     fn parsing_spirv_std_dep_for_shader_template() {
         let shader_template_path = crate::test::shader_crate_template_path();
         let source = SpirvSource::get_rust_gpu_deps_from_shader(&shader_template_path).unwrap();
-        assert_eq!(
-            source,
-            SpirvSource::Git {
-                url: "https://github.com/Rust-GPU/rust-gpu".to_owned(),
-                rev: "6a67e7b5954f37989ad540a555b5d6969073592e".to_owned()
-            }
-        );
-    }
-
-    #[test_log::test]
-    fn path_sanity() {
-        let path = std::path::PathBuf::from("./");
-        assert!(path.is_relative());
+        expect![[r#"
+            Git {
+                url: "https://github.com/Rust-GPU/rust-gpu",
+                rev: "6a67e7b5954f37989ad540a555b5d6969073592e",
+            }"#]]
+        .assert_eq(&format!("{source:#?}"));
     }
 
     #[test_log::test]
@@ -299,7 +293,13 @@ mod test {
             .to_str()
             .map(std::string::ToString::to_string)
             .unwrap();
-        assert_eq!("https___github_com_Rust-GPU_rust-gpu+6a67e7b5", &name);
+        expect!["https___github_com_Rust-GPU_rust-gpu+6a67e7b5"].assert_eq(&name);
+    }
+
+    #[test_log::test]
+    fn path_sanity() {
+        let path = std::path::PathBuf::from("./");
+        assert!(path.is_relative());
     }
 
     #[test_log::test]
