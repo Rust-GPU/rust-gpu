@@ -7,8 +7,9 @@ use std::path::Path;
 /// The version listed in the enum is always the minimum version to require said target spec, with the newest version
 /// always at the top.
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub enum TargetSpecVersion {
+    Older,
     /// Introduced in `489c3ee6fd63da3ca7cf2b15e1ee709d8e078aab` in the old v2 target spec way, later ported to here.
     /// remove `os: unknown`, add `crt-static-respected: true`
     Rustc_1_85_0,
@@ -18,6 +19,24 @@ pub enum TargetSpecVersion {
     Rustc_1_76_0,
     /// rustc 1.93 requires that the value of "target-pointer-width" is no longer a string but u16
     Rustc_1_93_0,
+    /// rustc 1.94.0 destabilised json target specs, requiring `-Ztarget-spec-json`
+    /// see <https://github.com/Rust-GPU/rust-gpu/pull/545>
+    /// see <https://github.com/rust-lang/rust/pull/150151>
+    Rustc_1_94_0,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct TargetSpec {
+    pub target: OsString,
+    pub extra_options: Vec<OsString>,
+}
+
+impl TargetSpec {
+    pub fn append_to_cmd(&self, cmd: &mut std::process::Command) {
+        cmd.args(self.extra_options.iter());
+        cmd.arg("--target");
+        cmd.arg(&self.target);
+    }
 }
 
 impl TargetSpecVersion {
@@ -27,28 +46,37 @@ impl TargetSpecVersion {
         rustc_version: Version,
         target: &SpirvTarget,
         target_spec_folder: &Path,
-    ) -> std::io::Result<OsString> {
-        if let Some(target_spec) = Self::from_rustc_version(rustc_version) {
+    ) -> std::io::Result<TargetSpec> {
+        let mut ret = TargetSpec::default();
+        let target_spec = Self::from_rustc_version(rustc_version);
+        if target_spec >= Self::Rustc_1_94_0 {
+            ret.extra_options.push("-Zjson-target-spec".into());
+        }
+
+        ret.target = if target_spec == Self::Older {
+            target.target().into()
+        } else {
             std::fs::create_dir_all(target_spec_folder)?;
             let spec_file = target_spec_folder.join(format!("{}.json", target.target()));
             std::fs::write(&spec_file, target_spec.format_spec(target))?;
-            Ok(std::fs::canonicalize(spec_file)?.into_os_string())
-        } else {
-            Ok(OsString::from(target.target()))
-        }
+            std::fs::canonicalize(spec_file)?.into_os_string()
+        };
+        Ok(ret)
     }
 
     /// Returns the version of the target spec required for a certain rustc version. May return `None` if the version
     /// is old enough to not need target specs.
-    pub fn from_rustc_version(rustc_version: Version) -> Option<Self> {
-        if rustc_version >= Version::new(1, 93, 0) {
-            Some(Self::Rustc_1_93_0)
+    pub fn from_rustc_version(rustc_version: Version) -> Self {
+        if rustc_version >= Version::new(1, 94, 0) {
+            Self::Rustc_1_94_0
+        } else if rustc_version >= Version::new(1, 93, 0) {
+            Self::Rustc_1_93_0
         } else if rustc_version >= Version::new(1, 85, 0) {
-            Some(Self::Rustc_1_85_0)
+            Self::Rustc_1_85_0
         } else if rustc_version >= Version::new(1, 76, 0) {
-            Some(Self::Rustc_1_76_0)
+            Self::Rustc_1_76_0
         } else {
-            None
+            Self::Older
         }
     }
 
@@ -56,9 +84,12 @@ impl TargetSpecVersion {
     pub fn format_spec(&self, target: &SpirvTarget) -> String {
         let target_env = target.env();
         let (extra, target_pointer_width) = match self {
+            TargetSpecVersion::Older => panic!("no target specs for older rustc versions"),
             TargetSpecVersion::Rustc_1_76_0 => (r#""os": "unknown","#, "\"32\""),
             TargetSpecVersion::Rustc_1_85_0 => (r#""crt-static-respected": true,"#, "\"32\""),
-            TargetSpecVersion::Rustc_1_93_0 => (r#""crt-static-respected": true,"#, "32"),
+            TargetSpecVersion::Rustc_1_93_0 | TargetSpecVersion::Rustc_1_94_0 => {
+                (r#""crt-static-respected": true,"#, "32")
+            }
         };
         format!(
             r#"{{

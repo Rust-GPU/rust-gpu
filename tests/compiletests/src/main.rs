@@ -1,7 +1,7 @@
 use clap::Parser;
+use compiletest::common::Mode;
 use itertools::Itertools as _;
-use rustc_codegen_spirv_types::{SpirvTarget, TargetSpecVersion, query_rustc_version};
-use std::ffi::OsString;
+use rustc_codegen_spirv_types::{SpirvTarget, TargetSpec, TargetSpecVersion, query_rustc_version};
 use std::{
     env, io,
     path::{Path, PathBuf},
@@ -79,7 +79,7 @@ fn main() {
         codegen_backend_path,
     };
 
-    runner.run_mode("ui");
+    runner.run_mode(Mode::Ui);
 }
 
 struct Runner {
@@ -94,7 +94,7 @@ impl Runner {
     /// Runs the given `mode` on the directory that matches that name, using the
     /// backend provided by `codegen_backend_path`.
     #[allow(clippy::string_add)]
-    fn run_mode(&self, mode: &'static str) {
+    fn run_mode(&self, mode: Mode) {
         /// RUSTFLAGS passed to all test files.
         fn test_rustc_flags(
             codegen_backend_path: &Path,
@@ -157,7 +157,12 @@ impl Runner {
             println!("Testing env: {stage_id}\n");
 
             let target = SpirvTarget::parse(env).unwrap();
-            let libs = self.build_deps(&target);
+            let rustc_version = query_rustc_version(None).unwrap();
+            let target_spec =
+                TargetSpecVersion::target_arg(rustc_version, &target, &self.deps_target_dir)
+                    .unwrap();
+
+            let libs = self.build_deps(&target, &target_spec);
             let mut flags = test_rustc_flags(
                 &self.codegen_backend_path,
                 &libs,
@@ -175,9 +180,9 @@ impl Runner {
             let config = compiletest::Config {
                 stage_id,
                 target_rustcflags: Some(flags),
-                mode: mode.parse().expect("Invalid mode"),
-                target: self.target_spec_json(&target).into_string().unwrap(),
-                src_base: self.tests_dir.join(mode),
+                mode,
+                target: target_spec.target.into_string().unwrap(),
+                src_base: self.tests_dir.join(mode.to_string()),
                 build_base: self.compiletest_build_dir.clone(),
                 bless: self.opt.bless,
                 filters: self.opt.filters.clone(),
@@ -191,20 +196,18 @@ impl Runner {
     }
 
     /// Runs the processes needed to build `spirv-std` & other deps.
-    fn build_deps(&self, target: &SpirvTarget) -> TestDeps {
+    fn build_deps(&self, target: &SpirvTarget, target_spec: &TargetSpec) -> TestDeps {
         // Build compiletests-deps-helper
-        std::process::Command::new("cargo")
-            .args([
-                "build",
-                "-p",
-                "compiletests-deps-helper",
-                "-Zjson-target-spec",
-                "-Zbuild-std=core",
-                "-Zbuild-std-features=compiler-builtins-mem",
-                "--target",
-            ])
-            .arg(self.target_spec_json(target))
-            .arg("--target-dir")
+        let mut cmd = std::process::Command::new("cargo");
+        cmd.args([
+            "build",
+            "-p",
+            "compiletests-deps-helper",
+            "-Zbuild-std=core",
+            "-Zbuild-std-features=compiler-builtins-mem",
+        ]);
+        target_spec.append_to_cmd(&mut cmd);
+        cmd.arg("--target-dir")
             .arg(&self.deps_target_dir)
             .env("RUSTFLAGS", rust_flags(&self.codegen_backend_path))
             .stderr(std::process::Stdio::inherit())
@@ -242,7 +245,7 @@ impl Runner {
                 "warning: cleaning deps ({missing_count} missing libs, {duplicate_count} duplicated libs)"
             );
             self.clean_deps();
-            self.build_deps(target)
+            self.build_deps(target, target_spec)
         } else {
             TestDeps {
                 core: core.ok().unwrap(),
@@ -259,16 +262,9 @@ impl Runner {
             .arg("clean")
             .arg("--target-dir")
             .arg(&self.deps_target_dir)
-            .stderr(std::process::Stdio::inherit())
-            .stdout(std::process::Stdio::inherit())
             .status()
             .and_then(map_status_to_result)
             .unwrap();
-    }
-
-    fn target_spec_json(&self, target: &SpirvTarget) -> OsString {
-        let rustc_version = query_rustc_version(None).unwrap();
-        TargetSpecVersion::target_arg(rustc_version, target, &self.deps_target_dir).unwrap()
     }
 }
 
