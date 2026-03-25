@@ -102,8 +102,16 @@ pub struct Install {
 
     /// Clear target dir of `rustc_codegen_spirv` build after a successful build, saves about
     /// 200MiB of disk space.
-    #[cfg_attr(feature = "clap", clap(long = "no-clear-target", default_value = "true", action = clap::ArgAction::SetFalse))]
+    #[cfg_attr(feature = "clap", clap(long = "no-clear-target", default_value = "true", action = clap::ArgAction::SetFalse
+    ))]
     pub clear_target: bool,
+
+    /// Enables printing `cargo:rerun-if-changed` to stdout for build scripts, defaults to `false`.
+    ///
+    /// Currently only used with `path`-based `spirv-std` sources, so that any change in your local rust-gpu checkout
+    /// reruns the build script to rebuild the codegen backend and your shaders.
+    #[cfg_attr(feature = "clap", clap(skip))]
+    pub build_script: bool,
 
     /// There is a tricky situation where a shader crate that depends on workspace config can have
     /// a different `Cargo.lock` lockfile version from the the workspace's `Cargo.lock`. This can
@@ -143,6 +151,7 @@ impl Install {
             rebuild_codegen: false,
             auto_install_rust_toolchain: true,
             clear_target: true,
+            build_script: false,
             force_overwrite_lockfiles_v4_to_v3: false,
         }
     }
@@ -227,6 +236,16 @@ package = "rustc_codegen_spirv"
             std::env::consts::DLL_PREFIX,
             std::env::consts::DLL_SUFFIX
         );
+
+        if self.build_script {
+            #[allow(clippy::print_stdout)]
+            if let SpirvSource::Path {
+                rust_gpu_repo_root, ..
+            } = &source
+            {
+                println!("cargo:rerun-if-changed={rust_gpu_repo_root}");
+            }
+        }
 
         let (dest_dylib_path, skip_rebuild) = if source.is_path() {
             (
