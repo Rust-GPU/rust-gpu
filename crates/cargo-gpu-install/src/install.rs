@@ -16,6 +16,8 @@ pub struct InstalledBackend {
     pub rustc_codegen_spirv_location: PathBuf,
     /// toolchain channel name
     pub toolchain_channel: String,
+    /// Whether this runs in a build script
+    pub build_script: bool,
 }
 
 impl InstalledBackend {
@@ -45,6 +47,7 @@ impl InstalledBackend {
     pub fn configure_spirv_builder(&self, builder: &mut SpirvBuilder) -> anyhow::Result<()> {
         builder.rustc_codegen_spirv_location = Some(self.rustc_codegen_spirv_location.clone());
         builder.toolchain_overwrite = Some(self.toolchain_channel.clone());
+        builder.build_script.defaults = self.build_script;
         Ok(())
     }
 }
@@ -108,8 +111,9 @@ pub struct Install {
 
     /// Enables printing `cargo:rerun-if-changed` to stdout for build scripts, defaults to `false`.
     ///
-    /// Currently only used with `path`-based `spirv-std` sources, so that any change in your local rust-gpu checkout
-    /// reruns the build script to rebuild the codegen backend and your shaders.
+    /// Will be forwarded to `spirv_builder.build_script.defaults`. On the cargo-gpu side, only used with `path`-based
+    /// `spirv-std` sources, so that any change in your local rust-gpu checkout reruns the build script to rebuild the
+    /// codegen backend and your shaders.
     #[cfg_attr(feature = "clap", clap(skip))]
     pub build_script: bool,
 
@@ -153,6 +157,15 @@ impl Install {
             clear_target: true,
             build_script: false,
             force_overwrite_lockfiles_v4_to_v3: false,
+        }
+    }
+
+    /// Set `build_script = true`
+    #[inline]
+    pub fn within_build_script(self) -> Self {
+        Self {
+            build_script: true,
+            ..self
         }
     }
 
@@ -352,6 +365,7 @@ package = "rustc_codegen_spirv"
         Ok(InstalledBackend {
             rustc_codegen_spirv_location: dest_dylib_path,
             toolchain_channel,
+            build_script: self.build_script,
         })
     }
 }
