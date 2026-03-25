@@ -8,9 +8,7 @@ use crate::spirv_type::SpirvType;
 use itertools::Itertools as _;
 use rspirv::spirv::Word;
 use rustc_abi::{self as abi, AddressSpace, Float, HasDataLayout, Integer, Primitive, Size};
-use rustc_codegen_ssa::traits::{
-    BaseTypeCodegenMethods, ConstCodegenMethods, MiscCodegenMethods, StaticCodegenMethods,
-};
+use rustc_codegen_ssa::traits::{ConstCodegenMethods, MiscCodegenMethods, StaticCodegenMethods};
 use rustc_middle::mir::interpret::{AllocError, ConstAllocation, GlobalAlloc, Scalar, alloc_range};
 use rustc_middle::ty::layout::LayoutOf;
 use rustc_span::{DUMMY_SP, Span};
@@ -170,14 +168,13 @@ impl ConstCodegenMethods for CodegenCx<'_> {
         let str_ty = self
             .layout_of(self.tcx.types.str_)
             .spirv_type(DUMMY_SP, self);
-        let bytes_ty = self.type_array(self.type_i8(), len as u64);
         (
             self.def_constant(
                 self.type_ptr_to(str_ty),
                 SpirvConst::PtrTo {
                     pointee: self
                         .constant_composite(
-                            bytes_ty,
+                            str_ty,
                             s.bytes().map(|b| self.const_u8(b).def_cx(self)),
                         )
                         .def_cx(self),
@@ -562,7 +559,8 @@ impl<'tcx> CodegenCx<'tcx> {
             }
             SpirvType::Vector { element, .. }
             | SpirvType::Matrix { element, .. }
-            | SpirvType::Array { element, .. } => {
+            | SpirvType::Array { element, .. }
+            | SpirvType::RuntimeArray { element } => {
                 let stride = self.lookup_type(element).sizeof(self).unwrap();
 
                 let count = match ty_def {
@@ -571,6 +569,9 @@ impl<'tcx> CodegenCx<'tcx> {
                     }
                     SpirvType::Array { count, .. } => {
                         u64::try_from(self.builder.lookup_const_scalar(count).unwrap()).unwrap()
+                    }
+                    SpirvType::RuntimeArray { .. } => {
+                        (alloc.inner().size() - offset).bytes() / stride.bytes()
                     }
                     _ => unreachable!(),
                 };
@@ -594,50 +595,18 @@ impl<'tcx> CodegenCx<'tcx> {
                     assert_eq!(read_size, ty_size);
                 }
 
+                if let SpirvType::RuntimeArray { .. } = ty_def {
+                    // FIXME(eddyb) values of this type should never be created,
+                    // the only reasonable encoding of e.g. `&str` consts should
+                    // be `&[u8; N]` consts, with the `static_addr_of` pointer
+                    // (*not* the value it points to) cast to `&str`, afterwards.
+                    self.zombie_no_span(
+                        result.def_cx(self),
+                        &format!("unsupported unsized `{}` constant", self.debug_type(ty)),
+                    );
+                }
+
                 (result, read_size)
-            }
-            SpirvType::RuntimeArray { element } => {
-                let stride = self.lookup_type(element).sizeof(self).unwrap();
-                if stride.bytes() == 0 {
-                    let result = self.undef(ty);
-                    self.zombie_no_span(
-                        result.def_cx(self),
-                        &format!(
-                            "unsupported unsized `{}` constant with zero-sized elements",
-                            self.debug_type(ty)
-                        ),
-                    );
-                    return (result, Size::ZERO);
-                }
-
-                let read_size = alloc.inner().size() - offset;
-                let rem = read_size.bytes() % stride.bytes();
-                if rem != 0 {
-                    let result = self.undef(ty);
-                    self.zombie_no_span(
-                        result.def_cx(self),
-                        &format!(
-                            "unsupported unsized `{}` constant with {rem} trailing bytes",
-                            self.debug_type(ty)
-                        ),
-                    );
-                    return (result, read_size);
-                }
-
-                let count = read_size.bytes() / stride.bytes();
-                let sized_ty = self.type_array(element, count);
-
-                let result = self.constant_composite(
-                    sized_ty,
-                    (0..count).map(|i| {
-                        let (e, e_size) =
-                            self.read_from_const_alloc_at(alloc, element, offset + i * stride);
-                        assert_eq!(e_size, stride);
-                        e.def_cx(self)
-                    }),
-                );
-
-                (result, count * stride)
             }
 
             SpirvType::Void
