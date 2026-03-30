@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerocopy-0.8.38/src/pointer/ptr.rs`."><title>ptr.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="zerocopy" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (01867557c 2025-11-12)" data-channel="nightly" data-search-js="search-8e3fad08.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">zerocopy/pointer/</div>ptr.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// Copyright 2023 The Fuchsia Authors
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerocopy-0.8.38/src/pointer/ptr.rs`."><title>ptr.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="zerocopy" data-themes="" data-resource-suffix="" data-rustdoc-version="1.96.0-nightly (1d8897a4e 2026-03-13)" data-channel="nightly" data-search-js="search-63369b7b.js" data-stringdex-js="stringdex-b897f86f.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5013f961.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">zerocopy/pointer/</div>ptr.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// Copyright 2023 The Fuchsia Authors
 <a href=#2 id=2 data-nosnippet>2</a>//
 <a href=#3 id=3 data-nosnippet>3</a>// Licensed under a BSD-style license &lt;LICENSE-BSD&gt;, Apache License, Version 2.0
 <a href=#4 id=4 data-nosnippet>4</a>// &lt;LICENSE-APACHE or https://www.apache.org/licenses/LICENSE-2.0&gt;, or the MIT
@@ -11,7 +11,7 @@
 <a href=#11 id=11 data-nosnippet>11</a>    marker::PhantomData,
 <a href=#12 id=12 data-nosnippet>12</a>};
 <a href=#13 id=13 data-nosnippet>13</a>
-<a href=#14 id=14 data-nosnippet>14</a><span class="kw">use crate</span>::{
+<a href=#14 id=14 data-nosnippet>14</a><span class="kw">use </span>crate::{
 <a href=#15 id=15 data-nosnippet>15</a>    pointer::{
 <a href=#16 id=16 data-nosnippet>16</a>        inner::PtrInner,
 <a href=#17 id=17 data-nosnippet>17</a>        invariant::<span class="kw-2">*</span>,
@@ -24,7 +24,7 @@
 <a href=#24 id=24 data-nosnippet>24</a></span><span class="kw">mod </span>def {
 <a href=#25 id=25 data-nosnippet>25</a>    <span class="attr">#[cfg(doc)]
 <a href=#26 id=26 data-nosnippet>26</a>    </span><span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::invariant;
-<a href=#27 id=27 data-nosnippet>27</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#27 id=27 data-nosnippet>27</a>    <span class="kw">use </span>super::<span class="kw-2">*</span>;
 <a href=#28 id=28 data-nosnippet>28</a>
 <a href=#29 id=29 data-nosnippet>29</a>    <span class="doccomment">/// A raw pointer with more restrictions.
 <a href=#30 id=30 data-nosnippet>30</a>    ///
@@ -107,7 +107,7 @@
 <a href=#107 id=107 data-nosnippet>107</a>
 <a href=#108 id=108 data-nosnippet>108</a><span class="doccomment">/// External trait implementations on [`Ptr`].
 <a href=#109 id=109 data-nosnippet>109</a></span><span class="kw">mod </span>_external {
-<a href=#110 id=110 data-nosnippet>110</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#110 id=110 data-nosnippet>110</a>    <span class="kw">use </span>super::<span class="kw-2">*</span>;
 <a href=#111 id=111 data-nosnippet>111</a>
 <a href=#112 id=112 data-nosnippet>112</a>    <span class="doccomment">/// SAFETY: Shared pointers are safely `Copy`. `Ptr`'s other invariants
 <a href=#113 id=113 data-nosnippet>113</a>    /// (besides aliasing) are unaffected by the number of references that exist
@@ -159,7 +159,7 @@
 <a href=#159 id=159 data-nosnippet>159</a>
 <a href=#160 id=160 data-nosnippet>160</a><span class="doccomment">/// Methods for converting to and from `Ptr` and Rust's safe reference types.
 <a href=#161 id=161 data-nosnippet>161</a></span><span class="kw">mod </span>_conversions {
-<a href=#162 id=162 data-nosnippet>162</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#162 id=162 data-nosnippet>162</a>    <span class="kw">use </span>super::<span class="kw-2">*</span>;
 <a href=#163 id=163 data-nosnippet>163</a>    <span class="kw">use </span><span class="kw">crate</span>::pointer::cast::{CastExact, CastSized, IdCast};
 <a href=#164 id=164 data-nosnippet>164</a>
 <a href=#165 id=165 data-nosnippet>165</a>    <span class="doccomment">/// `&amp;'a T` → `Ptr&lt;'a, T&gt;`
@@ -609,8 +609,8 @@
 <a href=#609 id=609 data-nosnippet>609</a>
 <a href=#610 id=610 data-nosnippet>610</a><span class="doccomment">/// State transitions between invariants.
 <a href=#611 id=611 data-nosnippet>611</a></span><span class="kw">mod </span>_transitions {
-<a href=#612 id=612 data-nosnippet>612</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#613 id=613 data-nosnippet>613</a>    <span class="kw">use crate</span>::{
+<a href=#612 id=612 data-nosnippet>612</a>    <span class="kw">use </span>super::<span class="kw-2">*</span>;
+<a href=#613 id=613 data-nosnippet>613</a>    <span class="kw">use </span>crate::{
 <a href=#614 id=614 data-nosnippet>614</a>        pointer::{cast::IdCast, transmute::TryTransmuteFromPtr},
 <a href=#615 id=615 data-nosnippet>615</a>        ReadOnly,
 <a href=#616 id=616 data-nosnippet>616</a>    };
@@ -799,8 +799,8 @@
 <a href=#799 id=799 data-nosnippet>799</a><span class="kw">mod </span>_casts {
 <a href=#800 id=800 data-nosnippet>800</a>    <span class="kw">use </span>core::cell::UnsafeCell;
 <a href=#801 id=801 data-nosnippet>801</a>
-<a href=#802 id=802 data-nosnippet>802</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#803 id=803 data-nosnippet>803</a>    <span class="kw">use crate</span>::{
+<a href=#802 id=802 data-nosnippet>802</a>    <span class="kw">use </span>super::<span class="kw-2">*</span>;
+<a href=#803 id=803 data-nosnippet>803</a>    <span class="kw">use </span>crate::{
 <a href=#804 id=804 data-nosnippet>804</a>        pointer::cast::{AsBytesCast, Cast},
 <a href=#805 id=805 data-nosnippet>805</a>        HasTag, ProjectField,
 <a href=#806 id=806 data-nosnippet>806</a>    };
@@ -1239,7 +1239,7 @@
 <a href=#1239 id=1239 data-nosnippet>1239</a>
 <a href=#1240 id=1240 data-nosnippet>1240</a><span class="doccomment">/// Projections through the referent.
 <a href=#1241 id=1241 data-nosnippet>1241</a></span><span class="kw">mod </span>_project {
-<a href=#1242 id=1242 data-nosnippet>1242</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#1242 id=1242 data-nosnippet>1242</a>    <span class="kw">use </span>super::<span class="kw-2">*</span>;
 <a href=#1243 id=1243 data-nosnippet>1243</a>
 <a href=#1244 id=1244 data-nosnippet>1244</a>    <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T, I&gt; Ptr&lt;<span class="lifetime">'a</span>, [T], I&gt;
 <a href=#1245 id=1245 data-nosnippet>1245</a>    <span class="kw">where
@@ -1287,13 +1287,13 @@
 <a href=#1287 id=1287 data-nosnippet>1287</a></span><span class="kw">mod </span>tests {
 <a href=#1288 id=1288 data-nosnippet>1288</a>    <span class="kw">use </span>core::mem::{<span class="self">self</span>, MaybeUninit};
 <a href=#1289 id=1289 data-nosnippet>1289</a>
-<a href=#1290 id=1290 data-nosnippet>1290</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#1290 id=1290 data-nosnippet>1290</a>    <span class="kw">use </span>super::<span class="kw-2">*</span>;
 <a href=#1291 id=1291 data-nosnippet>1291</a>    <span class="attr">#[allow(unused)] </span><span class="comment">// Needed on our MSRV, but considered unused on later toolchains.
 <a href=#1292 id=1292 data-nosnippet>1292</a>    </span><span class="kw">use </span><span class="kw">crate</span>::util::AsAddress;
-<a href=#1293 id=1293 data-nosnippet>1293</a>    <span class="kw">use crate</span>::{pointer::BecauseImmutable, util::testutil::AU64, FromBytes, Immutable};
+<a href=#1293 id=1293 data-nosnippet>1293</a>    <span class="kw">use </span>crate::{pointer::BecauseImmutable, util::testutil::AU64, FromBytes, Immutable};
 <a href=#1294 id=1294 data-nosnippet>1294</a>
 <a href=#1295 id=1295 data-nosnippet>1295</a>    <span class="kw">mod </span>test_ptr_try_cast_into_soundness {
-<a href=#1296 id=1296 data-nosnippet>1296</a>        <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#1296 id=1296 data-nosnippet>1296</a>        <span class="kw">use </span>super::<span class="kw-2">*</span>;
 <a href=#1297 id=1297 data-nosnippet>1297</a>
 <a href=#1298 id=1298 data-nosnippet>1298</a>        <span class="comment">// This test is designed so that if `Ptr::try_cast_into_xxx` are
 <a href=#1299 id=1299 data-nosnippet>1299</a>        // buggy, it will manifest as unsoundness that Miri can detect.

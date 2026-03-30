@@ -1,9 +1,9 @@
 (function() {
-    var implementors = Object.fromEntries([["toml_edit",[]]]);
+    const implementors = Object.fromEntries([["toml_edit",[]]]);
     if (window.register_implementors) {
         window.register_implementors(implementors);
     } else {
         window.pending_implementors = implementors;
     }
 })()
-//{"start":57,"fragment_lengths":[16]}
+//{"start":59,"fragment_lengths":[16]}

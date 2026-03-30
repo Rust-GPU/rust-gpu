@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-automata-0.4.14/src/dfa/dense.rs`."><title>dense.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (01867557c 2025-11-12)" data-channel="nightly" data-search-js="search-8e3fad08.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">regex_automata/dfa/</div>dense.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/*!
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-automata-0.4.14/src/dfa/dense.rs`."><title>dense.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.96.0-nightly (1d8897a4e 2026-03-13)" data-channel="nightly" data-search-js="search-63369b7b.js" data-stringdex-js="stringdex-b897f86f.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5013f961.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">regex_automata/dfa/</div>dense.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/*!
 <a href=#2 id=2 data-nosnippet>2</a>Types and routines specific to dense DFAs.
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a>This module is the home of [`dense::DFA`](DFA).
@@ -19,7 +19,7 @@
 <a href=#19 id=19 data-nosnippet>19</a>};
 <a href=#20 id=20 data-nosnippet>20</a>
 <a href=#21 id=21 data-nosnippet>21</a><span class="attr">#[cfg(feature = <span class="string">"dfa-build"</span>)]
-<a href=#22 id=22 data-nosnippet>22</a></span><span class="kw">use crate</span>::{
+<a href=#22 id=22 data-nosnippet>22</a></span><span class="kw">use </span>crate::{
 <a href=#23 id=23 data-nosnippet>23</a>    dfa::{
 <a href=#24 id=24 data-nosnippet>24</a>        accel::Accel, determinize, minimize::Minimizer, remapper::Remapper,
 <a href=#25 id=25 data-nosnippet>25</a>        sparse,
@@ -27,7 +27,7 @@
 <a href=#27 id=27 data-nosnippet>27</a>    nfa::thompson,
 <a href=#28 id=28 data-nosnippet>28</a>    util::{look::LookMatcher, search::MatchKind},
 <a href=#29 id=29 data-nosnippet>29</a>};
-<a href=#30 id=30 data-nosnippet>30</a><span class="kw">use crate</span>::{
+<a href=#30 id=30 data-nosnippet>30</a><span class="kw">use </span>crate::{
 <a href=#31 id=31 data-nosnippet>31</a>    dfa::{
 <a href=#32 id=32 data-nosnippet>32</a>        accel::Accels,
 <a href=#33 id=33 data-nosnippet>33</a>        automaton::{fmt_state_indicator, Automaton, StartError},
@@ -2672,7 +2672,7 @@
 <a href=#2672 id=2672 data-nosnippet>2672</a>                    update_special_accel(<span class="kw-2">&amp;mut </span><span class="self">self</span>.special, next_id);
 <a href=#2673 id=2673 data-nosnippet>2673</a>
 <a href=#2674 id=2674 data-nosnippet>2674</a>                    <span class="comment">// No need to do any actual swapping for equivalent IDs.
-<a href=#2675 id=2675 data-nosnippet>2675</a>                    </span><span class="kw">if </span><span class="macro">cur_id !</span>= next_id {
+<a href=#2675 id=2675 data-nosnippet>2675</a>                    </span><span class="kw">if </span>cur_id != next_id {
 <a href=#2676 id=2676 data-nosnippet>2676</a>                        remapper.swap(<span class="self">self</span>, cur_id, next_id);
 <a href=#2677 id=2677 data-nosnippet>2677</a>
 <a href=#2678 id=2678 data-nosnippet>2678</a>                        <span class="comment">// Swap pattern IDs for match states.
@@ -3999,7 +3999,7 @@
 <a href=#3999 id=3999 data-nosnippet>3999</a>        <span class="kw">let </span>(stride, nr) =
 <a href=#4000 id=4000 data-nosnippet>4000</a>            wire::try_read_u32_as_usize(slice, <span class="string">"start table stride"</span>)<span class="question-mark">?</span>;
 <a href=#4001 id=4001 data-nosnippet>4001</a>        slice = <span class="kw-2">&amp;</span>slice[nr..];
-<a href=#4002 id=4002 data-nosnippet>4002</a>        <span class="kw">if </span><span class="macro">stride !</span>= Start::len() {
+<a href=#4002 id=4002 data-nosnippet>4002</a>        <span class="kw">if </span>stride != Start::len() {
 <a href=#4003 id=4003 data-nosnippet>4003</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeError::generic(
 <a href=#4004 id=4004 data-nosnippet>4004</a>                <span class="string">"invalid starting table stride"</span>,
 <a href=#4005 id=4005 data-nosnippet>4005</a>            ));
@@ -4949,13 +4949,13 @@
 <a href=#4949 id=4949 data-nosnippet>4949</a>                <span class="self">self</span>.cur = <span class="prelude-val">Some</span>((prev_start, unit, prev_next));
 <a href=#4950 id=4950 data-nosnippet>4950</a>            } <span class="kw">else </span>{
 <a href=#4951 id=4951 data-nosnippet>4951</a>                <span class="self">self</span>.cur = <span class="prelude-val">Some</span>((unit, unit, next));
-<a href=#4952 id=4952 data-nosnippet>4952</a>                <span class="kw">if </span><span class="macro">prev_next !</span>= DEAD {
+<a href=#4952 id=4952 data-nosnippet>4952</a>                <span class="kw">if </span>prev_next != DEAD {
 <a href=#4953 id=4953 data-nosnippet>4953</a>                    <span class="kw">return </span><span class="prelude-val">Some</span>((prev_start, prev_end, prev_next));
 <a href=#4954 id=4954 data-nosnippet>4954</a>                }
 <a href=#4955 id=4955 data-nosnippet>4955</a>            }
 <a href=#4956 id=4956 data-nosnippet>4956</a>        }
 <a href=#4957 id=4957 data-nosnippet>4957</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>((start, end, next)) = <span class="self">self</span>.cur.take() {
-<a href=#4958 id=4958 data-nosnippet>4958</a>            <span class="kw">if </span><span class="macro">next !</span>= DEAD {
+<a href=#4958 id=4958 data-nosnippet>4958</a>            <span class="kw">if </span>next != DEAD {
 <a href=#4959 id=4959 data-nosnippet>4959</a>                <span class="kw">return </span><span class="prelude-val">Some</span>((start, end, next));
 <a href=#4960 id=4960 data-nosnippet>4960</a>            }
 <a href=#4961 id=4961 data-nosnippet>4961</a>        }
@@ -5189,9 +5189,9 @@
 <a href=#5189 id=5189 data-nosnippet>5189</a>
 <a href=#5190 id=5190 data-nosnippet>5190</a><span class="attr">#[cfg(all(test, feature = <span class="string">"syntax"</span>, feature = <span class="string">"dfa-build"</span>))]
 <a href=#5191 id=5191 data-nosnippet>5191</a></span><span class="kw">mod </span>tests {
-<a href=#5192 id=5192 data-nosnippet>5192</a>    <span class="kw">use crate</span>::{Input, MatchError};
+<a href=#5192 id=5192 data-nosnippet>5192</a>    <span class="kw">use </span>crate::{Input, MatchError};
 <a href=#5193 id=5193 data-nosnippet>5193</a>
-<a href=#5194 id=5194 data-nosnippet>5194</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#5194 id=5194 data-nosnippet>5194</a>    <span class="kw">use </span>super::<span class="kw-2">*</span>;
 <a href=#5195 id=5195 data-nosnippet>5195</a>
 <a href=#5196 id=5196 data-nosnippet>5196</a>    <span class="attr">#[test]
 <a href=#5197 id=5197 data-nosnippet>5197</a>    </span><span class="kw">fn </span>errors_with_unicode_word_boundary() {

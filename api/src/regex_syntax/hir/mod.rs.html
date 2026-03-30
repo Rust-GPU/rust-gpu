@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-syntax-0.8.9/src/hir/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_syntax" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (01867557c 2025-11-12)" data-channel="nightly" data-search-js="search-8e3fad08.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">regex_syntax/hir/</div>mod.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/*!
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-syntax-0.8.9/src/hir/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_syntax" data-themes="" data-resource-suffix="" data-rustdoc-version="1.96.0-nightly (1d8897a4e 2026-03-13)" data-channel="nightly" data-search-js="search-63369b7b.js" data-stringdex-js="stringdex-b897f86f.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5013f961.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">regex_syntax/hir/</div>mod.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/*!
 <a href=#2 id=2 data-nosnippet>2</a>Defines a high-level intermediate (HIR) representation for regular expressions.
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a>The HIR is represented by the [`Hir`] type, and it principally constructed via
@@ -27,13 +27,13 @@
 <a href=#27 id=27 data-nosnippet>27</a>    vec::Vec,
 <a href=#28 id=28 data-nosnippet>28</a>};
 <a href=#29 id=29 data-nosnippet>29</a>
-<a href=#30 id=30 data-nosnippet>30</a><span class="kw">use crate</span>::{
+<a href=#30 id=30 data-nosnippet>30</a><span class="kw">use </span>crate::{
 <a href=#31 id=31 data-nosnippet>31</a>    ast::Span,
 <a href=#32 id=32 data-nosnippet>32</a>    hir::interval::{Interval, IntervalSet, IntervalSetIter},
 <a href=#33 id=33 data-nosnippet>33</a>    unicode,
 <a href=#34 id=34 data-nosnippet>34</a>};
 <a href=#35 id=35 data-nosnippet>35</a>
-<a href=#36 id=36 data-nosnippet>36</a><span class="kw">pub use crate</span>::{
+<a href=#36 id=36 data-nosnippet>36</a><span class="kw">pub use </span>crate::{
 <a href=#37 id=37 data-nosnippet>37</a>    hir::visitor::{visit, Visitor},
 <a href=#38 id=38 data-nosnippet>38</a>    unicode::CaseFoldError,
 <a href=#39 id=39 data-nosnippet>39</a>};
@@ -2360,8 +2360,8 @@
 <a href=#2360 id=2360 data-nosnippet>2360</a>            props.explicit_captures_len = props
 <a href=#2361 id=2361 data-nosnippet>2361</a>                .explicit_captures_len
 <a href=#2362 id=2362 data-nosnippet>2362</a>                .saturating_add(p.explicit_captures_len());
-<a href=#2363 id=2363 data-nosnippet>2363</a>            <span class="kw">if </span>props.<span class="macro">static_explicit_captures_len
-<a href=#2364 id=2364 data-nosnippet>2364</a>                !</span>= p.static_explicit_captures_len()
+<a href=#2363 id=2363 data-nosnippet>2363</a>            <span class="kw">if </span>props.static_explicit_captures_len
+<a href=#2364 id=2364 data-nosnippet>2364</a>                != p.static_explicit_captures_len()
 <a href=#2365 id=2365 data-nosnippet>2365</a>            {
 <a href=#2366 id=2366 data-nosnippet>2366</a>                props.static_explicit_captures_len = <span class="prelude-val">None</span>;
 <a href=#2367 id=2367 data-nosnippet>2367</a>            }
@@ -2687,7 +2687,7 @@
 <a href=#2687 id=2687 data-nosnippet>2687</a>    /// This set contains all possible look-around assertions.
 <a href=#2688 id=2688 data-nosnippet>2688</a>    </span><span class="attr">#[inline]
 <a href=#2689 id=2689 data-nosnippet>2689</a>    </span><span class="kw">pub fn </span>full() -&gt; LookSet {
-<a href=#2690 id=2690 data-nosnippet>2690</a>        LookSet { <span class="macro">bits: !</span><span class="number">0 </span>}
+<a href=#2690 id=2690 data-nosnippet>2690</a>        LookSet { bits: !<span class="number">0 </span>}
 <a href=#2691 id=2691 data-nosnippet>2691</a>    }
 <a href=#2692 id=2692 data-nosnippet>2692</a>
 <a href=#2693 id=2693 data-nosnippet>2693</a>    <span class="doccomment">/// Create a look-around set containing the look-around assertion given.
@@ -3074,7 +3074,7 @@
 <a href=#3074 id=3074 data-nosnippet>3074</a>
 <a href=#3075 id=3075 data-nosnippet>3075</a><span class="attr">#[cfg(test)]
 <a href=#3076 id=3076 data-nosnippet>3076</a></span><span class="kw">mod </span>tests {
-<a href=#3077 id=3077 data-nosnippet>3077</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#3077 id=3077 data-nosnippet>3077</a>    <span class="kw">use </span>super::<span class="kw-2">*</span>;
 <a href=#3078 id=3078 data-nosnippet>3078</a>
 <a href=#3079 id=3079 data-nosnippet>3079</a>    <span class="kw">fn </span>uclass(ranges: <span class="kw-2">&amp;</span>[(char, char)]) -&gt; ClassUnicode {
 <a href=#3080 id=3080 data-nosnippet>3080</a>        <span class="kw">let </span>ranges: Vec&lt;ClassUnicodeRange&gt; = ranges
