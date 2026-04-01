@@ -193,15 +193,13 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
                     args[2].immediate(),
                 ],
             ),
-            sym::fabsf32 | sym::fabsf64 | sym::fabsf128 => {
-                self.gl_op(GLOp::FAbs, ret_ty, [args[0].immediate()])
-            }
-            sym::minnumf32 | sym::minnumf64 | sym::minnumf128 => self.gl_op(
+            sym::fabs => self.gl_op(GLOp::FAbs, ret_ty, [args[0].immediate()]),
+            sym::minimumf32 | sym::minimumf64 | sym::minimumf128 => self.gl_op(
                 GLOp::FMin,
                 ret_ty,
                 [args[0].immediate(), args[1].immediate()],
             ),
-            sym::maxnumf32 | sym::maxnumf64 | sym::maxnumf128 => self.gl_op(
+            sym::maximumf32 | sym::maximumf64 | sym::maximumf128 => self.gl_op(
                 GLOp::FMax,
                 ret_ty,
                 [args[0].immediate(), args[1].immediate()],
