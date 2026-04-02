@@ -83,10 +83,12 @@ use serde::Deserialize;
 use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::env;
+use std::ffi::OsStr;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
+use std::time::SystemTime;
 use thiserror::Error;
 
 #[cfg(feature = "watch")]
@@ -805,20 +807,71 @@ fn dylib_path() -> Vec<PathBuf> {
     dylibs
 }
 
+fn rustc_codegen_spirv_dylib_name() -> String {
+    format!(
+        "{}rustc_codegen_spirv{}",
+        env::consts::DLL_PREFIX,
+        env::consts::DLL_SUFFIX
+    )
+}
+
+fn find_latest_hashed_rustc_codegen_spirv_in_dir(dir: &Path) -> Option<PathBuf> {
+    let prefix = format!("{}rustc_codegen_spirv-", env::consts::DLL_PREFIX);
+    let suffix = env::consts::DLL_SUFFIX;
+    let mut best_match: Option<(SystemTime, PathBuf)> = None;
+
+    for entry in std::fs::read_dir(dir).ok()?.flatten() {
+        let path = entry.path();
+        if !path.is_file() {
+            continue;
+        }
+
+        let Some(name) = path.file_name().and_then(OsStr::to_str) else {
+            continue;
+        };
+        if !name.starts_with(&prefix) || !name.ends_with(suffix) {
+            continue;
+        }
+
+        let modified = entry
+            .metadata()
+            .ok()
+            .and_then(|metadata| metadata.modified().ok())
+            .unwrap_or(SystemTime::UNIX_EPOCH);
+        match &mut best_match {
+            Some((best_modified, best_path)) if modified < *best_modified => {}
+            Some((best_modified, best_path)) => {
+                *best_modified = modified;
+                *best_path = path;
+            }
+            None => best_match = Some((modified, path)),
+        }
+    }
+
+    best_match.map(|(_, path)| path)
+}
+
+fn find_rustc_codegen_spirv_in_paths(dylib_paths: Vec<PathBuf>) -> Option<PathBuf> {
+    let exact_name = rustc_codegen_spirv_dylib_name();
+
+    for dir in &dylib_paths {
+        let path = dir.join(&exact_name);
+        if path.is_file() {
+            return Some(path);
+        }
+    }
+
+    dylib_paths
+        .into_iter()
+        .find_map(|dir| find_latest_hashed_rustc_codegen_spirv_in_dir(&dir))
+}
+
 fn find_rustc_codegen_spirv() -> Result<PathBuf, SpirvBuilderError> {
     if cfg!(feature = "rustc_codegen_spirv") {
-        let filename = format!(
-            "{}rustc_codegen_spirv{}",
-            env::consts::DLL_PREFIX,
-            env::consts::DLL_SUFFIX
-        );
-        let dylib_paths = dylib_path();
-        for mut path in dylib_paths {
-            path.push(&filename);
-            if path.is_file() {
-                return Ok(path);
-            }
+        if let Some(path) = find_rustc_codegen_spirv_in_paths(dylib_path()) {
+            return Ok(path);
         }
+        let filename = rustc_codegen_spirv_dylib_name();
         panic!("Could not find {filename} in library path");
     } else {
         Err(SpirvBuilderError::MissingRustcCodegenSpirvDylib)
