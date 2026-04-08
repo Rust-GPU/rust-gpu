@@ -244,10 +244,10 @@ impl DependencyVersion {
     pub fn modify_toml(&self, toml: &mut toml::Value) {
         if let Some(mut table) = self.to_toml() {
             let mut copy = |key: &str| {
-                if let Some(src_table) = toml.as_table_mut() {
-                    if let Some(value) = src_table.remove(key) {
-                        table.insert(key.to_owned(), value);
-                    }
+                if let Some(src_table) = toml.as_table_mut()
+                    && let Some(value) = src_table.remove(key)
+                {
+                    table.insert(key.to_owned(), value);
                 }
             };
             copy("default-features");

@@ -1,7 +1,7 @@
 //! Install a dedicated per-shader crate that has the `rust-gpu` compiler in it.
 
 use crate::spirv_source::{
-    get_channel_from_rustc_codegen_spirv_build_script, query_metadata, FindPackage as _,
+    FindPackage as _, get_channel_from_rustc_codegen_spirv_build_script, query_metadata,
 };
 use crate::{cache_dir, spirv_source::SpirvSource};
 use anyhow::Context as _;

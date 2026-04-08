@@ -3,8 +3,11 @@ use cargo_gpu::Cli;
 use clap::Parser as _;
 
 fn main() {
+    // Safety: always in single-threaded code
     #[cfg(debug_assertions)]
-    std::env::set_var("RUST_BACKTRACE", "1");
+    unsafe {
+        std::env::set_var("RUST_BACKTRACE", "1");
+    }
 
     env_logger::builder().init();
 

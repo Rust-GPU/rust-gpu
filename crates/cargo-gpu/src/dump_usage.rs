@@ -1,7 +1,7 @@
 //! Convenience function for internal use. Dumps all the CLI usage instructions. Useful for
 //! updating the README.
 
-use crate::{user_output, Cli};
+use crate::{Cli, user_output};
 
 /// main dump usage function
 pub fn dump_full_usage_for_readme() -> anyhow::Result<()> {
