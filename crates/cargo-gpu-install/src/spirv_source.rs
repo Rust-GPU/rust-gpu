@@ -15,6 +15,7 @@ use std::path::{Path, PathBuf};
     clippy::doc_markdown,
     reason = "The URL should appear literally like this. But Clippy wants a markdown clickable link"
 )]
+#[expect(rustdoc::bare_urls)]
 /// The source and version of `rust-gpu`.
 /// Eg:
 ///   * From crates.io with version "0.10.0"

@@ -1,9 +1,5 @@
 #![expect(clippy::pub_use, reason = "pub use for build scripts")]
-#![expect(
-    missing_docs,
-    clippy::missing_docs_in_private_items,
-    reason = "crate docs are cfg'ed out"
-)]
+#![expect(missing_docs, reason = "crate docs are cfg'ed out")]
 #![cfg_attr(doc, doc = include_str!("../README.md"))]
 
 pub mod install;

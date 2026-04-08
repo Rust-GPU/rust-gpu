@@ -39,8 +39,9 @@ impl TestEnv {
     }
 
     /// Copies the `shader_crate_template` to the temp dir and returns the path to the directory.
+    #[expect(clippy::unused_self)]
     pub fn setup_shader_crate(&self) -> anyhow::Result<PathBuf> {
-        let shader_crate_path = crate::cache_dir().unwrap().join("shader_crate");
+        let shader_crate_path = crate::cache_dir()?.join("shader_crate");
         copy_dir_all(shader_crate_template_path(), &shader_crate_path)?;
         Ok(shader_crate_path)
     }
@@ -65,6 +66,12 @@ impl TestEnv {
     }
 }
 
+impl Default for TestEnv {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Drop for TestEnv {
     fn drop(&mut self) {
         TESTDIR.replace(None).unwrap();
@@ -76,14 +83,14 @@ impl Drop for TestEnv {
 }
 
 thread_local! {
-    static TESTDIR: RefCell<Option<PathBuf>> = RefCell::new(None);
+    static TESTDIR: RefCell<Option<PathBuf>> = const { RefCell::new(None) };
 }
 
 /// [`crate::cache_dir`] for testing, see [`TestEnv`]
 pub fn test_cache_dir() -> anyhow::Result<PathBuf> {
-    Ok(TESTDIR.with_borrow(|a| a.clone()).context(
+    TESTDIR.with_borrow(|a| a.clone()).context(
         "TestEnv is not initialized! Add `let _env = TestEnv::new();` to the beginning of your test",
-    )?)
+    )
 }
 
 fn copy_dir_all(

@@ -80,6 +80,7 @@ pub struct Install {
         clippy::doc_markdown,
         reason = "The URL should appear literally like this. But Clippy wants a markdown clickable link"
     )]
+    #[expect(rustdoc::bare_urls)]
     /// Source of `spirv-builder` dependency
     /// Eg: "https://github.com/Rust-GPU/rust-gpu"
     #[cfg_attr(feature = "clap", clap(long))]
