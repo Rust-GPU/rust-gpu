@@ -3,6 +3,7 @@ use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 
 use super::Builder;
 use crate::abi::ConvSpirvType;
+use crate::builder::format_args_decompiler::{CodegenPanic, DecodedFormatArgs};
 use crate::builder_spirv::{
     SpirvBlockCursor, SpirvConst, SpirvValue, SpirvValueExt, SpirvValueKind,
 };
@@ -26,14 +27,13 @@ use rustc_codegen_ssa::traits::{
 };
 use rustc_middle::bug;
 use rustc_middle::middle::codegen_fn_attrs::CodegenFnAttrs;
+use rustc_middle::ty::layout::TyAndLayout;
 use rustc_middle::ty::{self, AtomicOrdering, Ty};
 use rustc_span::Span;
 use rustc_target::callconv::FnAbi;
 use smallvec::SmallVec;
 use std::iter::{self, empty};
 use std::ops::{BitAnd, BitOr, BitXor, Not, RangeInclusive};
-
-use crate::builder::format_args_decompiler::{CodegenPanic, DecodedFormatArgs};
 use tracing::{Level, instrument, span};
 use tracing::{trace, warn};
 
@@ -1825,10 +1825,6 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         self.declare_func_local_var(self.type_array(self.type_i8(), size.bytes()), align)
     }
 
-    fn scalable_alloca(&mut self, _elt: u64, _align: Align, _element_ty: Ty<'_>) -> Self::Value {
-        bug!("scalable alloca is not supported in SPIR-V backend")
-    }
-
     fn load(&mut self, ty: Self::Type, ptr: Self::Value, _align: Align) -> Self::Value {
         let (ptr, access_ty) = self.adjust_pointer_for_typed_access(ptr, ty);
         let loaded_val = ptr.const_fold_load(self).unwrap_or_else(|| {
@@ -3081,10 +3077,6 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         bug!("Funclets are not supported")
     }
 
-    fn get_funclet_cleanuppad(&self, _funclet: &Self::Funclet) -> Self::Value {
-        bug!("Funclets are not supported")
-    }
-
     fn atomic_cmpxchg(
         &mut self,
         dst: Self::Value,
@@ -3465,5 +3457,9 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
 
     fn apply_attrs_to_cleanup_callsite(&mut self, _llret: Self::Value) {
         // Ignore
+    }
+
+    fn alloca_with_ty(&mut self, _layout: TyAndLayout<'tcx>) -> Self::Value {
+        bug!("scalable alloca is not supported in SPIR-V backend")
     }
 }

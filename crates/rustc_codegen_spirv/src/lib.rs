@@ -133,9 +133,10 @@ mod symbols;
 mod target;
 mod target_feature;
 
+use crate::maybe_pqp_cg_ssa::back::write::ThinLtoInput;
 use builder::Builder;
 use codegen_cx::CodegenCx;
-use maybe_pqp_cg_ssa::back::lto::{SerializedModule, ThinModule};
+use maybe_pqp_cg_ssa::back::lto::ThinModule;
 use maybe_pqp_cg_ssa::back::write::{
     CodegenContext, FatLtoInput, ModuleConfig, OngoingCodegen, SharedEmitter,
     TargetMachineFactoryFn,
@@ -152,10 +153,11 @@ use rspirv::binary::Assemble;
 use rustc_ast::expand::allocator::AllocatorMethod;
 use rustc_data_structures::fx::FxIndexMap;
 use rustc_data_structures::profiling::SelfProfilerRef;
+use rustc_errors::DiagCtxtHandle;
 use rustc_metadata::EncodedMetadata;
 use rustc_middle::dep_graph::{WorkProduct, WorkProductId};
-use rustc_middle::mir::mono::{MonoItem, MonoItemData};
 use rustc_middle::mir::pretty::write_mir_pretty;
+use rustc_middle::mono::{MonoItem, MonoItemData};
 use rustc_middle::ty::print::with_no_trimmed_paths;
 use rustc_middle::ty::{InstanceKind, TyCtxt};
 use rustc_session::Session;
@@ -338,16 +340,15 @@ impl WriteBackendMethods for SpirvCodegenBackend {
     }
 
     fn run_thin_lto(
-        cgcx: &CodegenContext,
+        _cgcx: &CodegenContext,
         _prof: &SelfProfilerRef,
-        _dcx: rustc_errors::DiagCtxtHandle<'_>,
-        // FIXME(bjorn3): Limit LTO exports to these symbols
+        _dcx: DiagCtxtHandle<'_>,
         _exported_symbols_for_lto: &[String],
-        _each_linked_rlib_for_lto: &[PathBuf], // njn: ?
-        modules: Vec<(String, Self::ModuleBuffer)>,
-        cached_modules: Vec<(SerializedModule<Self::ModuleBuffer>, WorkProduct)>,
+        _each_linked_rlib_for_lto: &[PathBuf],
+        _modules: Vec<ThinLtoInput<Self>>,
     ) -> (Vec<ThinModule<Self>>, Vec<WorkProduct>) {
-        link::run_thin(cgcx, modules, cached_modules)
+        // Note(@firestar99): gcc impl this as unreachable as well
+        unreachable!()
     }
 
     fn optimize(

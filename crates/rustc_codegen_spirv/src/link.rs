@@ -2,37 +2,33 @@
 use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 
 use crate::codegen_cx::{CodegenArgs, SpirvMetadata};
-use crate::{SpirvCodegenBackend, SpirvModuleBuffer, linker};
+use crate::linker;
 use ar::{Archive, GnuBuilder, Header};
 use rspirv::binary::Assemble;
 use rspirv::dr::Module;
 use rustc_attr_parsing::eval_config_entry;
 use rustc_codegen_spirv_types::{CompileResult, ModuleResult};
-use rustc_codegen_ssa::back::lto::{SerializedModule, ThinModule, ThinShared};
-use rustc_codegen_ssa::back::write::CodegenContext;
 use rustc_codegen_ssa::{CompiledModules, CrateInfo, NativeLib};
 use rustc_data_structures::fx::FxHashSet;
 use rustc_errors::Diag;
 use rustc_hir::attrs::NativeLibKind;
 use rustc_metadata::{EncodedMetadata, fs::METADATA_FILENAME};
 use rustc_middle::bug;
-use rustc_middle::dep_graph::WorkProduct;
 use rustc_middle::middle::dependency_format::Linkage;
 use rustc_session::Session;
 use rustc_session::config::{
-    CrateType, DebugInfo, Lto, OptLevel, OutFileName, OutputFilenames, OutputType,
+    CrateType, DebugInfo, OptLevel, OutFileName, OutputFilenames, OutputType,
 };
 use rustc_session::output::{check_file_is_writeable, invalid_output_for_target, out_filename};
 use rustc_span::Symbol;
 use spirv_tools::TargetEnv;
 use std::collections::BTreeMap;
-use std::ffi::{CString, OsStr};
+use std::ffi::OsStr;
 use std::fs::File;
 use std::io::{BufWriter, Read};
 use std::iter;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
-use std::sync::Arc;
 
 pub fn link(
     sess: &Session,
@@ -623,53 +619,4 @@ fn do_link(
         sess.dcx().abort_if_errors();
         bug!("Linker errored, but no error reported");
     }
-}
-
-/// As of right now, this is essentially a no-op, just plumbing through all the files.
-// TODO: WorkProduct impl
-pub(crate) fn run_thin(
-    cgcx: &CodegenContext,
-    modules: Vec<(String, SpirvModuleBuffer)>,
-    cached_modules: Vec<(SerializedModule<SpirvModuleBuffer>, WorkProduct)>,
-) -> (Vec<ThinModule<SpirvCodegenBackend>>, Vec<WorkProduct>) {
-    if cgcx.use_linker_plugin_lto {
-        unreachable!("We should never reach this case if the LTO step is deferred to the linker");
-    }
-    assert!(
-        cgcx.lto == Lto::ThinLocal,
-        "no actual LTO implemented in Rust-GPU"
-    );
-    let mut thin_buffers = Vec::with_capacity(modules.len());
-    let mut module_names = Vec::with_capacity(modules.len() + cached_modules.len());
-
-    for (name, buffer) in modules {
-        let cname = CString::new(name.clone()).unwrap();
-        thin_buffers.push(buffer);
-        module_names.push(cname);
-    }
-
-    let mut serialized_modules = Vec::with_capacity(cached_modules.len());
-
-    for (sm, wp) in cached_modules {
-        let _slice_u8 = sm.data();
-        serialized_modules.push(sm);
-        module_names.push(CString::new(wp.cgu_name).unwrap());
-    }
-
-    let shared = Arc::new(ThinShared {
-        data: (),
-        thin_buffers,
-        serialized_modules,
-        module_names,
-    });
-
-    let mut opt_jobs = vec![];
-    for (module_index, _) in shared.module_names.iter().enumerate() {
-        opt_jobs.push(ThinModule {
-            shared: shared.clone(),
-            idx: module_index,
-        });
-    }
-
-    (opt_jobs, vec![])
 }

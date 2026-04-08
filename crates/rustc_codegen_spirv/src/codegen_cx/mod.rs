@@ -28,7 +28,7 @@ use rustc_codegen_ssa::traits::{
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 use rustc_hir::def_id::DefId;
 use rustc_middle::mir;
-use rustc_middle::mir::mono::CodegenUnit;
+use rustc_middle::mono::CodegenUnit;
 use rustc_middle::ty::layout::{HasTyCtxt, HasTypingEnv};
 use rustc_middle::ty::{self, Instance, Ty, TyCtxt, TypingEnv};
 use rustc_session::Session;

@@ -14,7 +14,7 @@ use rustc_hir::attrs::{InlineAttr, Linkage};
 use rustc_middle::bug;
 use rustc_middle::middle::codegen_fn_attrs::{CodegenFnAttrFlags, CodegenFnAttrs};
 use rustc_middle::mir::interpret::ConstAllocation;
-use rustc_middle::mir::mono::{MonoItem, Visibility};
+use rustc_middle::mono::{MonoItem, Visibility};
 use rustc_middle::ty::layout::{FnAbiOf, LayoutOf};
 use rustc_middle::ty::{self, Instance, TypeVisitableExt, TypingEnv};
 use rustc_span::Span;

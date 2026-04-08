@@ -141,6 +141,12 @@ impl ConstCodegenMethods for CodegenCx<'_> {
     fn const_i32(&self, i: i32) -> Self::Value {
         self.constant_i32(DUMMY_SP, i)
     }
+    fn const_i64(&self, i: i64) -> Self::Value {
+        self.constant_i64(DUMMY_SP, i)
+    }
+    fn const_u8(&self, i: u8) -> Self::Value {
+        self.constant_u8(DUMMY_SP, i)
+    }
     fn const_u32(&self, i: u32) -> Self::Value {
         self.constant_u32(DUMMY_SP, i)
     }
@@ -155,9 +161,6 @@ impl ConstCodegenMethods for CodegenCx<'_> {
         let ptr_size = self.tcx.data_layout.pointer_size().bits() as u32;
         let t = SpirvType::Integer(ptr_size, false).def(DUMMY_SP, self);
         self.constant_int(t, i.into())
-    }
-    fn const_u8(&self, i: u8) -> Self::Value {
-        self.constant_u8(DUMMY_SP, i)
     }
     fn const_real(&self, t: Self::Type, val: f64) -> Self::Value {
         self.constant_float(t, val)
