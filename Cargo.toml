@@ -24,11 +24,22 @@ members = [
     "crates/spirv-std",
     "crates/spirv-std/shared",
     "crates/spirv-std/macros",
+    "crates/cargo-gpu",
+    "crates/cargo-gpu-install",
+    "crates/xtask",
 
     "tests/compiletests",
     "tests/compiletests/deps-helper",
     "tests/difftests/bin",
     "tests/difftests/lib",
+]
+
+exclude = [
+    # This currently needs to be excluded because it depends on a version of `rust-gpu` that
+    # uses a toolchain whose Cargo version doesn't recognise version 4 of `Cargo.lock`.
+    "crates/shader-crate-template",
+    # Testing infra may copy the `shader-crate-template` into subdirs of target
+    "target",
 ]
 
 [workspace.package]
@@ -37,6 +48,7 @@ authors = ["rust-gpu developers", "Embark <opensource@embark-studios.com>"]
 edition = "2024"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/rust-gpu/rust-gpu"
+keywords = ["gpu", "compiler", "rust-gpu"]
 
 [workspace.lints.rust]
 unexpected_cfgs = { level = "allow", check-cfg = ['cfg(target_arch, values("spirv"))'] }
@@ -49,6 +61,27 @@ spirv-std-macros = { path = "./crates/spirv-std/macros", version = "=0.9.0" }
 spirv-tools = { version = "0.13.0", default-features = false }
 rustc_codegen_spirv = { path = "./crates/rustc_codegen_spirv", version = "=0.9.0", default-features = false }
 rustc_codegen_spirv-types = { path = "./crates/rustc_codegen_spirv-types", version = "=0.9.0" }
+cargo-gpu-install = { path = "./crates/cargo-gpu-install" }
+
+# normal dependencies
+anyhow = "1.0.98"
+clap = { version = "4.5.41", features = ["derive"] }
+crossterm = { version = "0.29.0", default-features = false, features = ["events", "windows"] }
+directories = "6.0.0"
+env_logger = "0.11.8"
+log = "0.4"
+relative-path = "2.0.1"
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.141"
+toml = "0.9.2"
+tempfile = "3.22"
+test-log = "0.2.18"
+cargo_metadata = "0.21.0"
+cargo-util-schemas = "0.8.2"
+semver = "1.0.26"
+dunce = "1.0.5"
+expect-test = "1.5.1"
+regex-lite = "0.1.9"
 
 # difftest libraries mirrored from difftest workspace
 difftest = { path = "tests/difftests/lib" }
