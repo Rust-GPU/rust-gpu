@@ -1,0 +1,108 @@
+[package]
+name = "rust-gpu-shader-crate-template"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["rlib", "cdylib"]
+
+[lints.rust]
+unexpected_cfgs = { level = "allow", check-cfg = ['cfg(target_arch, values("spirv"))'] }
+
+# Dependencies for CPU and GPU code
+[dependencies]
+# TODO: use a simple crate version once v0.10.0 is released
+spirv-std = { git = "https://github.com/Rust-GPU/rust-gpu", rev = "877bd8697a15f3e6d09446a5e1807e6237ca1dac" }
+glam = { version = "0.30.8", default-features = false }
+
+[package.metadata.rust-gpu.build]
+# Where to output the compiled shader. Defaults to where `cargo gpu` is called from.
+# TODO: Should it default to the root of the shader crate?
+output-dir = "./"
+# Set shader crate's cargo default-features
+default_features = true
+# Set shader crate's cargo features.
+features = []
+# The compile target.
+# TODO: `cargo gpu show targets` for all available options.
+target = "spirv-unknown-vulkan1.2"
+# Treat warnings as errors during compilation.
+deny-warnings = false
+# Compile shaders in debug mode.
+release = true
+# Enables the provided SPIR-V capabilities.
+# See: `impl core::str::FromStr for spirv_builder::Capability`.
+# TODO: `cargo gpu show capabilities` for all available options.
+capabilities = []
+# Enables the provided SPIR-V extensions.
+# See https://github.com/KhronosGroup/SPIRV-Registry for all extensions
+# TODO: `cargo gpu show extensions` for all available options.
+extensions = []
+# Compile one .spv file per shader entry point.
+multimodule = false
+# Set the level of metadata included in the SPIR-V binary.
+# Options: "None", "NameVariables", "Full".
+spirv-metadata = "None"
+# Allow store from one struct type to a different type with compatible layout and members.
+relax-struct-store = false
+# Allow allocating an object of a pointer type and returning a pointer value from a function
+# in logical addressing mode.
+relax-logical-pointer = false
+# Enable VK_KHR_relaxed_block_layout when checking standard uniform, storage buffer, and push
+# constant layouts.
+# This is the default when targeting Vulkan 1.1 or later.
+relax-block-layout = false
+# Enable VK_KHR_uniform_buffer_standard_layout when checking standard uniform buffer layouts.
+uniform-buffer-standard-layout = false
+# Enable `VK_EXT_scalar_block_layout` when checking standard uniform, storage buffer, and push
+# constant layouts.
+# Scalar layout rules are more permissive than relaxed block layout so in effect this will
+# override the `relax_block_layout` option.
+scalar-block-layout = false
+# Skip checking standard uniform/storage buffer layout.
+# Overrides `relax_block_layout` and `scalar_block_layout`.
+skip-block-layout = false
+# Preserve unused descriptor bindings. Useful for reflection.
+preserve-bindings = false
+# Renames the manifest.json file to the given string. Useful if you collect all your SPIR-V fragments
+# in one place.
+manifest-file = "manifest.json"
+
+[package.metadata.rust-gpu.install]
+# Source of `spirv-builder` dependency
+# Eg: "https://github.com/Rust-GPU/rust-gpu"
+# spirv_builder_source = ""
+
+# Version of `spirv-builder` dependency.
+#  * If `--spirv-builder-source` is not set, then this is assumed to be a crates.io semantic
+#    version such as "0.9.0".
+#  * If `--spirv-builder-source` is set, then this is assumed to be a Git "commitsh", such
+#    as a Git commit hash or a Git tag, therefore anything that `git checkout` can resolve.
+# spirv_builder_version = ""
+
+# Whether to assume "yes" to the "Install Rust toolchain: [y/n]" prompt.
+auto-install-rust-toolchain = false
+# Force `rustc_codegen_spirv` to be rebuilt.
+rebuild_codegen = false
+# There is a tricky situation where a shader crate that depends on workspace config can have
+# a different `Cargo.lock` lockfile version from the the workspace's `Cargo.lock`. This can
+# prevent builds when an old Rust toolchain doesn't recognise the newer lockfile version.
+# 
+# The ideal way to resolve this would be to match the shader crate's toolchain with the
+# workspace's toolchain. However, that is not always possible. Another solution is to
+# `exclude = [...]` the problematic shader crate from the workspace. This also may not be a
+# suitable solution if there are a number of shader crates all sharing similar config and
+# you don't want to have to copy/paste and maintain that config across all the shaders.
+# 
+# So a somewhat hacky workaround is to have `cargo gpu` overwrite lockfile versions. Enabling
+# this flag will only come into effect if there are a mix of v3/v4 lockfiles. It will also
+# only overwrite versions for the duration of a build. It will attempt to return the versions
+# to their original values once the build is finished. However, of course, unexpected errors
+# can occur and the overwritten values can remain. Hence why this behaviour is not enabled by
+# default.
+# 
+# This hack is possible because the change from v3 to v4 only involves a minor change to the
+# way source URLs are encoded. See these PRs for more details:
+#   * https://github.com/rust-lang/cargo/pull/12280
+#   * https://github.com/rust-lang/cargo/pull/14595
+force-overwrite-lockfiles-v4-to-v3 = false
