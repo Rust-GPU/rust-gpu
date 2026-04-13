@@ -70,21 +70,40 @@ impl SpirvShader for RustComputeShader {
 }
 
 impl WgpuShader for RustComputeShader {
-    fn create_module(
+    fn create_pipeline(
         &self,
         device: &wgpu::Device,
-    ) -> anyhow::Result<(wgpu::ShaderModule, Option<String>)> {
+        layout: &wgpu::PipelineLayout,
+    ) -> anyhow::Result<wgpu::ComputePipeline> {
         let (shader_bytes, entry_point) = self.spirv_bytes()?;
 
         if !shader_bytes.len().is_multiple_of(4) {
             anyhow::bail!("SPIR-V binary length is not a multiple of 4");
         }
         let shader_words: Vec<u32> = bytemuck::cast_slice(&shader_bytes).to_vec();
-        let module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("Compute Shader"),
-            source: wgpu::ShaderSource::SpirV(Cow::Owned(shader_words)),
+        let module = unsafe {
+            device.create_shader_module_passthrough(wgpu::ShaderModuleDescriptorPassthrough {
+                entry_point: entry_point.clone(),
+                label: Some("Compute Shader"),
+                num_workgroups: (0, 0, 0),
+                runtime_checks: Default::default(),
+                spirv: Some(Cow::Owned(shader_words)),
+                dxil: None,
+                msl: None,
+                hlsl: None,
+                glsl: None,
+                wgsl: None,
+            })
+        };
+        let pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+            label: Some("Compute Pipeline"),
+            layout: Some(layout),
+            module: &module,
+            entry_point: Some(&entry_point),
+            compilation_options: wgpu::PipelineCompilationOptions::default(),
+            cache: None,
         });
-        Ok((module, Some(entry_point)))
+        Ok(pipeline)
     }
 }
 

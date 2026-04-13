@@ -20,17 +20,27 @@ impl WgslComputeShader {
 }
 
 impl WgpuShader for WgslComputeShader {
-    fn create_module(
+    fn create_pipeline(
         &self,
         device: &wgpu::Device,
-    ) -> anyhow::Result<(wgpu::ShaderModule, Option<String>)> {
+        layout: &wgpu::PipelineLayout,
+    ) -> anyhow::Result<wgpu::ComputePipeline> {
         let shader_source = fs::read_to_string(&self.path)
             .with_context(|| format!("reading wgsl source file '{}'", &self.path.display()))?;
         let module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Compute Shader"),
             source: wgpu::ShaderSource::Wgsl(Cow::Owned(shader_source)),
         });
-        Ok((module, self.entry_point.clone()))
+        Ok(
+            device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+                label: Some("Wgsl compute pipeline"),
+                layout: Some(layout),
+                module: &module,
+                entry_point: self.entry_point.as_ref().map(|s| s.as_str()),
+                compilation_options: Default::default(),
+                cache: None,
+            }),
+        )
     }
 }
 
