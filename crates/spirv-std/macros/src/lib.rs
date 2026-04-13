@@ -151,6 +151,19 @@ pub fn spirv(attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut tokens = quote! { #[cfg_attr(target_arch="spirv", rust_gpu::#spirv(#attr))] };
 
     let item: proc_macro2::TokenStream = item.into();
+    // If the annotated item is a function without `pub`, automatically add it.
+    // SPIR-V entry points must be publicly visible to the codegen backend.
+    // Also emit `#[allow(missing_docs)]` so the forced-public visibility doesn't
+    // trigger the `missing_docs` lint on crates that have it enabled.
+    let item = if let Ok(mut func) = syn::parse2::<syn::ItemFn>(item.clone()) {
+        if !matches!(func.vis, syn::Visibility::Public(_)) {
+            func.vis = syn::parse_quote!(pub);
+            func.attrs.push(syn::parse_quote!(#[allow(missing_docs)]));
+        }
+        func.into_token_stream()
+    } else {
+        item
+    };
     for tt in item {
         match tt {
             TokenTree::Group(group) if group.delimiter() == Delimiter::Parenthesis => {
