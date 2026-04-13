@@ -3,7 +3,7 @@
 
 use crate::attr::{AggregatedSpirvAttributes, IntrinsicType};
 use crate::codegen_cx::CodegenCx;
-use crate::spirv_type::SpirvType;
+use crate::spirv_type::{SpirvType, name_type_id};
 use itertools::Itertools;
 use rspirv::spirv::{Dim, ImageFormat, StorageClass, Word};
 use rustc_abi::ExternAbi as Abi;
@@ -317,8 +317,33 @@ impl<'tcx> ConvSpirvType<'tcx> for FnAbi<'tcx, Ty<'tcx>> {
     }
 }
 
+/// If `layout` has exactly one non-ZST field positioned at offset 0 with size and
+/// alignment matching the outer layout, returns that field.
+///
+/// This captures the structural shape of a "newtype wrapper" — a single meaningful
+/// field padded out to the outer type, which can be substituted for the outer type
+/// in a SPIR-V type graph as long as the caller has *independently* verified that
+/// the ABIs match (either via `BackendRepr::eq_up_to_validity`, or via
+/// `#[repr(transparent)]`, which guarantees full ABI identity by construction).
+fn sole_structural_newtype_field<'tcx>(
+    cx: &CodegenCx<'tcx>,
+    layout: TyAndLayout<'tcx>,
+) -> Option<TyAndLayout<'tcx>> {
+    let mut non_zst = (0..layout.fields.count()).filter(|&i| !layout.field(cx, i).is_zst());
+    let i = non_zst.next()?;
+    if non_zst.next().is_some() {
+        return None;
+    }
+    let field = layout.field(cx, i);
+    (layout.fields.offset(i) == Size::ZERO
+        && field.size == layout.size
+        && field.align.abi == layout.align.abi)
+        .then_some(field)
+}
+
 impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
     fn spirv_type(&self, mut span: Span, cx: &CodegenCx<'tcx>) -> Word {
+        let mut has_block_attr = false;
         if let TyKind::Adt(adt, args) = *self.ty.kind() {
             if span == DUMMY_SP {
                 span = cx.tcx.def_span(adt.did());
@@ -336,6 +361,8 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                         &[cx.sym.rust_gpu, cx.sym.vector, cx.sym.v1],
                     )),
             );
+
+            has_block_attr = attrs.block.is_some();
 
             if let Some(intrinsic_type_attr) = attrs.intrinsic_type.map(|attr| attr.value)
                 && let Ok(spirv_type) =
@@ -375,23 +402,12 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                 //      a new one, offering the `(a, b)` shape `rustc_codegen_ssa`
                 //      expects, while letting noop pointercasts access the sole
                 //      `BackendRepr::ScalarPair` field - this is the approach taken here
-                let mut non_zst_fields = (0..self.fields.count())
-                    .map(|i| (i, self.field(cx, i)))
-                    .filter(|(_, field)| !field.is_zst());
-                let sole_non_zst_field = match (non_zst_fields.next(), non_zst_fields.next()) {
-                    (Some(field), None) => Some(field),
-                    _ => None,
-                };
-                if let Some((i, field)) = sole_non_zst_field {
-                    // Only unpack a newtype if the field and the newtype line up
-                    // perfectly, in every way that could potentially affect ABI.
-                    if self.fields.offset(i) == Size::ZERO
-                        && field.size == self.size
-                        && field.align.abi == self.align.abi
-                        && field.backend_repr.eq_up_to_validity(&self.backend_repr)
-                    {
-                        return field.spirv_type(span, cx);
-                    }
+                // Only unpack a newtype if the field and the newtype line up
+                // perfectly, in every way that could potentially affect ABI.
+                if let Some(field) = sole_structural_newtype_field(cx, *self)
+                    && field.backend_repr.eq_up_to_validity(&self.backend_repr)
+                {
+                    return field.spirv_type(span, cx);
                 }
 
                 // Note: We can't use auto_struct_layout here because the spirv types here might be undefined due to
@@ -443,7 +459,43 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                 .tcx
                 .dcx()
                 .fatal("scalable vectors are not supported in SPIR-V backend"),
-            BackendRepr::Memory { sized: _ } => trans_aggregate(cx, span, *self),
+            BackendRepr::Memory { sized: _ } => {
+                // For `#[repr(transparent)]` newtypes, reuse the single non-ZST
+                // field's SPIR-V type directly instead of wrapping it in an
+                // `OpTypeStruct`. This mirrors the `ScalarPair` newtype-unpacking
+                // above, but with two differences:
+                //
+                // 1. We gate on `#[repr(transparent)]` explicitly. Without this
+                //    guard, semantically opaque single-field structs (e.g.
+                //    `struct Viewport { rect: Vec4 }`) would also collapse,
+                //    losing their `OpTypeStruct` identity - which matters for
+                //    SPIR-V interface matching, `OpMemberDecorate`, and
+                //    push-constant block declarations.
+                //
+                // 2. We additionally refuse to collapse if the wrapper carries
+                //    a `#[spirv(block)]` attribute, since that decoration needs
+                //    an `OpTypeStruct` to land on.
+                //
+                // We omit the `eq_up_to_validity` check on `backend_repr`: the
+                // outer wrapper always has `BackendRepr::Memory` here while the
+                // inner field may have a different repr (e.g. a type annotated
+                // with `#[rust_gpu::spirv(vector)]` goes through the intrinsic
+                // path above and returns an `OpTypeVector`). The reprs will
+                // never match, but `#[repr(transparent)]` guarantees full ABI
+                // identity, so the structural checks in the helper suffice.
+                if let TyKind::Adt(adt, _) = self.ty.kind()
+                    && adt.repr().transparent()
+                    && !has_block_attr
+                    && let Some(field) = sole_structural_newtype_field(cx, *self)
+                {
+                    let inner_id = field.spirv_type(span, cx);
+                    // Preserve the wrapper's name as an `OpName` alias on the
+                    // inner SPIR-V type so disassembly still shows it.
+                    name_type_id(cx, inner_id, TyLayoutNameKey::from(*self));
+                    return inner_id;
+                }
+                trans_aggregate(cx, span, *self)
+            }
         }
     }
 }
