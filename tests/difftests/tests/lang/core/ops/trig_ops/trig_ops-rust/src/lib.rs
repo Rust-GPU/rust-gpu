@@ -21,8 +21,8 @@ pub fn main_cs(
             0 => x.sin(),
             1 => x.cos(),
             2 => x.tan(),
-            3 => x.asin().clamp(-1.0, 1.0), // Clamp to avoid NaN for values outside [-1, 1]
-            4 => x.acos().clamp(-1.0, 1.0), // Clamp to avoid NaN for values outside [-1, 1]
+            3 => x.clamp(-1.0, 1.0).asin(), // Clamp the input to asin's domain to avoid NaN
+            4 => x.clamp(-1.0, 1.0).acos(), // Clamp the input to acos's domain to avoid NaN
             5 => x.atan(),
             6 => x.sinh(),
             7 => x.cosh(),
