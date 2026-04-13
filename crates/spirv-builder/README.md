@@ -2,7 +2,7 @@
 <!-- markdownlint-disable-file MD033 -->
 # `spirv-builder`
 
-![Rust version](https://img.shields.io/badge/rust-nightly--2023--05--27-purple.svg)
+![Rust version](https://img.shields.io/badge/rust-nightly--2026--04--11-purple.svg)
 
 This crate gives you `SpirvBuilder`, a tool to build shaders using [rust-gpu][rustgpu].
 
@@ -32,19 +32,19 @@ const SHADER: &[u8] = include_bytes!(env!("my_shaders.spv"));
 
 As `spirv-builder` relies on `rustc_codegen_spirv` being built for it (by Cargo, as a direct dependency), and due to the special nature of the latter (as a `rustc` codegen backend "plugin"), both end up sharing the requirement for a very specific nightly toolchain version of Rust.
 
-**The current Rust toolchain version is: `nightly-2024-04-24`.**
+**The current Rust toolchain version is: `nightly-2026-04-11`.**
 
 Rust toolchain version history across [rust-gpu releases](https://github.com/rust-gpu/rust-gpu/releases) (since `0.4`):
 
-|`spirv-builder`<br>version|Rust toolchain<br>version|
-|:-:|:-:|
-|`0.10`|`nightly-2024-04-24`|
-|`0.9`|`nightly-2023-05-27`|
-|`0.8`|`nightly-2023-04-15`|
-|`0.7`|`nightly-2023-03-04`|
-|`0.6`|`nightly-2023-01-21`|
-|`0.5`|`nightly-2022-12-18`|
-|`0.4`|`nightly-2022-10-29`|
+| `spirv-builder`<br>version | Rust toolchain<br>version |
+|:--------------------------:|:-------------------------:|
+|      `0.10.0-alpha.1`      |   `nightly-2026-04-11`    |
+|           `0.9`            |   `nightly-2023-05-27`    |
+|           `0.8`            |   `nightly-2023-04-15`    |
+|           `0.7`            |   `nightly-2023-03-04`    |
+|           `0.6`            |   `nightly-2023-01-21`    |
+|           `0.5`            |   `nightly-2022-12-18`    |
+|           `0.4`            |   `nightly-2022-10-29`    |
 
 <sup>*As patch versions must be semver-compatible, they will always require the  
 same toolchain (for example, `0.6.0` and `0.6.1` both use `nightly-2023-01-21`).*</sup>
