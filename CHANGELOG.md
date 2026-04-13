@@ -1,4 +1,4 @@
-# `rust-gpu` Changelog
+# Changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -6,29 +6,99 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## [0.10.0-alpha.1](https://github.com/Rust-GPU/rust-gpu/compare/v0.9.0...v0.10.0-alpha.1) - 2026-04-13
+
+Toolchain: `nightly-2026-04-11` (rustc 1.96.0)
+
+### Added ⭐
+
+- [PR#493](https://github.com/Rust-GPU/rust-gpu/pull/493) add `spirv-unknown-naga-wgsl` target to transpile to wgsl with naga 29
+- [PR#271](https://github.com/Rust-GPU/rust-gpu/pull/271) added new targets: `vulkan1.3`, `vulkan1.4`, `spv1.6`
+- [PR#177](https://github.com/Rust-GPU/rust-gpu/pull/177) added `NonUniform` SPIR-V decoration for every image and buffer access when `NonUniform` capability is enabled
+- [PR#394](https://github.com/Rust-GPU/rust-gpu/pull/394) remove unsafe from safe SPIR-V intrinsic functions
+- [PR#44](https://github.com/Rust-GPU/rust-gpu/pull/44) added [mesh shaders](https://www.khronos.org/blog/mesh-shading-for-vulkan) with task shaders and per-primitive output attributes
+
+- entry point:
+  - [PR#514](https://github.com/Rust-GPU/rust-gpu/pull/514) allowed zero-sized types in entry point input/output positions
+  - [PR#509](https://github.com/Rust-GPU/rust-gpu/pull/509) added validation for incorrect `LocalInvocationIndex` type, must be `u32`
+  - [PR#16](https://github.com/Rust-GPU/rust-gpu/pull/16) added
+    [`TypedBuffer`](https://rust-gpu.github.io/rust-gpu/api/spirv_std/struct.TypedBuffer.html),
+    an explicit way to declare inputs and outputs as buffers, useful for arrays of buffer descriptors
+  - [PR#448](https://github.com/Rust-GPU/rust-gpu/pull/448) added arrayed specialization constants, allowing spec constants declared as fixed-size arrays occupying consecutive IDs
+  - [PR#482](https://github.com/Rust-GPU/rust-gpu/pull/482) added explicit `#[spirv(location = N)]` support, fixed overlapping location assignment for larger-than `Vec4` structs
+
+- subgroup intrinsics:
+  - [PR#14](https://github.com/Rust-GPU/rust-gpu/pull/14) added subgroup intrinsics matching GLSL's [`GL_KHR_shader_subgroup`](https://github.com/KhronosGroup/GLSL/blob/main/extensions/khr/GL_KHR_shader_subgroup.txt)
+  - [PR#441](https://github.com/Rust-GPU/rust-gpu/pull/441) added `ScalarComposite` trait and derive macro, enabling composite types (scalars, vectors, arrays, structs, repr-int enums) in subgroup intrinsics
+
+- ray tracing:
+  - [PR#391](https://github.com/Rust-GPU/rust-gpu/pull/391) added `Matrix4x3` type for ray tracing intrinsics
+  - [PR#343](https://github.com/Rust-GPU/rust-gpu/pull/343) added `RayQuery::get_intersection_triangle_vertex_positions()` for ray tracing
+  - [PR#339](https://github.com/Rust-GPU/rust-gpu/pull/339) added `HitTriangleVertexPositionsKHR` built-in for ray tracing pipelines
+
+- `spirv-builder`
+  - [PR#477](https://github.com/Rust-GPU/rust-gpu/pull/477) removed the need for `crate-type = ["dylib"]` in shader crate `Cargo.toml`
+  - [PR#488](https://github.com/Rust-GPU/rust-gpu/pull/488) replaced `enum MetadataPrintout` with `struct BuildScriptConfig`; shader compilation warnings now properly forwarded to build output
+  - [PR#265](https://github.com/Rust-GPU/rust-gpu/pull/265) added `#[non_exhaustive]` on `SpirvBuilder` and dependent structs; use builder patterns instead of direct construction
+  - [PR#13](https://github.com/Rust-GPU/rust-gpu/pull/13) allowed cargo features and default-features to be passed to the shader crate
+  - [PR#422](https://github.com/Rust-GPU/rust-gpu/pull/422) redesigned the `spirv-builder` watch API: simpler `Watcher` returning `CompileResult` directly from `recv()`, with `try_recv()` for non-blocking polling
+  - [PR#223](https://github.com/Rust-GPU/rust-gpu/pull/223) added `SpirvBuilder::target_dir_path` to set the target directory explicitly
+  - [PR#188](https://github.com/Rust-GPU/rust-gpu/pull/188) added `RUSTGPU_CARGOFLAGS` environment variable for passing extra cargo flags
+
+- `cargo-gpu`
+  - added `cargo-gpu` to allow CPU code to be compiled by a stable toolchain
+  - [PR#131](https://github.com/Rust-GPU/cargo-gpu/pull/131) added `cargo gpu clippy` and `cargo gpu check` for linting/checking shader code
+  - [PR#109](https://github.com/Rust-GPU/cargo-gpu/pull/109) added `--package`/`-p` akin to `cargo`
+  - [PR#16](https://github.com/Rust-GPU/cargo-gpu/pull/16) added `[package.metadata.rust-gpu]` support in `Cargo.toml` for declarative build configuration
+  - [PR#42](https://github.com/Rust-GPU/cargo-gpu/pull/42) added `--watch` flag for auto-recompilation on source changes
+  - [PR#71](https://github.com/Rust-GPU/cargo-gpu/pull/71) refactored cargo-gpu from a binary into a library with a public API that's usable from build scripts
+  - [PR#132](https://github.com/Rust-GPU/cargo-gpu/pull/132) extracted install logic into a separate `cargo-gpu-install` crate, reducing dependency count by ~30 crates for library consumers
 
 ### Changed 🛠
 
-- [PR#170](https://github.com/Rust-GPU/rust-gpu/pull/170) updated toolchain to `nightly-2024-11-22`
-- [PR#44](https://github.com/Rust-GPU/rust-gpu/pull/44) added support for [mesh shaders](https://www.khronos.org/blog/mesh-shading-for-vulkan)
-- [PR#17](https://github.com/Rust-GPU/rust-gpu/pull/17) refactored [`ByteAddressableBuffer`](https://rust-gpu.github.io/rust-gpu/api/spirv_std/byte_addressable_buffer/struct.ByteAddressableBuffer.html) to allow reading from read-only buffers
-- [PR#16](https://github.com/Rust-GPU/rust-gpu/pull/16) added
-  [`TypedBuffer`](https://rust-gpu.github.io/rust-gpu/api/spirv_std/struct.TypedBuffer.html),
-  an explicit way to declare inputs and outputs as buffers
-- [PR#14](https://github.com/Rust-GPU/rust-gpu/pull/14) added subgroup intrinsics matching
-  glsl's
-  [`GL_KHR_shader_subgroup`](https://github.com/KhronosGroup/GLSL/blob/main/extensions/khr/GL_KHR_shader_subgroup.txt)
-- [PR#13](https://github.com/Rust-GPU/rust-gpu/pull/13) allowed cargo features to be passed to the shader crate
-- [PR#9](https://github.com/Rust-GPU/rust-gpu/pull/9) relaxed `glam` version requirements (`>=0.22, <=0.29`)
-- [PR#1127](https://github.com/EmbarkStudios/rust-gpu/pull/1127) updated `spirv-tools` to `0.10.0`, which follows `vulkan-sdk-1.3.275`
-- [PR#1101](https://github.com/EmbarkStudios/rust-gpu/pull/1101) added `ignore` and `no_run` to documentation to make `cargo test` pass
-- [PR#1112](https://github.com/EmbarkStudios/rust-gpu/pull/1112) updated wgpu and winit in example runners
+- Updated Rust nightly toolchain to `nightly-2026-04-11`
+- [PR#249](https://github.com/Rust-GPU/rust-gpu/pull/249) updated to Rust 2024 edition
+- [PR#380](https://github.com/Rust-GPU/rust-gpu/pull/380) `glam` types have the same layout on GPU and CPU to prevent sutle UB bugs with `Vec3`, requires at least glam `0.30.8`
+- [PR#395](https://github.com/Rust-GPU/rust-gpu/pull/395) make many APIs explicitly use `glam` types instead of generics
+
+- `ByteAddressableBuffer`:
+  - [PR#17](https://github.com/Rust-GPU/rust-gpu/pull/17) refactored `ByteAddressableBuffer` to allow reading from read-only buffers
+  - [PR#430](https://github.com/Rust-GPU/rust-gpu/pull/430) fix `ByteAddressableBuffer` stores of scalar pair types
+  - [PR#353](https://github.com/Rust-GPU/rust-gpu/pull/353) soundness fix: respect `read_scalar` errors instead of silently corrupting data
+
+- image:
+  - [PR#281](https://github.com/Rust-GPU/rust-gpu/pull/281) allow `SampledImage` to access `query_size_lod` and `query_size`
+  - [PR#361](https://github.com/Rust-GPU/rust-gpu/pull/361) added `Image::fetch_with_lod` shortcut for `Image::fetch_with(..., lod(...))`
+  - [PR#490](https://github.com/Rust-GPU/rust-gpu/pull/490) made `Image::fetch()` implicitly declare LOD 0
+  - [PR#474](https://github.com/Rust-GPU/rust-gpu/pull/474) allow `Image::write()` to write scalar values into scalar images
 
 ### Fixed 🩹
 
-- [PR#200](https://github.com/Rust-GPU/rust-gpu/pull/200) fixed [#199](https://github.com/Rust-GPU/rust-gpu/issues/199) by correctly generating an `fmul` in the `log10` intrinsic
-- [PR#174](https://github.com/Rust-GPU/rust-gpu/pull/174) fixed [#169](https://github.com/Rust-GPU/rust-gpu/issues/169) by handling signed integers in the `bswap` intrinsic
-- [PR#1129](https://github.com/EmbarkStudios/rust-gpu/pull/1129) fixed [#1062](https://github.com/EmbarkStudios/rust-gpu/issues/1062) by not flipping the comparison of the rotate amount with zero
+- [PR#552](https://github.com/Rust-GPU/rust-gpu/pull/552) massive speedups for mem2reg linker step
+- [PR#364](https://github.com/Rust-GPU/rust-gpu/pull/364) fixed `libm` intrinsics for versions newer than `0.2.11`
+- [PR#233](https://github.com/Rust-GPU/rust-gpu/pull/233) fixed array of array types
+- [PR#167](https://github.com/Rust-GPU/rust-gpu/pull/167) fixed `debug_printf` macros not escaping `{` and `}` correctly
+
+- codegen:
+  - [PR#15](https://github.com/Rust-GPU/rust-gpu/pull/15) fixed signed `for` loops
+  - [PR#213](https://github.com/Rust-GPU/rust-gpu/pull/213) fixed `leading_zeros`, `trailing_zeros` and `count_ones` intrinsics
+  - [PR#174](https://github.com/Rust-GPU/rust-gpu/pull/174) added support for signed integer `bswap`
+  - [PR#363](https://github.com/Rust-GPU/rust-gpu/pull/363) allow `std::hint::black_box` to be a no-op on GPU
+  - [PR#518](https://github.com/Rust-GPU/rust-gpu/pull/518) replace `num_traits::Float::powi` implementation with `GLSL.std.450 Pow` intrinsics
+  - [PR#200](https://github.com/Rust-GPU/rust-gpu/pull/200) fixed `log10` intrinsic
+  - [PR#1129](https://github.com/EmbarkStudios/rust-gpu/pull/1129) fixed bit rotates being completely broken
+  - [PR#227](https://github.com/Rust-GPU/rust-gpu/pull/227) fixed array init with `0i32` incorrectly using `0u32`
+  - [PR#224](https://github.com/Rust-GPU/rust-gpu/pull/224) fixed typo swapping logical operations on bools
+  - [PR#302](https://github.com/Rust-GPU/rust-gpu/pull/302) optimize constant casts to avoid requiring `Int64` capabilities
+
+- spirv-val:
+  - [PR#512](https://github.com/Rust-GPU/rust-gpu/pull/512) fixed validation failures with newer `spirv-val` (v2025.5+) by folding `OpLoad` from `Private` variables with constant initializers
+  - [PR#456](https://github.com/Rust-GPU/rust-gpu/pull/456) fixed unused shared memory causing validation errors
+  - [PR#379](https://github.com/Rust-GPU/rust-gpu/pull/379) fixed Vulkan validation errors by erasing explicit layout decorations when disallowed
+
+- ICE:
+  - [PR#431](https://github.com/Rust-GPU/rust-gpu/pull/431) fixed divide-by-zero ICE
+  - [PR#453](https://github.com/Rust-GPU/rust-gpu/pull/453) fixed ICE on indirect function pointers
 
 ## [0.9.0]
 
