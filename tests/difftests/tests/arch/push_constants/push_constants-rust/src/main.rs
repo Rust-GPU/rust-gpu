@@ -1,6 +1,7 @@
 use difftest::config::Config;
+use difftest::scaffold::compute::wgpu::Features;
 use difftest::scaffold::compute::{
-    BufferConfig, BufferUsage, RustComputeShader, WgpuComputeTestPushConstants,
+    BufferConfig, BufferUsage, RustComputeShader, WgpuComputeTestMultiBuffer,
 };
 
 #[repr(C)]
@@ -30,7 +31,7 @@ fn main() {
         count: num_elements as u32,
     };
 
-    let test = WgpuComputeTestPushConstants::new(
+    let test = WgpuComputeTestMultiBuffer::new(
         RustComputeShader::default(),
         [4, 1, 1], // 256 / 64 = 4 workgroups
         vec![
@@ -45,9 +46,9 @@ fn main() {
                 initial_data: None,
             },
         ],
-        std::mem::size_of::<PushConstants>() as u32,
-        bytemuck::bytes_of(&push_constants).to_vec(),
-    );
+    )
+    .with_feature(Features::PUSH_CONSTANTS)
+    .with_push_constant(&push_constants);
 
     test.run_test(&config).unwrap();
 }
