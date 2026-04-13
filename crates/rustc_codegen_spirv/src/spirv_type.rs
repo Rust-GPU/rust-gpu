@@ -92,6 +92,17 @@ pub enum SpirvType<'tcx> {
     RayQueryKhr,
 }
 
+/// Emit an `OpName` for a type `id`, deduplicated per `(id, name_key)` pair.
+/// Unlike [`SpirvType::def_with_name`], this operates on an existing `id` - useful
+/// for types reused across multiple Rust types (e.g. `#[repr(transparent)]`
+/// newtype collapse, where the wrapper's name is attached to the inner's id).
+pub fn name_type_id<'tcx>(cx: &CodegenCx<'tcx>, id: Word, name_key: TyLayoutNameKey<'tcx>) {
+    let mut type_names = cx.type_cache.type_names.borrow_mut();
+    if type_names.entry(id).or_default().insert(name_key) {
+        cx.emit_global().name(id, name_key.to_string());
+    }
+}
+
 impl SpirvType<'_> {
     /// Note: `Builder::type_*` should be called *nowhere else* but here, to ensure
     /// `CodegenCx::type_defs` stays up-to-date
@@ -266,13 +277,7 @@ impl SpirvType<'_> {
         name_key: TyLayoutNameKey<'tcx>,
     ) -> Word {
         let id = self.def(def_span, cx);
-
-        // Only emit `OpName` if this is the first time we see this name.
-        let mut type_names = cx.type_cache.type_names.borrow_mut();
-        if type_names.entry(id).or_default().insert(name_key) {
-            cx.emit_global().name(id, name_key.to_string());
-        }
-
+        name_type_id(cx, id, name_key);
         id
     }
 
