@@ -58,6 +58,7 @@ pub use metadata::MetadataCache;
 mod build;
 mod config;
 mod dump_usage;
+#[cfg(feature = "cargo-generate")]
 mod generate;
 mod linkage;
 mod lockfile;
@@ -81,6 +82,7 @@ pub enum Command {
     Clippy(Box<build::Build>),
 
     /// Generate a new rust-gpu project from a template
+    #[cfg(feature = "cargo-generate")]
     New(generate::Generate),
 
     /// Show some useful values.
@@ -147,6 +149,7 @@ impl Command {
                 }
                 command.run()?;
             }
+            #[cfg(feature = "cargo-generate")]
             Self::New(generate) => generate.run()?,
             Self::Show(show) => show.run()?,
             Self::DumpUsage => dump_usage::dump_full_usage_for_readme()?,
