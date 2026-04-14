@@ -11,7 +11,7 @@ There are 2 ways to use it:
 To install the command line tool, ensure you are using `rustup`. Then run:
 
 ```
-cargo install --git https://github.com/rust-gpu/cargo-gpu cargo-gpu
+cargo install --git https://github.com/rust-gpu/rust-gpu cargo-gpu
 ```
 
 You can then use `cargo gpu` to compile your shader crates or use any of the other commands you're used to:
@@ -26,10 +26,8 @@ cargo gpu clippy
 
 To create an example project from our [templates](https://github.com/Rust-GPU/rust-gpu-template), use the command below:
 ```
-cargo install cargo-generate
-cargo generate --git https://github.com/Rust-GPU/rust-gpu-template
-# choose any template you want, then select cargo-gpu cmdline integration
-# you may have to adjust the crate name
+cargo gpu generate
+cd <project-name>
 cargo gpu build -p mygraphics-shaders
 ```
 
