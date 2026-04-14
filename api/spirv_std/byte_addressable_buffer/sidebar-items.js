@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["ByteAddressableBuffer"]};
+window.SIDEBAR_ITEMS = {"fn":["buffer_load_intrinsic","buffer_store_intrinsic"],"struct":["ByteAddressableBuffer"]};
