@@ -1,8 +1,6 @@
 //! Install a dedicated per-shader crate that has the `rust-gpu` compiler in it.
 
-use crate::spirv_source::{
-    FindPackage as _, get_channel_from_rustc_codegen_spirv_build_script, query_metadata,
-};
+use crate::spirv_source::{CrateMetadata, get_channel_from_rustc_codegen_spirv_build_script};
 use crate::{cache_dir, spirv_source::SpirvSource};
 use anyhow::Context as _;
 use spirv_builder::SpirvBuilder;
@@ -238,8 +236,9 @@ package = "rustc_codegen_spirv"
             format!("could not create cache directory '{}'", cache_dir.display())
         })?;
 
+        let metadata = CrateMetadata::query(self.shader_crate.clone())?;
         let source = SpirvSource::new(
-            &self.shader_crate,
+            &metadata,
             self.spirv_builder_source.as_deref(),
             self.spirv_builder_version.as_deref(),
         )?;
@@ -289,7 +288,7 @@ package = "rustc_codegen_spirv"
 
         // TODO cache toolchain channel in a file?
         log::debug!("resolving toolchain version to use");
-        let dummy_metadata = query_metadata(&install_dir)
+        let dummy_metadata = CrateMetadata::query(install_dir.clone())
             .context("resolving toolchain version: get `rustc_codegen_spirv_dummy` metadata")?;
         let rustc_codegen_spirv = dummy_metadata.find_package("rustc_codegen_spirv").context(
             "resolving toolchain version: expected a dependency on `rustc_codegen_spirv`",
