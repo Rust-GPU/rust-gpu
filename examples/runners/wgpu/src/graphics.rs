@@ -1,9 +1,8 @@
 use crate::{CompiledShaderModules, Options, maybe_watch};
 use std::borrow::Cow;
-use wgpu::{ExperimentalFeatures, ShaderModuleDescriptor, ShaderSource};
+use wgpu::{CurrentSurfaceTexture, ExperimentalFeatures, ShaderModuleDescriptor, ShaderSource};
 
 use shared::ShaderConstants;
-use std::slice;
 use winit::{
     event::{ElementState, Event, MouseButton, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -42,14 +41,9 @@ async fn run(
     window: Window,
     compiled_shader_modules: CompiledShaderModules,
 ) {
-    // FIXME(eddyb) should this just use `wgpu::Backends::PRIMARY`?
-    // (that also enables the DirectX 12 backend, not sure we want that one?)
-    let backends = wgpu::Backends::from_env()
-        .unwrap_or(wgpu::Backends::VULKAN | wgpu::Backends::METAL | wgpu::Backends::BROWSER_WEBGPU);
-    let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
-        backends,
-        ..Default::default()
-    });
+    let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_with_display_handle_from_env(
+        Box::new(event_loop.owned_display_handle()),
+    ));
 
     // HACK(eddyb) marker error type for lazily-created surfaces (e.g. on Android).
     struct SurfaceCreationPending {
@@ -76,12 +70,12 @@ async fn run(
     .await
     .expect("Failed to find an appropriate adapter");
 
-    let mut required_features = wgpu::Features::PUSH_CONSTANTS;
+    let mut required_features = wgpu::Features::IMMEDIATES;
     if options.force_spirv_passthru {
-        required_features |= wgpu::Features::EXPERIMENTAL_PASSTHROUGH_SHADERS;
+        required_features |= wgpu::Features::PASSTHROUGH_SHADERS;
     }
     let required_limits = wgpu::Limits {
-        max_push_constant_size: 128,
+        max_immediate_size: 128,
         ..Default::default()
     };
 
@@ -142,10 +136,7 @@ async fn run(
         let stages = wgpu::ShaderStages::VERTEX | wgpu::ShaderStages::FRAGMENT;
 
         if !options.emulate_push_constants_with_storage_buffer {
-            Ok(wgpu::PushConstantRange {
-                stages,
-                range: 0..PUSH_CONSTANTS_SIZE as u32,
-            })
+            Ok(PUSH_CONSTANTS_SIZE as u32)
         } else {
             let buffer = device.create_buffer(&wgpu::BufferDescriptor {
                 label: None,
@@ -184,11 +175,9 @@ async fn run(
         bind_group_layouts: push_constants_or_rossbo_emulation
             .as_ref()
             .err()
-            .map(|(_, layout, _)| layout)
+            .map(|(_, layout, _)| Some(layout))
             .as_slice(),
-        push_constant_ranges: push_constants_or_rossbo_emulation
-            .as_ref()
-            .map_or(&[], slice::from_ref),
+        immediate_size: *push_constants_or_rossbo_emulation.as_ref().unwrap_or(&0),
     });
 
     let mut render_pipeline = create_pipeline(
@@ -283,19 +272,17 @@ async fn run(
 
                 if let Ok((surface, surface_config)) = &mut surface_with_config {
                     let output = match surface.get_current_texture() {
-                        Ok(surface) => surface,
-                        Err(err) => {
-                            eprintln!("get_current_texture error: {err:?}");
-                            match err {
-                                wgpu::SurfaceError::Lost => {
-                                    surface.configure(&device, surface_config);
-                                }
-                                wgpu::SurfaceError::OutOfMemory => {
-                                    event_loop_window_target.exit();
-                                }
-                                _ => (),
-                            }
+                        CurrentSurfaceTexture::Success(surface) => surface,
+                        CurrentSurfaceTexture::Suboptimal(_) | CurrentSurfaceTexture::Outdated | CurrentSurfaceTexture::Lost => {
+                            surface.configure(&device, surface_config);
                             return;
+                        },
+                        CurrentSurfaceTexture::Timeout |
+                        CurrentSurfaceTexture::Occluded => {
+                            return;
+                        }
+                        CurrentSurfaceTexture::Validation => {
+                            panic!("get_current_texture validation error");
                         }
                     };
                     let output_view = output.texture.create_view(&wgpu::TextureViewDescriptor {
@@ -346,8 +333,7 @@ async fn run(
                         let (push_constant_offset, push_constant_bytes) =
                             (0, bytemuck::bytes_of(&push_constants));
                         match &push_constants_or_rossbo_emulation {
-                            Ok(_) => rpass.set_push_constants(
-                                wgpu::ShaderStages::VERTEX | wgpu::ShaderStages::FRAGMENT,
+                            Ok(_) => rpass.set_immediates(
                                 push_constant_offset as u32,
                                 push_constant_bytes,
                             ),
@@ -535,7 +521,7 @@ fn create_pipeline(
                 write_mask: wgpu::ColorWrites::ALL,
             })],
         }),
-        multiview: None,
+        multiview_mask: None,
     })
 }
 
