@@ -131,53 +131,10 @@ async fn run(
         .map(|surface| auto_configure_surface(&adapter, &device, surface, window.inner_size()));
 
     // Describe the pipeline layout and build the initial pipeline.
-    let push_constants_or_rossbo_emulation = {
-        const PUSH_CONSTANTS_SIZE: usize = std::mem::size_of::<ShaderConstants>();
-        let stages = wgpu::ShaderStages::VERTEX | wgpu::ShaderStages::FRAGMENT;
-
-        if !options.emulate_push_constants_with_storage_buffer {
-            Ok(PUSH_CONSTANTS_SIZE as u32)
-        } else {
-            let buffer = device.create_buffer(&wgpu::BufferDescriptor {
-                label: None,
-                size: PUSH_CONSTANTS_SIZE as u64,
-                usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
-                mapped_at_creation: false,
-            });
-            let binding0 = wgpu::BindGroupLayoutEntry {
-                binding: 0,
-                visibility: stages,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Storage { read_only: true },
-                    has_dynamic_offset: false,
-                    min_binding_size: Some((PUSH_CONSTANTS_SIZE as u64).try_into().unwrap()),
-                },
-                count: None,
-            };
-            let bind_group_layout =
-                device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                    label: None,
-                    entries: &[binding0],
-                });
-            let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-                label: None,
-                layout: &bind_group_layout,
-                entries: &[wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: buffer.as_entire_binding(),
-                }],
-            });
-            Err((buffer, bind_group_layout, bind_group))
-        }
-    };
     let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: None,
-        bind_group_layouts: push_constants_or_rossbo_emulation
-            .as_ref()
-            .err()
-            .map(|(_, layout, _)| Some(layout))
-            .as_slice(),
-        immediate_size: *push_constants_or_rossbo_emulation.as_ref().unwrap_or(&0),
+        bind_group_layouts: &[],
+        immediate_size: size_of::<ShaderConstants>() as u32,
     });
 
     let mut render_pipeline = create_pipeline(
@@ -276,7 +233,7 @@ async fn run(
                         CurrentSurfaceTexture::Suboptimal(_) | CurrentSurfaceTexture::Outdated | CurrentSurfaceTexture::Lost => {
                             surface.configure(&device, surface_config);
                             return;
-                        },
+                        }
                         CurrentSurfaceTexture::Timeout |
                         CurrentSurfaceTexture::Occluded => {
                             return;
@@ -332,20 +289,10 @@ async fn run(
                         rpass.set_pipeline(render_pipeline);
                         let (push_constant_offset, push_constant_bytes) =
                             (0, bytemuck::bytes_of(&push_constants));
-                        match &push_constants_or_rossbo_emulation {
-                            Ok(_) => rpass.set_immediates(
-                                push_constant_offset as u32,
-                                push_constant_bytes,
-                            ),
-                            Err((buffer, _, bind_group)) => {
-                                queue.write_buffer(
-                                    buffer,
-                                    push_constant_offset,
-                                    push_constant_bytes,
-                                );
-                                rpass.set_bind_group(0, bind_group, &[]);
-                            }
-                        }
+                        rpass.set_immediates(
+                            push_constant_offset as u32,
+                            push_constant_bytes,
+                        );
                         rpass.draw(0..3, 0..1);
                     }
 
