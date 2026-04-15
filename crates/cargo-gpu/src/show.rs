@@ -3,6 +3,7 @@
 use crate::cache_dir;
 use crate::spirv_builder::Capability;
 use crate::spirv_source::SpirvSource;
+use cargo_gpu_install::spirv_source::CrateMetadata;
 
 /// Show the computed source of the spirv-std dependency.
 #[derive(Clone, Debug, clap::Parser)]
@@ -48,7 +49,8 @@ impl Show {
                 println!("{}\n", cache_dir()?.display());
             }
             Info::SpirvSource(SpirvSourceDep { shader_crate }) => {
-                let rust_gpu_source = SpirvSource::get_rust_gpu_deps_from_shader(shader_crate)?;
+                let metadata = CrateMetadata::query(shader_crate.clone())?;
+                let rust_gpu_source = SpirvSource::get_rust_gpu_deps_from_shader(&metadata)?;
                 println!("{rust_gpu_source}\n");
             }
             Info::Commitsh => {

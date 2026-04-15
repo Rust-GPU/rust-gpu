@@ -9,6 +9,7 @@ use cargo_metadata::camino::{Utf8Path, Utf8PathBuf};
 use cargo_metadata::semver::Version;
 use cargo_metadata::{Metadata, MetadataCommand, Package};
 use std::fs;
+use std::ops::Deref;
 use std::path::{Path, PathBuf};
 
 #[expect(
@@ -75,7 +76,7 @@ impl SpirvSource {
     /// # Errors
     /// Crate may not depend on `spirv-std` or is otherwise malformed
     pub fn new(
-        shader_crate_path: &Path,
+        shader_crate: &CrateMetadata,
         maybe_rust_gpu_source: Option<&str>,
         maybe_rust_gpu_version: Option<&str>,
     ) -> anyhow::Result<Self> {
@@ -89,10 +90,10 @@ impl SpirvSource {
                 Self::CratesIO(Version::parse(rust_gpu_version)?)
             }
         } else {
-            Self::get_rust_gpu_deps_from_shader(shader_crate_path).with_context(|| {
+            Self::get_rust_gpu_deps_from_shader(shader_crate).with_context(|| {
                 format!(
                     "get spirv-std dependency from shader crate '{}'",
-                    shader_crate_path.display()
+                    shader_crate.path().display()
                 )
             })?
         };
@@ -103,14 +104,13 @@ impl SpirvSource {
     ///
     /// # Errors
     /// Crate may not depend on `spirv-std` or is otherwise malformed
-    pub fn get_rust_gpu_deps_from_shader(shader_crate_path: &Path) -> anyhow::Result<Self> {
-        let crate_metadata = query_metadata(shader_crate_path)?;
+    pub fn get_rust_gpu_deps_from_shader(crate_metadata: &CrateMetadata) -> anyhow::Result<Self> {
         let spirv_std_package = crate_metadata.find_package("spirv-std")?;
         let spirv_source = Self::parse_spirv_std_source_and_version(spirv_std_package)?;
         log::debug!(
             "Parsed `SpirvSource` from crate `{}`: \
             {spirv_source:?}",
-            shader_crate_path.display(),
+            crate_metadata.path().display(),
         );
         Ok(spirv_source)
     }
@@ -193,33 +193,39 @@ impl SpirvSource {
     }
 }
 
-/// get the Package metadata from some crate
-///
-/// # Errors
-/// metadata query may fail
-pub fn query_metadata(crate_path: &Path) -> anyhow::Result<Metadata> {
-    log::debug!("Running `cargo metadata` on `{}`", crate_path.display());
-    let metadata = MetadataCommand::new()
-        .current_dir(
-            &crate_path
-                .canonicalize()
-                .context("could not get absolute path to shader crate")?,
-        )
-        .exec()?;
-    Ok(metadata)
+/// [`cargo_metadata::Metadata`] combined with the path to the crate being queried
+pub struct CrateMetadata {
+    path: PathBuf,
+    metadata: Metadata,
 }
 
-/// implements [`Self::find_package`]
-pub trait FindPackage {
+impl CrateMetadata {
+    /// get the Package metadata from some crate
+    ///
+    /// # Errors
+    /// metadata query may fail
+    pub fn query(path: PathBuf) -> anyhow::Result<Self> {
+        log::debug!("Running `cargo metadata` on `{}`", path.display());
+        let metadata = MetadataCommand::new()
+            .current_dir(
+                &path
+                    .canonicalize()
+                    .context("could not get absolute path to shader crate")?,
+            )
+            .exec()?;
+        Ok(Self { path, metadata })
+    }
+
+    /// Path to the crate that was queried
+    pub fn path(&self) -> &Path {
+        self.path.as_path()
+    }
+
     /// Search for a package or return a nice error
     ///
     /// # Errors
     /// package may not be found or crate may be malformed
-    fn find_package(&self, crate_name: &str) -> anyhow::Result<&Package>;
-}
-
-impl FindPackage for Metadata {
-    fn find_package(&self, crate_name: &str) -> anyhow::Result<&Package> {
+    pub fn find_package(&self, crate_name: &str) -> anyhow::Result<&Package> {
         if let Some(package) = self
             .packages
             .iter()
@@ -233,6 +239,14 @@ impl FindPackage for Metadata {
                 self.workspace_root
             );
         }
+    }
+}
+
+impl Deref for CrateMetadata {
+    type Target = Metadata;
+
+    fn deref(&self) -> &Self::Target {
+        &self.metadata
     }
 }
 
@@ -273,7 +287,8 @@ mod test {
     #[test_log::test]
     fn parsing_spirv_std_dep_for_shader_template() {
         let shader_template_path = crate::test::shader_crate_template_path();
-        let source = SpirvSource::get_rust_gpu_deps_from_shader(&shader_template_path).unwrap();
+        let metadata = CrateMetadata::query(shader_template_path).unwrap();
+        let source = SpirvSource::get_rust_gpu_deps_from_shader(&metadata).unwrap();
         expect![[r#"
             Git {
                 url: "https://github.com/Rust-GPU/rust-gpu",
@@ -286,7 +301,8 @@ mod test {
     fn cached_checkout_dir_sanity() {
         let _env = TestEnv::new();
         let shader_template_path = crate::test::shader_crate_template_path();
-        let source = SpirvSource::get_rust_gpu_deps_from_shader(&shader_template_path).unwrap();
+        let metadata = CrateMetadata::query(shader_template_path).unwrap();
+        let source = SpirvSource::get_rust_gpu_deps_from_shader(&metadata).unwrap();
         let dir = source.install_dir().unwrap();
         let name = dir
             .file_name()
