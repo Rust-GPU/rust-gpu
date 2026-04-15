@@ -24,11 +24,8 @@ pub fn start(options: &Options) {
 }
 
 async fn start_internal(options: &Options, compiled_shader_modules: CompiledShaderModules) {
-    let backends = wgpu::Backends::from_env().unwrap_or(wgpu::Backends::PRIMARY);
-    let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
-        backends,
-        ..Default::default()
-    });
+    let instance =
+        wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
     let adapter = wgpu::util::initialize_adapter_from_env_or_default(&instance, None)
         .await
         .expect("Failed to find an appropriate adapter");
@@ -50,7 +47,7 @@ async fn start_internal(options: &Options, compiled_shader_modules: CompiledShad
         );
     }
     if options.force_spirv_passthru {
-        required_features |= wgpu::Features::EXPERIMENTAL_PASSTHROUGH_SHADERS;
+        required_features |= wgpu::Features::PASSTHROUGH_SHADERS;
     }
 
     let (device, queue) = adapter
@@ -120,8 +117,8 @@ async fn start_internal(options: &Options, compiled_shader_modules: CompiledShad
 
     let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: None,
-        bind_group_layouts: &[&bind_group_layout],
-        push_constant_ranges: &[],
+        bind_group_layouts: &[Some(&bind_group_layout)],
+        immediate_size: 0,
     });
 
     let compute_pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
