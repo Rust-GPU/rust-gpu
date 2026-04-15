@@ -250,8 +250,11 @@ package = "rustc_codegen_spirv"
             std::env::consts::DLL_SUFFIX
         );
 
+        #[allow(clippy::print_stdout)]
         if self.build_script {
-            #[allow(clippy::print_stdout)]
+            let root = metadata.workspace_root.as_path();
+            println!("cargo:rerun-if-changed={root}/Cargo.lock");
+
             if let SpirvSource::Path {
                 rust_gpu_repo_root, ..
             } = &source
