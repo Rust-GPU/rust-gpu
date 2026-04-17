@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["predeclared","wgsl"],"struct":["DiagnosticDebug","DiagnosticDisplay"],"trait":["ForDebug","ForDebugWithTypes"]};

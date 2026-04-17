@@ -1,0 +1,127 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/naga-29.0.1/src/non_max_u32.rs`."><title>non_max_u32.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="naga" data-themes="" data-resource-suffix="" data-rustdoc-version="1.96.0-nightly (02c7f9bec 2026-04-10)" data-channel="nightly" data-search-js="search-b5634cc7.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5013f961.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">naga/</div>non_max_u32.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! [`NonMaxU32`], a 32-bit type that can represent any value except [`u32::MAX`].
+<a href=#2 id=2 data-nosnippet>2</a>//!
+<a href=#3 id=3 data-nosnippet>3</a>//! Naga would like `Option&lt;Handle&lt;T&gt;&gt;` to be a 32-bit value, which means we
+<a href=#4 id=4 data-nosnippet>4</a>//! need to exclude some index value for use in representing [`None`]. We could
+<a href=#5 id=5 data-nosnippet>5</a>//! have [`Handle`] store a [`NonZeroU32`], but zero is a very useful value for
+<a href=#6 id=6 data-nosnippet>6</a>//! indexing. We could have a [`Handle`] store a value one greater than its index,
+<a href=#7 id=7 data-nosnippet>7</a>//! but it turns out that it's not uncommon to want to work with [`Handle`]s'
+<a href=#8 id=8 data-nosnippet>8</a>//! indices, so that bias of 1 becomes more visible than one would like.
+<a href=#9 id=9 data-nosnippet>9</a>//!
+<a href=#10 id=10 data-nosnippet>10</a>//! This module defines the type [`NonMaxU32`], for which `Option&lt;NonMaxU32&gt;` is
+<a href=#11 id=11 data-nosnippet>11</a>//! still a 32-bit value, but which is directly usable as a [`Handle`] index
+<a href=#12 id=12 data-nosnippet>12</a>//! type. It still uses a bias of 1 under the hood, but that fact is isolated
+<a href=#13 id=13 data-nosnippet>13</a>//! within the implementation.
+<a href=#14 id=14 data-nosnippet>14</a>//!
+<a href=#15 id=15 data-nosnippet>15</a>//! [`Handle`]: crate::arena::Handle
+<a href=#16 id=16 data-nosnippet>16</a>//! [`NonZeroU32`]: core::num::NonZeroU32
+<a href=#17 id=17 data-nosnippet>17</a></span><span class="attr">#![allow(dead_code)]
+<a href=#18 id=18 data-nosnippet>18</a>
+<a href=#19 id=19 data-nosnippet>19</a></span><span class="kw">use </span>core::num::NonZeroU32;
+<a href=#20 id=20 data-nosnippet>20</a>
+<a href=#21 id=21 data-nosnippet>21</a><span class="doccomment">/// An unsigned 32-bit value known not to be [`u32::MAX`].
+<a href=#22 id=22 data-nosnippet>22</a>///
+<a href=#23 id=23 data-nosnippet>23</a>/// A `NonMaxU32` value can represent any value in the range `0 .. u32::MAX -
+<a href=#24 id=24 data-nosnippet>24</a>/// 1`, and an `Option&lt;NonMaxU32&gt;` is still a 32-bit value. In other words,
+<a href=#25 id=25 data-nosnippet>25</a>/// `NonMaxU32` is just like [`NonZeroU32`], except that a different value is
+<a href=#26 id=26 data-nosnippet>26</a>/// missing from the full `u32` range.
+<a href=#27 id=27 data-nosnippet>27</a>///
+<a href=#28 id=28 data-nosnippet>28</a>/// Since zero is a very useful value in indexing, `NonMaxU32` is more useful
+<a href=#29 id=29 data-nosnippet>29</a>/// for representing indices than [`NonZeroU32`].
+<a href=#30 id=30 data-nosnippet>30</a>///
+<a href=#31 id=31 data-nosnippet>31</a>/// `NonMaxU32` values and `Option&lt;NonMaxU32&gt;` values both occupy 32 bits.
+<a href=#32 id=32 data-nosnippet>32</a>///
+<a href=#33 id=33 data-nosnippet>33</a>/// # Serialization and Deserialization
+<a href=#34 id=34 data-nosnippet>34</a>///
+<a href=#35 id=35 data-nosnippet>35</a>/// When the appropriate Cargo features are enabled, `NonMaxU32` implements
+<a href=#36 id=36 data-nosnippet>36</a>/// [`serde::Serialize`] and [`serde::Deserialize`] in the natural way, as the
+<a href=#37 id=37 data-nosnippet>37</a>/// integer value it represents. For example, serializing
+<a href=#38 id=38 data-nosnippet>38</a>/// `NonMaxU32::new(0).unwrap()` as JSON or RON yields the string `"0"`. This is
+<a href=#39 id=39 data-nosnippet>39</a>/// the case despite `NonMaxU32`'s implementation, described below.
+<a href=#40 id=40 data-nosnippet>40</a>///
+<a href=#41 id=41 data-nosnippet>41</a>/// # Implementation
+<a href=#42 id=42 data-nosnippet>42</a>///
+<a href=#43 id=43 data-nosnippet>43</a>/// Although this should not be observable to its users, a `NonMaxU32` whose
+<a href=#44 id=44 data-nosnippet>44</a>/// value is `n` is a newtype around a [`NonZeroU32`] whose value is `n + 1`.
+<a href=#45 id=45 data-nosnippet>45</a>/// This way, the range of values that `NonMaxU32` can represent,
+<a href=#46 id=46 data-nosnippet>46</a>/// `0..=u32::MAX - 1`, is mapped to the range `1..=u32::MAX`, which is the
+<a href=#47 id=47 data-nosnippet>47</a>/// range that /// [`NonZeroU32`] can represent. (And conversely, since
+<a href=#48 id=48 data-nosnippet>48</a>/// [`u32`] addition wraps around, the value unrepresentable in `NonMaxU32`,
+<a href=#49 id=49 data-nosnippet>49</a>/// [`u32::MAX`], becomes the value unrepresentable in [`NonZeroU32`], `0`.)
+<a href=#50 id=50 data-nosnippet>50</a>///
+<a href=#51 id=51 data-nosnippet>51</a>/// [`NonZeroU32`]: core::num::NonZeroU32
+<a href=#52 id=52 data-nosnippet>52</a></span><span class="attr">#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+<a href=#53 id=53 data-nosnippet>53</a>#[cfg_attr(feature = <span class="string">"arbitrary"</span>, derive(arbitrary::Arbitrary))]
+<a href=#54 id=54 data-nosnippet>54</a></span><span class="kw">pub struct </span>NonMaxU32(NonZeroU32);
+<a href=#55 id=55 data-nosnippet>55</a>
+<a href=#56 id=56 data-nosnippet>56</a><span class="kw">impl </span>NonMaxU32 {
+<a href=#57 id=57 data-nosnippet>57</a>    <span class="doccomment">/// Construct a [`NonMaxU32`] whose value is `n`, if possible.
+<a href=#58 id=58 data-nosnippet>58</a>    </span><span class="kw">pub const fn </span>new(n: u32) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
+<a href=#59 id=59 data-nosnippet>59</a>        <span class="comment">// If `n` is `u32::MAX`, then `n.wrapping_add(1)` is `0`,
+<a href=#60 id=60 data-nosnippet>60</a>        // so `NonZeroU32::new` returns `None` in exactly the case
+<a href=#61 id=61 data-nosnippet>61</a>        // where we must return `None`.
+<a href=#62 id=62 data-nosnippet>62</a>        </span><span class="kw">match </span>NonZeroU32::new(n.wrapping_add(<span class="number">1</span>)) {
+<a href=#63 id=63 data-nosnippet>63</a>            <span class="prelude-val">Some</span>(non_zero) =&gt; <span class="prelude-val">Some</span>(NonMaxU32(non_zero)),
+<a href=#64 id=64 data-nosnippet>64</a>            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">None</span>,
+<a href=#65 id=65 data-nosnippet>65</a>        }
+<a href=#66 id=66 data-nosnippet>66</a>    }
+<a href=#67 id=67 data-nosnippet>67</a>
+<a href=#68 id=68 data-nosnippet>68</a>    <span class="doccomment">/// Return the value of `self` as a [`u32`].
+<a href=#69 id=69 data-nosnippet>69</a>    </span><span class="kw">pub const fn </span>get(<span class="self">self</span>) -&gt; u32 {
+<a href=#70 id=70 data-nosnippet>70</a>        <span class="self">self</span>.<span class="number">0</span>.get() - <span class="number">1
+<a href=#71 id=71 data-nosnippet>71</a>    </span>}
+<a href=#72 id=72 data-nosnippet>72</a>
+<a href=#73 id=73 data-nosnippet>73</a>    <span class="kw">pub fn </span>checked_add(<span class="self">self</span>, n: u32) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
+<a href=#74 id=74 data-nosnippet>74</a>        <span class="comment">// Adding `n` to `self` produces `u32::MAX` if and only if
+<a href=#75 id=75 data-nosnippet>75</a>        // adding `n` to `self.0` produces `0`. So we can simply
+<a href=#76 id=76 data-nosnippet>76</a>        // call `NonZeroU32::checked_add` and let its check for zero
+<a href=#77 id=77 data-nosnippet>77</a>        // determine whether our add would have produced `u32::MAX`.
+<a href=#78 id=78 data-nosnippet>78</a>        </span><span class="prelude-val">Some</span>(NonMaxU32(<span class="self">self</span>.<span class="number">0</span>.checked_add(n)<span class="question-mark">?</span>))
+<a href=#79 id=79 data-nosnippet>79</a>    }
+<a href=#80 id=80 data-nosnippet>80</a>}
+<a href=#81 id=81 data-nosnippet>81</a>
+<a href=#82 id=82 data-nosnippet>82</a><span class="kw">impl </span>core::fmt::Debug <span class="kw">for </span>NonMaxU32 {
+<a href=#83 id=83 data-nosnippet>83</a>    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; core::fmt::Result {
+<a href=#84 id=84 data-nosnippet>84</a>        <span class="self">self</span>.get().fmt(f)
+<a href=#85 id=85 data-nosnippet>85</a>    }
+<a href=#86 id=86 data-nosnippet>86</a>}
+<a href=#87 id=87 data-nosnippet>87</a>
+<a href=#88 id=88 data-nosnippet>88</a><span class="kw">impl </span>core::fmt::Display <span class="kw">for </span>NonMaxU32 {
+<a href=#89 id=89 data-nosnippet>89</a>    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; core::fmt::Result {
+<a href=#90 id=90 data-nosnippet>90</a>        <span class="self">self</span>.get().fmt(f)
+<a href=#91 id=91 data-nosnippet>91</a>    }
+<a href=#92 id=92 data-nosnippet>92</a>}
+<a href=#93 id=93 data-nosnippet>93</a>
+<a href=#94 id=94 data-nosnippet>94</a><span class="attr">#[cfg(feature = <span class="string">"serialize"</span>)]
+<a href=#95 id=95 data-nosnippet>95</a></span><span class="kw">impl </span>serde::Serialize <span class="kw">for </span>NonMaxU32 {
+<a href=#96 id=96 data-nosnippet>96</a>    <span class="kw">fn </span>serialize&lt;S&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, serializer: S) -&gt; <span class="prelude-ty">Result</span>&lt;S::Ok, S::Error&gt;
+<a href=#97 id=97 data-nosnippet>97</a>    <span class="kw">where
+<a href=#98 id=98 data-nosnippet>98</a>        </span>S: serde::Serializer,
+<a href=#99 id=99 data-nosnippet>99</a>    {
+<a href=#100 id=100 data-nosnippet>100</a>        serializer.serialize_u32(<span class="self">self</span>.get())
+<a href=#101 id=101 data-nosnippet>101</a>    }
+<a href=#102 id=102 data-nosnippet>102</a>}
+<a href=#103 id=103 data-nosnippet>103</a>
+<a href=#104 id=104 data-nosnippet>104</a><span class="attr">#[cfg(feature = <span class="string">"deserialize"</span>)]
+<a href=#105 id=105 data-nosnippet>105</a></span><span class="kw">impl</span>&lt;<span class="lifetime">'de</span>&gt; serde::Deserialize&lt;<span class="lifetime">'de</span>&gt; <span class="kw">for </span>NonMaxU32 {
+<a href=#106 id=106 data-nosnippet>106</a>    <span class="kw">fn </span>deserialize&lt;D&gt;(deserializer: D) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, D::Error&gt;
+<a href=#107 id=107 data-nosnippet>107</a>    <span class="kw">where
+<a href=#108 id=108 data-nosnippet>108</a>        </span>D: serde::Deserializer&lt;<span class="lifetime">'de</span>&gt;,
+<a href=#109 id=109 data-nosnippet>109</a>    {
+<a href=#110 id=110 data-nosnippet>110</a>        <span class="comment">// Defer to `u32`'s `Deserialize` implementation.
+<a href=#111 id=111 data-nosnippet>111</a>        </span><span class="kw">let </span>n = &lt;u32 <span class="kw">as </span>serde::Deserialize&gt;::deserialize(deserializer)<span class="question-mark">?</span>;
+<a href=#112 id=112 data-nosnippet>112</a>
+<a href=#113 id=113 data-nosnippet>113</a>        <span class="comment">// Constrain the range of the value further.
+<a href=#114 id=114 data-nosnippet>114</a>        </span>NonMaxU32::new(n).ok_or_else(|| {
+<a href=#115 id=115 data-nosnippet>115</a>            &lt;D::Error <span class="kw">as </span>serde::de::Error&gt;::invalid_value(
+<a href=#116 id=116 data-nosnippet>116</a>                serde::de::Unexpected::Unsigned(n <span class="kw">as </span>u64),
+<a href=#117 id=117 data-nosnippet>117</a>                <span class="kw-2">&amp;</span><span class="string">"a value no less than 0 and no greater than 4294967294 (2^32 - 2)"</span>,
+<a href=#118 id=118 data-nosnippet>118</a>            )
+<a href=#119 id=119 data-nosnippet>119</a>        })
+<a href=#120 id=120 data-nosnippet>120</a>    }
+<a href=#121 id=121 data-nosnippet>121</a>}
+<a href=#122 id=122 data-nosnippet>122</a>
+<a href=#123 id=123 data-nosnippet>123</a><span class="attr">#[test]
+<a href=#124 id=124 data-nosnippet>124</a></span><span class="kw">fn </span>size() {
+<a href=#125 id=125 data-nosnippet>125</a>    <span class="macro">assert_eq!</span>(size_of::&lt;<span class="prelude-ty">Option</span>&lt;NonMaxU32&gt;&gt;(), size_of::&lt;u32&gt;());
+<a href=#126 id=126 data-nosnippet>126</a>}
+</code></pre></div></section></main></body></html>

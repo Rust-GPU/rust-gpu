@@ -1,0 +1,88 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Analyzes whether a type is [`IntoBytes`]."><title>IntoBytes in zerocopy - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="zerocopy" data-themes="" data-resource-suffix="" data-rustdoc-version="1.96.0-nightly (02c7f9bec 2026-04-10)" data-channel="nightly" data-search-js="search-b5634cc7.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../static.files/storage-41dd4d93.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-5013f961.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc derive"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">IntoBytes</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../zerocopy/index.html">zerocopy</a><span class="version">0.8.38</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Into<wbr>Bytes</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#error-messages" title="Error Messages">Error Messages</a></li><li><a href="#unions" title="Unions">Unions</a></li><li><a href="#analysis" title="Analysis">Analysis</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate zerocopy</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">zerocopy</a></div><h1>Derive Macro <span class="derive">Into<wbr>Bytes</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/zerocopy_derive/lib.rs.html#82">Source</a> </span></div><pre class="rust item-decl"><code>#[derive(IntoBytes)]
+{
+    <span class="comment">// Attributes available to this derive:</span>
+    #[zerocopy]
+}
+</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Analyzes whether a type is <a href="trait.IntoBytes.html" title="trait zerocopy::IntoBytes"><code>IntoBytes</code></a>.</p>
+<p>This derive analyzes, at compile time, whether the annotated type satisfies
+the <a href="trait.IntoBytes.html#safety" title="trait zerocopy::IntoBytes">safety conditions</a> of <code>IntoBytes</code> and implements <code>IntoBytes</code> if it is
+sound to do so. This derive can be applied to structs and enums (see below
+for union support); e.g.:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[derive(IntoBytes)]
+#[repr(C)]
+</span><span class="kw">struct </span>MyStruct {
+    ...
+}
+
+<span class="attr">#[derive(IntoBytes)]
+#[repr(u8)]
+</span><span class="kw">enum </span>MyEnum {
+    ...
+}</code></pre></div><h2 id="error-messages"><a class="doc-anchor" href="#error-messages">§</a>Error Messages</h2>
+<p>On Rust toolchains prior to 1.78.0, due to the way that the custom derive
+for <code>IntoBytes</code> is implemented, you may get an error like this:</p>
+<div class="example-wrap"><pre class="language-text"><code>error[E0277]: the trait bound `(): PaddingFree&lt;Foo, true&gt;` is not satisfied
+  --&gt; lib.rs:23:10
+   |
+ 1 | #[derive(IntoBytes)]
+   |          ^^^^^^^^^ the trait `PaddingFree&lt;Foo, true&gt;` is not implemented for `()`
+   |
+   = help: the following implementations were found:
+                  &lt;() as PaddingFree&lt;T, false&gt;&gt;</code></pre></div>
+<p>This error indicates that the type being annotated has padding bytes, which
+is illegal for <code>IntoBytes</code> types. Consider reducing the alignment of some
+fields by using types in the <a href="byteorder/index.html" title="mod zerocopy::byteorder"><code>byteorder</code></a> module, wrapping field types in
+<a href="struct.Unalign.html" title="struct zerocopy::Unalign"><code>Unalign</code></a>, adding explicit struct fields where those padding bytes would
+be, or using <code>#[repr(packed)]</code>. See the Rust Reference’s page on <a href="https://doc.rust-lang.org/reference/type-layout.html">type
+layout</a> for more information about type layout and padding.</p>
+<h2 id="unions"><a class="doc-anchor" href="#unions">§</a>Unions</h2>
+<p>Currently, union bit validity is <a href="https://github.com/rust-lang/unsafe-code-guidelines/issues/438">up in the air</a>, and so
+zerocopy does not support <code>#[derive(IntoBytes)]</code> on unions by default.
+However, implementing <code>IntoBytes</code> on a union type is likely sound on all
+existing Rust toolchains - it’s just that it may become unsound in the
+future. You can opt-in to <code>#[derive(IntoBytes)]</code> support on unions by
+passing the unstable <code>zerocopy_derive_union_into_bytes</code> cfg:</p>
+<div class="example-wrap"><pre class="language-shell"><code>$ RUSTFLAGS=&#39;--cfg zerocopy_derive_union_into_bytes&#39; cargo build</code></pre></div>
+<p>However, it is your responsibility to ensure that this derive is sound on
+the specific versions of the Rust toolchain you are using! We make no
+stability or soundness guarantees regarding this cfg, and may remove it at
+any point.</p>
+<p>We are actively working with Rust to stabilize the necessary language
+guarantees to support this in a forwards-compatible way, which will enable
+us to remove the cfg gate. As part of this effort, we need to know how much
+demand there is for this feature. If you would like to use <code>IntoBytes</code> on
+unions, <a href="https://github.com/google/zerocopy/discussions/1802">please let us know</a>.</p>
+<h2 id="analysis"><a class="doc-anchor" href="#analysis">§</a>Analysis</h2>
+<p><em>This section describes, roughly, the analysis performed by this derive to
+determine whether it is sound to implement <code>IntoBytes</code> for a given type.
+Unless you are modifying the implementation of this derive, or attempting to
+manually implement <code>IntoBytes</code> for a type yourself, you don’t need to read
+this section.</em></p>
+<p>If a type has the following properties, then this derive can implement
+<code>IntoBytes</code> for that type:</p>
+<ul>
+<li>If the type is a struct, its fields must be <a href="trait.IntoBytes.html" title="trait zerocopy::IntoBytes"><code>IntoBytes</code></a>. Additionally:
+<ul>
+<li>if the type is <code>repr(transparent)</code> or <code>repr(packed)</code>, it is
+<a href="trait.IntoBytes.html" title="trait zerocopy::IntoBytes"><code>IntoBytes</code></a> if its fields are <a href="trait.IntoBytes.html" title="trait zerocopy::IntoBytes"><code>IntoBytes</code></a>; else,</li>
+<li>if the type is <code>repr(C)</code> with at most one field, it is <a href="trait.IntoBytes.html" title="trait zerocopy::IntoBytes"><code>IntoBytes</code></a>
+if its field is <a href="trait.IntoBytes.html" title="trait zerocopy::IntoBytes"><code>IntoBytes</code></a>; else,</li>
+<li>if the type has no generic parameters, it is <a href="trait.IntoBytes.html" title="trait zerocopy::IntoBytes"><code>IntoBytes</code></a> if the type
+is sized and has no padding bytes; else,</li>
+<li>if the type is <code>repr(C)</code>, its fields must be <a href="trait.Unaligned.html" title="trait zerocopy::Unaligned"><code>Unaligned</code></a>.</li>
+</ul>
+</li>
+<li>If the type is an enum:
+<ul>
+<li>It must have a defined representation (<code>repr</code>s <code>C</code>, <code>u8</code>, <code>u16</code>, <code>u32</code>,
+<code>u64</code>, <code>usize</code>, <code>i8</code>, <code>i16</code>, <code>i32</code>, <code>i64</code>, or <code>isize</code>).</li>
+<li>It must have no padding bytes.</li>
+<li>Its fields must be <a href="trait.IntoBytes.html" title="trait zerocopy::IntoBytes"><code>IntoBytes</code></a>.</li>
+</ul>
+</li>
+</ul>
+<p>This analysis is subject to change. Unsafe code may <em>only</em> rely on the
+documented <a href="trait.IntoBytes.html#safety" title="trait zerocopy::IntoBytes">safety conditions</a> of <code>FromBytes</code>, and must <em>not</em> rely on the
+implementation details of this derive.</p>
+</div></details></section></div></main></body></html>

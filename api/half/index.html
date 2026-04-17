@@ -1,0 +1,101 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="A crate that provides support for half-precision 16-bit floating point types."><title>half - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="half" data-themes="" data-resource-suffix="" data-rustdoc-version="1.96.0-nightly (02c7f9bec 2026-04-10)" data-channel="nightly" data-search-js="search-b5634cc7.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../static.files/storage-41dd4d93.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-5013f961.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc mod crate"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Crate half</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../half/index.html">half</a><span class="version">2.7.1</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#serialization" title="Serialization">Serialization</a></li><li><a href="#hardware-support" title="Hardware support">Hardware support</a></li><li><a href="#cargo-features" title="Cargo Features">Cargo Features</a></li></ul><h3><a href="#modules">Crate Items</a></h3><ul class="block"><li><a href="#modules" title="Modules">Modules</a></li><li><a href="#structs" title="Structs">Structs</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1>Crate <span>half</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/half/lib.rs.html#1-283">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>A crate that provides support for half-precision 16-bit floating point types.</p>
+<p>This crate provides the <a href="struct.f16.html" title="struct half::f16"><code>f16</code></a> type, which is an implementation of the IEEE 754-2008 standard
+<a href="https://en.wikipedia.org/wiki/Half-precision_floating-point_format"><code>binary16</code></a> a.k.a “half” floating point type. This 16-bit floating point type is intended for
+efficient storage where the full range and precision of a larger floating point value is not
+required. This is especially useful for image storage formats.</p>
+<p>This crate also provides a <a href="struct.bf16.html" title="struct half::bf16"><code>bf16</code></a> type, an alternative 16-bit floating point format. The
+<a href="https://en.wikipedia.org/wiki/Bfloat16_floating-point_format"><code>bfloat16</code></a> format is a truncated IEEE 754 standard <code>binary32</code> float that preserves the
+exponent to allow the same range as <a href="https://doc.rust-lang.org/nightly/std/primitive.f32.html" title="primitive f32"><code>f32</code></a> but with only 8 bits of precision (instead of 11
+bits for <a href="struct.f16.html" title="struct half::f16"><code>f16</code></a>). See the <a href="struct.bf16.html" title="struct half::bf16"><code>bf16</code></a> type for details.</p>
+<p>Because <a href="struct.f16.html" title="struct half::f16"><code>f16</code></a> and <a href="struct.bf16.html" title="struct half::bf16"><code>bf16</code></a> are primarily for efficient storage, floating point operations such
+as addition, multiplication, etc. are not always implemented by hardware. When hardware does not
+support these operations, this crate emulates them by converting the value to
+<a href="https://doc.rust-lang.org/nightly/std/primitive.f32.html" title="primitive f32"><code>f32</code></a> before performing the operation and then back afterward.</p>
+<p>Note that conversion from <a href="https://doc.rust-lang.org/nightly/std/primitive.f32.html" title="primitive f32"><code>f32</code></a>/<a href="https://doc.rust-lang.org/nightly/std/primitive.f64.html" title="primitive f64"><code>f64</code></a> to both <a href="struct.f16.html" title="struct half::f16"><code>f16</code></a> and <a href="struct.bf16.html" title="struct half::bf16"><code>bf16</code></a> are lossy operations, and
+just as converting a <a href="https://doc.rust-lang.org/nightly/std/primitive.f64.html" title="primitive f64"><code>f64</code></a> to <a href="https://doc.rust-lang.org/nightly/std/primitive.f32.html" title="primitive f32"><code>f32</code></a> is lossy and does not have <code>Into</code>/<code>From</code> trait
+implementations, so too do these smaller types not have those trait implementations either.
+Instead, use <code>from_f32</code>/<code>from_f64</code> functions for the types in this crate. If you don’t care
+about lossy conversions and need trait conversions, use the appropriate <a href="https://crates.io/crates/num-traits"><code>num-traits</code></a>
+traits that are implemented.</p>
+<p>This crate also provides a <a href="slice/index.html" title="mod half::slice"><code>slice</code></a> module for zero-copy in-place conversions of
+<a href="https://doc.rust-lang.org/nightly/std/primitive.u16.html" title="primitive u16"><code>u16</code></a> slices to both <a href="struct.f16.html" title="struct half::f16"><code>f16</code></a> and <a href="struct.bf16.html" title="struct half::bf16"><code>bf16</code></a>, as well as efficient vectorized conversions of
+larger buffers of floating point values to and from these half formats.</p>
+<p>The crate supports <code>#[no_std]</code> when the <code>std</code> cargo feature is not enabled, so can be used in
+embedded environments without using the Rust <a href="https://doc.rust-lang.org/std/"><code>std</code></a> library. The <code>std</code> feature enables support
+for the standard library and is enabled by default, see the <a href="#cargo-features">Cargo Features</a>
+section below.</p>
+<p>A <a href="prelude/index.html" title="mod half::prelude"><code>prelude</code></a> module is provided for easy importing of available utility traits.</p>
+<h2 id="serialization"><a class="doc-anchor" href="#serialization">§</a>Serialization</h2>
+<p>When the <code>serde</code> feature is enabled, <a href="struct.f16.html" title="struct half::f16"><code>f16</code></a> and <a href="struct.bf16.html" title="struct half::bf16"><code>bf16</code></a> will be serialized as a newtype of
+<a href="https://doc.rust-lang.org/nightly/std/primitive.u16.html" title="primitive u16"><code>u16</code></a> by default. In binary formats this is ideal, as it will generally use just two bytes for
+storage. For string formats like JSON, however, this isn’t as useful, and due to design
+limitations of serde, it’s not possible for the default <code>Serialize</code> implementation to support
+different serialization for different formats.</p>
+<p>Instead, it’s up to the containter type of the floats to control how it is serialized. This can
+easily be controlled when using the derive macros using <code>#[serde(serialize_with="")]</code>
+attributes. For both <a href="struct.f16.html" title="struct half::f16"><code>f16</code></a> and <a href="struct.bf16.html" title="struct half::bf16"><code>bf16</code></a> a <code>serialize_as_f32</code> and <code>serialize_as_string</code> are
+provided for use with this attribute.</p>
+<p>Deserialization of both float types supports deserializing from the default serialization,
+strings, and <code>f32</code>/<code>f64</code> values, so no additional work is required.</p>
+<h2 id="hardware-support"><a class="doc-anchor" href="#hardware-support">§</a>Hardware support</h2>
+<p>Hardware support for these conversions and arithmetic will be used
+whenever hardware support is available—either through instrinsics or targeted assembly—although
+a nightly Rust toolchain may be required for some hardware. When hardware supports it the
+functions and traits in the <a href="slice/index.html" title="mod half::slice"><code>slice</code></a> and <a href="#"><code>vec</code></a> modules will also use vectorized
+SIMD intructions for increased efficiency.</p>
+<p>The following list details hardware support for floating point types in this crate. When using
+<code>std</code> cargo feature, runtime CPU target detection will be used. To get the most performance
+benefits, compile for specific CPU features which avoids the runtime overhead and works in a
+<code>no_std</code> environment.</p>
+<div><table><thead><tr><th>Architecture</th><th>CPU Target Feature</th><th>Notes</th></tr></thead><tbody>
+<tr><td><code>x86</code>/<code>x86_64</code></td><td><code>f16c</code></td><td>This supports conversion to/from <a href="struct.f16.html" title="struct half::f16"><code>f16</code></a> only (including vector SIMD) and does not support any <a href="struct.bf16.html" title="struct half::bf16"><code>bf16</code></a> or arithmetic operations.</td></tr>
+<tr><td><code>aarch64</code></td><td><code>fp16</code></td><td>This supports all operations on <a href="struct.f16.html" title="struct half::f16"><code>f16</code></a> only.</td></tr>
+<tr><td><code>loongarch64</code></td><td><code>lsx</code></td><td>This supports conversion to/from <a href="struct.f16.html" title="struct half::f16"><code>f16</code></a> only (including vector SIMD) and does not support any <a href="struct.bf16.html" title="struct half::bf16"><code>bf16</code></a> or arithmetic operations.</td></tr>
+</tbody></table>
+</div><h2 id="cargo-features"><a class="doc-anchor" href="#cargo-features">§</a>Cargo Features</h2>
+<p>This crate supports a number of optional cargo features. None of these features are enabled by
+default, even <code>std</code>.</p>
+<ul>
+<li>
+<p><strong><code>alloc</code></strong> — Enable use of the <a href="https://doc.rust-lang.org/alloc/"><code>alloc</code></a> crate when not using the <code>std</code> library.</p>
+<p>Among other functions, this enables the <a href="#"><code>vec</code></a> module, which contains zero-copy
+conversions for the <a href="#"><code>Vec</code></a> type. This allows fast conversion between raw <code>Vec&lt;u16&gt;</code> bits and
+<code>Vec&lt;f16&gt;</code> or <code>Vec&lt;bf16&gt;</code> arrays, and vice versa.</p>
+</li>
+<li>
+<p><strong><code>std</code></strong> — Enable features that depend on the Rust <a href="https://doc.rust-lang.org/std/"><code>std</code></a> library. This also enables the
+<code>alloc</code> feature automatically.</p>
+<p>Enabling the <code>std</code> feature enables runtime CPU feature detection of hardware support.
+Without this feature detection, harware is only used when compiler target supports them.</p>
+</li>
+<li>
+<p><strong><code>serde</code></strong> — Adds support for the <a href="https://crates.io/crates/serde"><code>serde</code></a> crate by implementing <a href="https://docs.rs/serde/*/serde/trait.Serialize.html"><code>Serialize</code></a> and
+<a href="https://docs.rs/serde/*/serde/trait.Deserialize.html"><code>Deserialize</code></a> traits for both <a href="struct.f16.html" title="struct half::f16"><code>f16</code></a> and <a href="struct.bf16.html" title="struct half::bf16"><code>bf16</code></a>.</p>
+</li>
+<li>
+<p><strong><code>num-traits</code></strong> — Adds support for the <a href="https://crates.io/crates/num-traits"><code>num-traits</code></a> crate by implementing <a href="../num_traits/cast/trait.ToPrimitive.html" title="trait num_traits::cast::ToPrimitive"><code>ToPrimitive</code></a>,
+<a href="../num_traits/cast/trait.FromPrimitive.html" title="trait num_traits::cast::FromPrimitive"><code>FromPrimitive</code></a>, <a href="../num_traits/ops/bytes/trait.ToBytes.html" title="trait num_traits::ops::bytes::ToBytes"><code>ToBytes</code></a>, <code>FromBytes</code>, <a href="../num_traits/cast/trait.AsPrimitive.html" title="trait num_traits::cast::AsPrimitive"><code>AsPrimitive</code></a>, <a href="../num_traits/trait.Num.html" title="trait num_traits::Num"><code>Num</code></a>, <a href="../num_traits/float/trait.Float.html" title="trait num_traits::float::Float"><code>Float</code></a>,
+<a href="../num_traits/float/trait.FloatCore.html" title="trait num_traits::float::FloatCore"><code>FloatCore</code></a>, <a href="../num_traits/sign/trait.Signed.html" title="trait num_traits::sign::Signed"><code>Signed</code></a>, and <a href="../num_traits/bounds/trait.Bounded.html" title="trait num_traits::bounds::Bounded"><code>Bounded</code></a> traits for both <a href="struct.f16.html" title="struct half::f16"><code>f16</code></a> and <a href="struct.bf16.html" title="struct half::bf16"><code>bf16</code></a>.</p>
+</li>
+<li>
+<p><strong><code>bytemuck</code></strong> — Adds support for the <a href="https://crates.io/crates/bytemuck"><code>bytemuck</code></a> crate by implementing <a href="https://docs.rs/bytemuck/*/bytemuck/trait.Zeroable.html"><code>Zeroable</code></a> and
+<a href="https://docs.rs/bytemuck/*bytemuck/trait.Pod.html"><code>Pod</code></a> traits for both <a href="struct.f16.html" title="struct half::f16"><code>f16</code></a> and <a href="struct.bf16.html" title="struct half::bf16"><code>bf16</code></a>.</p>
+</li>
+<li>
+<p><strong><code>rand_distr</code></strong> — Adds support for the <a href="https://crates.io/crates/rand_distr"><code>rand_distr</code></a> crate by implementing <a href="https://docs.rs/rand/*/rand/distr/trait.Distribution.html"><code>Distribution</code></a>
+and other traits for both <a href="struct.f16.html" title="struct half::f16"><code>f16</code></a> and <a href="struct.bf16.html" title="struct half::bf16"><code>bf16</code></a>.</p>
+</li>
+<li>
+<p><strong><code>rkyv</code></strong> – Enable zero-copy deserializtion with <a href="(https://crates.io/crates/rkyv)"><code>rkyv</code></a> crate.</p>
+</li>
+<li>
+<p><strong><code>aribtrary</code></strong> – Enable fuzzing support with <a href="(https://crates.io/crates/arbitrary)"><code>arbitrary</code></a> crate by implementing
+<a href="(https://crates.io/crates/arbitrary)"><code>Arbitrary</code></a> trait.</p>
+</li>
+<li>
+<p><strong><code>nightly</code></strong> – Enable nightly-only features.</p>
+</li>
+</ul>
+</div></details><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><dl class="item-table"><dt><a class="mod" href="prelude/index.html" title="mod half::prelude">prelude</a></dt><dd>A collection of the most used items and traits in this crate for easy importing.</dd><dt><a class="mod" href="slice/index.html" title="mod half::slice">slice</a></dt><dd>Contains utility functions and traits to convert between slices of <a href="https://doc.rust-lang.org/nightly/std/primitive.u16.html" title="primitive u16"><code>u16</code></a> bits and <a href="struct.f16.html" title="struct half::f16"><code>f16</code></a> or
+<a href="struct.bf16.html" title="struct half::bf16"><code>bf16</code></a> numbers.</dd></dl><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.bf16.html" title="struct half::bf16">bf16</a></dt><dd>A 16-bit floating point type implementing the <a href="https://en.wikipedia.org/wiki/Bfloat16_floating-point_format"><code>bfloat16</code></a> format.</dd><dt><a class="struct" href="struct.f16.html" title="struct half::f16">f16</a></dt><dd>A 16-bit floating point type implementing the IEEE 754-2008 standard <a href="https://en.wikipedia.org/wiki/Half-precision_floating-point_format"><code>binary16</code></a> a.k.a “half”
+format.</dd></dl></section></div></main></body></html>

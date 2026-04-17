@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ABSTRACT_WIDTH","BOOL_WIDTH"],"mod":["back","common","compact","diagnostic_filter","error","front","ir","keywords","proc","valid"],"struct":["Arena","Handle","Range","SourceLocation","Span","UniqueArena","WithSpan"],"type":["FastHashMap","FastHashSet","FastIndexMap","FastIndexSet","SpanContext"]};

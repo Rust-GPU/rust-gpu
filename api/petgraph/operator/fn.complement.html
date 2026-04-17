@@ -1,0 +1,58 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="[Generic] complement of the graph"><title>complement in petgraph::operator - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="petgraph" data-themes="" data-resource-suffix="" data-rustdoc-version="1.96.0-nightly (02c7f9bec 2026-04-10)" data-channel="nightly" data-search-js="search-b5634cc7.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="sidebar-items.js"></script><script defer src="../../static.files/main-5013f961.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc fn"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">complement</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../petgraph/index.html">petgraph</a><span class="version">0.8.3</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">complement</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#example" title="Example">Example</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="index.html">In petgraph::<wbr>operator</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">petgraph</a>::<wbr><a href="index.html">operator</a></div><h1>Function <span class="fn">complement</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/petgraph/operator.rs.html#63-83">Source</a> </span></div><pre class="rust item-decl"><code>pub fn complement&lt;N, E, Ty, Ix&gt;(
+    input: &amp;<a class="struct" href="../graph/struct.Graph.html" title="struct petgraph::graph::Graph">Graph</a>&lt;N, E, Ty, Ix&gt;,
+    output: &amp;mut <a class="struct" href="../graph/struct.Graph.html" title="struct petgraph::graph::Graph">Graph</a>&lt;N, E, Ty, Ix&gt;,
+    weight: E,
+)<div class="where">where
+    Ty: <a class="trait" href="../trait.EdgeType.html" title="trait petgraph::EdgeType">EdgeType</a>,
+    Ix: <a class="trait" href="../graph/trait.IndexType.html" title="trait petgraph::graph::IndexType">IndexType</a>,
+    E: <a class="trait" href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html" title="trait core::clone::Clone">Clone</a>,
+    N: <a class="trait" href="https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html" title="trait core::clone::Clone">Clone</a>,</div></code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>[Generic] complement of the graph</p>
+<p>Computes the graph complement of the input Graph and stores it
+in the provided empty output Graph.</p>
+<p>The function does not create self-loops.</p>
+<p>Computes in <strong>O(|V|^2*log(|V|))</strong> time (average).</p>
+<p>Returns the complement.</p>
+<h2 id="example"><a class="doc-anchor" href="#example">§</a>Example</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>petgraph::Graph;
+<span class="kw">use </span>petgraph::operator::complement;
+<span class="kw">use </span>petgraph::prelude::<span class="kw-2">*</span>;
+
+<span class="kw">let </span><span class="kw-2">mut </span>graph: Graph&lt;(),(),Directed&gt; = Graph::new();
+<span class="kw">let </span>a = graph.add_node(()); <span class="comment">// node with no weight
+</span><span class="kw">let </span>b = graph.add_node(());
+<span class="kw">let </span>c = graph.add_node(());
+<span class="kw">let </span>d = graph.add_node(());
+
+graph.extend_with_edges(<span class="kw-2">&amp;</span>[
+    (a, b),
+    (b, c),
+    (c, d),
+]);
+<span class="comment">// a ----&gt; b ----&gt; c ----&gt; d
+
+</span><span class="kw">let </span><span class="kw-2">mut </span>output: Graph&lt;(), (), Directed&gt; = Graph::new();
+
+complement(<span class="kw-2">&amp;</span>graph, <span class="kw-2">&amp;mut </span>output, ());
+
+<span class="kw">let </span><span class="kw-2">mut </span>expected_res: Graph&lt;(), (), Directed&gt; = Graph::new();
+<span class="kw">let </span>a = expected_res.add_node(());
+<span class="kw">let </span>b = expected_res.add_node(());
+<span class="kw">let </span>c = expected_res.add_node(());
+<span class="kw">let </span>d = expected_res.add_node(());
+expected_res.extend_with_edges(<span class="kw-2">&amp;</span>[
+    (a, c),
+    (a, d),
+    (b, a),
+    (b, d),
+    (c, a),
+    (c, b),
+    (d, a),
+    (d, b),
+    (d, c),
+]);
+
+<span class="kw">for </span>x <span class="kw">in </span>graph.node_indices() {
+    <span class="kw">for </span>y <span class="kw">in </span>graph.node_indices() {
+        <span class="macro">assert_eq!</span>(output.contains_edge(x, y), expected_res.contains_edge(x, y));
+    }
+}</code></pre></div></div></details></section></div></main></body></html>

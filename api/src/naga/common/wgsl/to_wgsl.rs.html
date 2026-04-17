@@ -1,0 +1,397 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/naga-29.0.1/src/common/wgsl/to_wgsl.rs`."><title>to_wgsl.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="naga" data-themes="" data-resource-suffix="" data-rustdoc-version="1.96.0-nightly (02c7f9bec 2026-04-10)" data-channel="nightly" data-search-js="search-b5634cc7.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../../static.files/src-script-813739b1.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-5013f961.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">naga/common/wgsl/</div>to_wgsl.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! Generating WGSL source code for Naga IR types.
+<a href=#2 id=2 data-nosnippet>2</a>
+<a href=#3 id=3 data-nosnippet>3</a></span><span class="kw">use </span>alloc::format;
+<a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span>alloc::string::{String, ToString};
+<a href=#5 id=5 data-nosnippet>5</a>
+<a href=#6 id=6 data-nosnippet>6</a><span class="doccomment">/// Types that can return the WGSL source representation of their
+<a href=#7 id=7 data-nosnippet>7</a>/// values as a `'static` string.
+<a href=#8 id=8 data-nosnippet>8</a>///
+<a href=#9 id=9 data-nosnippet>9</a>/// This trait is specifically for types whose WGSL forms are simple
+<a href=#10 id=10 data-nosnippet>10</a>/// enough that they can always be returned as a static string.
+<a href=#11 id=11 data-nosnippet>11</a>///
+<a href=#12 id=12 data-nosnippet>12</a>/// - If only some values have a WGSL representation, consider
+<a href=#13 id=13 data-nosnippet>13</a>///   implementing [`TryToWgsl`] instead.
+<a href=#14 id=14 data-nosnippet>14</a>///
+<a href=#15 id=15 data-nosnippet>15</a>/// - If a type's WGSL form requires dynamic formatting, so that
+<a href=#16 id=16 data-nosnippet>16</a>///   returning a `&amp;'static str` isn't feasible, consider implementing
+<a href=#17 id=17 data-nosnippet>17</a>///   [`core::fmt::Display`] on some wrapper type instead.
+<a href=#18 id=18 data-nosnippet>18</a></span><span class="kw">pub trait </span>ToWgsl: Sized {
+<a href=#19 id=19 data-nosnippet>19</a>    <span class="doccomment">/// Return WGSL source code representation of `self`.
+<a href=#20 id=20 data-nosnippet>20</a>    </span><span class="kw">fn </span>to_wgsl(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str;
+<a href=#21 id=21 data-nosnippet>21</a>}
+<a href=#22 id=22 data-nosnippet>22</a>
+<a href=#23 id=23 data-nosnippet>23</a><span class="doccomment">/// Types that may be able to return the WGSL source representation
+<a href=#24 id=24 data-nosnippet>24</a>/// for their values as a `'static` string.
+<a href=#25 id=25 data-nosnippet>25</a>///
+<a href=#26 id=26 data-nosnippet>26</a>/// This trait is specifically for types whose values are either
+<a href=#27 id=27 data-nosnippet>27</a>/// simple enough that their WGSL form can be represented a static
+<a href=#28 id=28 data-nosnippet>28</a>/// string, or aren't representable in WGSL at all.
+<a href=#29 id=29 data-nosnippet>29</a>///
+<a href=#30 id=30 data-nosnippet>30</a>/// - If all values in the type have `&amp;'static str` representations in
+<a href=#31 id=31 data-nosnippet>31</a>///   WGSL, consider implementing [`ToWgsl`] instead.
+<a href=#32 id=32 data-nosnippet>32</a>///
+<a href=#33 id=33 data-nosnippet>33</a>/// - If a type's WGSL form requires dynamic formatting, so that
+<a href=#34 id=34 data-nosnippet>34</a>///   returning a `&amp;'static str` isn't feasible, consider implementing
+<a href=#35 id=35 data-nosnippet>35</a>///   [`core::fmt::Display`] on some wrapper type instead.
+<a href=#36 id=36 data-nosnippet>36</a></span><span class="kw">pub trait </span>TryToWgsl: Sized {
+<a href=#37 id=37 data-nosnippet>37</a>    <span class="doccomment">/// Return the WGSL form of `self` as a `'static` string.
+<a href=#38 id=38 data-nosnippet>38</a>    ///
+<a href=#39 id=39 data-nosnippet>39</a>    /// If `self` doesn't have a representation in WGSL (standard or
+<a href=#40 id=40 data-nosnippet>40</a>    /// as extended by Naga), then return `None`.
+<a href=#41 id=41 data-nosnippet>41</a>    </span><span class="kw">fn </span>try_to_wgsl(<span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt;;
+<a href=#42 id=42 data-nosnippet>42</a>
+<a href=#43 id=43 data-nosnippet>43</a>    <span class="doccomment">/// What kind of WGSL thing `Self` represents.
+<a href=#44 id=44 data-nosnippet>44</a>    </span><span class="kw">const </span>DESCRIPTION: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str;
+<a href=#45 id=45 data-nosnippet>45</a>
+<a href=#46 id=46 data-nosnippet>46</a>    <span class="doccomment">/// Return the WGSL form of `self` as appropriate for diagnostics.
+<a href=#47 id=47 data-nosnippet>47</a>    ///
+<a href=#48 id=48 data-nosnippet>48</a>    /// If `self` can be expressed in WGSL, return that form as a
+<a href=#49 id=49 data-nosnippet>49</a>    /// [`String`]. Otherwise, return some representation of `self`
+<a href=#50 id=50 data-nosnippet>50</a>    /// that is appropriate for use in diagnostic messages.
+<a href=#51 id=51 data-nosnippet>51</a>    ///
+<a href=#52 id=52 data-nosnippet>52</a>    /// The default implementation of this function falls back to
+<a href=#53 id=53 data-nosnippet>53</a>    /// `self`'s [`Debug`] form.
+<a href=#54 id=54 data-nosnippet>54</a>    ///
+<a href=#55 id=55 data-nosnippet>55</a>    /// [`Debug`]: core::fmt::Debug
+<a href=#56 id=56 data-nosnippet>56</a>    </span><span class="kw">fn </span>to_wgsl_for_diagnostics(<span class="self">self</span>) -&gt; String
+<a href=#57 id=57 data-nosnippet>57</a>    <span class="kw">where
+<a href=#58 id=58 data-nosnippet>58</a>        </span><span class="self">Self</span>: core::fmt::Debug + Copy,
+<a href=#59 id=59 data-nosnippet>59</a>    {
+<a href=#60 id=60 data-nosnippet>60</a>        <span class="kw">match </span><span class="self">self</span>.try_to_wgsl() {
+<a href=#61 id=61 data-nosnippet>61</a>            <span class="prelude-val">Some</span>(static_string) =&gt; static_string.to_string(),
+<a href=#62 id=62 data-nosnippet>62</a>            <span class="prelude-val">None </span>=&gt; <span class="macro">format!</span>(<span class="string">"{{non-WGSL {} {self:?}}}"</span>, <span class="self">Self</span>::DESCRIPTION),
+<a href=#63 id=63 data-nosnippet>63</a>        }
+<a href=#64 id=64 data-nosnippet>64</a>    }
+<a href=#65 id=65 data-nosnippet>65</a>}
+<a href=#66 id=66 data-nosnippet>66</a>
+<a href=#67 id=67 data-nosnippet>67</a><span class="kw">impl </span>TryToWgsl <span class="kw">for </span><span class="kw">crate</span>::MathFunction {
+<a href=#68 id=68 data-nosnippet>68</a>    <span class="kw">const </span>DESCRIPTION: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str = <span class="string">"math function"</span>;
+<a href=#69 id=69 data-nosnippet>69</a>
+<a href=#70 id=70 data-nosnippet>70</a>    <span class="kw">fn </span>try_to_wgsl(<span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt; {
+<a href=#71 id=71 data-nosnippet>71</a>        <span class="kw">use </span><span class="kw">crate</span>::MathFunction <span class="kw">as </span>Mf;
+<a href=#72 id=72 data-nosnippet>72</a>
+<a href=#73 id=73 data-nosnippet>73</a>        <span class="prelude-val">Some</span>(<span class="kw">match </span><span class="self">self </span>{
+<a href=#74 id=74 data-nosnippet>74</a>            Mf::Abs =&gt; <span class="string">"abs"</span>,
+<a href=#75 id=75 data-nosnippet>75</a>            Mf::Min =&gt; <span class="string">"min"</span>,
+<a href=#76 id=76 data-nosnippet>76</a>            Mf::Max =&gt; <span class="string">"max"</span>,
+<a href=#77 id=77 data-nosnippet>77</a>            Mf::Clamp =&gt; <span class="string">"clamp"</span>,
+<a href=#78 id=78 data-nosnippet>78</a>            Mf::Saturate =&gt; <span class="string">"saturate"</span>,
+<a href=#79 id=79 data-nosnippet>79</a>            Mf::Cos =&gt; <span class="string">"cos"</span>,
+<a href=#80 id=80 data-nosnippet>80</a>            Mf::Cosh =&gt; <span class="string">"cosh"</span>,
+<a href=#81 id=81 data-nosnippet>81</a>            Mf::Sin =&gt; <span class="string">"sin"</span>,
+<a href=#82 id=82 data-nosnippet>82</a>            Mf::Sinh =&gt; <span class="string">"sinh"</span>,
+<a href=#83 id=83 data-nosnippet>83</a>            Mf::Tan =&gt; <span class="string">"tan"</span>,
+<a href=#84 id=84 data-nosnippet>84</a>            Mf::Tanh =&gt; <span class="string">"tanh"</span>,
+<a href=#85 id=85 data-nosnippet>85</a>            Mf::Acos =&gt; <span class="string">"acos"</span>,
+<a href=#86 id=86 data-nosnippet>86</a>            Mf::Asin =&gt; <span class="string">"asin"</span>,
+<a href=#87 id=87 data-nosnippet>87</a>            Mf::Atan =&gt; <span class="string">"atan"</span>,
+<a href=#88 id=88 data-nosnippet>88</a>            Mf::Atan2 =&gt; <span class="string">"atan2"</span>,
+<a href=#89 id=89 data-nosnippet>89</a>            Mf::Asinh =&gt; <span class="string">"asinh"</span>,
+<a href=#90 id=90 data-nosnippet>90</a>            Mf::Acosh =&gt; <span class="string">"acosh"</span>,
+<a href=#91 id=91 data-nosnippet>91</a>            Mf::Atanh =&gt; <span class="string">"atanh"</span>,
+<a href=#92 id=92 data-nosnippet>92</a>            Mf::Radians =&gt; <span class="string">"radians"</span>,
+<a href=#93 id=93 data-nosnippet>93</a>            Mf::Degrees =&gt; <span class="string">"degrees"</span>,
+<a href=#94 id=94 data-nosnippet>94</a>            Mf::Ceil =&gt; <span class="string">"ceil"</span>,
+<a href=#95 id=95 data-nosnippet>95</a>            Mf::Floor =&gt; <span class="string">"floor"</span>,
+<a href=#96 id=96 data-nosnippet>96</a>            Mf::Round =&gt; <span class="string">"round"</span>,
+<a href=#97 id=97 data-nosnippet>97</a>            Mf::Fract =&gt; <span class="string">"fract"</span>,
+<a href=#98 id=98 data-nosnippet>98</a>            Mf::Trunc =&gt; <span class="string">"trunc"</span>,
+<a href=#99 id=99 data-nosnippet>99</a>            Mf::Modf =&gt; <span class="string">"modf"</span>,
+<a href=#100 id=100 data-nosnippet>100</a>            Mf::Frexp =&gt; <span class="string">"frexp"</span>,
+<a href=#101 id=101 data-nosnippet>101</a>            Mf::Ldexp =&gt; <span class="string">"ldexp"</span>,
+<a href=#102 id=102 data-nosnippet>102</a>            Mf::Exp =&gt; <span class="string">"exp"</span>,
+<a href=#103 id=103 data-nosnippet>103</a>            Mf::Exp2 =&gt; <span class="string">"exp2"</span>,
+<a href=#104 id=104 data-nosnippet>104</a>            Mf::Log =&gt; <span class="string">"log"</span>,
+<a href=#105 id=105 data-nosnippet>105</a>            Mf::Log2 =&gt; <span class="string">"log2"</span>,
+<a href=#106 id=106 data-nosnippet>106</a>            Mf::Pow =&gt; <span class="string">"pow"</span>,
+<a href=#107 id=107 data-nosnippet>107</a>            Mf::Dot =&gt; <span class="string">"dot"</span>,
+<a href=#108 id=108 data-nosnippet>108</a>            Mf::Dot4I8Packed =&gt; <span class="string">"dot4I8Packed"</span>,
+<a href=#109 id=109 data-nosnippet>109</a>            Mf::Dot4U8Packed =&gt; <span class="string">"dot4U8Packed"</span>,
+<a href=#110 id=110 data-nosnippet>110</a>            Mf::Cross =&gt; <span class="string">"cross"</span>,
+<a href=#111 id=111 data-nosnippet>111</a>            Mf::Distance =&gt; <span class="string">"distance"</span>,
+<a href=#112 id=112 data-nosnippet>112</a>            Mf::Length =&gt; <span class="string">"length"</span>,
+<a href=#113 id=113 data-nosnippet>113</a>            Mf::Normalize =&gt; <span class="string">"normalize"</span>,
+<a href=#114 id=114 data-nosnippet>114</a>            Mf::FaceForward =&gt; <span class="string">"faceForward"</span>,
+<a href=#115 id=115 data-nosnippet>115</a>            Mf::Reflect =&gt; <span class="string">"reflect"</span>,
+<a href=#116 id=116 data-nosnippet>116</a>            Mf::Refract =&gt; <span class="string">"refract"</span>,
+<a href=#117 id=117 data-nosnippet>117</a>            Mf::Sign =&gt; <span class="string">"sign"</span>,
+<a href=#118 id=118 data-nosnippet>118</a>            Mf::Fma =&gt; <span class="string">"fma"</span>,
+<a href=#119 id=119 data-nosnippet>119</a>            Mf::Mix =&gt; <span class="string">"mix"</span>,
+<a href=#120 id=120 data-nosnippet>120</a>            Mf::Step =&gt; <span class="string">"step"</span>,
+<a href=#121 id=121 data-nosnippet>121</a>            Mf::SmoothStep =&gt; <span class="string">"smoothstep"</span>,
+<a href=#122 id=122 data-nosnippet>122</a>            Mf::Sqrt =&gt; <span class="string">"sqrt"</span>,
+<a href=#123 id=123 data-nosnippet>123</a>            Mf::InverseSqrt =&gt; <span class="string">"inverseSqrt"</span>,
+<a href=#124 id=124 data-nosnippet>124</a>            Mf::Transpose =&gt; <span class="string">"transpose"</span>,
+<a href=#125 id=125 data-nosnippet>125</a>            Mf::Determinant =&gt; <span class="string">"determinant"</span>,
+<a href=#126 id=126 data-nosnippet>126</a>            Mf::QuantizeToF16 =&gt; <span class="string">"quantizeToF16"</span>,
+<a href=#127 id=127 data-nosnippet>127</a>            Mf::CountTrailingZeros =&gt; <span class="string">"countTrailingZeros"</span>,
+<a href=#128 id=128 data-nosnippet>128</a>            Mf::CountLeadingZeros =&gt; <span class="string">"countLeadingZeros"</span>,
+<a href=#129 id=129 data-nosnippet>129</a>            Mf::CountOneBits =&gt; <span class="string">"countOneBits"</span>,
+<a href=#130 id=130 data-nosnippet>130</a>            Mf::ReverseBits =&gt; <span class="string">"reverseBits"</span>,
+<a href=#131 id=131 data-nosnippet>131</a>            Mf::ExtractBits =&gt; <span class="string">"extractBits"</span>,
+<a href=#132 id=132 data-nosnippet>132</a>            Mf::InsertBits =&gt; <span class="string">"insertBits"</span>,
+<a href=#133 id=133 data-nosnippet>133</a>            Mf::FirstTrailingBit =&gt; <span class="string">"firstTrailingBit"</span>,
+<a href=#134 id=134 data-nosnippet>134</a>            Mf::FirstLeadingBit =&gt; <span class="string">"firstLeadingBit"</span>,
+<a href=#135 id=135 data-nosnippet>135</a>            Mf::Pack4x8snorm =&gt; <span class="string">"pack4x8snorm"</span>,
+<a href=#136 id=136 data-nosnippet>136</a>            Mf::Pack4x8unorm =&gt; <span class="string">"pack4x8unorm"</span>,
+<a href=#137 id=137 data-nosnippet>137</a>            Mf::Pack2x16snorm =&gt; <span class="string">"pack2x16snorm"</span>,
+<a href=#138 id=138 data-nosnippet>138</a>            Mf::Pack2x16unorm =&gt; <span class="string">"pack2x16unorm"</span>,
+<a href=#139 id=139 data-nosnippet>139</a>            Mf::Pack2x16float =&gt; <span class="string">"pack2x16float"</span>,
+<a href=#140 id=140 data-nosnippet>140</a>            Mf::Pack4xI8 =&gt; <span class="string">"pack4xI8"</span>,
+<a href=#141 id=141 data-nosnippet>141</a>            Mf::Pack4xU8 =&gt; <span class="string">"pack4xU8"</span>,
+<a href=#142 id=142 data-nosnippet>142</a>            Mf::Pack4xI8Clamp =&gt; <span class="string">"pack4xI8Clamp"</span>,
+<a href=#143 id=143 data-nosnippet>143</a>            Mf::Pack4xU8Clamp =&gt; <span class="string">"pack4xU8Clamp"</span>,
+<a href=#144 id=144 data-nosnippet>144</a>            Mf::Unpack4x8snorm =&gt; <span class="string">"unpack4x8snorm"</span>,
+<a href=#145 id=145 data-nosnippet>145</a>            Mf::Unpack4x8unorm =&gt; <span class="string">"unpack4x8unorm"</span>,
+<a href=#146 id=146 data-nosnippet>146</a>            Mf::Unpack2x16snorm =&gt; <span class="string">"unpack2x16snorm"</span>,
+<a href=#147 id=147 data-nosnippet>147</a>            Mf::Unpack2x16unorm =&gt; <span class="string">"unpack2x16unorm"</span>,
+<a href=#148 id=148 data-nosnippet>148</a>            Mf::Unpack2x16float =&gt; <span class="string">"unpack2x16float"</span>,
+<a href=#149 id=149 data-nosnippet>149</a>            Mf::Unpack4xI8 =&gt; <span class="string">"unpack4xI8"</span>,
+<a href=#150 id=150 data-nosnippet>150</a>            Mf::Unpack4xU8 =&gt; <span class="string">"unpack4xU8"</span>,
+<a href=#151 id=151 data-nosnippet>151</a>
+<a href=#152 id=152 data-nosnippet>152</a>            <span class="comment">// Non-standard math functions.
+<a href=#153 id=153 data-nosnippet>153</a>            </span>Mf::Inverse | Mf::Outer =&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
+<a href=#154 id=154 data-nosnippet>154</a>        })
+<a href=#155 id=155 data-nosnippet>155</a>    }
+<a href=#156 id=156 data-nosnippet>156</a>}
+<a href=#157 id=157 data-nosnippet>157</a>
+<a href=#158 id=158 data-nosnippet>158</a><span class="kw">impl </span>TryToWgsl <span class="kw">for </span><span class="kw">crate</span>::BuiltIn {
+<a href=#159 id=159 data-nosnippet>159</a>    <span class="kw">const </span>DESCRIPTION: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str = <span class="string">"builtin value"</span>;
+<a href=#160 id=160 data-nosnippet>160</a>
+<a href=#161 id=161 data-nosnippet>161</a>    <span class="kw">fn </span>try_to_wgsl(<span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt; {
+<a href=#162 id=162 data-nosnippet>162</a>        <span class="kw">use </span><span class="kw">crate</span>::BuiltIn <span class="kw">as </span>Bi;
+<a href=#163 id=163 data-nosnippet>163</a>        <span class="prelude-val">Some</span>(<span class="kw">match </span><span class="self">self </span>{
+<a href=#164 id=164 data-nosnippet>164</a>            Bi::Position { .. } =&gt; <span class="string">"position"</span>,
+<a href=#165 id=165 data-nosnippet>165</a>            Bi::ViewIndex =&gt; <span class="string">"view_index"</span>,
+<a href=#166 id=166 data-nosnippet>166</a>            Bi::InstanceIndex =&gt; <span class="string">"instance_index"</span>,
+<a href=#167 id=167 data-nosnippet>167</a>            Bi::VertexIndex =&gt; <span class="string">"vertex_index"</span>,
+<a href=#168 id=168 data-nosnippet>168</a>            Bi::ClipDistance =&gt; <span class="string">"clip_distances"</span>,
+<a href=#169 id=169 data-nosnippet>169</a>            Bi::FragDepth =&gt; <span class="string">"frag_depth"</span>,
+<a href=#170 id=170 data-nosnippet>170</a>            Bi::FrontFacing =&gt; <span class="string">"front_facing"</span>,
+<a href=#171 id=171 data-nosnippet>171</a>            Bi::PrimitiveIndex =&gt; <span class="string">"primitive_index"</span>,
+<a href=#172 id=172 data-nosnippet>172</a>            Bi::DrawIndex =&gt; <span class="string">"draw_index"</span>,
+<a href=#173 id=173 data-nosnippet>173</a>            Bi::Barycentric { perspective: <span class="bool-val">true </span>} =&gt; <span class="string">"barycentric"</span>,
+<a href=#174 id=174 data-nosnippet>174</a>            Bi::Barycentric { perspective: <span class="bool-val">false </span>} =&gt; <span class="string">"barycentric_no_perspective"</span>,
+<a href=#175 id=175 data-nosnippet>175</a>            Bi::SampleIndex =&gt; <span class="string">"sample_index"</span>,
+<a href=#176 id=176 data-nosnippet>176</a>            Bi::SampleMask =&gt; <span class="string">"sample_mask"</span>,
+<a href=#177 id=177 data-nosnippet>177</a>            Bi::GlobalInvocationId =&gt; <span class="string">"global_invocation_id"</span>,
+<a href=#178 id=178 data-nosnippet>178</a>            Bi::LocalInvocationId =&gt; <span class="string">"local_invocation_id"</span>,
+<a href=#179 id=179 data-nosnippet>179</a>            Bi::LocalInvocationIndex =&gt; <span class="string">"local_invocation_index"</span>,
+<a href=#180 id=180 data-nosnippet>180</a>            Bi::WorkGroupId =&gt; <span class="string">"workgroup_id"</span>,
+<a href=#181 id=181 data-nosnippet>181</a>            Bi::NumWorkGroups =&gt; <span class="string">"num_workgroups"</span>,
+<a href=#182 id=182 data-nosnippet>182</a>            Bi::NumSubgroups =&gt; <span class="string">"num_subgroups"</span>,
+<a href=#183 id=183 data-nosnippet>183</a>            Bi::SubgroupId =&gt; <span class="string">"subgroup_id"</span>,
+<a href=#184 id=184 data-nosnippet>184</a>            Bi::SubgroupSize =&gt; <span class="string">"subgroup_size"</span>,
+<a href=#185 id=185 data-nosnippet>185</a>            Bi::SubgroupInvocationId =&gt; <span class="string">"subgroup_invocation_id"</span>,
+<a href=#186 id=186 data-nosnippet>186</a>
+<a href=#187 id=187 data-nosnippet>187</a>            <span class="comment">// Non-standard built-ins.
+<a href=#188 id=188 data-nosnippet>188</a>            </span>Bi::MeshTaskSize =&gt; <span class="string">"mesh_task_size"</span>,
+<a href=#189 id=189 data-nosnippet>189</a>            Bi::TriangleIndices =&gt; <span class="string">"triangle_indices"</span>,
+<a href=#190 id=190 data-nosnippet>190</a>            Bi::LineIndices =&gt; <span class="string">"line_indices"</span>,
+<a href=#191 id=191 data-nosnippet>191</a>            Bi::PointIndex =&gt; <span class="string">"point_index"</span>,
+<a href=#192 id=192 data-nosnippet>192</a>            Bi::Vertices =&gt; <span class="string">"vertices"</span>,
+<a href=#193 id=193 data-nosnippet>193</a>            Bi::Primitives =&gt; <span class="string">"primitives"</span>,
+<a href=#194 id=194 data-nosnippet>194</a>            Bi::VertexCount =&gt; <span class="string">"vertex_count"</span>,
+<a href=#195 id=195 data-nosnippet>195</a>            Bi::PrimitiveCount =&gt; <span class="string">"primitive_count"</span>,
+<a href=#196 id=196 data-nosnippet>196</a>            Bi::CullPrimitive =&gt; <span class="string">"cull_primitive"</span>,
+<a href=#197 id=197 data-nosnippet>197</a>
+<a href=#198 id=198 data-nosnippet>198</a>            Bi::RayInvocationId =&gt; <span class="string">"ray_invocation_id"</span>,
+<a href=#199 id=199 data-nosnippet>199</a>            Bi::NumRayInvocations =&gt; <span class="string">"num_ray_invocations"</span>,
+<a href=#200 id=200 data-nosnippet>200</a>            Bi::InstanceCustomData =&gt; <span class="string">"instance_custom_data"</span>,
+<a href=#201 id=201 data-nosnippet>201</a>            Bi::GeometryIndex =&gt; <span class="string">"geometry_index"</span>,
+<a href=#202 id=202 data-nosnippet>202</a>            Bi::WorldRayOrigin =&gt; <span class="string">"world_ray_origin"</span>,
+<a href=#203 id=203 data-nosnippet>203</a>            Bi::WorldRayDirection =&gt; <span class="string">"world_ray_direction"</span>,
+<a href=#204 id=204 data-nosnippet>204</a>            Bi::ObjectRayOrigin =&gt; <span class="string">"object_ray_origin"</span>,
+<a href=#205 id=205 data-nosnippet>205</a>            Bi::ObjectRayDirection =&gt; <span class="string">"object_ray_direction"</span>,
+<a href=#206 id=206 data-nosnippet>206</a>            Bi::RayTmin =&gt; <span class="string">"ray_t_min"</span>,
+<a href=#207 id=207 data-nosnippet>207</a>            Bi::RayTCurrentMax =&gt; <span class="string">"ray_t_current_max"</span>,
+<a href=#208 id=208 data-nosnippet>208</a>            Bi::ObjectToWorld =&gt; <span class="string">"object_to_world"</span>,
+<a href=#209 id=209 data-nosnippet>209</a>            Bi::WorldToObject =&gt; <span class="string">"world_to_object"</span>,
+<a href=#210 id=210 data-nosnippet>210</a>            Bi::HitKind =&gt; <span class="string">"hit_kind"</span>,
+<a href=#211 id=211 data-nosnippet>211</a>
+<a href=#212 id=212 data-nosnippet>212</a>            Bi::BaseInstance
+<a href=#213 id=213 data-nosnippet>213</a>            | Bi::BaseVertex
+<a href=#214 id=214 data-nosnippet>214</a>            | Bi::CullDistance
+<a href=#215 id=215 data-nosnippet>215</a>            | Bi::PointSize
+<a href=#216 id=216 data-nosnippet>216</a>            | Bi::PointCoord
+<a href=#217 id=217 data-nosnippet>217</a>            | Bi::WorkGroupSize =&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
+<a href=#218 id=218 data-nosnippet>218</a>        })
+<a href=#219 id=219 data-nosnippet>219</a>    }
+<a href=#220 id=220 data-nosnippet>220</a>}
+<a href=#221 id=221 data-nosnippet>221</a>
+<a href=#222 id=222 data-nosnippet>222</a><span class="kw">impl </span>ToWgsl <span class="kw">for </span><span class="kw">crate</span>::Interpolation {
+<a href=#223 id=223 data-nosnippet>223</a>    <span class="kw">fn </span>to_wgsl(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str {
+<a href=#224 id=224 data-nosnippet>224</a>        <span class="kw">match </span><span class="self">self </span>{
+<a href=#225 id=225 data-nosnippet>225</a>            <span class="kw">crate</span>::Interpolation::Perspective =&gt; <span class="string">"perspective"</span>,
+<a href=#226 id=226 data-nosnippet>226</a>            <span class="kw">crate</span>::Interpolation::Linear =&gt; <span class="string">"linear"</span>,
+<a href=#227 id=227 data-nosnippet>227</a>            <span class="kw">crate</span>::Interpolation::Flat =&gt; <span class="string">"flat"</span>,
+<a href=#228 id=228 data-nosnippet>228</a>            <span class="kw">crate</span>::Interpolation::PerVertex =&gt; <span class="string">"per_vertex"</span>,
+<a href=#229 id=229 data-nosnippet>229</a>        }
+<a href=#230 id=230 data-nosnippet>230</a>    }
+<a href=#231 id=231 data-nosnippet>231</a>}
+<a href=#232 id=232 data-nosnippet>232</a>
+<a href=#233 id=233 data-nosnippet>233</a><span class="kw">impl </span>ToWgsl <span class="kw">for </span><span class="kw">crate</span>::Sampling {
+<a href=#234 id=234 data-nosnippet>234</a>    <span class="kw">fn </span>to_wgsl(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str {
+<a href=#235 id=235 data-nosnippet>235</a>        <span class="kw">match </span><span class="self">self </span>{
+<a href=#236 id=236 data-nosnippet>236</a>            <span class="kw">crate</span>::Sampling::Center =&gt; <span class="string">"center"</span>,
+<a href=#237 id=237 data-nosnippet>237</a>            <span class="kw">crate</span>::Sampling::Centroid =&gt; <span class="string">"centroid"</span>,
+<a href=#238 id=238 data-nosnippet>238</a>            <span class="kw">crate</span>::Sampling::Sample =&gt; <span class="string">"sample"</span>,
+<a href=#239 id=239 data-nosnippet>239</a>            <span class="kw">crate</span>::Sampling::First =&gt; <span class="string">"first"</span>,
+<a href=#240 id=240 data-nosnippet>240</a>            <span class="kw">crate</span>::Sampling::Either =&gt; <span class="string">"either"</span>,
+<a href=#241 id=241 data-nosnippet>241</a>        }
+<a href=#242 id=242 data-nosnippet>242</a>    }
+<a href=#243 id=243 data-nosnippet>243</a>}
+<a href=#244 id=244 data-nosnippet>244</a>
+<a href=#245 id=245 data-nosnippet>245</a><span class="kw">impl </span>ToWgsl <span class="kw">for </span><span class="kw">crate</span>::StorageFormat {
+<a href=#246 id=246 data-nosnippet>246</a>    <span class="kw">fn </span>to_wgsl(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str {
+<a href=#247 id=247 data-nosnippet>247</a>        <span class="kw">use </span><span class="kw">crate</span>::StorageFormat <span class="kw">as </span>Sf;
+<a href=#248 id=248 data-nosnippet>248</a>
+<a href=#249 id=249 data-nosnippet>249</a>        <span class="kw">match </span><span class="self">self </span>{
+<a href=#250 id=250 data-nosnippet>250</a>            Sf::R8Unorm =&gt; <span class="string">"r8unorm"</span>,
+<a href=#251 id=251 data-nosnippet>251</a>            Sf::R8Snorm =&gt; <span class="string">"r8snorm"</span>,
+<a href=#252 id=252 data-nosnippet>252</a>            Sf::R8Uint =&gt; <span class="string">"r8uint"</span>,
+<a href=#253 id=253 data-nosnippet>253</a>            Sf::R8Sint =&gt; <span class="string">"r8sint"</span>,
+<a href=#254 id=254 data-nosnippet>254</a>            Sf::R16Uint =&gt; <span class="string">"r16uint"</span>,
+<a href=#255 id=255 data-nosnippet>255</a>            Sf::R16Sint =&gt; <span class="string">"r16sint"</span>,
+<a href=#256 id=256 data-nosnippet>256</a>            Sf::R16Float =&gt; <span class="string">"r16float"</span>,
+<a href=#257 id=257 data-nosnippet>257</a>            Sf::Rg8Unorm =&gt; <span class="string">"rg8unorm"</span>,
+<a href=#258 id=258 data-nosnippet>258</a>            Sf::Rg8Snorm =&gt; <span class="string">"rg8snorm"</span>,
+<a href=#259 id=259 data-nosnippet>259</a>            Sf::Rg8Uint =&gt; <span class="string">"rg8uint"</span>,
+<a href=#260 id=260 data-nosnippet>260</a>            Sf::Rg8Sint =&gt; <span class="string">"rg8sint"</span>,
+<a href=#261 id=261 data-nosnippet>261</a>            Sf::R32Uint =&gt; <span class="string">"r32uint"</span>,
+<a href=#262 id=262 data-nosnippet>262</a>            Sf::R32Sint =&gt; <span class="string">"r32sint"</span>,
+<a href=#263 id=263 data-nosnippet>263</a>            Sf::R32Float =&gt; <span class="string">"r32float"</span>,
+<a href=#264 id=264 data-nosnippet>264</a>            Sf::Rg16Uint =&gt; <span class="string">"rg16uint"</span>,
+<a href=#265 id=265 data-nosnippet>265</a>            Sf::Rg16Sint =&gt; <span class="string">"rg16sint"</span>,
+<a href=#266 id=266 data-nosnippet>266</a>            Sf::Rg16Float =&gt; <span class="string">"rg16float"</span>,
+<a href=#267 id=267 data-nosnippet>267</a>            Sf::Rgba8Unorm =&gt; <span class="string">"rgba8unorm"</span>,
+<a href=#268 id=268 data-nosnippet>268</a>            Sf::Rgba8Snorm =&gt; <span class="string">"rgba8snorm"</span>,
+<a href=#269 id=269 data-nosnippet>269</a>            Sf::Rgba8Uint =&gt; <span class="string">"rgba8uint"</span>,
+<a href=#270 id=270 data-nosnippet>270</a>            Sf::Rgba8Sint =&gt; <span class="string">"rgba8sint"</span>,
+<a href=#271 id=271 data-nosnippet>271</a>            Sf::Bgra8Unorm =&gt; <span class="string">"bgra8unorm"</span>,
+<a href=#272 id=272 data-nosnippet>272</a>            Sf::Rgb10a2Uint =&gt; <span class="string">"rgb10a2uint"</span>,
+<a href=#273 id=273 data-nosnippet>273</a>            Sf::Rgb10a2Unorm =&gt; <span class="string">"rgb10a2unorm"</span>,
+<a href=#274 id=274 data-nosnippet>274</a>            Sf::Rg11b10Ufloat =&gt; <span class="string">"rg11b10ufloat"</span>,
+<a href=#275 id=275 data-nosnippet>275</a>            Sf::R64Uint =&gt; <span class="string">"r64uint"</span>,
+<a href=#276 id=276 data-nosnippet>276</a>            Sf::Rg32Uint =&gt; <span class="string">"rg32uint"</span>,
+<a href=#277 id=277 data-nosnippet>277</a>            Sf::Rg32Sint =&gt; <span class="string">"rg32sint"</span>,
+<a href=#278 id=278 data-nosnippet>278</a>            Sf::Rg32Float =&gt; <span class="string">"rg32float"</span>,
+<a href=#279 id=279 data-nosnippet>279</a>            Sf::Rgba16Uint =&gt; <span class="string">"rgba16uint"</span>,
+<a href=#280 id=280 data-nosnippet>280</a>            Sf::Rgba16Sint =&gt; <span class="string">"rgba16sint"</span>,
+<a href=#281 id=281 data-nosnippet>281</a>            Sf::Rgba16Float =&gt; <span class="string">"rgba16float"</span>,
+<a href=#282 id=282 data-nosnippet>282</a>            Sf::Rgba32Uint =&gt; <span class="string">"rgba32uint"</span>,
+<a href=#283 id=283 data-nosnippet>283</a>            Sf::Rgba32Sint =&gt; <span class="string">"rgba32sint"</span>,
+<a href=#284 id=284 data-nosnippet>284</a>            Sf::Rgba32Float =&gt; <span class="string">"rgba32float"</span>,
+<a href=#285 id=285 data-nosnippet>285</a>            Sf::R16Unorm =&gt; <span class="string">"r16unorm"</span>,
+<a href=#286 id=286 data-nosnippet>286</a>            Sf::R16Snorm =&gt; <span class="string">"r16snorm"</span>,
+<a href=#287 id=287 data-nosnippet>287</a>            Sf::Rg16Unorm =&gt; <span class="string">"rg16unorm"</span>,
+<a href=#288 id=288 data-nosnippet>288</a>            Sf::Rg16Snorm =&gt; <span class="string">"rg16snorm"</span>,
+<a href=#289 id=289 data-nosnippet>289</a>            Sf::Rgba16Unorm =&gt; <span class="string">"rgba16unorm"</span>,
+<a href=#290 id=290 data-nosnippet>290</a>            Sf::Rgba16Snorm =&gt; <span class="string">"rgba16snorm"</span>,
+<a href=#291 id=291 data-nosnippet>291</a>        }
+<a href=#292 id=292 data-nosnippet>292</a>    }
+<a href=#293 id=293 data-nosnippet>293</a>}
+<a href=#294 id=294 data-nosnippet>294</a>
+<a href=#295 id=295 data-nosnippet>295</a><span class="kw">impl </span>TryToWgsl <span class="kw">for </span><span class="kw">crate</span>::Scalar {
+<a href=#296 id=296 data-nosnippet>296</a>    <span class="kw">const </span>DESCRIPTION: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str = <span class="string">"scalar type"</span>;
+<a href=#297 id=297 data-nosnippet>297</a>
+<a href=#298 id=298 data-nosnippet>298</a>    <span class="kw">fn </span>try_to_wgsl(<span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt; {
+<a href=#299 id=299 data-nosnippet>299</a>        <span class="kw">use </span><span class="kw">crate</span>::Scalar;
+<a href=#300 id=300 data-nosnippet>300</a>
+<a href=#301 id=301 data-nosnippet>301</a>        <span class="prelude-val">Some</span>(<span class="kw">match </span><span class="self">self </span>{
+<a href=#302 id=302 data-nosnippet>302</a>            Scalar::F16 =&gt; <span class="string">"f16"</span>,
+<a href=#303 id=303 data-nosnippet>303</a>            Scalar::F32 =&gt; <span class="string">"f32"</span>,
+<a href=#304 id=304 data-nosnippet>304</a>            Scalar::F64 =&gt; <span class="string">"f64"</span>,
+<a href=#305 id=305 data-nosnippet>305</a>            Scalar::I32 =&gt; <span class="string">"i32"</span>,
+<a href=#306 id=306 data-nosnippet>306</a>            Scalar::U32 =&gt; <span class="string">"u32"</span>,
+<a href=#307 id=307 data-nosnippet>307</a>            Scalar::I64 =&gt; <span class="string">"i64"</span>,
+<a href=#308 id=308 data-nosnippet>308</a>            Scalar::U64 =&gt; <span class="string">"u64"</span>,
+<a href=#309 id=309 data-nosnippet>309</a>            Scalar::BOOL =&gt; <span class="string">"bool"</span>,
+<a href=#310 id=310 data-nosnippet>310</a>            <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
+<a href=#311 id=311 data-nosnippet>311</a>        })
+<a href=#312 id=312 data-nosnippet>312</a>    }
+<a href=#313 id=313 data-nosnippet>313</a>
+<a href=#314 id=314 data-nosnippet>314</a>    <span class="kw">fn </span>to_wgsl_for_diagnostics(<span class="self">self</span>) -&gt; String {
+<a href=#315 id=315 data-nosnippet>315</a>        <span class="kw">match </span><span class="self">self</span>.try_to_wgsl() {
+<a href=#316 id=316 data-nosnippet>316</a>            <span class="prelude-val">Some</span>(static_string) =&gt; static_string.to_string(),
+<a href=#317 id=317 data-nosnippet>317</a>            <span class="prelude-val">None </span>=&gt; <span class="kw">match </span><span class="self">self</span>.kind {
+<a href=#318 id=318 data-nosnippet>318</a>                <span class="kw">crate</span>::ScalarKind::Sint
+<a href=#319 id=319 data-nosnippet>319</a>                | <span class="kw">crate</span>::ScalarKind::Uint
+<a href=#320 id=320 data-nosnippet>320</a>                | <span class="kw">crate</span>::ScalarKind::Float
+<a href=#321 id=321 data-nosnippet>321</a>                | <span class="kw">crate</span>::ScalarKind::Bool =&gt; <span class="macro">format!</span>(<span class="string">"{{non-WGSL scalar {self:?}}}"</span>),
+<a href=#322 id=322 data-nosnippet>322</a>                <span class="kw">crate</span>::ScalarKind::AbstractInt =&gt; <span class="string">"{AbstractInt}"</span>.to_string(),
+<a href=#323 id=323 data-nosnippet>323</a>                <span class="kw">crate</span>::ScalarKind::AbstractFloat =&gt; <span class="string">"{AbstractFloat}"</span>.to_string(),
+<a href=#324 id=324 data-nosnippet>324</a>            },
+<a href=#325 id=325 data-nosnippet>325</a>        }
+<a href=#326 id=326 data-nosnippet>326</a>    }
+<a href=#327 id=327 data-nosnippet>327</a>}
+<a href=#328 id=328 data-nosnippet>328</a>
+<a href=#329 id=329 data-nosnippet>329</a><span class="kw">impl </span>ToWgsl <span class="kw">for </span><span class="kw">crate</span>::CooperativeRole {
+<a href=#330 id=330 data-nosnippet>330</a>    <span class="kw">fn </span>to_wgsl(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str {
+<a href=#331 id=331 data-nosnippet>331</a>        <span class="kw">match </span><span class="self">self </span>{
+<a href=#332 id=332 data-nosnippet>332</a>            <span class="self">Self</span>::A =&gt; <span class="string">"A"</span>,
+<a href=#333 id=333 data-nosnippet>333</a>            <span class="self">Self</span>::B =&gt; <span class="string">"B"</span>,
+<a href=#334 id=334 data-nosnippet>334</a>            <span class="self">Self</span>::C =&gt; <span class="string">"C"</span>,
+<a href=#335 id=335 data-nosnippet>335</a>        }
+<a href=#336 id=336 data-nosnippet>336</a>    }
+<a href=#337 id=337 data-nosnippet>337</a>}
+<a href=#338 id=338 data-nosnippet>338</a>
+<a href=#339 id=339 data-nosnippet>339</a><span class="kw">impl </span>ToWgsl <span class="kw">for </span><span class="kw">crate</span>::ImageDimension {
+<a href=#340 id=340 data-nosnippet>340</a>    <span class="kw">fn </span>to_wgsl(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str {
+<a href=#341 id=341 data-nosnippet>341</a>        <span class="kw">match </span><span class="self">self </span>{
+<a href=#342 id=342 data-nosnippet>342</a>            <span class="self">Self</span>::D1 =&gt; <span class="string">"1d"</span>,
+<a href=#343 id=343 data-nosnippet>343</a>            <span class="self">Self</span>::D2 =&gt; <span class="string">"2d"</span>,
+<a href=#344 id=344 data-nosnippet>344</a>            <span class="self">Self</span>::D3 =&gt; <span class="string">"3d"</span>,
+<a href=#345 id=345 data-nosnippet>345</a>            <span class="self">Self</span>::Cube =&gt; <span class="string">"cube"</span>,
+<a href=#346 id=346 data-nosnippet>346</a>        }
+<a href=#347 id=347 data-nosnippet>347</a>    }
+<a href=#348 id=348 data-nosnippet>348</a>}
+<a href=#349 id=349 data-nosnippet>349</a>
+<a href=#350 id=350 data-nosnippet>350</a><span class="doccomment">/// Return the WGSL address space and access mode strings for `space`.
+<a href=#351 id=351 data-nosnippet>351</a>///
+<a href=#352 id=352 data-nosnippet>352</a>/// Why don't we implement [`ToWgsl`] for [`AddressSpace`]?
+<a href=#353 id=353 data-nosnippet>353</a>///
+<a href=#354 id=354 data-nosnippet>354</a>/// In WGSL, the full form of a pointer type is `ptr&lt;AS, T, AM&gt;`, where:
+<a href=#355 id=355 data-nosnippet>355</a>/// - `AS` is the address space,
+<a href=#356 id=356 data-nosnippet>356</a>/// - `T` is the store type, and
+<a href=#357 id=357 data-nosnippet>357</a>/// - `AM` is the access mode.
+<a href=#358 id=358 data-nosnippet>358</a>///
+<a href=#359 id=359 data-nosnippet>359</a>/// Since the type `T` intervenes between the address space and the
+<a href=#360 id=360 data-nosnippet>360</a>/// access mode, there isn't really any individual WGSL grammar
+<a href=#361 id=361 data-nosnippet>361</a>/// production that corresponds to an [`AddressSpace`], so [`ToWgsl`]
+<a href=#362 id=362 data-nosnippet>362</a>/// is too simple-minded for this case.
+<a href=#363 id=363 data-nosnippet>363</a>///
+<a href=#364 id=364 data-nosnippet>364</a>/// Furthermore, we want to write `var&lt;AS[, AM]&gt;` for most address
+<a href=#365 id=365 data-nosnippet>365</a>/// spaces, but we want to just write `var foo: T` for handle types.
+<a href=#366 id=366 data-nosnippet>366</a>///
+<a href=#367 id=367 data-nosnippet>367</a>/// [`AddressSpace`]: crate::AddressSpace
+<a href=#368 id=368 data-nosnippet>368</a></span><span class="kw">pub const fn </span>address_space_str(
+<a href=#369 id=369 data-nosnippet>369</a>    space: <span class="kw">crate</span>::AddressSpace,
+<a href=#370 id=370 data-nosnippet>370</a>) -&gt; (<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt;, <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt;) {
+<a href=#371 id=371 data-nosnippet>371</a>    <span class="kw">use </span><span class="kw">crate</span>::AddressSpace <span class="kw">as </span>As;
+<a href=#372 id=372 data-nosnippet>372</a>
+<a href=#373 id=373 data-nosnippet>373</a>    (
+<a href=#374 id=374 data-nosnippet>374</a>        <span class="prelude-val">Some</span>(<span class="kw">match </span>space {
+<a href=#375 id=375 data-nosnippet>375</a>            As::Private =&gt; <span class="string">"private"</span>,
+<a href=#376 id=376 data-nosnippet>376</a>            As::Uniform =&gt; <span class="string">"uniform"</span>,
+<a href=#377 id=377 data-nosnippet>377</a>            As::Storage { access } =&gt; {
+<a href=#378 id=378 data-nosnippet>378</a>                <span class="kw">if </span>access.contains(<span class="kw">crate</span>::StorageAccess::ATOMIC) {
+<a href=#379 id=379 data-nosnippet>379</a>                    <span class="kw">return </span>(<span class="prelude-val">Some</span>(<span class="string">"storage"</span>), <span class="prelude-val">Some</span>(<span class="string">"atomic"</span>));
+<a href=#380 id=380 data-nosnippet>380</a>                } <span class="kw">else if </span>access.contains(<span class="kw">crate</span>::StorageAccess::STORE) {
+<a href=#381 id=381 data-nosnippet>381</a>                    <span class="kw">return </span>(<span class="prelude-val">Some</span>(<span class="string">"storage"</span>), <span class="prelude-val">Some</span>(<span class="string">"read_write"</span>));
+<a href=#382 id=382 data-nosnippet>382</a>                } <span class="kw">else </span>{
+<a href=#383 id=383 data-nosnippet>383</a>                    <span class="string">"storage"
+<a href=#384 id=384 data-nosnippet>384</a>                </span>}
+<a href=#385 id=385 data-nosnippet>385</a>            }
+<a href=#386 id=386 data-nosnippet>386</a>            As::Immediate =&gt; <span class="string">"immediate"</span>,
+<a href=#387 id=387 data-nosnippet>387</a>            As::WorkGroup =&gt; <span class="string">"workgroup"</span>,
+<a href=#388 id=388 data-nosnippet>388</a>            As::Handle =&gt; <span class="kw">return </span>(<span class="prelude-val">None</span>, <span class="prelude-val">None</span>),
+<a href=#389 id=389 data-nosnippet>389</a>            As::Function =&gt; <span class="string">"function"</span>,
+<a href=#390 id=390 data-nosnippet>390</a>            As::TaskPayload =&gt; <span class="string">"task_payload"</span>,
+<a href=#391 id=391 data-nosnippet>391</a>            As::IncomingRayPayload =&gt; <span class="string">"incoming_ray_payload"</span>,
+<a href=#392 id=392 data-nosnippet>392</a>            As::RayPayload =&gt; <span class="string">"ray_payload"</span>,
+<a href=#393 id=393 data-nosnippet>393</a>        }),
+<a href=#394 id=394 data-nosnippet>394</a>        <span class="prelude-val">None</span>,
+<a href=#395 id=395 data-nosnippet>395</a>    )
+<a href=#396 id=396 data-nosnippet>396</a>}
+</code></pre></div></section></main></body></html>

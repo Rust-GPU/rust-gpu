@@ -1,9 +1,9 @@
 (function() {
-    const implementors = Object.fromEntries([["zerocopy",[]]]);
+    const implementors = Object.fromEntries([["half",[["impl <a class=\"trait\" href=\"zerocopy/trait.TryFromBytes.html\" title=\"trait zerocopy::TryFromBytes\">TryFromBytes</a> for <a class=\"struct\" href=\"half/struct.bf16.html\" title=\"struct half::bf16\">bf16</a><div class=\"where\">where\n    <a class=\"primitive\" href=\"https://doc.rust-lang.org/nightly/core/primitive.u16.html\">u16</a>: <a class=\"trait\" href=\"zerocopy/trait.TryFromBytes.html\" title=\"trait zerocopy::TryFromBytes\">TryFromBytes</a>,</div>",0],["impl <a class=\"trait\" href=\"zerocopy/trait.TryFromBytes.html\" title=\"trait zerocopy::TryFromBytes\">TryFromBytes</a> for <a class=\"struct\" href=\"half/struct.f16.html\" title=\"struct half::f16\">f16</a><div class=\"where\">where\n    <a class=\"primitive\" href=\"https://doc.rust-lang.org/nightly/core/primitive.u16.html\">u16</a>: <a class=\"trait\" href=\"zerocopy/trait.TryFromBytes.html\" title=\"trait zerocopy::TryFromBytes\">TryFromBytes</a>,</div>",0]]],["half",[["impl <a class=\"trait\" href=\"zerocopy/trait.TryFromBytes.html\" title=\"trait zerocopy::TryFromBytes\">TryFromBytes</a> for <a class=\"struct\" href=\"half/struct.bf16.html\" title=\"struct half::bf16\">bf16</a><div class=\"where\">where\n    <a class=\"primitive\" href=\"https://doc.rust-lang.org/nightly/std/primitive.u16.html\">u16</a>: <a class=\"trait\" href=\"zerocopy/trait.TryFromBytes.html\" title=\"trait zerocopy::TryFromBytes\">TryFromBytes</a>,</div>",0],["impl <a class=\"trait\" href=\"zerocopy/trait.TryFromBytes.html\" title=\"trait zerocopy::TryFromBytes\">TryFromBytes</a> for <a class=\"struct\" href=\"half/struct.f16.html\" title=\"struct half::f16\">f16</a><div class=\"where\">where\n    <a class=\"primitive\" href=\"https://doc.rust-lang.org/nightly/std/primitive.u16.html\">u16</a>: <a class=\"trait\" href=\"zerocopy/trait.TryFromBytes.html\" title=\"trait zerocopy::TryFromBytes\">TryFromBytes</a>,</div>",0]]],["zerocopy",[]]]);
     if (window.register_implementors) {
         window.register_implementors(implementors);
     } else {
         window.pending_implementors = implementors;
     }
 })()
-//{"start":59,"fragment_lengths":[15]}
+//{"start":59,"fragment_lengths":[955,954,16]}

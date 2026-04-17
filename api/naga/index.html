@@ -1,0 +1,63 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Naga can be used to translate source code written in one shading language to another."><title>naga - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="naga" data-themes="" data-resource-suffix="" data-rustdoc-version="1.96.0-nightly (02c7f9bec 2026-04-10)" data-channel="nightly" data-search-js="search-b5634cc7.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../static.files/storage-41dd4d93.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-5013f961.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc mod crate"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Crate naga</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../naga/index.html">naga</a><span class="version">29.0.1</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#example" title="Example">Example</a></li></ul><h3><a href="#modules">Crate Items</a></h3><ul class="block"><li><a href="#modules" title="Modules">Modules</a></li><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#constants" title="Constants">Constants</a></li><li><a href="#types" title="Type Aliases">Type Aliases</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1>Crate <span>naga</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/naga/lib.rs.html#1-160">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Naga can be used to translate source code written in one shading language to another.</p>
+<h2 id="example"><a class="doc-anchor" href="#example">§</a>Example</h2>
+<p>The following example translates WGSL to GLSL.
+It requires the features <code>"wgsl-in"</code> and <code>"glsl-out"</code> to be enabled.</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">let </span>wgsl_source = <span class="string">"
+@fragment
+fn main_fs() -&gt; @location(0) vec4&lt;f32&gt; {
+    return vec4&lt;f32&gt;(1.0, 1.0, 1.0, 1.0);
+}
+"</span>;
+
+<span class="comment">// Parse the source into a Module.
+</span><span class="kw">let </span>module: naga::Module = naga::front::wgsl::parse_str(wgsl_source)<span class="question-mark">?</span>;
+
+<span class="comment">// Validate the module.
+// Validation can be made less restrictive by changing the ValidationFlags.
+</span><span class="kw">let </span>module_info: naga::valid::ModuleInfo =
+    naga::valid::Validator::new(
+        naga::valid::ValidationFlags::all(),
+        naga::valid::Capabilities::all(),
+    )
+    .subgroup_stages(naga::valid::ShaderStages::all())
+    .subgroup_operations(naga::valid::SubgroupOperationSet::all())
+    .validate(<span class="kw-2">&amp;</span>module)<span class="question-mark">?</span>;
+
+<span class="comment">// Translate the module.
+</span><span class="kw">use </span>naga::back::glsl;
+<span class="kw">let </span><span class="kw-2">mut </span>glsl_source = String::new();
+glsl::Writer::new(
+    <span class="kw-2">&amp;mut </span>glsl_source,
+    <span class="kw-2">&amp;</span>module,
+    <span class="kw-2">&amp;</span>module_info,
+    <span class="kw-2">&amp;</span>glsl::Options::default(),
+    <span class="kw-2">&amp;</span>glsl::PipelineOptions {
+        entry_point: <span class="string">"main_fs"</span>.into(),
+        shader_stage: naga::ShaderStage::Fragment,
+        multiview: <span class="prelude-val">None</span>,
+    },
+    naga::proc::BoundsCheckPolicies::default(),
+)<span class="question-mark">?</span>.write()<span class="question-mark">?</span>;
+
+<span class="macro">assert_eq!</span>(glsl_source, <span class="string">"\
+#version 310 es
+
+precision highp float;
+precision highp int;
+
+layout(location = 0) out vec4 _fs2p_location0;
+
+void main() {
+    _fs2p_location0 = vec4(1.0, 1.0, 1.0, 1.0);
+    return;
+}
+
+"</span>);
+</code></pre></div></div></details><h2 id="reexports" class="section-header">Re-exports<a href="#reexports" class="anchor">§</a></h2><dl class="item-table reexports"><dt><code>pub use <a class="mod" href="ir/index.html" title="mod naga::ir">ir</a>::*;</code></dt></dl><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><dl class="item-table"><dt><a class="mod" href="back/index.html" title="mod naga::back">back</a></dt><dd>Backend functions that export shader <a href="ir/struct.Module.html" title="struct naga::ir::Module"><code>Module</code></a>s into binary and text formats.</dd><dt><a class="mod" href="common/index.html" title="mod naga::common">common</a></dt><dd>Code common to the front and backends for specific languages.</dd><dt><a class="mod" href="compact/index.html" title="mod naga::compact">compact</a></dt><dt><a class="mod" href="diagnostic_filter/index.html" title="mod naga::diagnostic_filter">diagnostic_<wbr>filter</a></dt><dd><a href="diagnostic_filter/struct.DiagnosticFilter.html" title="struct naga::diagnostic_filter::DiagnosticFilter"><code>DiagnosticFilter</code></a>s and supporting functionality.</dd><dt><a class="mod" href="error/index.html" title="mod naga::error">error</a></dt><dt><a class="mod" href="front/index.html" title="mod naga::front">front</a></dt><dd>Frontend parsers that consume binary and text shaders and load them into <a href="ir/struct.Module.html" title="struct naga::ir::Module"><code>Module</code></a>s.</dd><dt><a class="mod" href="ir/index.html" title="mod naga::ir">ir</a></dt><dd>The Intermediate Representation shared by all frontends and backends.</dd><dt><a class="mod" href="keywords/index.html" title="mod naga::keywords">keywords</a></dt><dd>Lists of reserved keywords for each shading language with a <a href="front/index.html" title="mod naga::front">frontend</a> or <a href="back/index.html" title="mod naga::back">backend</a>.</dd><dt><a class="mod" href="proc/index.html" title="mod naga::proc">proc</a></dt><dd><a href="ir/struct.Module.html" title="struct naga::ir::Module"><code>Module</code></a> processing functionality.</dd><dt><a class="mod" href="valid/index.html" title="mod naga::valid">valid</a></dt><dd>Shader validator.</dd></dl><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.Arena.html" title="struct naga::Arena">Arena</a></dt><dd>An arena holding some kind of component (e.g., type, constant,
+instruction, etc.) that can be referenced.</dd><dt><a class="struct" href="struct.Handle.html" title="struct naga::Handle">Handle</a></dt><dd>A strongly typed reference to an arena item.</dd><dt><a class="struct" href="struct.Range.html" title="struct naga::Range">Range</a></dt><dd>A strongly typed range of handles.</dd><dt><a class="struct" href="struct.SourceLocation.html" title="struct naga::SourceLocation">Source<wbr>Location</a></dt><dd>A human-readable representation for a span, tailored for text source.</dd><dt><a class="struct" href="struct.Span.html" title="struct naga::Span">Span</a></dt><dd>A source code span, used for error reporting.</dd><dt><a class="struct" href="struct.UniqueArena.html" title="struct naga::UniqueArena">Unique<wbr>Arena</a></dt><dd>An arena whose elements are guaranteed to be unique.</dd><dt><a class="struct" href="struct.WithSpan.html" title="struct naga::WithSpan">With<wbr>Span</a></dt><dd>Wrapper class for <a href="https://doc.rust-lang.org/nightly/core/error/trait.Error.html" title="trait core::error::Error"><code>Error</code></a>, augmenting it with a list of <a href="type.SpanContext.html" title="type naga::SpanContext"><code>SpanContext</code></a>s.</dd></dl><h2 id="constants" class="section-header">Constants<a href="#constants" class="anchor">§</a></h2><dl class="item-table"><dt><a class="constant" href="constant.ABSTRACT_WIDTH.html" title="constant naga::ABSTRACT_WIDTH">ABSTRACT_<wbr>WIDTH</a></dt><dd>Width of abstract types, in bytes.</dd><dt><a class="constant" href="constant.BOOL_WIDTH.html" title="constant naga::BOOL_WIDTH">BOOL_<wbr>WIDTH</a></dt><dd>Width of a boolean type, in bytes.</dd></dl><h2 id="types" class="section-header">Type Aliases<a href="#types" class="anchor">§</a></h2><dl class="item-table"><dt><a class="type" href="type.FastHashMap.html" title="type naga::FastHashMap">Fast<wbr>Hash<wbr>Map</a></dt><dd>Hash map that is faster but not resilient to DoS attacks.
+(Similar to rustc_hash::FxHashMap but using hashbrown::HashMap instead of alloc::collections::HashMap.)
+To construct a new instance: <code>FastHashMap::default()</code></dd><dt><a class="type" href="type.FastHashSet.html" title="type naga::FastHashSet">Fast<wbr>Hash<wbr>Set</a></dt><dd>Hash set that is faster but not resilient to DoS attacks.
+(Similar to rustc_hash::FxHashSet but using hashbrown::HashSet instead of alloc::collections::HashMap.)</dd><dt><a class="type" href="type.FastIndexMap.html" title="type naga::FastIndexMap">Fast<wbr>Index<wbr>Map</a></dt><dd>Insertion-order-preserving hash map (<code>IndexMap&lt;K, V&gt;</code>), but with the same
+hasher as <code>FastHashMap&lt;K, V&gt;</code> (faster but not resilient to DoS attacks).</dd><dt><a class="type" href="type.FastIndexSet.html" title="type naga::FastIndexSet">Fast<wbr>Index<wbr>Set</a></dt><dd>Insertion-order-preserving hash set (<code>IndexSet&lt;K&gt;</code>), but with the same
+hasher as <code>FastHashSet&lt;K&gt;</code> (faster but not resilient to DoS attacks).</dd><dt><a class="type" href="type.SpanContext.html" title="type naga::SpanContext">Span<wbr>Context</a></dt><dd>A source code span together with “context”, a user-readable description of what part of the error it refers to.</dd></dl></section></div></main></body></html>
