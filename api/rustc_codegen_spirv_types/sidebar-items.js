@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["SPIRV_TARGET_PREFIX","a"],"enum":["Capability","ModuleResult","TargetError","TargetSpecVersion"],"fn":["query_rustc_version"],"struct":["CompileResult","SpirvTarget","TargetSpec"]};
+window.SIDEBAR_ITEMS = {"constant":["SPIRV_ARCH","SPIRV_TARGET_PREFIX","a"],"enum":["Capability","ModuleResult","TargetError","TargetSpecVersion"],"fn":["query_rustc_version"],"struct":["CompileResult","SpirvTarget","TargetSpec"]};

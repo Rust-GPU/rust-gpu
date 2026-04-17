@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["__rustc_codegen_backend"]};
+window.SIDEBAR_ITEMS = {"fn":["__rustc_codegen_backend"],"mod":["target"]};

@@ -1,0 +1,9 @@
+(function() {
+    const implementors = Object.fromEntries([["rustc_codegen_spirv",[["impl DynSend for <a class=\"enum\" href=\"rustc_codegen_spirv/target/enum.SpirvTarget.html\" title=\"enum rustc_codegen_spirv::target::SpirvTarget\">SpirvTarget</a>",0,1,["rustc_codegen_spirv::target::SpirvTarget"]],["impl DynSend for <a class=\"enum\" href=\"rustc_codegen_spirv/target/enum.TargetError.html\" title=\"enum rustc_codegen_spirv::target::TargetError\">TargetError</a>",0,1,["rustc_codegen_spirv::target::TargetError"]],["impl DynSend for <a class=\"struct\" href=\"rustc_codegen_spirv/target/struct.OpenGLTarget.html\" title=\"struct rustc_codegen_spirv::target::OpenGLTarget\">OpenGLTarget</a>",0,1,["rustc_codegen_spirv::target::OpenGLTarget"]],["impl DynSend for <a class=\"struct\" href=\"rustc_codegen_spirv/target/struct.SpirvVersion.html\" title=\"struct rustc_codegen_spirv::target::SpirvVersion\">SpirvVersion</a>",0,1,["rustc_codegen_spirv::target::SpirvVersion"]],["impl DynSend for <a class=\"struct\" href=\"rustc_codegen_spirv/target/struct.UniversalTarget.html\" title=\"struct rustc_codegen_spirv::target::UniversalTarget\">UniversalTarget</a>",0,1,["rustc_codegen_spirv::target::UniversalTarget"]],["impl DynSend for <a class=\"struct\" href=\"rustc_codegen_spirv/target/struct.Version.html\" title=\"struct rustc_codegen_spirv::target::Version\">Version</a>",0,1,["rustc_codegen_spirv::target::Version"]],["impl DynSend for <a class=\"struct\" href=\"rustc_codegen_spirv/target/struct.VulkanTarget.html\" title=\"struct rustc_codegen_spirv::target::VulkanTarget\">VulkanTarget</a>",0,1,["rustc_codegen_spirv::target::VulkanTarget"]]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":59,"fragment_lengths":[1593]}
