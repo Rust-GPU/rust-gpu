@@ -2429,8 +2429,12 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         let src_pointee_ty = self.lookup_type(ptr_pointee);
 
         // *[T; N] -> *RuntimeArray<T>
-        if let SpirvType::Array { element: elem_ty, .. } = src_pointee_ty
-            && let SpirvType::RuntimeArray { element: rt_elem_ty } = dst_pointee_ty
+        if let SpirvType::Array {
+            element: elem_ty, ..
+        } = src_pointee_ty
+            && let SpirvType::RuntimeArray {
+                element: rt_elem_ty,
+            } = dst_pointee_ty
             && elem_ty == rt_elem_ty
         {
             let zero = self.constant_u32(self.span(), 0).def(self);
