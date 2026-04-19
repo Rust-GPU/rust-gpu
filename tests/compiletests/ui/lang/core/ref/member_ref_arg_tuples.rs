@@ -1,8 +1,4 @@
-// FIXME(eddyb) this is like `member_ref_arg`, but testing the error messages
-// in some broken cases - this test should eventually pass, but for now
-// we care more that the error messages do not regress too much.
-
-// build-fail
+// build-pass
 // normalize-stderr-test     "ref/member_ref_arg-broken\.[^`]*" -> "ref/member_ref_arg-broken"
 // normalize-stderr-test     "38\[%38\]" -> "$$ID[%$$ID]"
 
@@ -37,6 +33,7 @@ fn h(xyz: (&u32, &u32, &u32)) -> (u32, u32, u32) {
 // instructions, but the extra nesting here stops them dead in their tracks
 // (they're also not really the right solution for this problem, such composites
 // should just never exist by-value, and `qptr` may very well get rid of them).
+// update : this now works but idealy it should be fixed by `qptr` but for now w'll use `destructure_composites`
 #[inline(never)]
 fn h_newtyped(xyz: ((&u32, &u32, &u32),)) -> (u32, u32, u32) {
     (*xyz.0.0, *xyz.0.1, *xyz.0.2)
