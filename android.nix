@@ -9,9 +9,9 @@
 # (you can also replace `cargo apk build` with `cargo apk run` to launch it,
 # via `adb`, into either the Android Emulator, or a physical Android device)
 
-let
-  pkgs = import <nixpkgs> {};
-in with pkgs; mkShell rec {
+{ pkgs, rustToolchain, ... }:
+
+with pkgs; mkShell rec {
   # Workaround for https://github.com/NixOS/nixpkgs/issues/60919.
   # NOTE(eddyb) needed only in debug mode (warnings about needing optimizations
   # turn into errors due to `-Werror`, for at least `spirv-tools-sys`).
@@ -20,15 +20,17 @@ in with pkgs; mkShell rec {
   # Allow cargo to download crates (even inside `nix-shell --pure`).
   SSL_CERT_FILE = "${cacert}/etc/ssl/certs/ca-bundle.crt";
 
-  nativeBuildInputs = [ rustup cargo-apk jdk ];
+  nativeBuildInputs = [ rustToolchain cargo-apk jdk ];
 
-  ANDROID_SDK_ROOT = let
-    androidComposition = androidenv.composeAndroidPackages {
-      abiVersions = [ "arm64-v8a" "x86_64" ];
-      includeNDK = true;
-      platformVersions = [ "30" ];
-    };
-  in "${androidComposition.androidsdk}/libexec/android-sdk";
+  ANDROID_SDK_ROOT =
+    let
+      androidComposition = androidenv.composeAndroidPackages {
+        abiVersions = [ "arm64-v8a" "x86_64" ];
+        includeNDK = true;
+        platformVersions = [ "30" ];
+      };
+    in
+    "${androidComposition.androidsdk}/libexec/android-sdk";
 
   ANDROID_NDK_ROOT = "${ANDROID_SDK_ROOT}/ndk-bundle";
 }
