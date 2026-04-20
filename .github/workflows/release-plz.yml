@@ -51,7 +51,15 @@ jobs:
     steps:
       - *checkout
       - *install-rust
-      - name: Run release-plz
+      - name: release-plz update
+        uses: release-plz/action@v0.5
+        with:
+          command: update
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: update difftest Cargo.lock
+        run: cargo fetch --manifest-path=tests/difftests/tests/Cargo.toml
+      - name: release-plz release-pr
         uses: release-plz/action@v0.5
         with:
           command: release-pr
