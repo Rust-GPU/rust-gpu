@@ -11,7 +11,7 @@ in with pkgs; stdenv.mkDerivation rec {
   # Allow cargo to download crates (even inside `nix-shell --pure`).
   SSL_CERT_FILE = "${cacert}/etc/ssl/certs/ca-bundle.crt";
 
-  nativeBuildInputs = [ rustup ];
+  nativeBuildInputs = [ rustup spirv-tools ];
   buildInputs = [ cargo-nextest ];
 
   # Runtime dependencies (for the example runners).
