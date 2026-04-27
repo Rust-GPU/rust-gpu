@@ -56,22 +56,7 @@ where
     }
 
     pub fn run(self) -> anyhow::Result<Vec<Vec<u8>>> {
-        let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
-            #[cfg(target_os = "linux")]
-            backends: wgpu::Backends::VULKAN,
-            #[cfg(not(target_os = "linux"))]
-            backends: wgpu::Backends::PRIMARY,
-            flags: Default::default(),
-            memory_budget_thresholds: Default::default(),
-            backend_options: wgpu::BackendOptions {
-                #[cfg(target_os = "windows")]
-                dx12: wgpu::Dx12BackendOptions {
-                    shader_compiler: wgpu::Dx12Compiler::StaticDxc,
-                    ..Default::default()
-                },
-                ..Default::default()
-            },
-        });
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle());
         let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
             power_preference: wgpu::PowerPreference::HighPerformance,
             compatible_surface: None,
@@ -80,9 +65,9 @@ where
         .context("Failed to find a suitable GPU adapter")?;
         let (device, queue) = block_on(adapter.request_device(&wgpu::DeviceDescriptor {
             label: Some("wgpu Device"),
-            required_features: wgpu::Features::EXPERIMENTAL_PASSTHROUGH_SHADERS | self.features,
+            required_features: wgpu::Features::PASSTHROUGH_SHADERS | self.features,
             required_limits: wgpu::Limits {
-                max_push_constant_size: 128,
+                max_immediate_size: 128,
                 ..wgpu::Limits::default()
             },
             experimental_features: unsafe { ExperimentalFeatures::enabled() },
@@ -96,8 +81,8 @@ where
             &device,
             &device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Pipeline Layout"),
-                bind_group_layouts: &[&device.create_bind_group_layout(
-                    &wgpu::BindGroupLayoutDescriptor {
+                bind_group_layouts: &[Some(
+                    &device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                         label: Some("Bind Group Layout"),
                         entries: &buffers
                             .iter()
@@ -125,16 +110,13 @@ where
                                 count: None,
                             })
                             .collect::<Vec<_>>(),
-                    },
+                    }),
                 )],
-                push_constant_ranges: self
+                immediate_size: self
                     .push_constant
                     .as_ref()
-                    .map(|data| wgpu::PushConstantRange {
-                        stages: wgpu::ShaderStages::COMPUTE,
-                        range: 0..data.len() as u32,
-                    })
-                    .as_slice(),
+                    .map(|data| data.len() as u32)
+                    .unwrap_or(0),
             }),
         )?;
 
@@ -203,7 +185,7 @@ where
             pass.set_pipeline(&pipeline);
             pass.set_bind_group(0, &bind_group, &[]);
             if let Some(push_constant) = self.push_constant {
-                pass.set_push_constants(0, &push_constant);
+                pass.set_immediates(0, &push_constant);
             }
             pass.dispatch_workgroups(self.dispatch[0], self.dispatch[1], self.dispatch[2]);
         }
