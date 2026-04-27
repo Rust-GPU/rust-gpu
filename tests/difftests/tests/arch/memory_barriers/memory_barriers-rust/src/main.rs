@@ -1,7 +1,5 @@
 use difftest::config::Config;
-use difftest::scaffold::compute::{
-    BufferConfig, BufferUsage, RustComputeShader, WgpuComputeTestMultiBuffer,
-};
+use difftest::scaffold::compute::{BufferConfig, BufferUsage, RustComputeShader, WgpuComputeTest};
 
 fn main() {
     let config = Config::from_path(std::env::args().nth(1).unwrap()).unwrap();
@@ -10,7 +8,7 @@ fn main() {
     let initial_data: Vec<u32> = (0..64).collect();
     let initial_bytes: Vec<u8> = initial_data.iter().flat_map(|&x| x.to_ne_bytes()).collect();
 
-    let test = WgpuComputeTestMultiBuffer::new(
+    let test = WgpuComputeTest::new(
         RustComputeShader::default(),
         [1, 1, 1],
         vec![
