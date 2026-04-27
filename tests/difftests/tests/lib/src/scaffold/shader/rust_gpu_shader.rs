@@ -83,16 +83,15 @@ impl WgpuShader for RustComputeShader {
         let module = if self.passthrough {
             unsafe {
                 device.create_shader_module_passthrough(wgpu::ShaderModuleDescriptorPassthrough {
-                    entry_point: entry_point.clone(),
                     label: Some("Rust-GPU Compute Shader"),
                     num_workgroups: (0, 0, 0),
-                    runtime_checks: Default::default(),
                     spirv: Some(Cow::Owned(shader_words)),
                     dxil: None,
                     msl: None,
                     hlsl: None,
                     glsl: None,
                     wgsl: None,
+                    metallib: None,
                 })
             }
         } else {
