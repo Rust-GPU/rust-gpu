@@ -7,4 +7,4 @@ pub use ash;
 pub use ash_runner::AshBackend;
 pub use backend::{BufferConfig, BufferUsage, ComputeBackend, ComputeShaderTest, ComputeTest};
 pub use wgpu;
-pub use wgpu_runner::WgpuComputeTestMultiBuffer;
+pub use wgpu_runner::WgpuComputeTest;

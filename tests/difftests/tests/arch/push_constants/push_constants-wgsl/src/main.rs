@@ -1,8 +1,6 @@
 use difftest::config::Config;
 use difftest::scaffold::compute::wgpu::Features;
-use difftest::scaffold::compute::{
-    BufferConfig, BufferUsage, WgpuComputeTestMultiBuffer, WgslComputeShader,
-};
+use difftest::scaffold::compute::{BufferConfig, BufferUsage, WgpuComputeTest, WgslComputeShader};
 
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
@@ -31,7 +29,7 @@ fn main() {
         count: num_elements as u32,
     };
 
-    let test = WgpuComputeTestMultiBuffer::new(
+    let test = WgpuComputeTest::new(
         WgslComputeShader::default(),
         [4, 1, 1], // 256 / 64 = 4 workgroups
         vec![

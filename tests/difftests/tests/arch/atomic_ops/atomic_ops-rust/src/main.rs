@@ -1,7 +1,5 @@
 use difftest::config::Config;
-use difftest::scaffold::compute::{
-    BufferConfig, BufferUsage, RustComputeShader, WgpuComputeTestMultiBuffer,
-};
+use difftest::scaffold::compute::{BufferConfig, BufferUsage, RustComputeShader, WgpuComputeTest};
 
 fn main() {
     let config = Config::from_path(std::env::args().nth(1).unwrap()).unwrap();
@@ -23,7 +21,7 @@ fn main() {
         },
     ];
 
-    let test = WgpuComputeTestMultiBuffer::new(
+    let test = WgpuComputeTest::new(
         RustComputeShader::default(),
         [1, 1, 1], // Single workgroup with 32 threads
         buffers,
