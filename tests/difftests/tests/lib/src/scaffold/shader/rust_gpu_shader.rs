@@ -7,47 +7,36 @@ use std::{env, fs};
 
 /// A compute shader written in Rust compiled with spirv-builder.
 pub struct RustComputeShader {
-    pub path: PathBuf,
-    pub target: String,
-    pub capabilities: Vec<spirv_builder::Capability>,
+    pub builder: SpirvBuilder,
 }
 
 impl RustComputeShader {
-    pub fn new<P: Into<PathBuf>>(path: P) -> Self {
-        Self {
-            path: path.into(),
-            target: "spirv-unknown-vulkan1.1".to_string(),
-            capabilities: Vec::new(),
-        }
+    pub fn new(path: impl Into<PathBuf>) -> Self {
+        Self::with_target(path, "spirv-unknown-vulkan1.3")
     }
 
-    pub fn with_target<P: Into<PathBuf>>(path: P, target: impl Into<String>) -> Self {
+    pub fn with_target(path: impl Into<PathBuf>, target: impl Into<String>) -> Self {
         Self {
-            path: path.into(),
-            target: target.into(),
-            capabilities: Vec::new(),
+            builder: SpirvBuilder::new(path.into(), target)
+                .release(true)
+                .multimodule(false)
+                .shader_panic_strategy(spirv_builder::ShaderPanicStrategy::SilentExit)
+                .preserve_bindings(true),
         }
     }
 
     pub fn with_capability(mut self, capability: spirv_builder::Capability) -> Self {
-        self.capabilities.push(capability);
+        self.builder.capabilities.push(capability);
         self
     }
 }
 
 impl SpirvShader for RustComputeShader {
     fn spirv_bytes(&self) -> anyhow::Result<(Vec<u8>, String)> {
-        let mut builder = SpirvBuilder::new(&self.path, &self.target)
-            .release(true)
-            .multimodule(false)
-            .shader_panic_strategy(spirv_builder::ShaderPanicStrategy::SilentExit)
-            .preserve_bindings(true);
-
-        for capability in &self.capabilities {
-            builder = builder.capability(*capability);
-        }
-
-        let artifact = builder.build().context("SpirvBuilder::build() failed")?;
+        let artifact = self
+            .builder
+            .build()
+            .context("SpirvBuilder::build() failed")?;
 
         if artifact.entry_points.len() != 1 {
             anyhow::bail!(
