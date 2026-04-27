@@ -4,10 +4,12 @@ use spirv_builder::{ModuleResult, SpirvBuilder};
 use std::borrow::Cow;
 use std::path::PathBuf;
 use std::{env, fs};
+use wgpu::ShaderSource;
 
 /// A compute shader written in Rust compiled with spirv-builder.
 pub struct RustComputeShader {
     pub builder: SpirvBuilder,
+    pub passthrough: bool,
 }
 
 impl RustComputeShader {
@@ -22,12 +24,20 @@ impl RustComputeShader {
                 .multimodule(false)
                 .shader_panic_strategy(spirv_builder::ShaderPanicStrategy::SilentExit)
                 .preserve_bindings(true),
+            passthrough: false,
         }
     }
 
     pub fn with_capability(mut self, capability: spirv_builder::Capability) -> Self {
         self.builder.capabilities.push(capability);
         self
+    }
+
+    pub fn passthrough(self) -> Self {
+        Self {
+            passthrough: true,
+            ..self
+        }
     }
 }
 
@@ -70,18 +80,25 @@ impl WgpuShader for RustComputeShader {
             anyhow::bail!("SPIR-V binary length is not a multiple of 4");
         }
         let shader_words: Vec<u32> = bytemuck::cast_slice(&shader_bytes).to_vec();
-        let module = unsafe {
-            device.create_shader_module_passthrough(wgpu::ShaderModuleDescriptorPassthrough {
-                entry_point: entry_point.clone(),
-                label: Some("Compute Shader"),
-                num_workgroups: (0, 0, 0),
-                runtime_checks: Default::default(),
-                spirv: Some(Cow::Owned(shader_words)),
-                dxil: None,
-                msl: None,
-                hlsl: None,
-                glsl: None,
-                wgsl: None,
+        let module = if self.passthrough {
+            unsafe {
+                device.create_shader_module_passthrough(wgpu::ShaderModuleDescriptorPassthrough {
+                    entry_point: entry_point.clone(),
+                    label: Some("Rust-GPU Compute Shader"),
+                    num_workgroups: (0, 0, 0),
+                    runtime_checks: Default::default(),
+                    spirv: Some(Cow::Owned(shader_words)),
+                    dxil: None,
+                    msl: None,
+                    hlsl: None,
+                    glsl: None,
+                    wgsl: None,
+                })
+            }
+        } else {
+            device.create_shader_module(wgpu::ShaderModuleDescriptor {
+                label: Some("Rust-GPU Compute Shader"),
+                source: ShaderSource::SpirV(Cow::Owned(shader_words)),
             })
         };
         let pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
