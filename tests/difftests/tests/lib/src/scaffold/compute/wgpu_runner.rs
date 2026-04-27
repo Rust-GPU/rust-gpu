@@ -7,7 +7,7 @@ use futures::executor::block_on;
 use wgpu::{ExperimentalFeatures, util::DeviceExt};
 
 /// More flexible compute test that supports multiple buffers.
-pub struct WgpuComputeTestMultiBuffer<S> {
+pub struct WgpuComputeTest<S> {
     pub features: wgpu::Features,
     pub shader: S,
     pub dispatch: [u32; 3],
@@ -15,7 +15,7 @@ pub struct WgpuComputeTestMultiBuffer<S> {
     pub push_constant: Option<Vec<u8>>,
 }
 
-impl<S> WgpuComputeTestMultiBuffer<S>
+impl<S> WgpuComputeTest<S>
 where
     S: WgpuShader,
 {
