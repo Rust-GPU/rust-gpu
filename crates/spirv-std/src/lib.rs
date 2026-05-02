@@ -92,6 +92,7 @@ pub use macros::{debug_printf, debug_printfln};
 
 pub mod arch;
 pub mod byte_addressable_buffer;
+pub mod cooperative_matrix;
 pub mod debug_printf;
 pub mod float;
 pub mod image;

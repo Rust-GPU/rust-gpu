@@ -623,7 +623,8 @@ impl<'tcx> CodegenCx<'tcx> {
             | SpirvType::SampledImage { .. }
             | SpirvType::InterfaceBlock { .. }
             | SpirvType::AccelerationStructureKhr
-            | SpirvType::RayQueryKhr => {
+            | SpirvType::RayQueryKhr
+            | SpirvType::CooperativeMatrixKhr { .. } => {
                 let result = self.undef(ty);
                 self.zombie_no_span(
                     result.def_cx(self),

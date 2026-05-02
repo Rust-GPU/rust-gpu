@@ -69,6 +69,7 @@ pub enum IntrinsicType {
     TypedBuffer,
     Matrix,
     Vector,
+    CooperativeMatrixKhr,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
