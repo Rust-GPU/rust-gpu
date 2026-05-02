@@ -90,6 +90,13 @@ pub enum SpirvType<'tcx> {
 
     AccelerationStructureKhr,
     RayQueryKhr,
+    CooperativeMatrixKhr {
+        component_type: Word,
+        usage: Word,
+        rows: Word,
+        columns: Word,
+        scope: Word,
+    },
 }
 
 impl SpirvType<'_> {
@@ -193,6 +200,20 @@ impl SpirvType<'_> {
                 cx.emit_global().type_acceleration_structure_khr_id(id)
             }
             Self::RayQueryKhr => cx.emit_global().type_ray_query_khr_id(id),
+            Self::CooperativeMatrixKhr {
+                component_type,
+                scope,
+                rows,
+                columns,
+                usage: use_,
+            } => cx.emit_global().type_cooperative_matrix_khr_id(
+                id,
+                component_type,
+                scope,
+                rows,
+                columns,
+                use_,
+            ),
             Self::SampledImage { image_type } => {
                 cx.emit_global().type_sampled_image_id(id, image_type)
             }
@@ -339,6 +360,7 @@ impl SpirvType<'_> {
             Self::Image { .. }
             | Self::AccelerationStructureKhr
             | Self::RayQueryKhr
+            | Self::CooperativeMatrixKhr { .. }
             | Self::Sampler
             | Self::SampledImage { .. }
             | Self::InterfaceBlock { .. } => Size::from_bytes(4),
@@ -361,6 +383,7 @@ impl SpirvType<'_> {
             Self::Image { .. }
             | Self::AccelerationStructureKhr
             | Self::RayQueryKhr
+            | Self::CooperativeMatrixKhr { .. }
             | Self::Sampler
             | Self::SampledImage { .. }
             | Self::InterfaceBlock { .. } => Align::from_bytes(4).unwrap(),
@@ -389,7 +412,10 @@ impl SpirvType<'_> {
             Self::InterfaceBlock { .. } | Self::RayQueryKhr | Self::SampledImage { .. } => None,
 
             // Descriptor types
-            Self::Image { .. } | Self::AccelerationStructureKhr | Self::Sampler => None,
+            Self::Image { .. }
+            | Self::AccelerationStructureKhr
+            | Self::CooperativeMatrixKhr { .. }
+            | Self::Sampler => None,
 
             // Primitive types
             ty => ty.sizeof(cx),
@@ -455,6 +481,19 @@ impl SpirvType<'_> {
             SpirvType::InterfaceBlock { inner_type } => SpirvType::InterfaceBlock { inner_type },
             SpirvType::AccelerationStructureKhr => SpirvType::AccelerationStructureKhr,
             SpirvType::RayQueryKhr => SpirvType::RayQueryKhr,
+            SpirvType::CooperativeMatrixKhr {
+                component_type,
+                scope,
+                rows,
+                columns,
+                usage: use_,
+            } => SpirvType::CooperativeMatrixKhr {
+                component_type,
+                scope,
+                rows,
+                columns,
+                usage: use_,
+            },
 
             // Only these variants have any slices to arena-allocate.
             SpirvType::Adt {
@@ -644,6 +683,20 @@ impl fmt::Debug for SpirvTypePrinter<'_, '_> {
                 .finish(),
             SpirvType::AccelerationStructureKhr => f.debug_struct("AccelerationStructure").finish(),
             SpirvType::RayQueryKhr => f.debug_struct("RayQuery").finish(),
+            SpirvType::CooperativeMatrixKhr {
+                component_type,
+                scope,
+                rows,
+                columns,
+                usage: use_,
+            } => f
+                .debug_struct("CooperativeMatrix")
+                .field("component_type", &self.cx.debug_type(component_type))
+                .field("scope", &self.cx.debug_type(scope))
+                .field("rows", &self.cx.debug_type(rows))
+                .field("columns", &self.cx.debug_type(columns))
+                .field("use_", &self.cx.debug_type(use_))
+                .finish(),
         };
         {
             let mut debug_stack = DEBUG_STACK.lock().unwrap();
@@ -797,6 +850,7 @@ impl SpirvTypePrinter<'_, '_> {
             }
             SpirvType::AccelerationStructureKhr => f.write_str("AccelerationStructureKhr"),
             SpirvType::RayQueryKhr => f.write_str("RayQuery"),
+            SpirvType::CooperativeMatrixKhr { .. } => f.write_str("CooperativeMatrixKhr"),
         }
     }
 }

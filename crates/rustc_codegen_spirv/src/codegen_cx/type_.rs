@@ -209,6 +209,7 @@ impl BaseTypeCodegenMethods for CodegenCx<'_> {
             | SpirvType::SampledImage { .. }
             | SpirvType::AccelerationStructureKhr
             | SpirvType::RayQueryKhr
+            | SpirvType::CooperativeMatrixKhr { .. }
                 => TypeKind::Token,
         }
     }

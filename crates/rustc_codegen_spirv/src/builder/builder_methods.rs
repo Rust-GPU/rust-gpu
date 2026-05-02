@@ -454,6 +454,9 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 self.fatal("cannot memset acceleration structure")
             }
             SpirvType::RayQueryKhr => self.fatal("cannot memset ray query"),
+            SpirvType::CooperativeMatrixKhr { .. } => {
+                self.fatal("cannot memset cooperative matrix")
+            }
         }
     }
 
@@ -511,6 +514,9 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 self.fatal("cannot memset acceleration structure")
             }
             SpirvType::RayQueryKhr => self.fatal("cannot memset ray query"),
+            SpirvType::CooperativeMatrixKhr { .. } => {
+                self.fatal("cannot memset cooperative matrix")
+            }
         }
     }
 
