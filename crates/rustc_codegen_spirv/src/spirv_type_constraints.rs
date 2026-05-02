@@ -1096,9 +1096,9 @@ pub fn instruction_signatures(op: Op) -> Option<&'static [InstSig<'static>]> {
         | Op::ImageBlockMatchSSDQCOM
         | Op::ImageBlockMatchSADQCOM => reserved!(SPV_QCOM_image_processing),
         // SPV_AMDX_shader_enqueue
-        Op::FinalizeNodePayloadsAMDX
-        | Op::FinishWritingNodePayloadAMDX
-        | Op::InitializeNodePayloadsAMDX => reserved!(SPV_AMDX_shader_enqueue),
+        Op::AllocateNodePayloadsAMDX
+        | Op::EnqueueNodePayloadsAMDX
+        | Op::FinishWritingNodePayloadAMDX => reserved!(SPV_AMDX_shader_enqueue),
         // SPV_NV_displacement_micromap
         Op::FetchMicroTriangleVertexPositionNV | Op::FetchMicroTriangleVertexBarycentricNV => {
             reserved!(SPV_NV_displacement_micromap)
@@ -1124,6 +1124,21 @@ pub fn instruction_signatures(op: Op) -> Option<&'static [InstSig<'static>]> {
         | Op::SpecConstantCompositeContinuedINTEL
         | Op::ControlBarrierArriveINTEL
         | Op::ControlBarrierWaitINTEL => reserved!(unknown_extension_INTEL),
+
+        // TODO unknown_extension_ARM
+        Op::TypeTensorARM
+        | Op::TensorReadARM
+        | Op::TensorWriteARM
+        | Op::TensorQuerySizeARM
+        | Op::GraphConstantARM
+        | Op::GraphEntryPointARM
+        | Op::GraphARM
+        | Op::GraphInputARM
+        | Op::GraphSetOutputARM
+        | Op::GraphEndARM
+        | Op::TypeGraphARM => reserved!(unknown_extension_ARM),
+
+        _ => reserved!(unknown_extension_),
     }
 
     None

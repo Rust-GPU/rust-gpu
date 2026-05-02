@@ -279,9 +279,9 @@ impl Validator<'_> {
     fn validate_spv_inst(&self, spv_inst: &spv::Inst) -> Result<(), Diag> {
         // FIXME(eddyb) make this information available through `spirt::spv::spec`.
         let (exts_providing_inst, caps_enabling_insts) = {
-            let inst_def =
-                rspirv::grammar::CoreInstructionTable::lookup_opcode(spv_inst.opcode.as_u16())
-                    .unwrap();
+            let inst_def = rspirv::grammar::INSTRUCTION_TABLE
+                .lookup_opcode(spv_inst.opcode.as_u16().into())
+                .unwrap();
             (
                 inst_def.extensions.iter().copied(),
                 inst_def.capabilities.iter().map(|&cap| cap as u32),

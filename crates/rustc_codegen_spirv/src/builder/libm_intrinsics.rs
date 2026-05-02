@@ -3,7 +3,7 @@ use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 
 use super::Builder;
 use crate::builder_spirv::{SpirvValue, SpirvValueExt};
-use rspirv::spirv::{GLOp, Word};
+use rspirv::spirv::{GlslStd450Op as GLOp, Word};
 use rustc_codegen_ssa::traits::BuilderMethods;
 
 #[derive(Copy, Clone, Debug)]

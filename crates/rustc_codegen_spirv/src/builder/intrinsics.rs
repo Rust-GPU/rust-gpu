@@ -8,7 +8,7 @@ use crate::codegen_cx::CodegenCx;
 use crate::custom_insts::CustomInst;
 use crate::spirv_type::SpirvType;
 use rspirv::dr::Operand;
-use rspirv::spirv::GLOp;
+use rspirv::spirv::GlslStd450Op as GLOp;
 use rustc_codegen_ssa::RetagInfo;
 use rustc_codegen_ssa::mir::operand::{OperandRef, OperandValue};
 use rustc_codegen_ssa::mir::place::PlaceRef;
