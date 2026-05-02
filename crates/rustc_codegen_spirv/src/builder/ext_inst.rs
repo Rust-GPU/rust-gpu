@@ -2,7 +2,7 @@ use super::Builder;
 use crate::builder_spirv::{SpirvValue, SpirvValueExt};
 use crate::custom_insts;
 use rspirv::dr::Operand;
-use rspirv::spirv::{GLOp, Word};
+use rspirv::spirv::{GlslStd450Op as GLOp, Word};
 
 const GLSL_STD_450: &str = "GLSL.std.450";
 

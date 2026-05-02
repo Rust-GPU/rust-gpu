@@ -18,10 +18,10 @@ use core::arch::asm;
 /// invocations are helper invocations in the presence
 /// of [demote_to_helper_invocation].
 #[spirv_std_macros::gpu_only]
-#[doc(alias = "OpDemoteToHelperInvocationEXT", alias = "discard")]
+#[doc(alias = "OpDemoteToHelperInvocation", alias = "discard")]
 pub fn demote_to_helper_invocation() {
     unsafe {
-        asm!("OpDemoteToHelperInvocationEXT");
+        asm!("OpDemoteToHelperInvocation");
     }
 }
 
