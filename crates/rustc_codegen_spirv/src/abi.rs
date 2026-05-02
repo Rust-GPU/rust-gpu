@@ -3,6 +3,7 @@
 
 use crate::attr::{AggregatedSpirvAttributes, IntrinsicType};
 use crate::codegen_cx::CodegenCx;
+use crate::maybe_pqp_cg_ssa::traits::ConstCodegenMethods as _;
 use crate::spirv_type::SpirvType;
 use itertools::Itertools;
 use rspirv::spirv::{Dim, ImageFormat, StorageClass, Word};
@@ -885,6 +886,48 @@ fn trans_intrinsic_type<'tcx>(
     args: GenericArgsRef<'tcx>,
     intrinsic_type_attr: IntrinsicType,
 ) -> Result<Word, ErrorGuaranteed> {
+    trait FromScalarInt: Sized {
+        fn from_scalar_int(n: ScalarInt) -> Option<Self>;
+    }
+
+    impl FromScalarInt for u32 {
+        fn from_scalar_int(n: ScalarInt) -> Option<Self> {
+            Some(n.try_to_bits(Size::from_bits(32)).ok()?.try_into().unwrap())
+        }
+    }
+
+    impl FromScalarInt for Dim {
+        fn from_scalar_int(n: ScalarInt) -> Option<Self> {
+            Dim::from_u32(u32::from_scalar_int(n)?)
+        }
+    }
+
+    impl FromScalarInt for ImageFormat {
+        fn from_scalar_int(n: ScalarInt) -> Option<Self> {
+            ImageFormat::from_u32(u32::from_scalar_int(n)?)
+        }
+    }
+
+    fn const_int_value<'tcx, P: FromScalarInt>(
+        cx: &CodegenCx<'tcx>,
+        const_: Const<'tcx>,
+    ) -> Result<P, ErrorGuaranteed> {
+        let ty::Value {
+            ty: const_ty,
+            valtree: const_val,
+        } = const_.to_value();
+        assert!(const_ty.is_integral());
+        const_val
+            .try_to_scalar()
+            .and_then(|scalar| scalar.try_to_scalar_int().ok())
+            .and_then(P::from_scalar_int)
+            .ok_or_else(|| {
+                cx.tcx
+                    .dcx()
+                    .err(format!("invalid value for const generic: {const_}"))
+            })
+    }
+
     match intrinsic_type_attr {
         IntrinsicType::GenericImageType => {
             // see SpirvType::sizeof
@@ -948,48 +991,6 @@ fn trans_intrinsic_type<'tcx>(
             // let image_format: spirv::ImageFormat =
             //     type_from_variant_discriminant(cx, args.const_at(6));
 
-            trait FromScalarInt: Sized {
-                fn from_scalar_int(n: ScalarInt) -> Option<Self>;
-            }
-
-            impl FromScalarInt for u32 {
-                fn from_scalar_int(n: ScalarInt) -> Option<Self> {
-                    Some(n.try_to_bits(Size::from_bits(32)).ok()?.try_into().unwrap())
-                }
-            }
-
-            impl FromScalarInt for Dim {
-                fn from_scalar_int(n: ScalarInt) -> Option<Self> {
-                    Dim::from_u32(u32::from_scalar_int(n)?)
-                }
-            }
-
-            impl FromScalarInt for ImageFormat {
-                fn from_scalar_int(n: ScalarInt) -> Option<Self> {
-                    ImageFormat::from_u32(u32::from_scalar_int(n)?)
-                }
-            }
-
-            fn const_int_value<'tcx, P: FromScalarInt>(
-                cx: &CodegenCx<'tcx>,
-                const_: Const<'tcx>,
-            ) -> Result<P, ErrorGuaranteed> {
-                let ty::Value {
-                    ty: const_ty,
-                    valtree: const_val,
-                } = const_.to_value();
-                assert!(const_ty.is_integral());
-                const_val
-                    .try_to_scalar()
-                    .and_then(|scalar| scalar.try_to_scalar_int().ok())
-                    .and_then(P::from_scalar_int)
-                    .ok_or_else(|| {
-                        cx.tcx
-                            .dcx()
-                            .err(format!("invalid value for Image const generic: {const_}"))
-                    })
-            }
-
             let dim = const_int_value(cx, args.const_at(1))?;
             let depth = const_int_value(cx, args.const_at(2))?;
             let arrayed = const_int_value(cx, args.const_at(3))?;
@@ -1019,6 +1020,37 @@ fn trans_intrinsic_type<'tcx>(
             Ok(SpirvType::AccelerationStructureKhr.def(span, cx))
         }
         IntrinsicType::RayQueryKhr => Ok(SpirvType::RayQueryKhr.def(span, cx)),
+        IntrinsicType::CooperativeMatrixKhr => {
+            if ty.size != Size::from_bytes(4) {
+                return Err(cx.tcx.dcx().err("cooperative_matrix type must have size 4"));
+            }
+
+            // Generic arg 0: component type T
+            let component_type = cx.layout_of(args.type_at(0)).spirv_type(span, cx);
+            // Const generic 1: USE (MatrixA=0, MatrixB=1, MatrixAccumulator=2)
+            let usage = cx
+                .const_u32(const_int_value(cx, args.const_at(1))?)
+                .def_cx(cx);
+            // Const generic 2: ROWS
+            let rows = cx
+                .const_u32(const_int_value(cx, args.const_at(2))?)
+                .def_cx(cx);
+            // Const generic 3: COLS
+            let columns = cx
+                .const_u32(const_int_value(cx, args.const_at(3))?)
+                .def_cx(cx);
+            // Scope: Subgroup = 3
+            let scope = cx.const_u32(3).def_cx(cx);
+
+            Ok(SpirvType::CooperativeMatrixKhr {
+                component_type,
+                usage,
+                rows,
+                columns,
+                scope,
+            }
+            .def(span, cx))
+        }
         IntrinsicType::SampledImage => {
             // see SpirvType::sizeof
             if ty.size != Size::from_bytes(4) {
