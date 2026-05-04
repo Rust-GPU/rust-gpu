@@ -225,15 +225,16 @@ where
 
     pub fn run_test(self, config: &Config) -> anyhow::Result<()> {
         let outputs = self.run()?;
-        // Write the first storage buffer output to the file.
-        for output in &outputs {
-            if let Some(output) = output {
-                if !output.is_empty() {
-                    config.write_result(output)?;
-                    return Ok(());
-                }
-            }
+        let output = outputs
+            .iter()
+            .filter_map(Option::as_ref)
+            .flatten()
+            .copied()
+            .collect::<Vec<_>>();
+        if output.is_empty() {
+            anyhow::bail!("No storage buffer output found")
         }
-        anyhow::bail!("No storage buffer output found")
+        config.write_result(&output)?;
+        Ok(())
     }
 }
