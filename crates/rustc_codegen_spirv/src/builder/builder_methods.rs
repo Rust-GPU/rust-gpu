@@ -1726,20 +1726,6 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         rhs: Self::Value,
     ) -> (Self::Value, Self::Value) {
         // adopted partially from https://github.com/ziglang/zig/blob/master/src/codegen/spirv.zig
-        let is_add = match oop {
-            OverflowOp::Add => true,
-            OverflowOp::Sub => false,
-            OverflowOp::Mul => {
-                // NOTE(eddyb) this needs to be `undef`, not `false`/`true`, because
-                // we don't want the user's boolean constants to keep the zombie alive.
-                let bool = SpirvType::Bool.def(self.span(), self);
-                let overflowed = self.undef(bool);
-
-                let result = (self.mul(lhs, rhs), overflowed);
-                self.zombie(result.1.def(self), "checked mul is not supported yet");
-                return result;
-            }
-        };
         let signed = match ty.kind() {
             ty::Int(_) => true,
             ty::Uint(_) => false,
@@ -1751,6 +1737,68 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                     OverflowOp::Mul => "checked mul",
                 }
             )),
+        };
+        let is_add = match oop {
+            OverflowOp::Add => true,
+            OverflowOp::Sub => false,
+            OverflowOp::Mul => {
+                let int_ty = lhs.ty;
+                let bits = match self.lookup_type(int_ty) {
+                    SpirvType::Integer(width, _) => width,
+                    other => self.fatal(format!(
+                        "checked mul on non-integer type: {}",
+                        other.debug(int_ty, self)
+                    )),
+                };
+
+                // OpUMulExtended / OpSMulExtended produce an OpTypeStruct{T, T}
+                // holding the low and high halves of the full 2*bits-wide product.
+                // The struct is purely intermediate — we extract both halves
+                // immediately and never expose it to Rust code.
+                let pair_ty = SpirvType::Adt {
+                    def_id: None,
+                    size: None,
+                    align: Align::from_bytes(0).unwrap(),
+                    field_types: &[int_ty, int_ty],
+                    field_offsets: &[],
+                    field_names: None,
+                }
+                .def(self.span(), self);
+
+                let extended = if signed {
+                    self.emit()
+                        .s_mul_extended(pair_ty, None, lhs.def(self), rhs.def(self))
+                } else {
+                    self.emit()
+                        .u_mul_extended(pair_ty, None, lhs.def(self), rhs.def(self))
+                }
+                .unwrap();
+
+                let low = self
+                    .emit()
+                    .composite_extract(int_ty, None, extended, [0].iter().cloned())
+                    .unwrap()
+                    .with_type(int_ty);
+                let high = self
+                    .emit()
+                    .composite_extract(int_ty, None, extended, [1].iter().cloned())
+                    .unwrap()
+                    .with_type(int_ty);
+
+                let overflowed = if signed {
+                    // For signed multiplication, no overflow occurs iff the high
+                    // half is the sign extension of the low half, i.e. the
+                    // arithmetic-shift of `low` by `bits-1` (replicating the MSB).
+                    let shift_amount = self.constant_int(int_ty, u128::from(bits - 1));
+                    let expected_high = self.ashr(low, shift_amount);
+                    self.icmp(IntPredicate::IntNE, high, expected_high)
+                } else {
+                    let zero = self.constant_int(int_ty, 0);
+                    self.icmp(IntPredicate::IntNE, high, zero)
+                };
+
+                return (low, overflowed);
+            }
         };
 
         let result = if is_add {
