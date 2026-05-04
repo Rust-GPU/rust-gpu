@@ -45,8 +45,7 @@ fn main() {
             },
         ],
     )
-    .with_feature(Features::IMMEDIATES)
-    .with_push_constant(&push_constants);
+    .with_immediates(&push_constants);
 
     test.run_test(&config).unwrap();
 }
