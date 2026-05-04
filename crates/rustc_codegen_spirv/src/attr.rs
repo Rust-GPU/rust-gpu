@@ -522,6 +522,22 @@ pub(crate) fn provide(providers: &mut Providers) {
                 .check_mod_attrs)(tcx, module_def_id);
             check_mod_attrs(tcx, module_def_id);
         },
+        // HACK(LegNeato) keep `#[spirv(...)]` entry-points from getting
+        // internalized and DCE'd before codegen. See issue #590.
+        cross_crate_inlinable: |tcx, def_id| {
+            let sym = Symbols::get();
+            let path = [sym.rust_gpu, sym.spirv_attr_with_version];
+            let attrs: Vec<_> = tcx.get_attrs_by_path(def_id.to_def_id(), &path).collect();
+            let is_entry_point = parse_attrs_for_checking(&sym, attrs)
+                .any(|result| matches!(result, Ok((_, SpirvAttribute::Entry(_)))));
+            if is_entry_point {
+                false
+            } else {
+                (rustc_interface::DEFAULT_QUERY_PROVIDERS
+                    .queries
+                    .cross_crate_inlinable)(tcx, def_id)
+            }
+        },
         ..*providers
     };
 }
