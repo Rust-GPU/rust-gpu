@@ -48,14 +48,15 @@ where
         }
     }
 
-    pub fn with_push_constant<T: NoUninit>(self, data: &T) -> Self {
+    pub fn with_immediates<T: NoUninit>(self, data: &T) -> Self {
         Self {
             push_constant: Some(bytemuck::bytes_of(data).to_vec()),
+            features: self.features | wgpu::Features::IMMEDIATES,
             ..self
         }
     }
 
-    pub fn run(self) -> anyhow::Result<Vec<Vec<u8>>> {
+    pub fn run(&self) -> anyhow::Result<Vec<Option<Vec<u8>>>> {
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle());
         let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
             power_preference: wgpu::PowerPreference::HighPerformance,
@@ -90,22 +91,18 @@ where
                             .map(|(i, buffer_config)| wgpu::BindGroupLayoutEntry {
                                 binding: i as u32,
                                 visibility: wgpu::ShaderStages::COMPUTE,
-                                ty: match buffer_config.usage {
-                                    BufferUsage::Storage => wgpu::BindingType::Buffer {
-                                        ty: wgpu::BufferBindingType::Storage { read_only: false },
-                                        has_dynamic_offset: false,
-                                        min_binding_size: None,
+                                ty: wgpu::BindingType::Buffer {
+                                    ty: match buffer_config.usage {
+                                        BufferUsage::Storage => {
+                                            wgpu::BufferBindingType::Storage { read_only: false }
+                                        }
+                                        BufferUsage::StorageReadOnly => {
+                                            wgpu::BufferBindingType::Storage { read_only: true }
+                                        }
+                                        BufferUsage::Uniform => wgpu::BufferBindingType::Uniform,
                                     },
-                                    BufferUsage::StorageReadOnly => wgpu::BindingType::Buffer {
-                                        ty: wgpu::BufferBindingType::Storage { read_only: true },
-                                        has_dynamic_offset: false,
-                                        min_binding_size: None,
-                                    },
-                                    BufferUsage::Uniform => wgpu::BindingType::Buffer {
-                                        ty: wgpu::BufferBindingType::Uniform,
-                                        has_dynamic_offset: false,
-                                        min_binding_size: None,
-                                    },
+                                    has_dynamic_offset: false,
+                                    min_binding_size: None,
                                 },
                                 count: None,
                             })
@@ -121,59 +118,55 @@ where
         )?;
 
         // Create buffers.
-        let mut gpu_buffers = Vec::new();
-
-        for (i, buffer_config) in self.buffers.iter().enumerate() {
-            let usage = match buffer_config.usage {
-                BufferUsage::Storage => wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
-                BufferUsage::StorageReadOnly => {
-                    wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC
-                }
-                BufferUsage::Uniform => wgpu::BufferUsages::UNIFORM,
-            };
-
-            let buffer = if let Some(initial_data) = &buffer_config.initial_data {
-                device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some(&format!("Buffer {i}")),
-                    contents: initial_data,
-                    usage,
-                })
-            } else {
-                let buffer = device.create_buffer(&wgpu::BufferDescriptor {
-                    label: Some(&format!("Buffer {i}")),
-                    size: buffer_config.size,
-                    usage,
-                    mapped_at_creation: true,
-                });
-                {
-                    // Zero the buffer.
-                    let initial_data = vec![0u8; buffer_config.size as usize];
-                    let mut mapping = buffer.slice(..).get_mapped_range_mut();
-                    mapping.copy_from_slice(&initial_data);
-                }
-                buffer.unmap();
-                buffer
-            };
-
-            gpu_buffers.push(buffer);
-        }
-
-        // Create bind entries after all buffers are created
-        let bind_entries: Vec<_> = gpu_buffers
+        let gpu_buffers = self
+            .buffers
             .iter()
             .enumerate()
-            .map(|(i, buffer)| wgpu::BindGroupEntry {
-                binding: i as u32,
-                resource: buffer.as_entire_binding(),
-            })
-            .collect();
+            .map(|(i, buffer_config)| {
+                let usage = match buffer_config.usage {
+                    BufferUsage::Storage => {
+                        wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC
+                    }
+                    BufferUsage::StorageReadOnly => {
+                        wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC
+                    }
+                    BufferUsage::Uniform => wgpu::BufferUsages::UNIFORM,
+                };
 
+                let buffer = if let Some(initial_data) = &buffer_config.initial_data {
+                    device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                        label: Some(&format!("Buffer {i}")),
+                        contents: initial_data,
+                        usage,
+                    })
+                } else {
+                    device.create_buffer(&wgpu::BufferDescriptor {
+                        label: Some(&format!("Buffer {i}")),
+                        size: buffer_config.size,
+                        usage,
+                        mapped_at_creation: false,
+                    })
+                };
+
+                (buffer_config, buffer)
+            })
+            .collect::<Vec<_>>();
+
+        // Create bind entries after all buffers are created
         let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             layout: &pipeline.get_bind_group_layout(0),
-            entries: &bind_entries,
+            entries: &gpu_buffers
+                .iter()
+                .enumerate()
+                .map(|(i, (_, buffer))| wgpu::BindGroupEntry {
+                    binding: i as u32,
+                    resource: buffer.as_entire_binding(),
+                })
+                .collect::<Vec<_>>(),
             label: Some("Compute Bind Group"),
         });
 
+        // record command encoder
         let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
             label: Some("Compute Encoder"),
         });
@@ -184,72 +177,61 @@ where
             });
             pass.set_pipeline(&pipeline);
             pass.set_bind_group(0, &bind_group, &[]);
-            if let Some(push_constant) = self.push_constant {
+            if let Some(push_constant) = &self.push_constant {
                 pass.set_immediates(0, &push_constant);
             }
             pass.dispatch_workgroups(self.dispatch[0], self.dispatch[1], self.dispatch[2]);
         }
 
-        // Create staging buffers and copy results.
-        let mut staging_buffers = Vec::new();
-        for (i, buffer_config) in self.buffers.iter().enumerate() {
-            if matches!(
-                buffer_config.usage,
-                BufferUsage::Storage | BufferUsage::StorageReadOnly
-            ) {
-                let staging_buffer = device.create_buffer(&wgpu::BufferDescriptor {
-                    label: Some(&format!("Staging Buffer {i}")),
-                    size: buffer_config.size,
-                    usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
-                    mapped_at_creation: false,
-                });
-                encoder.copy_buffer_to_buffer(
-                    &gpu_buffers[i],
-                    0,
-                    &staging_buffer,
-                    0,
-                    buffer_config.size,
-                );
-                staging_buffers.push(Some(staging_buffer));
-            } else {
-                staging_buffers.push(None);
-            }
-        }
-
+        // Create staging buffers, copy results and initiate mapping.
+        let download_buffers = gpu_buffers
+            .iter()
+            .enumerate()
+            .map(|(i, (buffer_config, buffer))| {
+                matches!(buffer_config.usage, BufferUsage::Storage).then(|| {
+                    let staging_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+                        label: Some(&format!("Staging Buffer {i}")),
+                        size: buffer_config.size,
+                        usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
+                        mapped_at_creation: false,
+                    });
+                    encoder.copy_buffer_to_buffer(
+                        &buffer,
+                        0,
+                        &staging_buffer,
+                        0,
+                        buffer_config.size,
+                    );
+                    encoder.map_buffer_on_submit(
+                        &staging_buffer,
+                        wgpu::MapMode::Read,
+                        ..,
+                        move |r| r.unwrap(),
+                    );
+                    staging_buffer
+                })
+            })
+            .collect::<Vec<_>>();
         queue.submit(Some(encoder.finish()));
+        device.poll(wgpu::PollType::wait_indefinitely())?;
 
-        // Read back results.
-        let mut results = Vec::new();
-        for staging_buffer in staging_buffers {
-            if let Some(buffer) = staging_buffer {
-                let buffer_slice = buffer.slice(..);
-                let (sender, receiver) = futures::channel::oneshot::channel();
-                buffer_slice.map_async(wgpu::MapMode::Read, move |res| {
-                    let _ = sender.send(res);
-                });
-                device.poll(wgpu::PollType::wait_indefinitely())?;
-                block_on(receiver)
-                    .context("mapping canceled")?
-                    .context("mapping failed")?;
-                let data = buffer_slice.get_mapped_range().to_vec();
-                buffer.unmap();
-                results.push(data);
-            } else {
-                results.push(Vec::new());
-            }
-        }
-
+        // copy data from buffers into Vecs
+        let results = download_buffers
+            .into_iter()
+            .map(|buffer| buffer.map(|buffer| buffer.get_mapped_range(..).to_vec()))
+            .collect::<Vec<_>>();
         Ok(results)
     }
 
     pub fn run_test(self, config: &Config) -> anyhow::Result<()> {
-        let buffers = self.buffers.clone();
         let outputs = self.run()?;
         // Write the first storage buffer output to the file.
-        for (output, buffer_config) in outputs.iter().zip(&buffers) {
-            if matches!(buffer_config.usage, BufferUsage::Storage) && !output.is_empty() {
-                config.write_result(output)?;
-                return Ok(());
+        for output in &outputs {
+            if let Some(output) = output {
+                if !output.is_empty() {
+                    config.write_result(output)?;
+                    return Ok(());
+                }
             }
         }
         anyhow::bail!("No storage buffer output found")
