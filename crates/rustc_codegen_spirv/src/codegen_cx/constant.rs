@@ -50,6 +50,10 @@ impl<'tcx> CodegenCx<'tcx> {
         self.constant_int_from_native_unsigned(span, val)
     }
 
+    pub fn constant_u128(&self, span: Span, val: u128) -> SpirvValue {
+        self.constant_int_from_native_unsigned(span, val)
+    }
+
     fn constant_int_from_native_unsigned(&self, span: Span, val: impl Into<u128>) -> SpirvValue {
         let size = Size::from_bytes(std::mem::size_of_val(&val));
         let ty = SpirvType::Integer(size.bits() as u32, false).def(span, self);

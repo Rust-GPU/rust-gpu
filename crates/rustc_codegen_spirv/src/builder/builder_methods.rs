@@ -308,6 +308,11 @@ fn memset_fill_u64(b: u8) -> u64 {
         | ((b as u64) << 56)
 }
 
+fn memset_fill_u128(b: u8) -> u128 {
+    let b64 = memset_fill_u64(b) as u128;
+    b64 | b64 >> 64
+}
+
 fn memset_dynamic_scalar(
     builder: &mut Builder<'_, '_>,
     fill_var: Word,
@@ -387,6 +392,9 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 64 => self
                     .constant_u64(self.span(), memset_fill_u64(fill_byte))
                     .def(self),
+                128 => self
+                    .constant_u128(self.span(), memset_fill_u128(fill_byte))
+                    .def(self),
                 _ => self.fatal(format!(
                     "memset on integer width {width} not implemented yet"
                 )),
@@ -401,6 +409,9 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                     .def(self),
                 64 => self
                     .constant_i64(self.span(), memset_fill_u64(fill_byte) as i64)
+                    .def(self),
+                128 => self
+                    .constant_u128(self.span(), memset_fill_u128(fill_byte))
                     .def(self),
                 _ => self.fatal(format!(
                     "memset on integer width {width} not implemented yet"
