@@ -110,6 +110,10 @@ impl WgpuShader for RustComputeShader {
         });
         Ok(pipeline)
     }
+
+    fn maybe_spirv_bytes(&self) -> anyhow::Result<Option<(Vec<u8>, String)>> {
+        Ok(Some(self.spirv_bytes()?))
+    }
 }
 
 /// For the SPIR-V shader, the manifest directory is used as the build path.

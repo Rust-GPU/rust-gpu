@@ -18,4 +18,9 @@ pub trait WgpuShader {
         device: &wgpu::Device,
         pipeline_layout: &wgpu::PipelineLayout,
     ) -> anyhow::Result<wgpu::ComputePipeline>;
+
+    // HACK(eddyb) used for hooking `spirti` into `wgpu_runner`.
+    fn maybe_spirv_bytes(&self) -> anyhow::Result<Option<(Vec<u8>, String)>> {
+        Ok(None)
+    }
 }
