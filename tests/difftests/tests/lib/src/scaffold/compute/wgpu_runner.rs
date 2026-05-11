@@ -57,6 +57,115 @@ where
     }
 
     pub fn run(&self) -> anyhow::Result<Vec<Option<Vec<u8>>>> {
+        // HACK(eddyb) running the test via `spirti`, instead.
+        if std::env::var("DIFFTEST_SPIRTI").is_ok() {
+            if let Ok(Some((spv_bytes, spv_entry_name))) = self.shader.maybe_spirv_bytes() {
+                use spirti::spirt::{self, Context, ExportKey, Exportee, Module, spv};
+                use std::num::NonZeroU32;
+                use std::rc::Rc;
+
+                let wk = &spirti::SpvSpecWithExtras::get().well_known;
+
+                let mut module =
+                    Module::lower_from_spv_bytes(Rc::new(Context::new()), spv_bytes).unwrap();
+                spirt::passes::legalize::structurize_func_cfgs(&mut module);
+
+                let mut interpreter = spirti::Interpreter::new(
+                    &module,
+                    spirti::DebugOptions::from_env(),
+                    &spirt::mem::LayoutConfig::VULKAN_SCALAR_LAYOUT_LE,
+                );
+
+                let (_, entry_exec_model, entry) = module
+                    .exports
+                    .iter()
+                    .filter_map(|(export_key, exportee)| match (export_key, exportee) {
+                        (
+                            ExportKey::SpvEntryPoint {
+                                imms,
+                                interface_global_vars: _,
+                            },
+                            &Exportee::Func(func),
+                        ) => {
+                            let exec_model = match imms[0] {
+                                spv::Imm::Short(kind, exec_model) => {
+                                    assert_eq!(kind, wk.ExecutionModel);
+                                    exec_model
+                                }
+                                _ => unreachable!(),
+                            };
+                            let name = spv::extract_literal_string(&imms[1..]).unwrap();
+
+                            Some((name, exec_model, func))
+                        }
+                        _ => None,
+                    })
+                    .find(|(name, _, _)| *name == spv_entry_name)
+                    .unwrap();
+
+                assert!(entry_exec_model == wk.GLCompute);
+                let entry_local_size = match interpreter.get_spv_attr(
+                    module.funcs[entry].attrs,
+                    wk.OpExecutionMode,
+                    wk.ExecutionMode,
+                    wk.LocalSize,
+                ) {
+                    Some(&[x, y, z]) => [x, y, z].map(|x| match x {
+                        spv::Imm::Short(_, x) => x,
+                        _ => unreachable!(),
+                    }),
+                    _ => unreachable!(),
+                };
+
+                for (i, buffer_config) in self.buffers.iter().enumerate() {
+                    let slot = match buffer_config.usage {
+                        // FIXME(eddyb) consider informing `spirti` about read-only buffers.
+                        BufferUsage::Storage | BufferUsage::StorageReadOnly => {
+                            spirti::BindSlot::StorageBuffer {
+                                descriptor_set: 0,
+                                binding: i as u32,
+                            }
+                        }
+                        BufferUsage::Uniform => todo!(),
+                    };
+                    interpreter.bind_memory(
+                        slot,
+                        buffer_config.initial_data.clone().unwrap_or_else(|| {
+                            // FIXME(eddyb) might be better to treat this as `undef`.
+                            vec![0; buffer_config.size as usize]
+                        }),
+                    );
+                }
+
+                if let Some(push_constant_bytes) = self.push_constant.clone() {
+                    interpreter.bind_memory(spirti::BindSlot::PushConstant, push_constant_bytes);
+                }
+
+                interpreter.launch = Some(spirti::Launch::Compute {
+                    local: entry_local_size.map(|x| NonZeroU32::new(x).unwrap()),
+                    global: self.dispatch.map(|x| NonZeroU32::new(x).unwrap()),
+                });
+                interpreter.eval_call(entry, [].into_iter().collect());
+
+                return Ok(self
+                    .buffers
+                    .iter()
+                    .enumerate()
+                    .map(|(i, buffer_config)| {
+                        matches!(buffer_config.usage, BufferUsage::Storage).then(|| {
+                            interpreter
+                                .read_bound_memory(spirti::BindSlot::StorageBuffer {
+                                    descriptor_set: 0,
+                                    binding: i as u32,
+                                })
+                                .ok()
+                                .unwrap()
+                        })
+                    })
+                    .collect());
+            }
+        }
+
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle());
         let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
             power_preference: wgpu::PowerPreference::HighPerformance,
