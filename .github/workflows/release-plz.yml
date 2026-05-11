@@ -18,8 +18,7 @@ jobs:
       pull-requests: read
       id-token: write
     steps:
-      - &checkout
-        name: Checkout repository
+      - name: Checkout repository
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
@@ -47,11 +46,48 @@ jobs:
       group: release-plz-${{ github.ref }}
       cancel-in-progress: false
     steps:
-      - *checkout
+      # `persist-credentials: true` so the follow-up step below can push to
+      # the release PR. See https://release-plz.dev/docs/github/output#example-commit-files-to-the-release-pr
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+          submodules: true
       - *install-rust
       - name: Run release-plz
+        id: release-plz
         uses: release-plz/action@v0.5
         with:
           command: release-pr
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # The difftest workspace pulls `spirv-std` / `spirv-builder` via path
+      # deps, so its `Cargo.lock` references their versions. release-plz only
+      # bumps the root workspace, so we update the difftest lockfile here and
+      # push it onto the release PR before CI runs against it.
+      - name: Update difftest Cargo.lock in release PR
+        if: ${{ steps.release-plz.outputs.prs_created == 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ steps.release-plz.outputs.pr }}
+          # `rust-toolchain.toml` pins nightly; force stable so rustup doesn't
+          # auto-install ~1GB of nightly + components just to update a lockfile.
+          RUSTUP_TOOLCHAIN: stable
+        run: |
+          set -euo pipefail
+          pr_number=$(echo "$PR" | jq -r '.number')
+          gh pr checkout "$pr_number"
+          cargo update --manifest-path tests/difftests/tests/Cargo.toml \
+            -p spirv-std \
+            -p spirv-std-macros \
+            -p spirv-std-types \
+            -p spirv-builder \
+            -p rustc_codegen_spirv-types
+          if ! git diff --quiet tests/difftests/tests/Cargo.lock; then
+            git config --local user.email "github-actions[bot]@users.noreply.github.com"
+            git config --local user.name "github-actions[bot]"
+            git add tests/difftests/tests/Cargo.lock
+            git commit -m "chore: update difftest Cargo.lock"
+            git push
+          fi
