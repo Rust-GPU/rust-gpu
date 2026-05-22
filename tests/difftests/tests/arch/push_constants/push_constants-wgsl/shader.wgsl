@@ -5,7 +5,7 @@ struct PushConstants {
     count: u32,
 }
 
-var<push_constant> push_constants: PushConstants;
+var<immediate> push_constants: PushConstants;
 
 @group(0) @binding(0)
 var<storage, read> input: array<f32>;

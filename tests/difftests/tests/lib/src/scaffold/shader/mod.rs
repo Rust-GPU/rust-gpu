@@ -13,8 +13,9 @@ pub trait SpirvShader {
 /// Trait for shaders that can create wgpu modules.
 pub trait WgpuShader {
     /// Creates a wgpu shader module.
-    fn create_module(
+    fn create_pipeline(
         &self,
         device: &wgpu::Device,
-    ) -> anyhow::Result<(wgpu::ShaderModule, Option<String>)>;
+        pipeline_layout: &wgpu::PipelineLayout,
+    ) -> anyhow::Result<wgpu::ComputePipeline>;
 }

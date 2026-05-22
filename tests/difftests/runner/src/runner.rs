@@ -1,7 +1,6 @@
 use bytesize::ByteSize;
 use difftest_types::config::{OutputType, TestMetadata};
 use serde::{Deserialize, Serialize};
-use std::process::Stdio;
 use std::{
     collections::{HashMap, HashSet},
     fs,
@@ -292,8 +291,6 @@ impl Runner {
 
             let output = cmd
                 .current_dir(&package.absolute_path)
-                .stdout(Stdio::inherit())
-                .stderr(Stdio::inherit())
                 .output()
                 .map_err(|e| RunnerError::Io { source: e })?;
             let exit_code = output.status.code().unwrap_or(-1);
