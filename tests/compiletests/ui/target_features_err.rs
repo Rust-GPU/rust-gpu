@@ -5,5 +5,5 @@ use spirv_std::spirv;
 
 #[spirv(any_hit)]
 pub fn main() {
-    unsafe { spirv_std::arch::terminate_ray() }
+    unsafe { spirv_std::ray_tracing::ray_pipeline::terminate_ray() }
 }

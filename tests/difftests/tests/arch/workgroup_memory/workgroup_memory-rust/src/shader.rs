@@ -1,4 +1,4 @@
-use spirv_std::arch::workgroup_memory_barrier_with_group_sync;
+use spirv_std::barrier::workgroup_memory_barrier_with_group_sync;
 use spirv_std::spirv;
 
 #[spirv(compute(threads(64)))]

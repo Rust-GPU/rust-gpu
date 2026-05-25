@@ -13,7 +13,7 @@ fn closure_user<F: FnMut(&u32, u32)>(ptr: &u32, xmax: u32, mut callback: F) {
 pub fn main(ptr: &mut u32) {
     closure_user(ptr, 10, |ptr, i| {
         if *ptr == i {
-            spirv_std::arch::kill();
+            spirv_std::fragment::kill();
         }
     });
 }

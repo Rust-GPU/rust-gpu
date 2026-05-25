@@ -8,25 +8,6 @@ use crate::Integer;
 use crate::{Scalar, SignedInteger, UnsignedInteger, Vector};
 #[cfg(target_arch = "spirv")]
 use core::arch::asm;
-use glam::UVec2;
-
-mod atomics;
-mod barrier;
-mod demote_to_helper_invocation_ext;
-mod derivative;
-mod mesh_shading;
-mod primitive;
-mod ray_tracing;
-mod subgroup;
-
-pub use atomics::*;
-pub use barrier::*;
-pub use demote_to_helper_invocation_ext::*;
-pub use derivative::*;
-pub use mesh_shading::*;
-pub use primitive::*;
-pub use ray_tracing::*;
-pub use subgroup::*;
 
 /// Result is true if any component of `vector` is true, otherwise result is
 /// false.
@@ -127,63 +108,6 @@ pub unsafe fn vector_insert_dynamic<T: Scalar, V: Vector<T, N>, const N: usize>(
             element = in(reg) &element,
             result = in(reg) &mut result,
         }
-
-        result
-    }
-}
-
-/// Fragment-shader discard. Equivalvent to `discard()` from GLSL
-///
-/// Ceases all further processing in any invocation that executes it: Only
-/// instructions these invocations executed before [kill] have observable side
-/// effects.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpKill", alias = "discard")]
-#[allow(clippy::empty_loop)]
-pub fn kill() -> ! {
-    unsafe { asm!("OpKill", options(noreturn)) }
-}
-
-/// Read from the shader clock with either the `Subgroup` or `Device` scope.
-///
-/// See:
-/// <https://htmlpreview.github.io/?https://github.com/KhronosGroup/SPIRV-Registry/blob/master/extensions/KHR/SPV_KHR_shader_clock.html>
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpReadClockKHR")]
-pub fn read_clock_khr<const SCOPE: u32>() -> u64 {
-    unsafe {
-        let mut result: u64;
-
-        asm! {
-            "%uint = OpTypeInt 32 0",
-            "%scope = OpConstant %uint {scope}",
-            "{result} = OpReadClockKHR typeof*{result} %scope",
-            result = out(reg) result,
-            scope = const SCOPE,
-        };
-
-        result
-    }
-}
-
-/// Like `read_clock_khr` but returns a vector to avoid requiring the `Int64`
-/// capability. It returns a 'vector of two-components of 32-bit unsigned
-/// integer type with the first component containing the 32 least significant
-/// bits and the second component containing the 32 most significant bits.'
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpReadClockKHR")]
-pub fn read_clock_uvec2_khr<const SCOPE: u32>() -> UVec2 {
-    unsafe {
-        let mut result = UVec2::default();
-
-        asm! {
-            "%uint = OpTypeInt 32 0",
-            "%scope = OpConstant %uint {scope}",
-            "%result = OpReadClockKHR typeof*{result} %scope",
-            "OpStore {result} %result",
-            result = in(reg) &mut result,
-            scope = const SCOPE,
-        };
 
         result
     }

@@ -43,7 +43,7 @@ pub unsafe trait ScalarOrVector: ScalarComposite + Default {
 /// features on the [`num_enum`] crate, or it won't compile on SPIR-V.
 ///
 /// [`Integer`]: crate::Integer
-/// [safe subgroup operations]: crate::arch::subgroup_shuffle
+/// [safe subgroup operations]: crate::subgroup::subgroup_shuffle
 /// [`FromPrimitive`]: https://docs.rs/num_enum/latest/num_enum/derive.FromPrimitive.html
 /// [`IntoPrimitive`]: https://docs.rs/num_enum/latest/num_enum/derive.IntoPrimitive.html
 /// [`num_enum`]: https://crates.io/crates/num_enum
