@@ -162,7 +162,7 @@ impl SpirvSource {
                         Some(Self::Git { url, rev })
                     };
                     parse_git()
-                        .with_context(|| format!("Failed to parse git url {}", &source.repr))?
+                        .with_context(|| format!("Failed to parse git url {}", source.repr))?
                 }
                 (false, true) => Self::CratesIO(spirv_std_package.version.clone()),
                 (false, false) => {

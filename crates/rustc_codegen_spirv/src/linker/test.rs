@@ -228,7 +228,7 @@ fn without_header_eq(output: Module, expected: &str) {
         .join("\n");
 
     if result != expected {
-        println!("{}", &result);
+        println!("{}", result);
         panic!(
             "assertion failed: `left == right`\
             \n\
