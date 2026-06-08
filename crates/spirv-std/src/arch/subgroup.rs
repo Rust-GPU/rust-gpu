@@ -9,9 +9,9 @@ use crate::{Float, Integer, ScalarComposite, ScalarOrVector, SignedInteger, Unsi
 #[cfg(target_arch = "spirv")]
 const SUBGROUP: u32 = Scope::Subgroup as u32;
 
-/// `SubgroupMask` is a [`glam::UVec4`] representing a bitmask of all invocations within a subgroup.
+/// `SubgroupMask` is a [`crate::glam::UVec4`] representing a bitmask of all invocations within a subgroup.
 /// Mostly used in group ballot operations.
-pub type SubgroupMask = glam::UVec4;
+pub type SubgroupMask = crate::glam::UVec4;
 
 /// Defines the class of group operation.
 #[non_exhaustive]

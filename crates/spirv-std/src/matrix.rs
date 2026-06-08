@@ -1,7 +1,7 @@
 //! a set of common SPIR-V Matrices, used for intrinsics
 
+use crate::glam::{Affine3A, Mat3, Mat3A, Mat4, Vec3, Vec3A};
 use core::fmt::{Debug, Display, Formatter};
-use glam::{Affine3A, Mat3, Mat3A, Mat4, Vec3, Vec3A};
 
 /// A Matrix with 4 columns of [`Vec3`], very similar to glam's [`Affine3A`].
 ///

@@ -5,10 +5,10 @@
 //! no additional safety checks beyond type-checking.
 #[cfg(target_arch = "spirv")]
 use crate::Integer;
+use crate::glam::UVec2;
 use crate::{Scalar, SignedInteger, UnsignedInteger, Vector};
 #[cfg(target_arch = "spirv")]
 use core::arch::asm;
-use glam::UVec2;
 
 mod atomics;
 mod barrier;

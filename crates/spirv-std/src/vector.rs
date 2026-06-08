@@ -1,9 +1,10 @@
 //! Traits related to vectors.
 
+use crate::glam;
+use crate::glam::{Vec3Swizzles, Vec4Swizzles};
 use crate::sealed::Sealed;
 use crate::{Scalar, ScalarComposite, ScalarOrVector, ScalarOrVectorTransform};
 use core::num::NonZeroUsize;
-use glam::{Vec3Swizzles, Vec4Swizzles};
 
 /// Abstract trait representing a SPIR-V vector type.
 ///

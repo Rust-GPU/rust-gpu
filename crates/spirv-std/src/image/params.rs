@@ -1,4 +1,5 @@
 use super::{Arrayed, Dimensionality, ImageFormat};
+use crate::glam;
 use crate::{Integer, Scalar, Vector, VectorTruncateInto};
 
 /// Marker trait for arguments that accept single scalar values or vectors
