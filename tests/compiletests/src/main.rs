@@ -62,6 +62,7 @@ fn main() {
     let workspace_root = tests_dir.parent().unwrap().parent().unwrap();
     let original_target_dir = workspace_root.join("target");
     let deps_target_dir = original_target_dir.join("compiletest-deps");
+    let target_spec_dir = original_target_dir.join("compiletest-target-spec");
     let compiletest_build_dir = original_target_dir.join("compiletest-results");
 
     // HACK(eddyb) force `compiletest` to pass `ui/...` relative paths to `rustc`,
@@ -76,6 +77,7 @@ fn main() {
         tests_dir,
         compiletest_build_dir,
         deps_target_dir,
+        target_spec_dir,
         codegen_backend_path,
     };
 
@@ -87,6 +89,7 @@ struct Runner {
     tests_dir: PathBuf,
     compiletest_build_dir: PathBuf,
     deps_target_dir: PathBuf,
+    target_spec_dir: PathBuf,
     codegen_backend_path: PathBuf,
 }
 
@@ -159,7 +162,7 @@ impl Runner {
             let target = SpirvTarget::parse(env).unwrap();
             let rustc_version = query_rustc_version(None).unwrap();
             let target_spec =
-                TargetSpecVersion::target_arg(rustc_version, &target, &self.deps_target_dir)
+                TargetSpecVersion::target_arg(rustc_version, &target, &self.target_spec_dir)
                     .unwrap();
 
             let libs = self.build_deps(&target, &target_spec);
