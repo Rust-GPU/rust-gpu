@@ -1,6 +1,6 @@
 //! Indirect command structs from vulkan
 
-use glam::UVec3;
+use crate::glam::UVec3;
 
 /// <https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkDeviceSize.html>
 pub type DeviceSize = u64;

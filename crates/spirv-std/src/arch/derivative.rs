@@ -1,5 +1,5 @@
+use crate::glam::{Vec2, Vec3, Vec3A, Vec4};
 use crate::sealed::Sealed;
-use glam::{Vec2, Vec3, Vec3A, Vec4};
 
 #[cfg(target_arch = "spirv")]
 macro_rules! deriv_fn {

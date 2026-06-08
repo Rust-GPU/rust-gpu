@@ -1,8 +1,8 @@
 //! Traits and helper functions related to floats.
 
+use crate::glam::{Vec2, Vec4};
 #[cfg(target_arch = "spirv")]
 use core::arch::asm;
-use glam::{Vec2, Vec4};
 
 /// Converts two f32 values (floats) into two f16 values (halfs). The result is a u32, with the low
 /// 16 bits being the first f16, and the high 16 bits being the second f16.
@@ -45,7 +45,7 @@ pub fn f16x2_to_vec2(int: u32) -> Vec2 {
 /// for u16 not being universal - the upper 16 bits will always be zero.
 #[spirv_std_macros::gpu_only]
 pub fn f32_to_f16(float: f32) -> u32 {
-    vec2_to_f16x2(glam::Vec2::new(float, 0.))
+    vec2_to_f16x2(crate::glam::Vec2::new(float, 0.))
 }
 
 /// Converts an f16 (half) into an f32 (float). The parameter is a u32, due to GPU support for u16

@@ -3,10 +3,10 @@
 // NOTE(eddyb) "&-masking with zero", likely due to `NONE = 0` in `bitflags!`.
 #![allow(clippy::bad_bit_mask)]
 
+use crate::glam::{UVec2, Vec2, Vec3};
 use crate::matrix::Matrix4x3;
 #[cfg(target_arch = "spirv")]
 use core::arch::asm;
-use glam::{UVec2, Vec2, Vec3};
 
 /// An acceleration structure type which is an opaque reference to an
 /// acceleration structure handle as defined in the client API specification.
