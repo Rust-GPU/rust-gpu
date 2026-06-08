@@ -639,7 +639,6 @@ impl SpirvTarget {
     pub fn rustc_target(&self) -> Target {
         let mut o = TargetOptions::default();
         o.simd_types_indirect = false;
-        o.allows_weak_linkage = false;
         o.crt_static_allows_dylibs = true;
         o.crt_static_respected = true;
         o.dll_prefix = "".into();

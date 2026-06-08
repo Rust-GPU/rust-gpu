@@ -34,11 +34,15 @@ fn rewrite_c_abi_to_rust<'tcx>(
     fn_sig: ty::EarlyBinder<'tcx, ty::PolyFnSig<'tcx>>,
 ) -> ty::EarlyBinder<'tcx, ty::PolyFnSig<'tcx>> {
     fn_sig.map_bound(|outer| {
-        outer.map_bound(|mut inner| {
-            if let Abi::C { .. } = inner.abi {
-                inner.abi = Abi::Rust;
+        outer.map_bound(|inner: ty::FnSig<'_>| {
+            if let Abi::C { .. } = inner.abi() {
+                ty::FnSig {
+                    fn_sig_kind: inner.fn_sig_kind.set_abi(Abi::Rust),
+                    ..inner
+                }
+            } else {
+                inner
             }
-            inner
         })
     })
 }
@@ -1081,7 +1085,7 @@ fn trans_glam_like_struct<'tcx>(
             .non_enum_variant()
             .fields
             .iter()
-            .map(|f| f.ty(tcx, args))
+            .map(|f| f.ty(tcx, args).skip_norm_wip())
             .dedup_with_count()
             .exactly_one()
             .map_err(|_e| {

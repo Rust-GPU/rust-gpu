@@ -1,4 +1,6 @@
 use crate::SpirvTarget;
+#[allow(clippy::enum_glob_use)]
+use TargetSpecVersion::*;
 use semver::Version;
 use std::ffi::OsString;
 use std::path::Path;
@@ -9,20 +11,23 @@ use std::path::Path;
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub enum TargetSpecVersion {
+    /// doesn't support target spec files
     Older,
-    /// Introduced in `489c3ee6fd63da3ca7cf2b15e1ee709d8e078aab` in the old v2 target spec way, later ported to here.
-    /// remove `os: unknown`, add `crt-static-respected: true`
-    Rustc_1_85_0,
     /// rustc 1.76 has been tested to correctly parse modern target spec jsons.
     /// Some later version requires them.
     /// Some earlier version fails with them (notably our 0.9.0 release).
     Rustc_1_76_0,
+    /// Introduced in `489c3ee6fd63da3ca7cf2b15e1ee709d8e078aab` in the old v2 target spec way, later ported to here.
+    /// remove `os: unknown`, add `crt-static-respected: true`
+    Rustc_1_85_0,
     /// rustc 1.93 requires that the value of "target-pointer-width" is no longer a string but u16
     Rustc_1_93_0,
     /// rustc 1.94.0 destabilised json target specs, requiring `-Ztarget-spec-json`
     /// see <https://github.com/Rust-GPU/rust-gpu/pull/545>
     /// see <https://github.com/rust-lang/rust/pull/150151>
     Rustc_1_94_0,
+    /// rustc 1.97.0 removed "allows-weak-linkage" key
+    Rustc_1_97_0,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -49,11 +54,11 @@ impl TargetSpecVersion {
     ) -> std::io::Result<TargetSpec> {
         let mut ret = TargetSpec::default();
         let target_spec = Self::from_rustc_version(rustc_version);
-        if target_spec >= Self::Rustc_1_94_0 {
+        if target_spec >= Rustc_1_94_0 {
             ret.extra_options.push("-Zjson-target-spec".into());
         }
 
-        ret.target = if target_spec == Self::Older {
+        ret.target = if target_spec == Older {
             target.target().into()
         } else {
             std::fs::create_dir_all(target_spec_folder)?;
@@ -67,33 +72,42 @@ impl TargetSpecVersion {
     /// Returns the version of the target spec required for a certain rustc version. May return `None` if the version
     /// is old enough to not need target specs.
     pub fn from_rustc_version(rustc_version: Version) -> Self {
-        if rustc_version >= Version::new(1, 94, 0) {
-            Self::Rustc_1_94_0
+        if rustc_version >= Version::new(1, 97, 0) {
+            Rustc_1_97_0
+        } else if rustc_version >= Version::new(1, 94, 0) {
+            Rustc_1_94_0
         } else if rustc_version >= Version::new(1, 93, 0) {
-            Self::Rustc_1_93_0
+            Rustc_1_93_0
         } else if rustc_version >= Version::new(1, 85, 0) {
-            Self::Rustc_1_85_0
+            Rustc_1_85_0
         } else if rustc_version >= Version::new(1, 76, 0) {
-            Self::Rustc_1_76_0
+            Rustc_1_76_0
         } else {
-            Self::Older
+            Older
         }
     }
 
     /// format the target spec json
-    pub fn format_spec(&self, target: &SpirvTarget) -> String {
+    pub fn format_spec(self, target: &SpirvTarget) -> String {
+        if matches!(self, Older) {
+            panic!("no target specs for older rustc versions")
+        }
+
         let target_env = target.env();
-        let (extra, target_pointer_width) = match self {
-            TargetSpecVersion::Older => panic!("no target specs for older rustc versions"),
-            TargetSpecVersion::Rustc_1_76_0 => (r#""os": "unknown","#, "\"32\""),
-            TargetSpecVersion::Rustc_1_85_0 => (r#""crt-static-respected": true,"#, "\"32\""),
-            TargetSpecVersion::Rustc_1_93_0 | TargetSpecVersion::Rustc_1_94_0 => {
-                (r#""crt-static-respected": true,"#, "32")
-            }
+        let allows_weak_linkage = if self >= Rustc_1_97_0 {
+            ""
+        } else {
+            r#""allows-weak-linkage": false,"#
         };
+        let os_crt_static_respected = if self >= Rustc_1_85_0 {
+            r#""crt-static-respected": true,"#
+        } else {
+            r#""os": "unknown","#
+        };
+        let target_pointer_width = if self >= Rustc_1_93_0 { "32" } else { "\"32\"" };
         format!(
             r#"{{
-  "allows-weak-linkage": false,
+  {allows_weak_linkage}
   "arch": "spirv",
   "crt-objects-fallback": "false",
   "crt-static-allows-dylibs": true,
@@ -113,7 +127,7 @@ impl TargetSpecVersion {
     "std": null,
     "tier": null
   }},
-  {extra}
+  {os_crt_static_respected}
   "panic-strategy": "abort",
   "simd-types-indirect": false,
   "target-pointer-width": {target_pointer_width}

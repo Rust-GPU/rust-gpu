@@ -3088,6 +3088,10 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         bug!("Funclets are not supported")
     }
 
+    fn get_funclet_cleanuppad(&self, _funclet: &Self::Funclet) -> Self::Value {
+        bug!("Funclets are not supported")
+    }
+
     fn atomic_cmpxchg(
         &mut self,
         dst: Self::Value,

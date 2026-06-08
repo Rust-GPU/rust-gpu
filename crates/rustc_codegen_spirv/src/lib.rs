@@ -1,5 +1,5 @@
 // HACK(eddyb) start of `rustc_codegen_ssa` crate-level attributes (see `build.rs`).
-#![feature(box_patterns)]
+#![feature(deref_patterns)]
 #![feature(file_buffered)]
 #![feature(negative_impls)]
 #![feature(string_from_utf8_lossy_owned)]
@@ -157,7 +157,6 @@ use rustc_data_structures::profiling::SelfProfilerRef;
 use rustc_errors::DiagCtxtHandle;
 use rustc_metadata::EncodedMetadata;
 use rustc_middle::dep_graph::{WorkProduct, WorkProductId};
-use rustc_middle::mir::pretty::write_mir_pretty;
 use rustc_middle::mono::{MonoItem, MonoItemData};
 use rustc_middle::ty::print::with_no_trimmed_paths;
 use rustc_middle::ty::{InstanceKind, TyCtxt};
@@ -166,25 +165,31 @@ use rustc_session::config::{self, OutputFilenames, OutputType};
 use rustc_span::symbol::Symbol;
 use std::any::Any;
 use std::fs;
-use std::io::Cursor;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tracing::error;
 
-fn dump_mir(tcx: TyCtxt<'_>, mono_items: &[(MonoItem<'_>, MonoItemData)], path: &Path) {
-    fs::create_dir_all(path.parent().unwrap()).unwrap();
-    let mut file = fs::File::create(path).unwrap();
+fn dump_mir<'tcx>(
+    tcx: TyCtxt<'tcx>,
+    mono_items: &[(MonoItem<'tcx>, MonoItemData)],
+    path: &Path,
+) -> std::io::Result<()> {
+    use rustc_middle::mir::pretty::MirWriter;
+    fs::create_dir_all(path.parent().unwrap())?;
+    let mut file = fs::File::create(path)?;
     for &(mono_item, _) in mono_items {
         if let MonoItem::Fn(instance) = mono_item
             && matches!(instance.def, InstanceKind::Item(_))
         {
-            let mut mir = Cursor::new(Vec::new());
-            if write_mir_pretty(tcx, Some(instance.def_id()), &mut mir).is_ok() {
-                writeln!(file, "{}", String::from_utf8(mir.into_inner()).unwrap()).unwrap();
-            }
+            let mut w = Vec::new();
+            let writer = MirWriter::new(tcx);
+            writer.write_mir_fn(tcx.instance_mir(instance.def), &mut w)?;
+            file.write_all(w.as_slice())?;
+            writeln!(file)?;
         }
     }
+    Ok(())
 }
 
 #[derive(Clone)]
@@ -243,8 +248,8 @@ impl CodegenBackend for SpirvCodegenBackend {
             .unwrap_or_else(|| sess.target.cpu.to_string())
     }
 
-    fn codegen_crate<'tcx>(&self, tcx: TyCtxt<'tcx>, crate_info: &CrateInfo) -> Box<dyn Any> {
-        Box::new(maybe_pqp_cg_ssa::base::codegen_crate(Self, tcx, crate_info))
+    fn codegen_crate<'tcx>(&self, tcx: TyCtxt<'tcx>) -> Box<dyn Any> {
+        Box::new(maybe_pqp_cg_ssa::base::codegen_crate(Self, tcx))
     }
 
     fn join_codegen(
@@ -252,11 +257,12 @@ impl CodegenBackend for SpirvCodegenBackend {
         ongoing_codegen: Box<dyn Any>,
         sess: &Session,
         _outputs: &OutputFilenames,
+        crate_info: &CrateInfo,
     ) -> (CompiledModules, FxIndexMap<WorkProductId, WorkProduct>) {
         ongoing_codegen
             .downcast::<OngoingCodegen<Self>>()
             .expect("Expected OngoingCodegen, found Box<Any>")
-            .join(sess)
+            .join(sess, crate_info)
     }
 
     fn link(
@@ -324,8 +330,8 @@ impl WriteBackendMethods for SpirvCodegenBackend {
     // entirety of `crate::linker` into this stage (lacking diagnostics may be
     // an issue - it's surprising `CodegenBackend::link` has `Session` at all).
     fn optimize_and_codegen_fat_lto(
+        _sess: &Session,
         cgcx: &CodegenContext,
-        _prof: &SelfProfilerRef,
         _shared_emitter: &SharedEmitter,
         _tm_factory: TargetMachineFactoryFn<Self>,
         _exported_symbols_for_lto: &[String],
@@ -333,7 +339,7 @@ impl WriteBackendMethods for SpirvCodegenBackend {
         _modules: Vec<FatLtoInput<Self>>,
     ) -> CompiledModule {
         assert!(
-            cgcx.lto == rustc_session::config::Lto::Fat,
+            cgcx.lto == config::Lto::Fat,
             "`optimize_and_codegen_fat_lto` should \
              only be invoked due to `-Clto` (or equivalent)"
         );
@@ -396,11 +402,9 @@ impl WriteBackendMethods for SpirvCodegenBackend {
         let name = module.name;
         let module_buffer = Self::serialize_module(module.module_llvm, false);
 
-        let path = cgcx.output_filenames.temp_path_for_cgu(
-            OutputType::Object,
-            &name,
-            cgcx.invocation_temp.as_deref(),
-        );
+        let path = cgcx
+            .output_filenames
+            .temp_path_for_cgu(OutputType::Object, &name);
         fs::write(&path, module_buffer.as_bytes()).unwrap();
 
         CompiledModule {
@@ -451,7 +455,7 @@ impl ExtraBackendMethods for SpirvCodegenBackend {
             let mono_items = cgu.items_in_deterministic_order(cx.tcx);
 
             if let Some(dir) = &cx.codegen_args.dump_mir {
-                dump_mir(tcx, mono_items.as_slice(), &dir.join(cgu_name.to_string()));
+                dump_mir(tcx, mono_items.as_slice(), &dir.join(cgu_name.to_string())).unwrap();
             }
 
             for &(mono_item, mono_item_data) in mono_items.iter() {

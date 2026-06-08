@@ -336,7 +336,7 @@ impl<'tcx> CodegenCx<'tcx> {
         // HACK(eddyb) the `ConstCodegenMethods` trait no longer guarantees the
         // lifetime that `alloc` is interned for, but since it *is* interned,
         // we can cheaply recover it (see also the `ty::Lift` infrastructure).
-        let alloc = self.tcx.lift(alloc).unwrap();
+        let alloc = self.tcx.lift(alloc);
 
         let void_type = SpirvType::Void.def(DUMMY_SP, self);
         self.def_constant(void_type, SpirvConst::ConstDataFromAlloc(alloc))

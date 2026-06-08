@@ -174,6 +174,7 @@ fn link_with_linker_opts(
                     None,
                     None,
                     None,
+                    None,
                     "".into(),
                     OutputTypes::new(&[]),
                 ),

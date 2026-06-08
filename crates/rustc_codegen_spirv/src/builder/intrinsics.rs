@@ -9,6 +9,7 @@ use crate::custom_insts::CustomInst;
 use crate::spirv_type::SpirvType;
 use rspirv::dr::Operand;
 use rspirv::spirv::GLOp;
+use rustc_codegen_ssa::RetagInfo;
 use rustc_codegen_ssa::mir::operand::{OperandRef, OperandValue};
 use rustc_codegen_ssa::mir::place::PlaceRef;
 use rustc_codegen_ssa::traits::{BuilderMethods, IntrinsicCallBuilderMethods};
@@ -410,6 +411,14 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
     fn va_end(&mut self, val: Self::Value) -> Self::Value {
         // See `va_start` above.
         val
+    }
+
+    fn retag_mem(&mut self, _place: Self::Value, _info: &RetagInfo<Self::Value>) {
+        bug!("retag not supported")
+    }
+
+    fn retag_reg(&mut self, _ptr: Self::Value, _info: &RetagInfo<Self::Value>) -> Self::Value {
+        bug!("retag not supported")
     }
 }
 
