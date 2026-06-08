@@ -116,7 +116,24 @@ pub use scalar_or_vector::*;
 pub use typed_buffer::*;
 pub use vector::*;
 
-pub use glam;
+#[cfg(feature = "glam_0_30")]
+pub use ::glam_0_30 as glam;
+#[cfg(feature = "glam_0_31")]
+pub use ::glam_0_31 as glam;
+#[cfg(feature = "glam_0_32")]
+pub use ::glam_0_32 as glam;
+#[cfg(feature = "glam_0_33")]
+pub use ::glam_0_33 as glam;
+
+#[cfg(not(any(
+    feature = "glam_0_33",
+    feature = "glam_0_32",
+    feature = "glam_0_31",
+    feature = "glam_0_30"
+)))]
+compile_error!(
+    "Crate `spirv-std` needs at least one one of it's `glam*` features enabled to select which glam version to use"
+);
 
 #[cfg(all(not(test), target_arch = "spirv"))]
 #[panic_handler]
