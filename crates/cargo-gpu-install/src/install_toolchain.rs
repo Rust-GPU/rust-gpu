@@ -148,7 +148,7 @@ pub fn run_cmd(cmd: &mut Command) -> anyhow::Result<(String, String)> {
         anyhow::bail!(
             "Command `{}` failed with {}:\n-- stdout\n{stdout}\n-- stderr\n{stderr}",
             fmt_cmd(),
-            &output.status,
+            output.status,
         );
     }
     Ok((stdout, stderr))

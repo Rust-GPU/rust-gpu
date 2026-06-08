@@ -57,7 +57,7 @@ pub fn destructure_composites(function: &mut Function) {
 
     // Transitive closure computation
     let mut closed_rewrite_rules = rewrite_rules.clone();
-    for (_, value) in closed_rewrite_rules.iter_mut() {
+    for value in closed_rewrite_rules.values_mut() {
         while let Some(next) = rewrite_rules.get(value) {
             *value = *next;
         }
