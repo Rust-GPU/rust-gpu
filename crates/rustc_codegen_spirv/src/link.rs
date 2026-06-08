@@ -65,12 +65,8 @@ pub fn link(
 
         if outputs.outputs.should_codegen() {
             let out_filename = out_filename(sess, crate_type, outputs, Symbol::intern(crate_name));
-            let out_filename_file_for_writing = out_filename.file_for_writing(
-                outputs,
-                OutputType::Exe,
-                crate_name,
-                sess.invocation_temp.as_deref(),
-            );
+            let out_filename_file_for_writing =
+                out_filename.file_for_writing(outputs, OutputType::Exe, crate_name);
             match crate_type {
                 CrateType::Rlib => {
                     link_rlib(
