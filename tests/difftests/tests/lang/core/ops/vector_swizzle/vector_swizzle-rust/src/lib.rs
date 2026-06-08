@@ -1,6 +1,6 @@
 #![no_std]
 
-use glam::{Vec3Swizzles, Vec4, Vec4Swizzles};
+use spirv_std::glam::{Vec3Swizzles, Vec4, Vec4Swizzles};
 use spirv_std::spirv;
 
 #[spirv(compute(threads(64)))]
