@@ -256,6 +256,33 @@ pub(super) fn elf_e_flags(architecture: Architecture, sess: &Session) -> u32 {",
                 );
             }
 
+            // HACK(firestar99): Undo code cleanup that prevents passing ScalarPairs as `PassMode::Direct`
+            // https://github.com/rust-lang/rust/commit/dfc475d018c780475ea962f15d86cfa05a50a148
+            if relative_path == Path::new("src/mir/mod.rs") {
+                src = src.replace(
+                    "
+                        debug_assert!(bx.is_backend_immediate(arg.layout));
+                        return local(OperandRef {
+                            val: OperandValue::Immediate(llarg),
+                            layout: arg.layout,
+                            move_annotation: None,
+                        });",
+                    "
+                        return local(OperandRef::from_immediate_or_packed_pair(
+                            bx, llarg, arg.layout,
+                        ));",
+                );
+            }
+            if relative_path == Path::new("src/mir/block.rs") {
+                src = src.replace(
+                    r#"
+                PassMode::Direct(_) => (op.immediate(), arg.layout.align.abi, false),
+                PassMode::Ignore | PassMode::Pair(..) => unreachable!("handled above"),"#,
+                    "\
+                _ => (op.immediate_or_packed_pair(bx), arg.layout.align.abi, false),",
+                );
+            }
+
             fs::write(out_path, src)?;
         }
     }
