@@ -10,8 +10,9 @@ use crate::spirv_type::SpirvType;
 use rspirv::dr::Operand;
 use rspirv::spirv::GlslStd450Op as GLOp;
 use rustc_codegen_ssa::RetagInfo;
+use rustc_codegen_ssa::mir::IntrinsicResult;
 use rustc_codegen_ssa::mir::operand::{OperandRef, OperandValue};
-use rustc_codegen_ssa::mir::place::PlaceRef;
+use rustc_codegen_ssa::mir::place::{PlaceRef, PlaceValue};
 use rustc_codegen_ssa::traits::{BuilderMethods, IntrinsicCallBuilderMethods};
 use rustc_middle::ty::layout::LayoutOf;
 use rustc_middle::ty::{FnDef, Instance, Ty, TyKind, TypingEnv};
@@ -64,9 +65,14 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
         &mut self,
         instance: Instance<'tcx>,
         args: &[OperandRef<'tcx, Self::Value>],
-        result: PlaceRef<'tcx, Self::Value>,
+        result_layout: ty::layout::TyAndLayout<'tcx>,
+        result_place: Option<PlaceValue<Self::Value>>,
         _span: Span,
-    ) -> Result<(), ty::Instance<'tcx>> {
+    ) -> IntrinsicResult<'tcx, Self::Value> {
+        let result = PlaceRef {
+            val: result_place.unwrap(),
+            layout: result_layout,
+        };
         let callee_ty = instance.ty(self.tcx, TypingEnv::fully_monomorphized());
 
         let (def_id, fn_args) = match *callee_ty.kind() {
@@ -95,7 +101,7 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
             sym::breakpoint => {
                 self.abort();
                 assert!(result.layout.ty.is_unit());
-                return Ok(());
+                return IntrinsicResult::WroteIntoPlace;
             }
 
             sym::volatile_load | sym::unaligned_volatile_load => {
@@ -105,7 +111,7 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
                 if !result.layout.is_zst() {
                     self.store(load, result.val.llval, result.val.align);
                 }
-                return Ok(());
+                return IntrinsicResult::WroteIntoPlace;
             }
 
             sym::prefetch_read_data
@@ -114,7 +120,7 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
             | sym::prefetch_write_instruction => {
                 // ignore
                 assert!(result.layout.ty.is_unit());
-                return Ok(());
+                return IntrinsicResult::WroteIntoPlace;
             }
 
             sym::saturating_add => {
@@ -352,7 +358,10 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
 
             _ => {
                 // Call the fallback body instead of generating the intrinsic code
-                return Err(ty::Instance::new_raw(instance.def_id(), instance.args));
+                return IntrinsicResult::Fallback(Instance::new_raw(
+                    instance.def_id(),
+                    instance.args,
+                ));
             }
         };
 
@@ -368,7 +377,7 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
                 .val
                 .store(self, result);
         }
-        Ok(())
+        IntrinsicResult::WroteIntoPlace
     }
 
     fn codegen_llvm_intrinsic_call(
@@ -402,16 +411,9 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
         todo!()
     }
 
-    fn va_start(&mut self, val: Self::Value) -> Self::Value {
-        // SPIR-V backend has no variadic ABI support; keep the placeholder
-        // operand unchanged so MIR lowering can proceed without crashing.
-        val
-    }
+    fn va_start(&mut self, _val: Self::Value) {}
 
-    fn va_end(&mut self, val: Self::Value) -> Self::Value {
-        // See `va_start` above.
-        val
-    }
+    fn va_end(&mut self, _val: Self::Value) {}
 
     fn retag_mem(&mut self, _place: Self::Value, _info: &RetagInfo<Self::Value>) {
         bug!("retag not supported")
