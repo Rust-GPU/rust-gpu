@@ -116,24 +116,28 @@ pub use scalar_or_vector::*;
 pub use typed_buffer::*;
 pub use vector::*;
 
-#[cfg(feature = "glam_0_30")]
-pub use ::glam_0_30 as glam;
-#[cfg(feature = "glam_0_31")]
-pub use ::glam_0_31 as glam;
-#[cfg(feature = "glam_0_32")]
-pub use ::glam_0_32 as glam;
-#[cfg(feature = "glam_0_33")]
-pub use ::glam_0_33 as glam;
-
-#[cfg(not(any(
-    feature = "glam_0_33",
-    feature = "glam_0_32",
-    feature = "glam_0_31",
-    feature = "glam_0_30"
-)))]
-compile_error!(
-    "Crate `spirv-std` needs at least one one of it's `glam*` features enabled to select which glam version to use"
-);
+// `spirv-std` prefers to use the most up-to-date glam feature that was enabled.
+// Even though it doesn't immediately fail, enabling multiple glam features at the same time will lead to weirdness in
+// downstream crates, as any traits in spirv_std will only be implemented on the most recent glam version.
+cfg_select! {
+    feature = "glam_0_33" => {
+        pub use ::glam_0_33 as glam;
+    }
+    feature = "glam_0_32" => {
+        pub use ::glam_0_32 as glam;
+    }
+    feature = "glam_0_31" => {
+        pub use ::glam_0_31 as glam;
+    }
+    feature = "glam_0_30" => {
+        pub use ::glam_0_30 as glam;
+    }
+    _ => {
+        compile_error!(
+            "Crate `spirv-std` needs at least one one of it's `glam*` features enabled to select which glam version to use"
+        );
+    }
+}
 
 #[cfg(all(not(test), target_arch = "spirv"))]
 #[panic_handler]
