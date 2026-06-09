@@ -930,6 +930,10 @@ impl<'tcx> MiscCodegenMethods<'tcx> for CodegenCx<'tcx> {
     fn declare_c_main(&self, _fn_type: Self::FunctionSignature) -> Option<Self::Function> {
         todo!()
     }
+
+    fn intrinsic_call_expects_place_always(&self, _: Symbol) -> bool {
+        true
+    }
 }
 
 impl<'tcx> DebugInfoCodegenMethods<'tcx> for CodegenCx<'tcx> {
