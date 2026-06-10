@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"macro":["language","region","script","subtag","variant"],"struct":["Language","Region","Script","Subtag","Variant","Variants"]};
+window.SIDEBAR_ITEMS = {"macro":[["language",1],["region",1],["script",1],["subtag",1],["variant",1]],"struct":["Language","Region","Script","Subtag","Variant","Variants"]};

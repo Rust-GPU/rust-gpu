@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["CollectionAllocErr"],"macro":["smallvec","smallvec_inline"],"struct":["Drain","IntoIter","SmallVec"],"trait":["Array","ToSmallVec"]};
+window.SIDEBAR_ITEMS = {"enum":["CollectionAllocErr"],"macro":[["smallvec",1],["smallvec_inline",1]],"struct":["Drain","IntoIter","SmallVec"],"trait":["Array","ToSmallVec"]};

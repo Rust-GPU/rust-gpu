@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["GetDisjointMutError"],"macro":["indexmap","indexmap_with_default","indexset","indexset_with_default"],"mod":["map","set"],"struct":["TryReserveError"],"trait":["Equivalent"]};
+window.SIDEBAR_ITEMS = {"enum":["GetDisjointMutError"],"macro":[["indexmap",1],["indexmap_with_default",1],["indexset",1],["indexset_with_default",1]],"mod":["map","set"],"struct":["TryReserveError"],"trait":["Equivalent"]};

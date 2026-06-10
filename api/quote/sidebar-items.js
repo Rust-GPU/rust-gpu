@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"macro":["format_ident","quote","quote_spanned"],"trait":["IdentFragment","ToTokens","TokenStreamExt"]};
+window.SIDEBAR_ITEMS = {"macro":[["format_ident",1],["quote",1],["quote_spanned",1]],"trait":["IdentFragment","ToTokens","TokenStreamExt"]};

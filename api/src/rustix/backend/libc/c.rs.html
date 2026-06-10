@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustix-1.1.4/src/backend/libc/c.rs`."><title>c.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="rustix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.96.0-nightly (02c7f9bec 2026-04-10)" data-channel="nightly" data-search-js="search-b5634cc7.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../../static.files/src-script-813739b1.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-5013f961.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">rustix/backend/libc/</div>c.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! Libc and supplemental types and constants.
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustix-1.1.4/src/backend/libc/c.rs`."><title>c.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="rustix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.97.0-nightly (e96c36b6f 2026-05-21)" data-channel="nightly" data-search-js="search-fd9372ac.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../../static.files/src-script-813739b1.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-fcd733ba.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">rustix/backend/libc/</div>c.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! Libc and supplemental types and constants.
 <a href=#2 id=2 data-nosnippet>2</a>
 <a href=#3 id=3 data-nosnippet>3</a></span><span class="attr">#![allow(unused_imports)]
 <a href=#4 id=4 data-nosnippet>4</a>
@@ -228,7 +228,7 @@
 <a href=#228 id=228 data-nosnippet>228</a>
 <a href=#229 id=229 data-nosnippet>229</a><span class="attr">#[cfg(target_os = <span class="string">"android"</span>)]
 <a href=#230 id=230 data-nosnippet>230</a></span><span class="kw">mod </span>readwrite_pv64 {
-<a href=#231 id=231 data-nosnippet>231</a>    <span class="kw">use </span>super::<span class="kw-2">*</span>;
+<a href=#231 id=231 data-nosnippet>231</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
 <a href=#232 id=232 data-nosnippet>232</a>
 <a href=#233 id=233 data-nosnippet>233</a>    <span class="kw">pub</span>(<span class="kw">in </span><span class="kw">super</span>::<span class="kw">super</span>) <span class="kw">unsafe fn </span>preadv64(
 <a href=#234 id=234 data-nosnippet>234</a>        fd: c_int,
@@ -296,7 +296,7 @@
 <a href=#296 id=296 data-nosnippet>296</a><span class="comment">// macOS added `preadv` and `pwritev` in version 11.0.
 <a href=#297 id=297 data-nosnippet>297</a></span><span class="attr">#[cfg(apple)]
 <a href=#298 id=298 data-nosnippet>298</a></span><span class="kw">mod </span>readwrite_pv {
-<a href=#299 id=299 data-nosnippet>299</a>    <span class="kw">use </span>super::<span class="kw-2">*</span>;
+<a href=#299 id=299 data-nosnippet>299</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
 <a href=#300 id=300 data-nosnippet>300</a>    <span class="macro">weakcall!</span> {
 <a href=#301 id=301 data-nosnippet>301</a>        <span class="kw">pub</span>(<span class="kw">in </span><span class="kw">super</span>::<span class="kw">super</span>) <span class="kw">fn </span>preadv(
 <a href=#302 id=302 data-nosnippet>302</a>            fd: c_int,
@@ -319,7 +319,7 @@
 <a href=#319 id=319 data-nosnippet>319</a><span class="comment">// glibc added `preadv64v2` and `pwritev64v2` in version 2.26.
 <a href=#320 id=320 data-nosnippet>320</a></span><span class="attr">#[cfg(all(target_os = <span class="string">"linux"</span>, target_env = <span class="string">"gnu"</span>))]
 <a href=#321 id=321 data-nosnippet>321</a></span><span class="kw">mod </span>readwrite_pv64v2 {
-<a href=#322 id=322 data-nosnippet>322</a>    <span class="kw">use </span>super::<span class="kw-2">*</span>;
+<a href=#322 id=322 data-nosnippet>322</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
 <a href=#323 id=323 data-nosnippet>323</a>
 <a href=#324 id=324 data-nosnippet>324</a>    <span class="kw">pub</span>(<span class="kw">in </span><span class="kw">super</span>::<span class="kw">super</span>) <span class="kw">unsafe fn </span>preadv64v2(
 <a href=#325 id=325 data-nosnippet>325</a>        fd: c_int,
@@ -409,7 +409,7 @@
 <a href=#409 id=409 data-nosnippet>409</a>    all(target_os = <span class="string">"linux"</span>, not(target_env = <span class="string">"gnu"</span>)),
 <a href=#410 id=410 data-nosnippet>410</a>))]
 <a href=#411 id=411 data-nosnippet>411</a></span><span class="kw">mod </span>readwrite_pv64v2 {
-<a href=#412 id=412 data-nosnippet>412</a>    <span class="kw">use </span>super::<span class="kw-2">*</span>;
+<a href=#412 id=412 data-nosnippet>412</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
 <a href=#413 id=413 data-nosnippet>413</a>
 <a href=#414 id=414 data-nosnippet>414</a>    <span class="kw">pub</span>(<span class="kw">in </span><span class="kw">super</span>::<span class="kw">super</span>) <span class="kw">unsafe fn </span>preadv64v2(
 <a href=#415 id=415 data-nosnippet>415</a>        fd: c_int,
@@ -571,7 +571,7 @@
 <a href=#571 id=571 data-nosnippet>571</a>
 <a href=#572 id=572 data-nosnippet>572</a><span class="attr">#[cfg(test)]
 <a href=#573 id=573 data-nosnippet>573</a></span><span class="kw">mod </span>tests {
-<a href=#574 id=574 data-nosnippet>574</a>    <span class="kw">use </span>super::<span class="kw-2">*</span>;
+<a href=#574 id=574 data-nosnippet>574</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
 <a href=#575 id=575 data-nosnippet>575</a>
 <a href=#576 id=576 data-nosnippet>576</a>    <span class="attr">#[test]
 <a href=#577 id=577 data-nosnippet>577</a>    #[cfg(linux_kernel)]

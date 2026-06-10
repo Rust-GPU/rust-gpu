@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"macro":["enum_keyword","struct_keyword"],"mod":["errors","keywords"]};
+window.SIDEBAR_ITEMS = {"macro":[["enum_keyword",1],["struct_keyword",1]],"mod":["errors","keywords"]};

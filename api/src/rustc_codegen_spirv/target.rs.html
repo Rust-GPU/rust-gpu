@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/target.rs`."><title>target.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.96.0-nightly (02c7f9bec 2026-04-10)" data-channel="nightly" data-search-js="search-b5634cc7.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5013f961.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/</div>target.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>rspirv::spirv::MemoryModel;
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/target.rs`."><title>target.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.97.0-nightly (e96c36b6f 2026-05-21)" data-channel="nightly" data-search-js="search-fd9372ac.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-fcd733ba.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/</div>target.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>rspirv::spirv::MemoryModel;
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span>rustc_codegen_spirv_types::{SPIRV_ARCH, SPIRV_TARGET_PREFIX};
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span>rustc_target::spec::{Arch, Cc, Env, LinkerFlavor, PanicStrategy, Target, TargetOptions};
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span>std::cmp::Ordering;
@@ -639,77 +639,76 @@
 <a href=#639 id=639 data-nosnippet>639</a>    <span class="kw">pub fn </span>rustc_target(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Target {
 <a href=#640 id=640 data-nosnippet>640</a>        <span class="kw">let </span><span class="kw-2">mut </span>o = TargetOptions::default();
 <a href=#641 id=641 data-nosnippet>641</a>        o.simd_types_indirect = <span class="bool-val">false</span>;
-<a href=#642 id=642 data-nosnippet>642</a>        o.allows_weak_linkage = <span class="bool-val">false</span>;
-<a href=#643 id=643 data-nosnippet>643</a>        o.crt_static_allows_dylibs = <span class="bool-val">true</span>;
-<a href=#644 id=644 data-nosnippet>644</a>        o.crt_static_respected = <span class="bool-val">true</span>;
-<a href=#645 id=645 data-nosnippet>645</a>        o.dll_prefix = <span class="string">""</span>.into();
-<a href=#646 id=646 data-nosnippet>646</a>        o.dll_suffix = <span class="string">".spv.json"</span>.into();
-<a href=#647 id=647 data-nosnippet>647</a>        o.dynamic_linking = <span class="bool-val">true</span>;
-<a href=#648 id=648 data-nosnippet>648</a>        o.emit_debug_gdb_scripts = <span class="bool-val">false</span>;
-<a href=#649 id=649 data-nosnippet>649</a>        o.linker_flavor = LinkerFlavor::Unix(Cc::No);
-<a href=#650 id=650 data-nosnippet>650</a>        o.panic_strategy = PanicStrategy::Abort;
-<a href=#651 id=651 data-nosnippet>651</a>        o.env = Env::Other(<span class="self">self</span>.env().into());
-<a href=#652 id=652 data-nosnippet>652</a>        <span class="comment">// Note(@firestar99): not sure if this does anything
-<a href=#653 id=653 data-nosnippet>653</a>        </span>o.is_like_gpu = <span class="bool-val">true</span>;
-<a href=#654 id=654 data-nosnippet>654</a>        <span class="comment">// TODO: Investigate if main_needs_argc_argv is useful (for building exes)
-<a href=#655 id=655 data-nosnippet>655</a>        </span>o.main_needs_argc_argv = <span class="bool-val">false</span>;
-<a href=#656 id=656 data-nosnippet>656</a>
-<a href=#657 id=657 data-nosnippet>657</a>        Target {
-<a href=#658 id=658 data-nosnippet>658</a>            llvm_target: <span class="self">self</span>.target().into(),
-<a href=#659 id=659 data-nosnippet>659</a>            metadata: Default::default(),
-<a href=#660 id=660 data-nosnippet>660</a>            pointer_width: <span class="number">32</span>,
-<a href=#661 id=661 data-nosnippet>661</a>            data_layout: <span class="string">"e-m:e-p:32:32:32-i64:64-n8:16:32:64"</span>.into(),
-<a href=#662 id=662 data-nosnippet>662</a>            arch: Arch::Other(SPIRV_ARCH.into()),
-<a href=#663 id=663 data-nosnippet>663</a>            options: o,
-<a href=#664 id=664 data-nosnippet>664</a>        }
-<a href=#665 id=665 data-nosnippet>665</a>    }
-<a href=#666 id=666 data-nosnippet>666</a>}
-<a href=#667 id=667 data-nosnippet>667</a>
-<a href=#668 id=668 data-nosnippet>668</a><span class="attr">#[cfg(test)]
-<a href=#669 id=669 data-nosnippet>669</a></span><span class="kw">mod </span>tests {
-<a href=#670 id=670 data-nosnippet>670</a>    <span class="kw">use </span>super::<span class="kw-2">*</span>;
-<a href=#671 id=671 data-nosnippet>671</a>
-<a href=#672 id=672 data-nosnippet>672</a>    <span class="attr">#[test]
-<a href=#673 id=673 data-nosnippet>673</a>    </span><span class="kw">fn </span>test_prefix_matches_arch_vendor() {
-<a href=#674 id=674 data-nosnippet>674</a>        <span class="macro">assert_eq!</span>(SPIRV_TARGET_PREFIX, <span class="macro">format!</span>(<span class="string">"{SPIRV_ARCH}-unknown-"</span>));
-<a href=#675 id=675 data-nosnippet>675</a>    }
-<a href=#676 id=676 data-nosnippet>676</a>
-<a href=#677 id=677 data-nosnippet>677</a>    <span class="attr">#[test]
-<a href=#678 id=678 data-nosnippet>678</a>    </span><span class="kw">fn </span>test_str_roundtrip_target() {
-<a href=#679 id=679 data-nosnippet>679</a>        <span class="kw">for </span>target <span class="kw">in </span>SpirvTarget::all_targets() {
-<a href=#680 id=680 data-nosnippet>680</a>            <span class="macro">assert_eq!</span>(SpirvTarget::parse_target(<span class="kw-2">&amp;</span>target.target()), <span class="prelude-val">Ok</span>(target));
-<a href=#681 id=681 data-nosnippet>681</a>        }
-<a href=#682 id=682 data-nosnippet>682</a>    }
-<a href=#683 id=683 data-nosnippet>683</a>
-<a href=#684 id=684 data-nosnippet>684</a>    <span class="attr">#[test]
-<a href=#685 id=685 data-nosnippet>685</a>    </span><span class="kw">fn </span>test_str_roundtrip_env() {
-<a href=#686 id=686 data-nosnippet>686</a>        <span class="kw">for </span>target <span class="kw">in </span>SpirvTarget::all_targets() {
-<a href=#687 id=687 data-nosnippet>687</a>            <span class="macro">assert_eq!</span>(SpirvTarget::parse_env(<span class="kw-2">&amp;</span>target.env()), <span class="prelude-val">Ok</span>(target));
-<a href=#688 id=688 data-nosnippet>688</a>        }
-<a href=#689 id=689 data-nosnippet>689</a>    }
-<a href=#690 id=690 data-nosnippet>690</a>
-<a href=#691 id=691 data-nosnippet>691</a>    <span class="attr">#[test]
-<a href=#692 id=692 data-nosnippet>692</a>    </span><span class="kw">fn </span>test_unknown_target() {
-<a href=#693 id=693 data-nosnippet>693</a>        <span class="kw">let </span>result = SpirvTarget::parse_env(<span class="string">"unknown"</span>);
-<a href=#694 id=694 data-nosnippet>694</a>        <span class="macro">assert!</span>(
-<a href=#695 id=695 data-nosnippet>695</a>            <span class="macro">matches!</span>(result, <span class="prelude-val">Err</span>(TargetError::UnknownTarget(..))),
-<a href=#696 id=696 data-nosnippet>696</a>            <span class="string">"{result:?}"</span>,
-<a href=#697 id=697 data-nosnippet>697</a>        );
-<a href=#698 id=698 data-nosnippet>698</a>        <span class="kw">let </span>result = SpirvTarget::parse_env(<span class="string">"vulkan6.8"</span>);
-<a href=#699 id=699 data-nosnippet>699</a>        <span class="macro">assert!</span>(
-<a href=#700 id=700 data-nosnippet>700</a>            <span class="macro">matches!</span>(result, <span class="prelude-val">Err</span>(TargetError::InvalidTargetVersion(..))),
-<a href=#701 id=701 data-nosnippet>701</a>            <span class="string">"{result:?}"</span>,
-<a href=#702 id=702 data-nosnippet>702</a>        );
-<a href=#703 id=703 data-nosnippet>703</a>        <span class="kw">let </span>result = SpirvTarget::parse_env(<span class="string">"vulkan1.4-spv1.0"</span>);
-<a href=#704 id=704 data-nosnippet>704</a>        <span class="macro">assert!</span>(
-<a href=#705 id=705 data-nosnippet>705</a>            <span class="macro">matches!</span>(result, <span class="prelude-val">Err</span>(TargetError::InvalidTargetVersion(..))),
-<a href=#706 id=706 data-nosnippet>706</a>            <span class="string">"{result:?}"</span>,
-<a href=#707 id=707 data-nosnippet>707</a>        );
-<a href=#708 id=708 data-nosnippet>708</a>        <span class="kw">let </span>result = SpirvTarget::parse_env(<span class="string">"spv1.4-spv1.0"</span>);
-<a href=#709 id=709 data-nosnippet>709</a>        <span class="macro">assert!</span>(
-<a href=#710 id=710 data-nosnippet>710</a>            <span class="macro">matches!</span>(result, <span class="prelude-val">Err</span>(TargetError::UnknownTarget(..))),
-<a href=#711 id=711 data-nosnippet>711</a>            <span class="string">"{result:?}"</span>,
-<a href=#712 id=712 data-nosnippet>712</a>        );
-<a href=#713 id=713 data-nosnippet>713</a>    }
-<a href=#714 id=714 data-nosnippet>714</a>}
+<a href=#642 id=642 data-nosnippet>642</a>        o.crt_static_allows_dylibs = <span class="bool-val">true</span>;
+<a href=#643 id=643 data-nosnippet>643</a>        o.crt_static_respected = <span class="bool-val">true</span>;
+<a href=#644 id=644 data-nosnippet>644</a>        o.dll_prefix = <span class="string">""</span>.into();
+<a href=#645 id=645 data-nosnippet>645</a>        o.dll_suffix = <span class="string">".spv.json"</span>.into();
+<a href=#646 id=646 data-nosnippet>646</a>        o.dynamic_linking = <span class="bool-val">true</span>;
+<a href=#647 id=647 data-nosnippet>647</a>        o.emit_debug_gdb_scripts = <span class="bool-val">false</span>;
+<a href=#648 id=648 data-nosnippet>648</a>        o.linker_flavor = LinkerFlavor::Unix(Cc::No);
+<a href=#649 id=649 data-nosnippet>649</a>        o.panic_strategy = PanicStrategy::Abort;
+<a href=#650 id=650 data-nosnippet>650</a>        o.env = Env::Other(<span class="self">self</span>.env().into());
+<a href=#651 id=651 data-nosnippet>651</a>        <span class="comment">// Note(@firestar99): not sure if this does anything
+<a href=#652 id=652 data-nosnippet>652</a>        </span>o.is_like_gpu = <span class="bool-val">true</span>;
+<a href=#653 id=653 data-nosnippet>653</a>        <span class="comment">// TODO: Investigate if main_needs_argc_argv is useful (for building exes)
+<a href=#654 id=654 data-nosnippet>654</a>        </span>o.main_needs_argc_argv = <span class="bool-val">false</span>;
+<a href=#655 id=655 data-nosnippet>655</a>
+<a href=#656 id=656 data-nosnippet>656</a>        Target {
+<a href=#657 id=657 data-nosnippet>657</a>            llvm_target: <span class="self">self</span>.target().into(),
+<a href=#658 id=658 data-nosnippet>658</a>            metadata: Default::default(),
+<a href=#659 id=659 data-nosnippet>659</a>            pointer_width: <span class="number">32</span>,
+<a href=#660 id=660 data-nosnippet>660</a>            data_layout: <span class="string">"e-m:e-p:32:32:32-i64:64-n8:16:32:64"</span>.into(),
+<a href=#661 id=661 data-nosnippet>661</a>            arch: Arch::Other(SPIRV_ARCH.into()),
+<a href=#662 id=662 data-nosnippet>662</a>            options: o,
+<a href=#663 id=663 data-nosnippet>663</a>        }
+<a href=#664 id=664 data-nosnippet>664</a>    }
+<a href=#665 id=665 data-nosnippet>665</a>}
+<a href=#666 id=666 data-nosnippet>666</a>
+<a href=#667 id=667 data-nosnippet>667</a><span class="attr">#[cfg(test)]
+<a href=#668 id=668 data-nosnippet>668</a></span><span class="kw">mod </span>tests {
+<a href=#669 id=669 data-nosnippet>669</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#670 id=670 data-nosnippet>670</a>
+<a href=#671 id=671 data-nosnippet>671</a>    <span class="attr">#[test]
+<a href=#672 id=672 data-nosnippet>672</a>    </span><span class="kw">fn </span>test_prefix_matches_arch_vendor() {
+<a href=#673 id=673 data-nosnippet>673</a>        <span class="macro">assert_eq!</span>(SPIRV_TARGET_PREFIX, <span class="macro">format!</span>(<span class="string">"{SPIRV_ARCH}-unknown-"</span>));
+<a href=#674 id=674 data-nosnippet>674</a>    }
+<a href=#675 id=675 data-nosnippet>675</a>
+<a href=#676 id=676 data-nosnippet>676</a>    <span class="attr">#[test]
+<a href=#677 id=677 data-nosnippet>677</a>    </span><span class="kw">fn </span>test_str_roundtrip_target() {
+<a href=#678 id=678 data-nosnippet>678</a>        <span class="kw">for </span>target <span class="kw">in </span>SpirvTarget::all_targets() {
+<a href=#679 id=679 data-nosnippet>679</a>            <span class="macro">assert_eq!</span>(SpirvTarget::parse_target(<span class="kw-2">&amp;</span>target.target()), <span class="prelude-val">Ok</span>(target));
+<a href=#680 id=680 data-nosnippet>680</a>        }
+<a href=#681 id=681 data-nosnippet>681</a>    }
+<a href=#682 id=682 data-nosnippet>682</a>
+<a href=#683 id=683 data-nosnippet>683</a>    <span class="attr">#[test]
+<a href=#684 id=684 data-nosnippet>684</a>    </span><span class="kw">fn </span>test_str_roundtrip_env() {
+<a href=#685 id=685 data-nosnippet>685</a>        <span class="kw">for </span>target <span class="kw">in </span>SpirvTarget::all_targets() {
+<a href=#686 id=686 data-nosnippet>686</a>            <span class="macro">assert_eq!</span>(SpirvTarget::parse_env(<span class="kw-2">&amp;</span>target.env()), <span class="prelude-val">Ok</span>(target));
+<a href=#687 id=687 data-nosnippet>687</a>        }
+<a href=#688 id=688 data-nosnippet>688</a>    }
+<a href=#689 id=689 data-nosnippet>689</a>
+<a href=#690 id=690 data-nosnippet>690</a>    <span class="attr">#[test]
+<a href=#691 id=691 data-nosnippet>691</a>    </span><span class="kw">fn </span>test_unknown_target() {
+<a href=#692 id=692 data-nosnippet>692</a>        <span class="kw">let </span>result = SpirvTarget::parse_env(<span class="string">"unknown"</span>);
+<a href=#693 id=693 data-nosnippet>693</a>        <span class="macro">assert!</span>(
+<a href=#694 id=694 data-nosnippet>694</a>            <span class="macro">matches!</span>(result, <span class="prelude-val">Err</span>(TargetError::UnknownTarget(..))),
+<a href=#695 id=695 data-nosnippet>695</a>            <span class="string">"{result:?}"</span>,
+<a href=#696 id=696 data-nosnippet>696</a>        );
+<a href=#697 id=697 data-nosnippet>697</a>        <span class="kw">let </span>result = SpirvTarget::parse_env(<span class="string">"vulkan6.8"</span>);
+<a href=#698 id=698 data-nosnippet>698</a>        <span class="macro">assert!</span>(
+<a href=#699 id=699 data-nosnippet>699</a>            <span class="macro">matches!</span>(result, <span class="prelude-val">Err</span>(TargetError::InvalidTargetVersion(..))),
+<a href=#700 id=700 data-nosnippet>700</a>            <span class="string">"{result:?}"</span>,
+<a href=#701 id=701 data-nosnippet>701</a>        );
+<a href=#702 id=702 data-nosnippet>702</a>        <span class="kw">let </span>result = SpirvTarget::parse_env(<span class="string">"vulkan1.4-spv1.0"</span>);
+<a href=#703 id=703 data-nosnippet>703</a>        <span class="macro">assert!</span>(
+<a href=#704 id=704 data-nosnippet>704</a>            <span class="macro">matches!</span>(result, <span class="prelude-val">Err</span>(TargetError::InvalidTargetVersion(..))),
+<a href=#705 id=705 data-nosnippet>705</a>            <span class="string">"{result:?}"</span>,
+<a href=#706 id=706 data-nosnippet>706</a>        );
+<a href=#707 id=707 data-nosnippet>707</a>        <span class="kw">let </span>result = SpirvTarget::parse_env(<span class="string">"spv1.4-spv1.0"</span>);
+<a href=#708 id=708 data-nosnippet>708</a>        <span class="macro">assert!</span>(
+<a href=#709 id=709 data-nosnippet>709</a>            <span class="macro">matches!</span>(result, <span class="prelude-val">Err</span>(TargetError::UnknownTarget(..))),
+<a href=#710 id=710 data-nosnippet>710</a>            <span class="string">"{result:?}"</span>,
+<a href=#711 id=711 data-nosnippet>711</a>        );
+<a href=#712 id=712 data-nosnippet>712</a>    }
+<a href=#713 id=713 data-nosnippet>713</a>}
 </code></pre></div></section></main></body></html>

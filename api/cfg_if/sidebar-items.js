@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"macro":["cfg_if"]};
+window.SIDEBAR_ITEMS = {"macro":[["cfg_if",1]]};

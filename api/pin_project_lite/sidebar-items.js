@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"macro":["pin_project"]};
+window.SIDEBAR_ITEMS = {"macro":[["pin_project",1]]};

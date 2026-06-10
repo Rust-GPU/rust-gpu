@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerocopy-0.8.50/src/layout.rs`."><title>layout.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="zerocopy" data-themes="" data-resource-suffix="" data-rustdoc-version="1.96.0-nightly (02c7f9bec 2026-04-10)" data-channel="nightly" data-search-js="search-b5634cc7.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5013f961.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">zerocopy/</div>layout.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// Copyright 2024 The Fuchsia Authors
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerocopy-0.8.50/src/layout.rs`."><title>layout.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="zerocopy" data-themes="" data-resource-suffix="" data-rustdoc-version="1.97.0-nightly (e96c36b6f 2026-05-21)" data-channel="nightly" data-search-js="search-fd9372ac.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-fcd733ba.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">zerocopy/</div>layout.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// Copyright 2024 The Fuchsia Authors
 <a href=#2 id=2 data-nosnippet>2</a>//
 <a href=#3 id=3 data-nosnippet>3</a>// Licensed under the 2-Clause BSD License &lt;LICENSE-BSD or
 <a href=#4 id=4 data-nosnippet>4</a>// https://opensource.org/license/bsd-2-clause&gt;, Apache License, Version 2.0
@@ -752,7 +752,7 @@
 <a href=#752 id=752 data-nosnippet>752</a>
 <a href=#753 id=753 data-nosnippet>753</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">use </span>cast_from::CastFrom;
 <a href=#754 id=754 data-nosnippet>754</a><span class="kw">mod </span>cast_from {
-<a href=#755 id=755 data-nosnippet>755</a>    <span class="kw">use </span>crate::<span class="kw-2">*</span>;
+<a href=#755 id=755 data-nosnippet>755</a>    <span class="kw">use crate</span>::<span class="kw-2">*</span>;
 <a href=#756 id=756 data-nosnippet>756</a>
 <a href=#757 id=757 data-nosnippet>757</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>CastFrom&lt;Dst: <span class="question-mark">?</span>Sized&gt; {
 <a href=#758 id=758 data-nosnippet>758</a>        _never: core::convert::Infallible,
@@ -1098,7 +1098,7 @@
 <a href=#1098 id=1098 data-nosnippet>1098</a></span><span class="attr">#[allow(unknown_lints)]
 <a href=#1099 id=1099 data-nosnippet>1099</a>#[cfg(test)]
 <a href=#1100 id=1100 data-nosnippet>1100</a></span><span class="kw">mod </span>tests {
-<a href=#1101 id=1101 data-nosnippet>1101</a>    <span class="kw">use </span>super::<span class="kw-2">*</span>;
+<a href=#1101 id=1101 data-nosnippet>1101</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
 <a href=#1102 id=1102 data-nosnippet>1102</a>
 <a href=#1103 id=1103 data-nosnippet>1103</a>    <span class="attr">#[test]
 <a href=#1104 id=1104 data-nosnippet>1104</a>    </span><span class="kw">fn </span>test_dst_layout_for_slice() {
@@ -1750,7 +1750,7 @@
 <a href=#1750 id=1750 data-nosnippet>1750</a>                        align: <span class="macro-nonterminal">$align</span>.try_into().unwrap(),
 <a href=#1751 id=1751 data-nosnippet>1751</a>                        elem_size: {
 <a href=#1752 id=1752 data-nosnippet>1752</a>                            <span class="attr">#[allow(unused)]
-<a href=#1753 id=1753 data-nosnippet>1753</a>                            </span><span class="kw">let </span>ret = None::&lt;usize&gt;;
+<a href=#1753 id=1753 data-nosnippet>1753</a>                            </span><span class="kw">let </span>ret = <span class="prelude-val">None</span>::&lt;usize&gt;;
 <a href=#1754 id=1754 data-nosnippet>1754</a>                            $(<span class="kw">let </span>ret = <span class="prelude-val">Some</span>(<span class="macro-nonterminal">$elem_size</span>);)<span class="question-mark">?
 <a href=#1755 id=1755 data-nosnippet>1755</a>                            </span>ret
 <a href=#1756 id=1756 data-nosnippet>1756</a>                        }
@@ -1772,7 +1772,7 @@
 <a href=#1772 id=1772 data-nosnippet>1772</a>                    };
 <a href=#1773 id=1773 data-nosnippet>1773</a>                    <span class="kw">let </span>addr_of_slice_field = {
 <a href=#1774 id=1774 data-nosnippet>1774</a>                        <span class="attr">#[allow(unused)]
-<a href=#1775 id=1775 data-nosnippet>1775</a>                        </span><span class="kw">let </span>f = None::&lt;<span class="kw">fn</span>(NonNull&lt;Foo&gt;) -&gt; NonNull&lt;u8&gt;&gt;;
+<a href=#1775 id=1775 data-nosnippet>1775</a>                        </span><span class="kw">let </span>f = <span class="prelude-val">None</span>::&lt;<span class="kw">fn</span>(NonNull&lt;Foo&gt;) -&gt; NonNull&lt;u8&gt;&gt;;
 <a href=#1776 id=1776 data-nosnippet>1776</a>                        $(
 <a href=#1777 id=1777 data-nosnippet>1777</a>                            <span class="comment">// SAFETY: `test` promises to only call `f` with a `ptr`
 <a href=#1778 id=1778 data-nosnippet>1778</a>                            // to a valid `Foo`.
@@ -1949,7 +1949,7 @@
 <a href=#1949 id=1949 data-nosnippet>1949</a></span><span class="kw">mod </span>proofs {
 <a href=#1950 id=1950 data-nosnippet>1950</a>    <span class="kw">use </span>core::alloc::Layout;
 <a href=#1951 id=1951 data-nosnippet>1951</a>
-<a href=#1952 id=1952 data-nosnippet>1952</a>    <span class="kw">use </span>super::<span class="kw-2">*</span>;
+<a href=#1952 id=1952 data-nosnippet>1952</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
 <a href=#1953 id=1953 data-nosnippet>1953</a>
 <a href=#1954 id=1954 data-nosnippet>1954</a>    <span class="kw">impl </span>kani::Arbitrary <span class="kw">for </span>DstLayout {
 <a href=#1955 id=1955 data-nosnippet>1955</a>        <span class="kw">fn </span>any() -&gt; <span class="self">Self </span>{

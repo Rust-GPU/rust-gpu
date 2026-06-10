@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["ParseError"],"macro":["tinystr"],"struct":["TinyAsciiStr","UnvalidatedTinyAsciiStr"],"type":["TinyStr16","TinyStr4","TinyStr8"]};
+window.SIDEBAR_ITEMS = {"enum":["ParseError"],"macro":[["tinystr",1]],"struct":["TinyAsciiStr","UnvalidatedTinyAsciiStr"],"type":["TinyStr16","TinyStr4","TinyStr8"]};
