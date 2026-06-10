@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerocopy-derive-0.8.38/src/derive/into_bytes.rs`."><title>into_bytes.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="zerocopy_derive" data-themes="" data-resource-suffix="" data-rustdoc-version="1.96.0-nightly (02c7f9bec 2026-04-10)" data-channel="nightly" data-search-js="search-b5634cc7.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5013f961.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">zerocopy_derive/derive/</div>into_bytes.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>proc_macro2::{Span, TokenStream};
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerocopy-derive-0.8.50/src/derive/into_bytes.rs`."><title>into_bytes.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="zerocopy_derive" data-themes="" data-resource-suffix="" data-rustdoc-version="1.96.0-nightly (02c7f9bec 2026-04-10)" data-channel="nightly" data-search-js="search-b5634cc7.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5013f961.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">zerocopy_derive/derive/</div>into_bytes.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>proc_macro2::{Span, TokenStream};
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span>quote::quote;
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span>syn::{Data, DataEnum, DataStruct, DataUnion, Error, Type};
 <a href=#4 id=4 data-nosnippet>4</a>
@@ -79,7 +79,7 @@
 <a href=#79 id=79 data-nosnippet>79</a>        // structs without requiring `Unaligned`.
 <a href=#80 id=80 data-nosnippet>80</a>        </span>(<span class="prelude-val">None</span>, <span class="bool-val">true</span>)
 <a href=#81 id=81 data-nosnippet>81</a>    } <span class="kw">else </span>{
-<a href=#82 id=82 data-nosnippet>82</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(Error::new(
+<a href=#82 id=82 data-nosnippet>82</a>        <span class="kw">return </span>ctx.error_or_skip(Error::new(
 <a href=#83 id=83 data-nosnippet>83</a>            Span::call_site(),
 <a href=#84 id=84 data-nosnippet>84</a>            <span class="string">"must have a non-align #[repr(...)] attribute in order to guarantee this type's memory layout"</span>,
 <a href=#85 id=85 data-nosnippet>85</a>        ));
@@ -99,7 +99,7 @@
 <a href=#99 id=99 data-nosnippet>99</a><span class="kw">fn </span>derive_into_bytes_enum(ctx: <span class="kw-2">&amp;</span>Ctx, enm: <span class="kw-2">&amp;</span>DataEnum) -&gt; <span class="prelude-ty">Result</span>&lt;TokenStream, Error&gt; {
 <a href=#100 id=100 data-nosnippet>100</a>    <span class="kw">let </span>repr = EnumRepr::from_attrs(<span class="kw-2">&amp;</span>ctx.ast.attrs)<span class="question-mark">?</span>;
 <a href=#101 id=101 data-nosnippet>101</a>    <span class="kw">if </span>!repr.is_c() &amp;&amp; !repr.is_primitive() {
-<a href=#102 id=102 data-nosnippet>102</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(Error::new(
+<a href=#102 id=102 data-nosnippet>102</a>        <span class="kw">return </span>ctx.error_or_skip(Error::new(
 <a href=#103 id=103 data-nosnippet>103</a>            Span::call_site(),
 <a href=#104 id=104 data-nosnippet>104</a>            <span class="string">"must have #[repr(C)] or #[repr(Int)] attribute in order to guarantee this type's memory layout"</span>,
 <a href=#105 id=105 data-nosnippet>105</a>        ));
@@ -127,33 +127,37 @@
 <a href=#127 id=127 data-nosnippet>127</a>        <span class="kw">let </span>error_message = <span class="string">"requires --cfg zerocopy_derive_union_into_bytes;
 <a href=#128 id=128 data-nosnippet>128</a>please let us know you use this feature: https://github.com/google/zerocopy/discussions/1802"</span>;
 <a href=#129 id=129 data-nosnippet>129</a>        <span class="macro">quote!</span>(
-<a href=#130 id=130 data-nosnippet>130</a>            <span class="kw">const _</span>: () = {
-<a href=#131 id=131 data-nosnippet>131</a>                <span class="attr">#[cfg(not(zerocopy_derive_union_into_bytes))]
-<a href=#132 id=132 data-nosnippet>132</a>                </span>#<span class="macro">core::compile_error!</span>(#error_message);
-<a href=#133 id=133 data-nosnippet>133</a>            };
-<a href=#134 id=134 data-nosnippet>134</a>        )
-<a href=#135 id=135 data-nosnippet>135</a>    };
-<a href=#136 id=136 data-nosnippet>136</a>
-<a href=#137 id=137 data-nosnippet>137</a>    <span class="comment">// FIXME(#10): Support type parameters.
-<a href=#138 id=138 data-nosnippet>138</a>    </span><span class="kw">if </span>!ctx.ast.generics.params.is_empty() {
-<a href=#139 id=139 data-nosnippet>139</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(Error::new(Span::call_site(), <span class="string">"unsupported on types with type parameters"</span>));
-<a href=#140 id=140 data-nosnippet>140</a>    }
-<a href=#141 id=141 data-nosnippet>141</a>
-<a href=#142 id=142 data-nosnippet>142</a>    <span class="comment">// Because we don't support generics, we don't need to worry about
-<a href=#143 id=143 data-nosnippet>143</a>    // special-casing different reprs. So long as there is *some* repr which
-<a href=#144 id=144 data-nosnippet>144</a>    // guarantees the layout, our `PaddingCheck::Union` guarantees that there is
-<a href=#145 id=145 data-nosnippet>145</a>    // no padding.
-<a href=#146 id=146 data-nosnippet>146</a>    </span><span class="kw">let </span>repr = StructUnionRepr::from_attrs(<span class="kw-2">&amp;</span>ctx.ast.attrs)<span class="question-mark">?</span>;
-<a href=#147 id=147 data-nosnippet>147</a>    <span class="kw">if </span>!repr.is_c() &amp;&amp; !repr.is_transparent() &amp;&amp; !repr.is_packed_1() {
-<a href=#148 id=148 data-nosnippet>148</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(Error::new(
-<a href=#149 id=149 data-nosnippet>149</a>            Span::call_site(),
-<a href=#150 id=150 data-nosnippet>150</a>            <span class="string">"must be #[repr(C)], #[repr(packed)], or #[repr(transparent)]"</span>,
-<a href=#151 id=151 data-nosnippet>151</a>        ));
-<a href=#152 id=152 data-nosnippet>152</a>    }
-<a href=#153 id=153 data-nosnippet>153</a>
-<a href=#154 id=154 data-nosnippet>154</a>    <span class="kw">let </span>impl_block = ImplBlockBuilder::new(ctx, unn, Trait::IntoBytes, FieldBounds::ALL_SELF)
-<a href=#155 id=155 data-nosnippet>155</a>        .padding_check(PaddingCheck::Union)
-<a href=#156 id=156 data-nosnippet>156</a>        .build();
-<a href=#157 id=157 data-nosnippet>157</a>    <span class="prelude-val">Ok</span>(<span class="macro">quote!</span>(#cfg_compile_error #impl_block))
-<a href=#158 id=158 data-nosnippet>158</a>}
+<a href=#130 id=130 data-nosnippet>130</a>            <span class="attr">#[allow(unused_attributes, unexpected_cfgs)]
+<a href=#131 id=131 data-nosnippet>131</a>            </span><span class="kw">const _</span>: () = {
+<a href=#132 id=132 data-nosnippet>132</a>                <span class="attr">#[cfg(not(zerocopy_derive_union_into_bytes))]
+<a href=#133 id=133 data-nosnippet>133</a>                </span>#<span class="macro">core::compile_error!</span>(#error_message);
+<a href=#134 id=134 data-nosnippet>134</a>            };
+<a href=#135 id=135 data-nosnippet>135</a>        )
+<a href=#136 id=136 data-nosnippet>136</a>    };
+<a href=#137 id=137 data-nosnippet>137</a>
+<a href=#138 id=138 data-nosnippet>138</a>    <span class="comment">// FIXME(#10): Support type parameters.
+<a href=#139 id=139 data-nosnippet>139</a>    </span><span class="kw">if </span>!ctx.ast.generics.params.is_empty() {
+<a href=#140 id=140 data-nosnippet>140</a>        <span class="kw">return </span>ctx.error_or_skip(Error::new(
+<a href=#141 id=141 data-nosnippet>141</a>            Span::call_site(),
+<a href=#142 id=142 data-nosnippet>142</a>            <span class="string">"unsupported on types with type parameters"</span>,
+<a href=#143 id=143 data-nosnippet>143</a>        ));
+<a href=#144 id=144 data-nosnippet>144</a>    }
+<a href=#145 id=145 data-nosnippet>145</a>
+<a href=#146 id=146 data-nosnippet>146</a>    <span class="comment">// Because we don't support generics, we don't need to worry about
+<a href=#147 id=147 data-nosnippet>147</a>    // special-casing different reprs. So long as there is *some* repr which
+<a href=#148 id=148 data-nosnippet>148</a>    // guarantees the layout, our `PaddingCheck::Union` guarantees that there is
+<a href=#149 id=149 data-nosnippet>149</a>    // no padding.
+<a href=#150 id=150 data-nosnippet>150</a>    </span><span class="kw">let </span>repr = StructUnionRepr::from_attrs(<span class="kw-2">&amp;</span>ctx.ast.attrs)<span class="question-mark">?</span>;
+<a href=#151 id=151 data-nosnippet>151</a>    <span class="kw">if </span>!repr.is_c() &amp;&amp; !repr.is_transparent() &amp;&amp; !repr.is_packed_1() {
+<a href=#152 id=152 data-nosnippet>152</a>        <span class="kw">return </span>ctx.error_or_skip(Error::new(
+<a href=#153 id=153 data-nosnippet>153</a>            Span::call_site(),
+<a href=#154 id=154 data-nosnippet>154</a>            <span class="string">"must be #[repr(C)], #[repr(packed)], or #[repr(transparent)]"</span>,
+<a href=#155 id=155 data-nosnippet>155</a>        ));
+<a href=#156 id=156 data-nosnippet>156</a>    }
+<a href=#157 id=157 data-nosnippet>157</a>
+<a href=#158 id=158 data-nosnippet>158</a>    <span class="kw">let </span>impl_block = ImplBlockBuilder::new(ctx, unn, Trait::IntoBytes, FieldBounds::ALL_SELF)
+<a href=#159 id=159 data-nosnippet>159</a>        .padding_check(PaddingCheck::Union)
+<a href=#160 id=160 data-nosnippet>160</a>        .build();
+<a href=#161 id=161 data-nosnippet>161</a>    <span class="prelude-val">Ok</span>(<span class="macro">quote!</span>(#cfg_compile_error #impl_block))
+<a href=#162 id=162 data-nosnippet>162</a>}
 </code></pre></div></section></main></body></html>

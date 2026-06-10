@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["u64vec2","u64vec3","u64vec4"],"struct":["U64Vec2","U64Vec3","U64Vec4"]};

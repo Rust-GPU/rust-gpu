@@ -116,20 +116,41 @@
 <a href=#116 id=116 data-nosnippet>116</a><span class="kw">pub use </span>typed_buffer::<span class="kw-2">*</span>;
 <a href=#117 id=117 data-nosnippet>117</a><span class="kw">pub use </span>vector::<span class="kw-2">*</span>;
 <a href=#118 id=118 data-nosnippet>118</a>
-<a href=#119 id=119 data-nosnippet>119</a><span class="kw">pub use </span>glam;
-<a href=#120 id=120 data-nosnippet>120</a>
-<a href=#121 id=121 data-nosnippet>121</a><span class="attr">#[cfg(all(not(test), target_arch = <span class="string">"spirv"</span>))]
-<a href=#122 id=122 data-nosnippet>122</a>#[panic_handler]
-<a href=#123 id=123 data-nosnippet>123</a></span><span class="kw">fn </span>panic(<span class="kw">_</span>: <span class="kw-2">&amp;</span>core::panic::PanicInfo&lt;<span class="lifetime">'_</span>&gt;) -&gt; ! {
-<a href=#124 id=124 data-nosnippet>124</a>    <span class="kw">loop </span>{}
-<a href=#125 id=125 data-nosnippet>125</a>}
-<a href=#126 id=126 data-nosnippet>126</a>
-<a href=#127 id=127 data-nosnippet>127</a><span class="attr">#[cfg(all(not(test), target_arch = <span class="string">"spirv"</span>))]
-<a href=#128 id=128 data-nosnippet>128</a>#[lang = <span class="string">"eh_personality"</span>]
-<a href=#129 id=129 data-nosnippet>129</a></span><span class="kw">extern </span><span class="string">"C" </span><span class="kw">fn </span>rust_eh_personality() {}
-<a href=#130 id=130 data-nosnippet>130</a>
-<a href=#131 id=131 data-nosnippet>131</a><span class="comment">// See: https://github.com/rust-lang/rust/issues/84738
-<a href=#132 id=132 data-nosnippet>132</a></span><span class="attr">#[doc(hidden)]
-<a href=#133 id=133 data-nosnippet>133</a></span><span class="doccomment">/// [spirv_std_types]
-<a href=#134 id=134 data-nosnippet>134</a></span><span class="kw">pub fn </span>workaround_rustdoc_ice_84738() {}
+<a href=#119 id=119 data-nosnippet>119</a><span class="comment">// `spirv-std` prefers to use the most up-to-date glam feature that was enabled.
+<a href=#120 id=120 data-nosnippet>120</a>// Even though it doesn't immediately fail, enabling multiple glam features at the same time will lead to weirdness in
+<a href=#121 id=121 data-nosnippet>121</a>// downstream crates, as any traits in spirv_std will only be implemented on the most recent glam version.
+<a href=#122 id=122 data-nosnippet>122</a></span><span class="macro">cfg_select!</span> {
+<a href=#123 id=123 data-nosnippet>123</a>    feature = <span class="string">"glam_0_33" </span>=&gt; {
+<a href=#124 id=124 data-nosnippet>124</a>        <span class="kw">pub use </span>::glam_0_33 <span class="kw">as </span>glam;
+<a href=#125 id=125 data-nosnippet>125</a>    }
+<a href=#126 id=126 data-nosnippet>126</a>    feature = <span class="string">"glam_0_32" </span>=&gt; {
+<a href=#127 id=127 data-nosnippet>127</a>        <span class="kw">pub use </span>::glam_0_32 <span class="kw">as </span>glam;
+<a href=#128 id=128 data-nosnippet>128</a>    }
+<a href=#129 id=129 data-nosnippet>129</a>    feature = <span class="string">"glam_0_31" </span>=&gt; {
+<a href=#130 id=130 data-nosnippet>130</a>        <span class="kw">pub use </span>::glam_0_31 <span class="kw">as </span>glam;
+<a href=#131 id=131 data-nosnippet>131</a>    }
+<a href=#132 id=132 data-nosnippet>132</a>    feature = <span class="string">"glam_0_30" </span>=&gt; {
+<a href=#133 id=133 data-nosnippet>133</a>        <span class="kw">pub use </span>::glam_0_30 <span class="kw">as </span>glam;
+<a href=#134 id=134 data-nosnippet>134</a>    }
+<a href=#135 id=135 data-nosnippet>135</a>    <span class="kw">_ </span>=&gt; {
+<a href=#136 id=136 data-nosnippet>136</a>        <span class="macro">compile_error!</span>(
+<a href=#137 id=137 data-nosnippet>137</a>            <span class="string">"Crate `spirv-std` needs at least one one of it's `glam*` features enabled to select which glam version to use"
+<a href=#138 id=138 data-nosnippet>138</a>        </span>);
+<a href=#139 id=139 data-nosnippet>139</a>    }
+<a href=#140 id=140 data-nosnippet>140</a>}
+<a href=#141 id=141 data-nosnippet>141</a>
+<a href=#142 id=142 data-nosnippet>142</a><span class="attr">#[cfg(all(not(test), target_arch = <span class="string">"spirv"</span>))]
+<a href=#143 id=143 data-nosnippet>143</a>#[panic_handler]
+<a href=#144 id=144 data-nosnippet>144</a></span><span class="kw">fn </span>panic(<span class="kw">_</span>: <span class="kw-2">&amp;</span>core::panic::PanicInfo&lt;<span class="lifetime">'_</span>&gt;) -&gt; ! {
+<a href=#145 id=145 data-nosnippet>145</a>    <span class="kw">loop </span>{}
+<a href=#146 id=146 data-nosnippet>146</a>}
+<a href=#147 id=147 data-nosnippet>147</a>
+<a href=#148 id=148 data-nosnippet>148</a><span class="attr">#[cfg(all(not(test), target_arch = <span class="string">"spirv"</span>))]
+<a href=#149 id=149 data-nosnippet>149</a>#[lang = <span class="string">"eh_personality"</span>]
+<a href=#150 id=150 data-nosnippet>150</a></span><span class="kw">extern </span><span class="string">"C" </span><span class="kw">fn </span>rust_eh_personality() {}
+<a href=#151 id=151 data-nosnippet>151</a>
+<a href=#152 id=152 data-nosnippet>152</a><span class="comment">// See: https://github.com/rust-lang/rust/issues/84738
+<a href=#153 id=153 data-nosnippet>153</a></span><span class="attr">#[doc(hidden)]
+<a href=#154 id=154 data-nosnippet>154</a></span><span class="doccomment">/// [spirv_std_types]
+<a href=#155 id=155 data-nosnippet>155</a></span><span class="kw">pub fn </span>workaround_rustdoc_ice_84738() {}
 </code></pre></div></section></main></body></html>

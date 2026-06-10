@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerocopy-derive-0.8.38/src/derive/try_from_bytes.rs`."><title>try_from_bytes.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="zerocopy_derive" data-themes="" data-resource-suffix="" data-rustdoc-version="1.96.0-nightly (02c7f9bec 2026-04-10)" data-channel="nightly" data-search-js="search-b5634cc7.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5013f961.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">zerocopy_derive/derive/</div>try_from_bytes.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>proc_macro2::TokenStream;
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerocopy-derive-0.8.50/src/derive/try_from_bytes.rs`."><title>try_from_bytes.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="zerocopy_derive" data-themes="" data-resource-suffix="" data-rustdoc-version="1.96.0-nightly (02c7f9bec 2026-04-10)" data-channel="nightly" data-search-js="search-b5634cc7.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5013f961.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">zerocopy_derive/derive/</div>try_from_bytes.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>proc_macro2::TokenStream;
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span>quote::quote;
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span>syn::{
 <a href=#4 id=4 data-nosnippet>4</a>    parse_quote, spanned::Spanned <span class="kw">as _</span>, Data, DataEnum, DataStruct, DataUnion, DeriveInput, Error,
@@ -369,362 +369,396 @@
 <a href=#369 id=369 data-nosnippet>369</a>        // enum's tag corresponds to one of the enum's discriminants. Then, we
 <a href=#370 id=370 data-nosnippet>370</a>        // check the bit validity of each field of the corresponding variant.
 <a href=#371 id=371 data-nosnippet>371</a>        // Thus, this is a sound implementation of `is_bit_valid`.
-<a href=#372 id=372 data-nosnippet>372</a>        </span><span class="kw">fn </span>is_bit_valid(
-<a href=#373 id=373 data-nosnippet>373</a>            <span class="kw-2">mut </span>candidate: #zerocopy_crate::Maybe&lt;<span class="lifetime">'_</span>, <span class="self">Self</span>&gt;,
-<a href=#374 id=374 data-nosnippet>374</a>        ) -&gt; #core::primitive::bool {
-<a href=#375 id=375 data-nosnippet>375</a>            #tag_enum
-<a href=#376 id=376 data-nosnippet>376</a>
-<a href=#377 id=377 data-nosnippet>377</a>            <span class="kw">type </span>___ZerocopyTagPrimitive = #zerocopy_crate::util::macro_util::SizeToTag&lt;
-<a href=#378 id=378 data-nosnippet>378</a>                { #core::mem::size_of::&lt;___ZerocopyTag&gt;() },
-<a href=#379 id=379 data-nosnippet>379</a>            &gt;;
+<a href=#372 id=372 data-nosnippet>372</a>        </span><span class="attr">#[inline]
+<a href=#373 id=373 data-nosnippet>373</a>        </span><span class="kw">fn </span>is_bit_valid&lt;___ZcAlignment&gt;(
+<a href=#374 id=374 data-nosnippet>374</a>            <span class="kw-2">mut </span>candidate: #zerocopy_crate::Maybe&lt;<span class="lifetime">'_</span>, <span class="self">Self</span>, ___ZcAlignment&gt;,
+<a href=#375 id=375 data-nosnippet>375</a>        ) -&gt; #core::primitive::bool
+<a href=#376 id=376 data-nosnippet>376</a>        <span class="kw">where
+<a href=#377 id=377 data-nosnippet>377</a>            </span>___ZcAlignment: #zerocopy_crate::invariant::Alignment,
+<a href=#378 id=378 data-nosnippet>378</a>        {
+<a href=#379 id=379 data-nosnippet>379</a>            #tag_enum
 <a href=#380 id=380 data-nosnippet>380</a>
-<a href=#381 id=381 data-nosnippet>381</a>            #tag_consts
-<a href=#382 id=382 data-nosnippet>382</a>
-<a href=#383 id=383 data-nosnippet>383</a>            <span class="kw">type </span>___ZerocopyOuterTag = #outer_tag_type;
-<a href=#384 id=384 data-nosnippet>384</a>            <span class="kw">type </span>___ZerocopyInnerTag = #inner_tag_type;
-<a href=#385 id=385 data-nosnippet>385</a>
-<a href=#386 id=386 data-nosnippet>386</a>            #variant_structs
-<a href=#387 id=387 data-nosnippet>387</a>
-<a href=#388 id=388 data-nosnippet>388</a>            #variants_union
+<a href=#381 id=381 data-nosnippet>381</a>            <span class="kw">type </span>___ZerocopyTagPrimitive = #zerocopy_crate::util::macro_util::SizeToTag&lt;
+<a href=#382 id=382 data-nosnippet>382</a>                { #core::mem::size_of::&lt;___ZerocopyTag&gt;() },
+<a href=#383 id=383 data-nosnippet>383</a>            &gt;;
+<a href=#384 id=384 data-nosnippet>384</a>
+<a href=#385 id=385 data-nosnippet>385</a>            #tag_consts
+<a href=#386 id=386 data-nosnippet>386</a>
+<a href=#387 id=387 data-nosnippet>387</a>            <span class="kw">type </span>___ZerocopyOuterTag = #outer_tag_type;
+<a href=#388 id=388 data-nosnippet>388</a>            <span class="kw">type </span>___ZerocopyInnerTag = #inner_tag_type;
 <a href=#389 id=389 data-nosnippet>389</a>
-<a href=#390 id=390 data-nosnippet>390</a>            #raw_enum
+<a href=#390 id=390 data-nosnippet>390</a>            #variant_structs
 <a href=#391 id=391 data-nosnippet>391</a>
-<a href=#392 id=392 data-nosnippet>392</a>            #has_tag
+<a href=#392 id=392 data-nosnippet>392</a>            #variants_union
 <a href=#393 id=393 data-nosnippet>393</a>
-<a href=#394 id=394 data-nosnippet>394</a>            #(#has_fields)*
+<a href=#394 id=394 data-nosnippet>394</a>            #raw_enum
 <a href=#395 id=395 data-nosnippet>395</a>
-<a href=#396 id=396 data-nosnippet>396</a>            <span class="kw">let </span>tag = {
-<a href=#397 id=397 data-nosnippet>397</a>                <span class="comment">// SAFETY:
-<a href=#398 id=398 data-nosnippet>398</a>                // - The provided cast addresses a subset of the bytes addressed
-<a href=#399 id=399 data-nosnippet>399</a>                //   by `candidate` because it addresses the starting tag of the
-<a href=#400 id=400 data-nosnippet>400</a>                //   enum.
-<a href=#401 id=401 data-nosnippet>401</a>                // - Because the pointer is cast from `candidate`, it has the
-<a href=#402 id=402 data-nosnippet>402</a>                //   same provenance as it.
-<a href=#403 id=403 data-nosnippet>403</a>                // - There are no `UnsafeCell`s in the tag because it is a
-<a href=#404 id=404 data-nosnippet>404</a>                //   primitive integer.
-<a href=#405 id=405 data-nosnippet>405</a>                // - `tag_ptr` is casted from `candidate`, whose referent is
-<a href=#406 id=406 data-nosnippet>406</a>                //   `Initialized`. Since we have not written uninitialized
-<a href=#407 id=407 data-nosnippet>407</a>                //   bytes into the referent, `tag_ptr` is also `Initialized`.
-<a href=#408 id=408 data-nosnippet>408</a>                //
-<a href=#409 id=409 data-nosnippet>409</a>                // FIXME(#2874): Revise this to a `cast` once `candidate`
-<a href=#410 id=410 data-nosnippet>410</a>                // references a `ReadOnly&lt;Self&gt;`.
-<a href=#411 id=411 data-nosnippet>411</a>                </span><span class="kw">let </span>tag_ptr = <span class="kw">unsafe </span>{
-<a href=#412 id=412 data-nosnippet>412</a>                    candidate.reborrow().project_transmute_unchecked::&lt;
-<a href=#413 id=413 data-nosnippet>413</a>                        <span class="kw">_</span>,
-<a href=#414 id=414 data-nosnippet>414</a>                        #zerocopy_crate::invariant::Initialized,
-<a href=#415 id=415 data-nosnippet>415</a>                        #zerocopy_crate::pointer::cast::CastSized
-<a href=#416 id=416 data-nosnippet>416</a>                    &gt;()
-<a href=#417 id=417 data-nosnippet>417</a>                };
-<a href=#418 id=418 data-nosnippet>418</a>                tag_ptr.recall_validity::&lt;<span class="kw">_</span>, (<span class="kw">_</span>, (<span class="kw">_</span>, <span class="kw">_</span>))&gt;().read_unaligned::&lt;#zerocopy_crate::BecauseImmutable&gt;()
-<a href=#419 id=419 data-nosnippet>419</a>            };
-<a href=#420 id=420 data-nosnippet>420</a>
-<a href=#421 id=421 data-nosnippet>421</a>            <span class="kw">let </span><span class="kw-2">mut </span>raw_enum = candidate.cast::&lt;
-<a href=#422 id=422 data-nosnippet>422</a>                #zerocopy_crate::ReadOnly&lt;___ZerocopyRawEnum #ty_generics&gt;,
-<a href=#423 id=423 data-nosnippet>423</a>                #zerocopy_crate::pointer::cast::CastSized,
-<a href=#424 id=424 data-nosnippet>424</a>                (#zerocopy_crate::pointer::BecauseRead, <span class="kw">_</span>)
-<a href=#425 id=425 data-nosnippet>425</a>            &gt;();
-<a href=#426 id=426 data-nosnippet>426</a>
-<a href=#427 id=427 data-nosnippet>427</a>            <span class="kw">let </span>variants = #<span class="macro">zerocopy_crate::into_inner!</span>(raw_enum.project::&lt;
-<a href=#428 id=428 data-nosnippet>428</a>                <span class="kw">_</span>,
-<a href=#429 id=429 data-nosnippet>429</a>                { #zerocopy_crate::STRUCT_VARIANT_ID },
-<a href=#430 id=430 data-nosnippet>430</a>                { #<span class="macro">zerocopy_crate::ident_id!</span>(variants) }
-<a href=#431 id=431 data-nosnippet>431</a>            &gt;());
-<a href=#432 id=432 data-nosnippet>432</a>
-<a href=#433 id=433 data-nosnippet>433</a>            <span class="kw">match </span>tag {
-<a href=#434 id=434 data-nosnippet>434</a>                #(#match_arms,)*
-<a href=#435 id=435 data-nosnippet>435</a>                <span class="kw">_ </span>=&gt; <span class="bool-val">false</span>,
-<a href=#436 id=436 data-nosnippet>436</a>            }
-<a href=#437 id=437 data-nosnippet>437</a>        }
-<a href=#438 id=438 data-nosnippet>438</a>    })
-<a href=#439 id=439 data-nosnippet>439</a>}
-<a href=#440 id=440 data-nosnippet>440</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>derive_try_from_bytes(ctx: <span class="kw-2">&amp;</span>Ctx, top_level: Trait) -&gt; <span class="prelude-ty">Result</span>&lt;TokenStream, Error&gt; {
-<a href=#441 id=441 data-nosnippet>441</a>    <span class="kw">match </span><span class="kw-2">&amp;</span>ctx.ast.data {
-<a href=#442 id=442 data-nosnippet>442</a>        Data::Struct(strct) =&gt; derive_try_from_bytes_struct(ctx, strct, top_level),
-<a href=#443 id=443 data-nosnippet>443</a>        Data::Enum(enm) =&gt; derive_try_from_bytes_enum(ctx, enm, top_level),
-<a href=#444 id=444 data-nosnippet>444</a>        Data::Union(unn) =&gt; <span class="prelude-val">Ok</span>(derive_try_from_bytes_union(ctx, unn, top_level)),
-<a href=#445 id=445 data-nosnippet>445</a>    }
-<a href=#446 id=446 data-nosnippet>446</a>}
-<a href=#447 id=447 data-nosnippet>447</a><span class="kw">fn </span>derive_has_field_struct_union(ctx: <span class="kw-2">&amp;</span>Ctx, data: <span class="kw-2">&amp;</span><span class="kw">dyn </span>DataExt) -&gt; TokenStream {
-<a href=#448 id=448 data-nosnippet>448</a>    <span class="kw">let </span>fields = ctx.ast.data.fields();
-<a href=#449 id=449 data-nosnippet>449</a>    <span class="kw">if </span>fields.is_empty() {
-<a href=#450 id=450 data-nosnippet>450</a>        <span class="kw">return </span><span class="macro">quote!</span> {};
-<a href=#451 id=451 data-nosnippet>451</a>    }
-<a href=#452 id=452 data-nosnippet>452</a>
-<a href=#453 id=453 data-nosnippet>453</a>    <span class="kw">let </span>field_tokens = fields.iter().map(|(vis, ident, <span class="kw">_</span>)| {
-<a href=#454 id=454 data-nosnippet>454</a>        <span class="kw">let </span>ident = <span class="macro">ident!</span>((<span class="string">"ẕ{}"</span>, ident), ident.span());
-<a href=#455 id=455 data-nosnippet>455</a>        <span class="macro">quote!</span>(
-<a href=#456 id=456 data-nosnippet>456</a>            #vis <span class="kw">enum </span>#ident {}
-<a href=#457 id=457 data-nosnippet>457</a>        )
-<a href=#458 id=458 data-nosnippet>458</a>    });
-<a href=#459 id=459 data-nosnippet>459</a>
-<a href=#460 id=460 data-nosnippet>460</a>    <span class="kw">let </span>zerocopy_crate = <span class="kw-2">&amp;</span>ctx.zerocopy_crate;
-<a href=#461 id=461 data-nosnippet>461</a>    <span class="kw">let </span>variant_id: Box&lt;Expr&gt; = <span class="kw">match </span><span class="kw-2">&amp;</span>ctx.ast.data {
-<a href=#462 id=462 data-nosnippet>462</a>        Data::Struct(<span class="kw">_</span>) =&gt; <span class="macro">parse_quote!</span>({ #zerocopy_crate::STRUCT_VARIANT_ID }),
-<a href=#463 id=463 data-nosnippet>463</a>        Data::Union(<span class="kw">_</span>) =&gt; {
-<a href=#464 id=464 data-nosnippet>464</a>            <span class="kw">let </span>is_repr_c = StructUnionRepr::from_attrs(<span class="kw-2">&amp;</span>ctx.ast.attrs)
-<a href=#465 id=465 data-nosnippet>465</a>                .map(|repr| repr.is_c())
-<a href=#466 id=466 data-nosnippet>466</a>                .unwrap_or(<span class="bool-val">false</span>);
-<a href=#467 id=467 data-nosnippet>467</a>            <span class="kw">if </span>is_repr_c {
-<a href=#468 id=468 data-nosnippet>468</a>                <span class="macro">parse_quote!</span>({ #zerocopy_crate::REPR_C_UNION_VARIANT_ID })
-<a href=#469 id=469 data-nosnippet>469</a>            } <span class="kw">else </span>{
-<a href=#470 id=470 data-nosnippet>470</a>                <span class="macro">parse_quote!</span>({ #zerocopy_crate::UNION_VARIANT_ID })
-<a href=#471 id=471 data-nosnippet>471</a>            }
-<a href=#472 id=472 data-nosnippet>472</a>        }
-<a href=#473 id=473 data-nosnippet>473</a>        <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
-<a href=#474 id=474 data-nosnippet>474</a>    };
-<a href=#475 id=475 data-nosnippet>475</a>
-<a href=#476 id=476 data-nosnippet>476</a>    <span class="kw">let </span>core = ctx.core_path();
-<a href=#477 id=477 data-nosnippet>477</a>    <span class="kw">let </span>has_tag = ImplBlockBuilder::new(ctx, data, Trait::HasTag, FieldBounds::None)
-<a href=#478 id=478 data-nosnippet>478</a>        .inner_extras(<span class="macro">quote!</span> {
-<a href=#479 id=479 data-nosnippet>479</a>            <span class="kw">type </span>Tag = ();
-<a href=#480 id=480 data-nosnippet>480</a>            <span class="kw">type </span>ProjectToTag = #zerocopy_crate::pointer::cast::CastToUnit;
-<a href=#481 id=481 data-nosnippet>481</a>        })
-<a href=#482 id=482 data-nosnippet>482</a>        .build();
-<a href=#483 id=483 data-nosnippet>483</a>    <span class="kw">let </span>has_fields = fields.iter().map(<span class="kw">move </span>|(<span class="kw">_</span>, ident, ty)| {
-<a href=#484 id=484 data-nosnippet>484</a>        <span class="kw">let </span>field_token = <span class="macro">ident!</span>((<span class="string">"ẕ{}"</span>, ident), ident.span());
-<a href=#485 id=485 data-nosnippet>485</a>        <span class="kw">let </span>field: Box&lt;Type&gt; = <span class="macro">parse_quote!</span>(#field_token);
-<a href=#486 id=486 data-nosnippet>486</a>        <span class="kw">let </span>field_id: Box&lt;Expr&gt; = <span class="macro">parse_quote!</span>({ #<span class="macro">zerocopy_crate::ident_id!</span>(#ident) });
-<a href=#487 id=487 data-nosnippet>487</a>        <span class="kw">let </span>has_field_trait = Trait::HasField {
-<a href=#488 id=488 data-nosnippet>488</a>                variant_id: variant_id.clone(),
-<a href=#489 id=489 data-nosnippet>489</a>                field: field.clone(),
-<a href=#490 id=490 data-nosnippet>490</a>                field_id: field_id.clone(),
-<a href=#491 id=491 data-nosnippet>491</a>            };
-<a href=#492 id=492 data-nosnippet>492</a>            <span class="kw">let </span>has_field_path = has_field_trait.crate_path(ctx);
-<a href=#493 id=493 data-nosnippet>493</a>            ImplBlockBuilder::new(
-<a href=#494 id=494 data-nosnippet>494</a>                ctx,
-<a href=#495 id=495 data-nosnippet>495</a>                data,
-<a href=#496 id=496 data-nosnippet>496</a>                has_field_trait,
-<a href=#497 id=497 data-nosnippet>497</a>                FieldBounds::None,
-<a href=#498 id=498 data-nosnippet>498</a>            )
-<a href=#499 id=499 data-nosnippet>499</a>            .inner_extras(<span class="macro">quote!</span> {
-<a href=#500 id=500 data-nosnippet>500</a>                <span class="kw">type </span>Type = #ty;
-<a href=#501 id=501 data-nosnippet>501</a>
-<a href=#502 id=502 data-nosnippet>502</a>                <span class="attr">#[inline(always)]
-<a href=#503 id=503 data-nosnippet>503</a>                </span><span class="kw">fn </span>project(slf: #zerocopy_crate::pointer::PtrInner&lt;<span class="lifetime">'_</span>, <span class="self">Self</span>&gt;) -&gt; <span class="kw-2">*mut </span>&lt;<span class="self">Self </span><span class="kw">as </span>#has_field_path&gt;::Type {
-<a href=#504 id=504 data-nosnippet>504</a>                    <span class="kw">let </span>slf = slf.as_ptr();
-<a href=#505 id=505 data-nosnippet>505</a>                    <span class="comment">// SAFETY: By invariant on `PtrInner`, `slf` is a non-null
-<a href=#506 id=506 data-nosnippet>506</a>                    // pointer whose referent is zero-sized or lives in a valid
-<a href=#507 id=507 data-nosnippet>507</a>                    // allocation. Since `#ident` is a struct or union field of
-<a href=#508 id=508 data-nosnippet>508</a>                    // `Self`, this projection preserves or shrinks the referent
-<a href=#509 id=509 data-nosnippet>509</a>                    // size, and so the resulting referent also fits in the same
-<a href=#510 id=510 data-nosnippet>510</a>                    // allocation.
-<a href=#511 id=511 data-nosnippet>511</a>                    </span><span class="kw">unsafe </span>{ #<span class="macro">core::ptr::addr_of_mut!</span>((<span class="kw-2">*</span>slf).#ident) }
-<a href=#512 id=512 data-nosnippet>512</a>                }
-<a href=#513 id=513 data-nosnippet>513</a>            }).outer_extras(<span class="kw">if </span><span class="macro">matches!</span>(<span class="kw-2">&amp;</span>ctx.ast.data, Data::Struct(..)) {
-<a href=#514 id=514 data-nosnippet>514</a>            <span class="kw">let </span>fields_preserve_alignment = StructUnionRepr::from_attrs(<span class="kw-2">&amp;</span>ctx.ast.attrs)
-<a href=#515 id=515 data-nosnippet>515</a>                .map(|repr| repr.get_packed().is_none())
-<a href=#516 id=516 data-nosnippet>516</a>                .unwrap();
-<a href=#517 id=517 data-nosnippet>517</a>            <span class="kw">let </span>alignment = <span class="kw">if </span>fields_preserve_alignment {
-<a href=#518 id=518 data-nosnippet>518</a>                <span class="macro">quote!</span> { Alignment }
-<a href=#519 id=519 data-nosnippet>519</a>            } <span class="kw">else </span>{
-<a href=#520 id=520 data-nosnippet>520</a>                <span class="macro">quote!</span> { #zerocopy_crate::invariant::Unaligned }
-<a href=#521 id=521 data-nosnippet>521</a>            };
-<a href=#522 id=522 data-nosnippet>522</a>            <span class="comment">// SAFETY: See comments on items.
-<a href=#523 id=523 data-nosnippet>523</a>            </span>ImplBlockBuilder::new(
-<a href=#524 id=524 data-nosnippet>524</a>                ctx,
-<a href=#525 id=525 data-nosnippet>525</a>                data,
-<a href=#526 id=526 data-nosnippet>526</a>                Trait::ProjectField {
-<a href=#527 id=527 data-nosnippet>527</a>                    variant_id: variant_id.clone(),
-<a href=#528 id=528 data-nosnippet>528</a>                    field: field.clone(),
-<a href=#529 id=529 data-nosnippet>529</a>                    field_id: field_id.clone(),
-<a href=#530 id=530 data-nosnippet>530</a>                    invariants: <span class="macro">parse_quote!</span>((Aliasing, Alignment, #zerocopy_crate::invariant::Initialized)),
-<a href=#531 id=531 data-nosnippet>531</a>                },
-<a href=#532 id=532 data-nosnippet>532</a>                FieldBounds::None,
-<a href=#533 id=533 data-nosnippet>533</a>            )
-<a href=#534 id=534 data-nosnippet>534</a>            .param_extras(<span class="macro">vec!</span>[
-<a href=#535 id=535 data-nosnippet>535</a>                <span class="macro">parse_quote!</span>(Aliasing: #zerocopy_crate::invariant::Aliasing),
-<a href=#536 id=536 data-nosnippet>536</a>                <span class="macro">parse_quote!</span>(Alignment: #zerocopy_crate::invariant::Alignment),
-<a href=#537 id=537 data-nosnippet>537</a>            ])
-<a href=#538 id=538 data-nosnippet>538</a>            .inner_extras(<span class="macro">quote!</span> {
-<a href=#539 id=539 data-nosnippet>539</a>                <span class="comment">// SAFETY: Projection into structs is always infallible.
-<a href=#540 id=540 data-nosnippet>540</a>                </span><span class="kw">type </span>Error = #zerocopy_crate::util::macro_util::core_reexport::convert::Infallible;
-<a href=#541 id=541 data-nosnippet>541</a>                <span class="comment">// SAFETY: The alignment of the projected `Ptr` is `Unaligned`
-<a href=#542 id=542 data-nosnippet>542</a>                // if the structure is packed; otherwise inherited from the
-<a href=#543 id=543 data-nosnippet>543</a>                // outer `Ptr`. If the validity of the outer pointer is
-<a href=#544 id=544 data-nosnippet>544</a>                // `Initialized`, so too is the validity of its fields.
-<a href=#545 id=545 data-nosnippet>545</a>                </span><span class="kw">type </span>Invariants = (Aliasing, #alignment, #zerocopy_crate::invariant::Initialized);
-<a href=#546 id=546 data-nosnippet>546</a>            })
-<a href=#547 id=547 data-nosnippet>547</a>            .build()
-<a href=#548 id=548 data-nosnippet>548</a>        } <span class="kw">else </span>{
-<a href=#549 id=549 data-nosnippet>549</a>            <span class="macro">quote!</span> {}
-<a href=#550 id=550 data-nosnippet>550</a>        })
-<a href=#551 id=551 data-nosnippet>551</a>        .build()
-<a href=#552 id=552 data-nosnippet>552</a>    });
-<a href=#553 id=553 data-nosnippet>553</a>
-<a href=#554 id=554 data-nosnippet>554</a>    const_block(field_tokens.into_iter().chain(<span class="prelude-val">Some</span>(has_tag)).chain(has_fields).map(<span class="prelude-val">Some</span>))
-<a href=#555 id=555 data-nosnippet>555</a>}
-<a href=#556 id=556 data-nosnippet>556</a><span class="kw">fn </span>derive_try_from_bytes_struct(
-<a href=#557 id=557 data-nosnippet>557</a>    ctx: <span class="kw-2">&amp;</span>Ctx,
-<a href=#558 id=558 data-nosnippet>558</a>    strct: <span class="kw-2">&amp;</span>DataStruct,
-<a href=#559 id=559 data-nosnippet>559</a>    top_level: Trait,
-<a href=#560 id=560 data-nosnippet>560</a>) -&gt; <span class="prelude-ty">Result</span>&lt;TokenStream, Error&gt; {
-<a href=#561 id=561 data-nosnippet>561</a>    <span class="kw">let </span>extras = try_gen_trivial_is_bit_valid(ctx, top_level).unwrap_or_else(|| {
-<a href=#562 id=562 data-nosnippet>562</a>        <span class="kw">let </span>zerocopy_crate = <span class="kw-2">&amp;</span>ctx.zerocopy_crate;
-<a href=#563 id=563 data-nosnippet>563</a>        <span class="kw">let </span>fields = strct.fields();
-<a href=#564 id=564 data-nosnippet>564</a>        <span class="kw">let </span>field_names = fields.iter().map(|(_vis, name, _ty)| name);
-<a href=#565 id=565 data-nosnippet>565</a>        <span class="kw">let </span>field_tys = fields.iter().map(|(_vis, _name, ty)| ty);
-<a href=#566 id=566 data-nosnippet>566</a>        <span class="kw">let </span>core = ctx.core_path();
-<a href=#567 id=567 data-nosnippet>567</a>        <span class="macro">quote!</span>(
-<a href=#568 id=568 data-nosnippet>568</a>            <span class="comment">// SAFETY: We use `is_bit_valid` to validate that each field is
-<a href=#569 id=569 data-nosnippet>569</a>            // bit-valid, and only return `true` if all of them are. The bit
-<a href=#570 id=570 data-nosnippet>570</a>            // validity of a struct is just the composition of the bit
-<a href=#571 id=571 data-nosnippet>571</a>            // validities of its fields, so this is a sound implementation
-<a href=#572 id=572 data-nosnippet>572</a>            // of `is_bit_valid`.
-<a href=#573 id=573 data-nosnippet>573</a>            </span><span class="kw">fn </span>is_bit_valid(
-<a href=#574 id=574 data-nosnippet>574</a>                <span class="kw-2">mut </span>candidate: #zerocopy_crate::Maybe&lt;<span class="self">Self</span>&gt;,
-<a href=#575 id=575 data-nosnippet>575</a>            ) -&gt; #core::primitive::bool {
-<a href=#576 id=576 data-nosnippet>576</a>                <span class="bool-val">true </span>#(&amp;&amp; {
-<a href=#577 id=577 data-nosnippet>577</a>                    <span class="kw">let </span>field_candidate =   #<span class="macro">zerocopy_crate::into_inner!</span>(candidate.reborrow().project::&lt;
-<a href=#578 id=578 data-nosnippet>578</a>                        <span class="kw">_</span>,
-<a href=#579 id=579 data-nosnippet>579</a>                        { #zerocopy_crate::STRUCT_VARIANT_ID },
-<a href=#580 id=580 data-nosnippet>580</a>                        { #<span class="macro">zerocopy_crate::ident_id!</span>(#field_names) }
-<a href=#581 id=581 data-nosnippet>581</a>                    &gt;());
-<a href=#582 id=582 data-nosnippet>582</a>                    &lt;#field_tys <span class="kw">as </span>#zerocopy_crate::TryFromBytes&gt;::is_bit_valid(field_candidate)
-<a href=#583 id=583 data-nosnippet>583</a>                })*
-<a href=#584 id=584 data-nosnippet>584</a>            }
-<a href=#585 id=585 data-nosnippet>585</a>        )
-<a href=#586 id=586 data-nosnippet>586</a>    });
-<a href=#587 id=587 data-nosnippet>587</a>    <span class="prelude-val">Ok</span>(ImplBlockBuilder::new(ctx, strct, Trait::TryFromBytes, FieldBounds::ALL_SELF)
-<a href=#588 id=588 data-nosnippet>588</a>        .inner_extras(extras)
-<a href=#589 id=589 data-nosnippet>589</a>        .outer_extras(derive_has_field_struct_union(ctx, strct))
-<a href=#590 id=590 data-nosnippet>590</a>        .build())
-<a href=#591 id=591 data-nosnippet>591</a>}
-<a href=#592 id=592 data-nosnippet>592</a><span class="kw">fn </span>derive_try_from_bytes_union(ctx: <span class="kw-2">&amp;</span>Ctx, unn: <span class="kw-2">&amp;</span>DataUnion, top_level: Trait) -&gt; TokenStream {
-<a href=#593 id=593 data-nosnippet>593</a>    <span class="kw">let </span>field_type_trait_bounds = FieldBounds::All(<span class="kw-2">&amp;</span>[TraitBound::Slf]);
-<a href=#594 id=594 data-nosnippet>594</a>
-<a href=#595 id=595 data-nosnippet>595</a>    <span class="kw">let </span>zerocopy_crate = <span class="kw-2">&amp;</span>ctx.zerocopy_crate;
-<a href=#596 id=596 data-nosnippet>596</a>    <span class="kw">let </span>variant_id: Box&lt;Expr&gt; = {
-<a href=#597 id=597 data-nosnippet>597</a>        <span class="kw">let </span>is_repr_c =
-<a href=#598 id=598 data-nosnippet>598</a>            StructUnionRepr::from_attrs(<span class="kw-2">&amp;</span>ctx.ast.attrs).map(|repr| repr.is_c()).unwrap_or(<span class="bool-val">false</span>);
-<a href=#599 id=599 data-nosnippet>599</a>        <span class="kw">if </span>is_repr_c {
-<a href=#600 id=600 data-nosnippet>600</a>            <span class="macro">parse_quote!</span>({ #zerocopy_crate::REPR_C_UNION_VARIANT_ID })
-<a href=#601 id=601 data-nosnippet>601</a>        } <span class="kw">else </span>{
-<a href=#602 id=602 data-nosnippet>602</a>            <span class="macro">parse_quote!</span>({ #zerocopy_crate::UNION_VARIANT_ID })
-<a href=#603 id=603 data-nosnippet>603</a>        }
-<a href=#604 id=604 data-nosnippet>604</a>    };
-<a href=#605 id=605 data-nosnippet>605</a>
-<a href=#606 id=606 data-nosnippet>606</a>    <span class="kw">let </span>extras = try_gen_trivial_is_bit_valid(ctx, top_level).unwrap_or_else(|| {
-<a href=#607 id=607 data-nosnippet>607</a>        <span class="kw">let </span>fields = unn.fields();
-<a href=#608 id=608 data-nosnippet>608</a>        <span class="kw">let </span>field_names = fields.iter().map(|(_vis, name, _ty)| name);
-<a href=#609 id=609 data-nosnippet>609</a>        <span class="kw">let </span>field_tys = fields.iter().map(|(_vis, _name, ty)| ty);
-<a href=#610 id=610 data-nosnippet>610</a>        <span class="kw">let </span>core = ctx.core_path();
-<a href=#611 id=611 data-nosnippet>611</a>        <span class="macro">quote!</span>(
-<a href=#612 id=612 data-nosnippet>612</a>            <span class="comment">// SAFETY: We use `is_bit_valid` to validate that any field is
-<a href=#613 id=613 data-nosnippet>613</a>            // bit-valid; we only return `true` if at least one of them is.
-<a href=#614 id=614 data-nosnippet>614</a>            // The bit validity of a union is not yet well defined in Rust,
-<a href=#615 id=615 data-nosnippet>615</a>            // but it is guaranteed to be no more strict than this
-<a href=#616 id=616 data-nosnippet>616</a>            // definition. See #696 for a more in-depth discussion.
-<a href=#617 id=617 data-nosnippet>617</a>            </span><span class="kw">fn </span>is_bit_valid(
-<a href=#618 id=618 data-nosnippet>618</a>                <span class="kw-2">mut </span>candidate: #zerocopy_crate::Maybe&lt;<span class="lifetime">'_</span>, <span class="self">Self</span>&gt;,
-<a href=#619 id=619 data-nosnippet>619</a>            ) -&gt; #core::primitive::bool {
-<a href=#620 id=620 data-nosnippet>620</a>                <span class="bool-val">false </span>#(|| {
-<a href=#621 id=621 data-nosnippet>621</a>                    <span class="comment">// SAFETY:
-<a href=#622 id=622 data-nosnippet>622</a>                    // - Since `ReadOnly&lt;Self&gt;: Immutable` unconditionally,
-<a href=#623 id=623 data-nosnippet>623</a>                    //   neither `*slf` nor the returned pointer's referent
-<a href=#624 id=624 data-nosnippet>624</a>                    //   permit interior mutation.
-<a href=#625 id=625 data-nosnippet>625</a>                    // - Both source and destination validity are
-<a href=#626 id=626 data-nosnippet>626</a>                    //   `Initialized`, which is always a sound
-<a href=#627 id=627 data-nosnippet>627</a>                    //   transmutation.
-<a href=#628 id=628 data-nosnippet>628</a>                    </span><span class="kw">let </span>field_candidate = <span class="kw">unsafe </span>{
-<a href=#629 id=629 data-nosnippet>629</a>                        candidate.reborrow().project_transmute_unchecked::&lt;
-<a href=#630 id=630 data-nosnippet>630</a>                            <span class="kw">_</span>,
-<a href=#631 id=631 data-nosnippet>631</a>                            <span class="kw">_</span>,
-<a href=#632 id=632 data-nosnippet>632</a>                            #zerocopy_crate::pointer::cast::Projection&lt;
-<a href=#633 id=633 data-nosnippet>633</a>                                <span class="kw">_</span>,
-<a href=#634 id=634 data-nosnippet>634</a>                                #variant_id,
-<a href=#635 id=635 data-nosnippet>635</a>                                { #<span class="macro">zerocopy_crate::ident_id!</span>(#field_names) }
-<a href=#636 id=636 data-nosnippet>636</a>                            &gt;
-<a href=#637 id=637 data-nosnippet>637</a>                        &gt;()
-<a href=#638 id=638 data-nosnippet>638</a>                    };
-<a href=#639 id=639 data-nosnippet>639</a>
-<a href=#640 id=640 data-nosnippet>640</a>                    &lt;#field_tys <span class="kw">as </span>#zerocopy_crate::TryFromBytes&gt;::is_bit_valid(field_candidate)
-<a href=#641 id=641 data-nosnippet>641</a>                })*
-<a href=#642 id=642 data-nosnippet>642</a>            }
-<a href=#643 id=643 data-nosnippet>643</a>        )
-<a href=#644 id=644 data-nosnippet>644</a>    });
-<a href=#645 id=645 data-nosnippet>645</a>    ImplBlockBuilder::new(ctx, unn, Trait::TryFromBytes, field_type_trait_bounds)
-<a href=#646 id=646 data-nosnippet>646</a>        .inner_extras(extras)
-<a href=#647 id=647 data-nosnippet>647</a>        .outer_extras(derive_has_field_struct_union(ctx, unn))
-<a href=#648 id=648 data-nosnippet>648</a>        .build()
-<a href=#649 id=649 data-nosnippet>649</a>}
-<a href=#650 id=650 data-nosnippet>650</a><span class="kw">fn </span>derive_try_from_bytes_enum(
-<a href=#651 id=651 data-nosnippet>651</a>    ctx: <span class="kw-2">&amp;</span>Ctx,
-<a href=#652 id=652 data-nosnippet>652</a>    enm: <span class="kw-2">&amp;</span>DataEnum,
-<a href=#653 id=653 data-nosnippet>653</a>    top_level: Trait,
-<a href=#654 id=654 data-nosnippet>654</a>) -&gt; <span class="prelude-ty">Result</span>&lt;TokenStream, Error&gt; {
-<a href=#655 id=655 data-nosnippet>655</a>    <span class="kw">let </span>repr = EnumRepr::from_attrs(<span class="kw-2">&amp;</span>ctx.ast.attrs)<span class="question-mark">?</span>;
-<a href=#656 id=656 data-nosnippet>656</a>
-<a href=#657 id=657 data-nosnippet>657</a>    <span class="comment">// If an enum has no fields, it has a well-defined integer representation,
-<a href=#658 id=658 data-nosnippet>658</a>    // and every possible bit pattern corresponds to a valid discriminant tag,
-<a href=#659 id=659 data-nosnippet>659</a>    // then it *could* be `FromBytes` (even if the user hasn't derived
-<a href=#660 id=660 data-nosnippet>660</a>    // `FromBytes`). This holds if, for `repr(uN)` or `repr(iN)`, there are 2^N
-<a href=#661 id=661 data-nosnippet>661</a>    // variants.
-<a href=#662 id=662 data-nosnippet>662</a>    </span><span class="kw">let </span>could_be_from_bytes = enum_size_from_repr(<span class="kw-2">&amp;</span>repr)
-<a href=#663 id=663 data-nosnippet>663</a>        .map(|size| enm.fields().is_empty() &amp;&amp; enm.variants.len() == <span class="number">1usize </span>&lt;&lt; size)
-<a href=#664 id=664 data-nosnippet>664</a>        .unwrap_or(<span class="bool-val">false</span>);
-<a href=#665 id=665 data-nosnippet>665</a>
-<a href=#666 id=666 data-nosnippet>666</a>    <span class="kw">let </span>trivial_is_bit_valid = try_gen_trivial_is_bit_valid(ctx, top_level);
-<a href=#667 id=667 data-nosnippet>667</a>    <span class="kw">let </span>extra = <span class="kw">match </span>(trivial_is_bit_valid, could_be_from_bytes) {
-<a href=#668 id=668 data-nosnippet>668</a>        (<span class="prelude-val">Some</span>(is_bit_valid), <span class="kw">_</span>) =&gt; is_bit_valid,
-<a href=#669 id=669 data-nosnippet>669</a>        <span class="comment">// SAFETY: It would be sound for the enum to implement `FromBytes`, as
-<a href=#670 id=670 data-nosnippet>670</a>        // required by `gen_trivial_is_bit_valid_unchecked`.
-<a href=#671 id=671 data-nosnippet>671</a>        </span>(<span class="prelude-val">None</span>, <span class="bool-val">true</span>) =&gt; <span class="kw">unsafe </span>{ gen_trivial_is_bit_valid_unchecked(ctx) },
-<a href=#672 id=672 data-nosnippet>672</a>        (<span class="prelude-val">None</span>, <span class="bool-val">false</span>) =&gt; derive_is_bit_valid(ctx, enm, <span class="kw-2">&amp;</span>repr)<span class="question-mark">?</span>,
-<a href=#673 id=673 data-nosnippet>673</a>    };
-<a href=#674 id=674 data-nosnippet>674</a>
-<a href=#675 id=675 data-nosnippet>675</a>    <span class="prelude-val">Ok</span>(ImplBlockBuilder::new(ctx, enm, Trait::TryFromBytes, FieldBounds::ALL_SELF)
-<a href=#676 id=676 data-nosnippet>676</a>        .inner_extras(extra)
-<a href=#677 id=677 data-nosnippet>677</a>        .build())
-<a href=#678 id=678 data-nosnippet>678</a>}
-<a href=#679 id=679 data-nosnippet>679</a><span class="kw">fn </span>try_gen_trivial_is_bit_valid(ctx: <span class="kw-2">&amp;</span>Ctx, top_level: Trait) -&gt; <span class="prelude-ty">Option</span>&lt;proc_macro2::TokenStream&gt; {
-<a href=#680 id=680 data-nosnippet>680</a>    <span class="comment">// If the top-level trait is `FromBytes` and `Self` has no type parameters,
-<a href=#681 id=681 data-nosnippet>681</a>    // then the `FromBytes` derive will fail compilation if `Self` is not
-<a href=#682 id=682 data-nosnippet>682</a>    // actually soundly `FromBytes`, and so we can rely on that for our
-<a href=#683 id=683 data-nosnippet>683</a>    // `is_bit_valid` impl. It's plausible that we could make changes - or Rust
-<a href=#684 id=684 data-nosnippet>684</a>    // could make changes (such as the "trivial bounds" language feature) - that
-<a href=#685 id=685 data-nosnippet>685</a>    // make this no longer true. To hedge against these, we include an explicit
-<a href=#686 id=686 data-nosnippet>686</a>    // `Self: FromBytes` check in the generated `is_bit_valid`, which is
-<a href=#687 id=687 data-nosnippet>687</a>    // bulletproof.
-<a href=#688 id=688 data-nosnippet>688</a>    </span><span class="kw">if </span><span class="macro">matches!</span>(top_level, Trait::FromBytes) &amp;&amp; ctx.ast.generics.params.is_empty() {
-<a href=#689 id=689 data-nosnippet>689</a>        <span class="kw">let </span>zerocopy_crate = <span class="kw-2">&amp;</span>ctx.zerocopy_crate;
-<a href=#690 id=690 data-nosnippet>690</a>        <span class="kw">let </span>core = ctx.core_path();
-<a href=#691 id=691 data-nosnippet>691</a>        <span class="prelude-val">Some</span>(<span class="macro">quote!</span>(
-<a href=#692 id=692 data-nosnippet>692</a>            <span class="comment">// SAFETY: See inline.
-<a href=#693 id=693 data-nosnippet>693</a>            </span><span class="kw">fn </span>is_bit_valid(
-<a href=#694 id=694 data-nosnippet>694</a>                _candidate: #zerocopy_crate::Maybe&lt;<span class="self">Self</span>&gt;,
-<a href=#695 id=695 data-nosnippet>695</a>            ) -&gt; #core::primitive::bool {
-<a href=#696 id=696 data-nosnippet>696</a>                <span class="kw">if </span><span class="bool-val">false </span>{
-<a href=#697 id=697 data-nosnippet>697</a>                    <span class="kw">fn </span>assert_is_from_bytes&lt;T&gt;()
-<a href=#698 id=698 data-nosnippet>698</a>                    <span class="kw">where
-<a href=#699 id=699 data-nosnippet>699</a>                        </span>T: #zerocopy_crate::FromBytes,
-<a href=#700 id=700 data-nosnippet>700</a>                        T: <span class="question-mark">?</span>#core::marker::Sized,
-<a href=#701 id=701 data-nosnippet>701</a>                    {
-<a href=#702 id=702 data-nosnippet>702</a>                    }
-<a href=#703 id=703 data-nosnippet>703</a>
-<a href=#704 id=704 data-nosnippet>704</a>                    assert_is_from_bytes::&lt;<span class="self">Self</span>&gt;();
-<a href=#705 id=705 data-nosnippet>705</a>                }
-<a href=#706 id=706 data-nosnippet>706</a>
-<a href=#707 id=707 data-nosnippet>707</a>                <span class="comment">// SAFETY: The preceding code only compiles if `Self:
-<a href=#708 id=708 data-nosnippet>708</a>                // FromBytes`. Thus, this code only compiles if all initialized
-<a href=#709 id=709 data-nosnippet>709</a>                // byte sequences represent valid instances of `Self`.
-<a href=#710 id=710 data-nosnippet>710</a>                </span><span class="bool-val">true
-<a href=#711 id=711 data-nosnippet>711</a>            </span>}
-<a href=#712 id=712 data-nosnippet>712</a>        ))
-<a href=#713 id=713 data-nosnippet>713</a>    } <span class="kw">else </span>{
-<a href=#714 id=714 data-nosnippet>714</a>        <span class="prelude-val">None
-<a href=#715 id=715 data-nosnippet>715</a>    </span>}
-<a href=#716 id=716 data-nosnippet>716</a>}
-<a href=#717 id=717 data-nosnippet>717</a><span class="kw">unsafe fn </span>gen_trivial_is_bit_valid_unchecked(ctx: <span class="kw-2">&amp;</span>Ctx) -&gt; proc_macro2::TokenStream {
-<a href=#718 id=718 data-nosnippet>718</a>    <span class="kw">let </span>zerocopy_crate = <span class="kw-2">&amp;</span>ctx.zerocopy_crate;
-<a href=#719 id=719 data-nosnippet>719</a>    <span class="kw">let </span>core = ctx.core_path();
-<a href=#720 id=720 data-nosnippet>720</a>    <span class="macro">quote!</span>(
-<a href=#721 id=721 data-nosnippet>721</a>        <span class="comment">// SAFETY: The caller of `gen_trivial_is_bit_valid_unchecked` has
-<a href=#722 id=722 data-nosnippet>722</a>        // promised that all initialized bit patterns are valid for `Self`.
-<a href=#723 id=723 data-nosnippet>723</a>        </span><span class="kw">fn </span>is_bit_valid(
-<a href=#724 id=724 data-nosnippet>724</a>            _candidate: #zerocopy_crate::Maybe&lt;<span class="self">Self</span>&gt;,
-<a href=#725 id=725 data-nosnippet>725</a>        ) -&gt; #core::primitive::bool {
-<a href=#726 id=726 data-nosnippet>726</a>            <span class="bool-val">true
-<a href=#727 id=727 data-nosnippet>727</a>        </span>}
-<a href=#728 id=728 data-nosnippet>728</a>    )
-<a href=#729 id=729 data-nosnippet>729</a>}
+<a href=#396 id=396 data-nosnippet>396</a>            #has_tag
+<a href=#397 id=397 data-nosnippet>397</a>
+<a href=#398 id=398 data-nosnippet>398</a>            #(#has_fields)*
+<a href=#399 id=399 data-nosnippet>399</a>
+<a href=#400 id=400 data-nosnippet>400</a>            <span class="kw">let </span>tag = {
+<a href=#401 id=401 data-nosnippet>401</a>                <span class="comment">// SAFETY:
+<a href=#402 id=402 data-nosnippet>402</a>                // - The provided cast addresses a subset of the bytes addressed
+<a href=#403 id=403 data-nosnippet>403</a>                //   by `candidate` because it addresses the starting tag of the
+<a href=#404 id=404 data-nosnippet>404</a>                //   enum.
+<a href=#405 id=405 data-nosnippet>405</a>                // - Because the pointer is cast from `candidate`, it has the
+<a href=#406 id=406 data-nosnippet>406</a>                //   same provenance as it.
+<a href=#407 id=407 data-nosnippet>407</a>                // - There are no `UnsafeCell`s in the tag because it is a
+<a href=#408 id=408 data-nosnippet>408</a>                //   primitive integer.
+<a href=#409 id=409 data-nosnippet>409</a>                // - `tag_ptr` is casted from `candidate`, whose referent is
+<a href=#410 id=410 data-nosnippet>410</a>                //   `Initialized`. Since we have not written uninitialized
+<a href=#411 id=411 data-nosnippet>411</a>                //   bytes into the referent, `tag_ptr` is also `Initialized`.
+<a href=#412 id=412 data-nosnippet>412</a>                //
+<a href=#413 id=413 data-nosnippet>413</a>                // FIXME(#2874): Revise this to a `cast` once `candidate`
+<a href=#414 id=414 data-nosnippet>414</a>                // references a `ReadOnly&lt;Self&gt;`.
+<a href=#415 id=415 data-nosnippet>415</a>                </span><span class="kw">let </span>tag_ptr = <span class="kw">unsafe </span>{
+<a href=#416 id=416 data-nosnippet>416</a>                    candidate.reborrow().project_transmute_unchecked::&lt;
+<a href=#417 id=417 data-nosnippet>417</a>                        <span class="kw">_</span>,
+<a href=#418 id=418 data-nosnippet>418</a>                        #zerocopy_crate::invariant::Initialized,
+<a href=#419 id=419 data-nosnippet>419</a>                        #zerocopy_crate::pointer::cast::CastSized
+<a href=#420 id=420 data-nosnippet>420</a>                    &gt;()
+<a href=#421 id=421 data-nosnippet>421</a>                };
+<a href=#422 id=422 data-nosnippet>422</a>                tag_ptr.recall_validity::&lt;<span class="kw">_</span>, (<span class="kw">_</span>, (<span class="kw">_</span>, <span class="kw">_</span>))&gt;().read::&lt;#zerocopy_crate::BecauseImmutable&gt;()
+<a href=#423 id=423 data-nosnippet>423</a>            };
+<a href=#424 id=424 data-nosnippet>424</a>
+<a href=#425 id=425 data-nosnippet>425</a>            <span class="kw">let </span><span class="kw-2">mut </span>raw_enum = candidate.cast::&lt;
+<a href=#426 id=426 data-nosnippet>426</a>                #zerocopy_crate::ReadOnly&lt;___ZerocopyRawEnum #ty_generics&gt;,
+<a href=#427 id=427 data-nosnippet>427</a>                #zerocopy_crate::pointer::cast::CastSized,
+<a href=#428 id=428 data-nosnippet>428</a>                (#zerocopy_crate::pointer::BecauseRead, <span class="kw">_</span>)
+<a href=#429 id=429 data-nosnippet>429</a>            &gt;();
+<a href=#430 id=430 data-nosnippet>430</a>
+<a href=#431 id=431 data-nosnippet>431</a>            <span class="kw">let </span>variants = #<span class="macro">zerocopy_crate::into_inner!</span>(raw_enum.project::&lt;
+<a href=#432 id=432 data-nosnippet>432</a>                <span class="kw">_</span>,
+<a href=#433 id=433 data-nosnippet>433</a>                { #zerocopy_crate::STRUCT_VARIANT_ID },
+<a href=#434 id=434 data-nosnippet>434</a>                { #<span class="macro">zerocopy_crate::ident_id!</span>(variants) }
+<a href=#435 id=435 data-nosnippet>435</a>            &gt;());
+<a href=#436 id=436 data-nosnippet>436</a>
+<a href=#437 id=437 data-nosnippet>437</a>            <span class="kw">match </span>tag {
+<a href=#438 id=438 data-nosnippet>438</a>                #(#match_arms,)*
+<a href=#439 id=439 data-nosnippet>439</a>                <span class="kw">_ </span>=&gt; <span class="bool-val">false</span>,
+<a href=#440 id=440 data-nosnippet>440</a>            }
+<a href=#441 id=441 data-nosnippet>441</a>        }
+<a href=#442 id=442 data-nosnippet>442</a>    })
+<a href=#443 id=443 data-nosnippet>443</a>}
+<a href=#444 id=444 data-nosnippet>444</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>derive_try_from_bytes(ctx: <span class="kw-2">&amp;</span>Ctx, top_level: Trait) -&gt; <span class="prelude-ty">Result</span>&lt;TokenStream, Error&gt; {
+<a href=#445 id=445 data-nosnippet>445</a>    <span class="kw">match </span><span class="kw-2">&amp;</span>ctx.ast.data {
+<a href=#446 id=446 data-nosnippet>446</a>        Data::Struct(strct) =&gt; derive_try_from_bytes_struct(ctx, strct, top_level),
+<a href=#447 id=447 data-nosnippet>447</a>        Data::Enum(enm) =&gt; derive_try_from_bytes_enum(ctx, enm, top_level),
+<a href=#448 id=448 data-nosnippet>448</a>        Data::Union(unn) =&gt; <span class="prelude-val">Ok</span>(derive_try_from_bytes_union(ctx, unn, top_level)),
+<a href=#449 id=449 data-nosnippet>449</a>    }
+<a href=#450 id=450 data-nosnippet>450</a>}
+<a href=#451 id=451 data-nosnippet>451</a><span class="kw">fn </span>derive_has_field_struct_union(ctx: <span class="kw-2">&amp;</span>Ctx, data: <span class="kw-2">&amp;</span><span class="kw">dyn </span>DataExt) -&gt; TokenStream {
+<a href=#452 id=452 data-nosnippet>452</a>    <span class="kw">let </span>fields = ctx.ast.data.fields();
+<a href=#453 id=453 data-nosnippet>453</a>    <span class="kw">if </span>fields.is_empty() {
+<a href=#454 id=454 data-nosnippet>454</a>        <span class="kw">return </span><span class="macro">quote!</span> {};
+<a href=#455 id=455 data-nosnippet>455</a>    }
+<a href=#456 id=456 data-nosnippet>456</a>
+<a href=#457 id=457 data-nosnippet>457</a>    <span class="kw">let </span>field_tokens = fields.iter().map(|(vis, ident, <span class="kw">_</span>)| {
+<a href=#458 id=458 data-nosnippet>458</a>        <span class="kw">let </span>ident = <span class="macro">ident!</span>((<span class="string">"ẕ{}"</span>, ident), ident.span());
+<a href=#459 id=459 data-nosnippet>459</a>        <span class="macro">quote!</span>(
+<a href=#460 id=460 data-nosnippet>460</a>            #vis <span class="kw">enum </span>#ident {}
+<a href=#461 id=461 data-nosnippet>461</a>        )
+<a href=#462 id=462 data-nosnippet>462</a>    });
+<a href=#463 id=463 data-nosnippet>463</a>
+<a href=#464 id=464 data-nosnippet>464</a>    <span class="kw">let </span>zerocopy_crate = <span class="kw-2">&amp;</span>ctx.zerocopy_crate;
+<a href=#465 id=465 data-nosnippet>465</a>    <span class="kw">let </span>variant_id: Box&lt;Expr&gt; = <span class="kw">match </span><span class="kw-2">&amp;</span>ctx.ast.data {
+<a href=#466 id=466 data-nosnippet>466</a>        Data::Struct(<span class="kw">_</span>) =&gt; <span class="macro">parse_quote!</span>({ #zerocopy_crate::STRUCT_VARIANT_ID }),
+<a href=#467 id=467 data-nosnippet>467</a>        Data::Union(<span class="kw">_</span>) =&gt; {
+<a href=#468 id=468 data-nosnippet>468</a>            <span class="kw">let </span>is_repr_c = StructUnionRepr::from_attrs(<span class="kw-2">&amp;</span>ctx.ast.attrs)
+<a href=#469 id=469 data-nosnippet>469</a>                .map(|repr| repr.is_c())
+<a href=#470 id=470 data-nosnippet>470</a>                .unwrap_or(<span class="bool-val">false</span>);
+<a href=#471 id=471 data-nosnippet>471</a>            <span class="kw">if </span>is_repr_c {
+<a href=#472 id=472 data-nosnippet>472</a>                <span class="macro">parse_quote!</span>({ #zerocopy_crate::REPR_C_UNION_VARIANT_ID })
+<a href=#473 id=473 data-nosnippet>473</a>            } <span class="kw">else </span>{
+<a href=#474 id=474 data-nosnippet>474</a>                <span class="macro">parse_quote!</span>({ #zerocopy_crate::UNION_VARIANT_ID })
+<a href=#475 id=475 data-nosnippet>475</a>            }
+<a href=#476 id=476 data-nosnippet>476</a>        }
+<a href=#477 id=477 data-nosnippet>477</a>        <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
+<a href=#478 id=478 data-nosnippet>478</a>    };
+<a href=#479 id=479 data-nosnippet>479</a>
+<a href=#480 id=480 data-nosnippet>480</a>    <span class="kw">let </span>core = ctx.core_path();
+<a href=#481 id=481 data-nosnippet>481</a>    <span class="kw">let </span>has_tag = ImplBlockBuilder::new(ctx, data, Trait::HasTag, FieldBounds::None)
+<a href=#482 id=482 data-nosnippet>482</a>        .inner_extras(<span class="macro">quote!</span> {
+<a href=#483 id=483 data-nosnippet>483</a>            <span class="kw">type </span>Tag = ();
+<a href=#484 id=484 data-nosnippet>484</a>            <span class="kw">type </span>ProjectToTag = #zerocopy_crate::pointer::cast::CastToUnit;
+<a href=#485 id=485 data-nosnippet>485</a>        })
+<a href=#486 id=486 data-nosnippet>486</a>        .build();
+<a href=#487 id=487 data-nosnippet>487</a>    <span class="kw">let </span>has_fields = fields.iter().map(<span class="kw">move </span>|(<span class="kw">_</span>, ident, ty)| {
+<a href=#488 id=488 data-nosnippet>488</a>        <span class="kw">let </span>field_token = <span class="macro">ident!</span>((<span class="string">"ẕ{}"</span>, ident), ident.span());
+<a href=#489 id=489 data-nosnippet>489</a>        <span class="kw">let </span>field: Box&lt;Type&gt; = <span class="macro">parse_quote!</span>(#field_token);
+<a href=#490 id=490 data-nosnippet>490</a>        <span class="kw">let </span>field_id: Box&lt;Expr&gt; = <span class="macro">parse_quote!</span>({ #<span class="macro">zerocopy_crate::ident_id!</span>(#ident) });
+<a href=#491 id=491 data-nosnippet>491</a>        <span class="kw">let </span>has_field_trait = Trait::HasField {
+<a href=#492 id=492 data-nosnippet>492</a>                variant_id: variant_id.clone(),
+<a href=#493 id=493 data-nosnippet>493</a>                field: field.clone(),
+<a href=#494 id=494 data-nosnippet>494</a>                field_id: field_id.clone(),
+<a href=#495 id=495 data-nosnippet>495</a>            };
+<a href=#496 id=496 data-nosnippet>496</a>            <span class="kw">let </span>has_field_path = has_field_trait.crate_path(ctx);
+<a href=#497 id=497 data-nosnippet>497</a>            ImplBlockBuilder::new(
+<a href=#498 id=498 data-nosnippet>498</a>                ctx,
+<a href=#499 id=499 data-nosnippet>499</a>                data,
+<a href=#500 id=500 data-nosnippet>500</a>                has_field_trait,
+<a href=#501 id=501 data-nosnippet>501</a>                FieldBounds::None,
+<a href=#502 id=502 data-nosnippet>502</a>            )
+<a href=#503 id=503 data-nosnippet>503</a>            .inner_extras(<span class="macro">quote!</span> {
+<a href=#504 id=504 data-nosnippet>504</a>                <span class="kw">type </span>Type = #ty;
+<a href=#505 id=505 data-nosnippet>505</a>
+<a href=#506 id=506 data-nosnippet>506</a>                <span class="attr">#[inline(always)]
+<a href=#507 id=507 data-nosnippet>507</a>                </span><span class="kw">fn </span>project(slf: #zerocopy_crate::pointer::PtrInner&lt;<span class="lifetime">'_</span>, <span class="self">Self</span>&gt;) -&gt; <span class="kw-2">*mut </span>&lt;<span class="self">Self </span><span class="kw">as </span>#has_field_path&gt;::Type {
+<a href=#508 id=508 data-nosnippet>508</a>                    <span class="kw">let </span>slf = slf.as_ptr();
+<a href=#509 id=509 data-nosnippet>509</a>                    <span class="comment">// SAFETY: By invariant on `PtrInner`, `slf` is a non-null
+<a href=#510 id=510 data-nosnippet>510</a>                    // pointer whose referent is zero-sized or lives in a valid
+<a href=#511 id=511 data-nosnippet>511</a>                    // allocation. Since `#ident` is a struct or union field of
+<a href=#512 id=512 data-nosnippet>512</a>                    // `Self`, this projection preserves or shrinks the referent
+<a href=#513 id=513 data-nosnippet>513</a>                    // size, and so the resulting referent also fits in the same
+<a href=#514 id=514 data-nosnippet>514</a>                    // allocation.
+<a href=#515 id=515 data-nosnippet>515</a>                    </span><span class="kw">unsafe </span>{ #<span class="macro">core::ptr::addr_of_mut!</span>((<span class="kw-2">*</span>slf).#ident) }
+<a href=#516 id=516 data-nosnippet>516</a>                }
+<a href=#517 id=517 data-nosnippet>517</a>            }).outer_extras(<span class="kw">if </span><span class="macro">matches!</span>(<span class="kw-2">&amp;</span>ctx.ast.data, Data::Struct(..)) {
+<a href=#518 id=518 data-nosnippet>518</a>            <span class="kw">let </span>fields_preserve_alignment = StructUnionRepr::from_attrs(<span class="kw-2">&amp;</span>ctx.ast.attrs)
+<a href=#519 id=519 data-nosnippet>519</a>                .map(|repr| repr.get_packed().is_none())
+<a href=#520 id=520 data-nosnippet>520</a>                .unwrap();
+<a href=#521 id=521 data-nosnippet>521</a>            <span class="kw">let </span>alignment = <span class="kw">if </span>fields_preserve_alignment {
+<a href=#522 id=522 data-nosnippet>522</a>                <span class="macro">quote!</span> { Alignment }
+<a href=#523 id=523 data-nosnippet>523</a>            } <span class="kw">else </span>{
+<a href=#524 id=524 data-nosnippet>524</a>                <span class="macro">quote!</span> { #zerocopy_crate::invariant::Unaligned }
+<a href=#525 id=525 data-nosnippet>525</a>            };
+<a href=#526 id=526 data-nosnippet>526</a>            <span class="comment">// SAFETY: See comments on items.
+<a href=#527 id=527 data-nosnippet>527</a>            </span>ImplBlockBuilder::new(
+<a href=#528 id=528 data-nosnippet>528</a>                ctx,
+<a href=#529 id=529 data-nosnippet>529</a>                data,
+<a href=#530 id=530 data-nosnippet>530</a>                Trait::ProjectField {
+<a href=#531 id=531 data-nosnippet>531</a>                    variant_id: variant_id.clone(),
+<a href=#532 id=532 data-nosnippet>532</a>                    field: field.clone(),
+<a href=#533 id=533 data-nosnippet>533</a>                    field_id: field_id.clone(),
+<a href=#534 id=534 data-nosnippet>534</a>                    invariants: <span class="macro">parse_quote!</span>((Aliasing, Alignment, #zerocopy_crate::invariant::Initialized)),
+<a href=#535 id=535 data-nosnippet>535</a>                },
+<a href=#536 id=536 data-nosnippet>536</a>                FieldBounds::None,
+<a href=#537 id=537 data-nosnippet>537</a>            )
+<a href=#538 id=538 data-nosnippet>538</a>            .param_extras(<span class="macro">vec!</span>[
+<a href=#539 id=539 data-nosnippet>539</a>                <span class="macro">parse_quote!</span>(Aliasing: #zerocopy_crate::invariant::Aliasing),
+<a href=#540 id=540 data-nosnippet>540</a>                <span class="macro">parse_quote!</span>(Alignment: #zerocopy_crate::invariant::Alignment),
+<a href=#541 id=541 data-nosnippet>541</a>            ])
+<a href=#542 id=542 data-nosnippet>542</a>            .inner_extras(<span class="macro">quote!</span> {
+<a href=#543 id=543 data-nosnippet>543</a>                <span class="comment">// SAFETY: Projection into structs is always infallible.
+<a href=#544 id=544 data-nosnippet>544</a>                </span><span class="kw">type </span>Error = #zerocopy_crate::util::macro_util::core_reexport::convert::Infallible;
+<a href=#545 id=545 data-nosnippet>545</a>                <span class="comment">// SAFETY: The alignment of the projected `Ptr` is `Unaligned`
+<a href=#546 id=546 data-nosnippet>546</a>                // if the structure is packed; otherwise inherited from the
+<a href=#547 id=547 data-nosnippet>547</a>                // outer `Ptr`. If the validity of the outer pointer is
+<a href=#548 id=548 data-nosnippet>548</a>                // `Initialized`, so too is the validity of its fields.
+<a href=#549 id=549 data-nosnippet>549</a>                </span><span class="kw">type </span>Invariants = (Aliasing, #alignment, #zerocopy_crate::invariant::Initialized);
+<a href=#550 id=550 data-nosnippet>550</a>            })
+<a href=#551 id=551 data-nosnippet>551</a>            .build()
+<a href=#552 id=552 data-nosnippet>552</a>        } <span class="kw">else </span>{
+<a href=#553 id=553 data-nosnippet>553</a>            <span class="macro">quote!</span> {}
+<a href=#554 id=554 data-nosnippet>554</a>        })
+<a href=#555 id=555 data-nosnippet>555</a>        .build()
+<a href=#556 id=556 data-nosnippet>556</a>    });
+<a href=#557 id=557 data-nosnippet>557</a>
+<a href=#558 id=558 data-nosnippet>558</a>    const_block(field_tokens.into_iter().chain(<span class="prelude-val">Some</span>(has_tag)).chain(has_fields).map(<span class="prelude-val">Some</span>))
+<a href=#559 id=559 data-nosnippet>559</a>}
+<a href=#560 id=560 data-nosnippet>560</a><span class="kw">fn </span>derive_try_from_bytes_struct(
+<a href=#561 id=561 data-nosnippet>561</a>    ctx: <span class="kw-2">&amp;</span>Ctx,
+<a href=#562 id=562 data-nosnippet>562</a>    strct: <span class="kw-2">&amp;</span>DataStruct,
+<a href=#563 id=563 data-nosnippet>563</a>    top_level: Trait,
+<a href=#564 id=564 data-nosnippet>564</a>) -&gt; <span class="prelude-ty">Result</span>&lt;TokenStream, Error&gt; {
+<a href=#565 id=565 data-nosnippet>565</a>    <span class="kw">let </span>extras = try_gen_trivial_is_bit_valid(ctx, top_level).unwrap_or_else(|| {
+<a href=#566 id=566 data-nosnippet>566</a>        <span class="kw">let </span>zerocopy_crate = <span class="kw-2">&amp;</span>ctx.zerocopy_crate;
+<a href=#567 id=567 data-nosnippet>567</a>        <span class="kw">let </span>fields = strct.fields();
+<a href=#568 id=568 data-nosnippet>568</a>        <span class="kw">let </span>field_names = fields.iter().map(|(_vis, name, _ty)| name);
+<a href=#569 id=569 data-nosnippet>569</a>        <span class="kw">let </span>field_tys = fields.iter().map(|(_vis, _name, ty)| ty);
+<a href=#570 id=570 data-nosnippet>570</a>        <span class="kw">let </span>core = ctx.core_path();
+<a href=#571 id=571 data-nosnippet>571</a>        <span class="macro">quote!</span>(
+<a href=#572 id=572 data-nosnippet>572</a>            <span class="comment">// SAFETY: We use `is_bit_valid` to validate that each field is
+<a href=#573 id=573 data-nosnippet>573</a>            // bit-valid, and only return `true` if all of them are. The bit
+<a href=#574 id=574 data-nosnippet>574</a>            // validity of a struct is just the composition of the bit
+<a href=#575 id=575 data-nosnippet>575</a>            // validities of its fields, so this is a sound implementation
+<a href=#576 id=576 data-nosnippet>576</a>            // of `is_bit_valid`.
+<a href=#577 id=577 data-nosnippet>577</a>            </span><span class="attr">#[inline]
+<a href=#578 id=578 data-nosnippet>578</a>            </span><span class="kw">fn </span>is_bit_valid&lt;___ZcAlignment&gt;(
+<a href=#579 id=579 data-nosnippet>579</a>                <span class="kw-2">mut </span>candidate: #zerocopy_crate::Maybe&lt;<span class="lifetime">'_</span>, <span class="self">Self</span>, ___ZcAlignment&gt;,
+<a href=#580 id=580 data-nosnippet>580</a>            ) -&gt; #core::primitive::bool
+<a href=#581 id=581 data-nosnippet>581</a>            <span class="kw">where
+<a href=#582 id=582 data-nosnippet>582</a>                </span>___ZcAlignment: #zerocopy_crate::invariant::Alignment,
+<a href=#583 id=583 data-nosnippet>583</a>            {
+<a href=#584 id=584 data-nosnippet>584</a>                <span class="bool-val">true </span>#(&amp;&amp; {
+<a href=#585 id=585 data-nosnippet>585</a>                    <span class="kw">let </span>field_candidate =   #<span class="macro">zerocopy_crate::into_inner!</span>(candidate.reborrow().project::&lt;
+<a href=#586 id=586 data-nosnippet>586</a>                        <span class="kw">_</span>,
+<a href=#587 id=587 data-nosnippet>587</a>                        { #zerocopy_crate::STRUCT_VARIANT_ID },
+<a href=#588 id=588 data-nosnippet>588</a>                        { #<span class="macro">zerocopy_crate::ident_id!</span>(#field_names) }
+<a href=#589 id=589 data-nosnippet>589</a>                    &gt;());
+<a href=#590 id=590 data-nosnippet>590</a>                    &lt;#field_tys <span class="kw">as </span>#zerocopy_crate::TryFromBytes&gt;::is_bit_valid(field_candidate)
+<a href=#591 id=591 data-nosnippet>591</a>                })*
+<a href=#592 id=592 data-nosnippet>592</a>            }
+<a href=#593 id=593 data-nosnippet>593</a>        )
+<a href=#594 id=594 data-nosnippet>594</a>    });
+<a href=#595 id=595 data-nosnippet>595</a>    <span class="prelude-val">Ok</span>(ImplBlockBuilder::new(ctx, strct, Trait::TryFromBytes, FieldBounds::ALL_SELF)
+<a href=#596 id=596 data-nosnippet>596</a>        .inner_extras(extras)
+<a href=#597 id=597 data-nosnippet>597</a>        .outer_extras(derive_has_field_struct_union(ctx, strct))
+<a href=#598 id=598 data-nosnippet>598</a>        .build())
+<a href=#599 id=599 data-nosnippet>599</a>}
+<a href=#600 id=600 data-nosnippet>600</a><span class="kw">fn </span>derive_try_from_bytes_union(ctx: <span class="kw-2">&amp;</span>Ctx, unn: <span class="kw-2">&amp;</span>DataUnion, top_level: Trait) -&gt; TokenStream {
+<a href=#601 id=601 data-nosnippet>601</a>    <span class="kw">let </span>field_type_trait_bounds = FieldBounds::All(<span class="kw-2">&amp;</span>[TraitBound::Slf]);
+<a href=#602 id=602 data-nosnippet>602</a>
+<a href=#603 id=603 data-nosnippet>603</a>    <span class="kw">let </span>zerocopy_crate = <span class="kw-2">&amp;</span>ctx.zerocopy_crate;
+<a href=#604 id=604 data-nosnippet>604</a>    <span class="kw">let </span>variant_id: Box&lt;Expr&gt; = {
+<a href=#605 id=605 data-nosnippet>605</a>        <span class="kw">let </span>is_repr_c =
+<a href=#606 id=606 data-nosnippet>606</a>            StructUnionRepr::from_attrs(<span class="kw-2">&amp;</span>ctx.ast.attrs).map(|repr| repr.is_c()).unwrap_or(<span class="bool-val">false</span>);
+<a href=#607 id=607 data-nosnippet>607</a>        <span class="kw">if </span>is_repr_c {
+<a href=#608 id=608 data-nosnippet>608</a>            <span class="macro">parse_quote!</span>({ #zerocopy_crate::REPR_C_UNION_VARIANT_ID })
+<a href=#609 id=609 data-nosnippet>609</a>        } <span class="kw">else </span>{
+<a href=#610 id=610 data-nosnippet>610</a>            <span class="macro">parse_quote!</span>({ #zerocopy_crate::UNION_VARIANT_ID })
+<a href=#611 id=611 data-nosnippet>611</a>        }
+<a href=#612 id=612 data-nosnippet>612</a>    };
+<a href=#613 id=613 data-nosnippet>613</a>
+<a href=#614 id=614 data-nosnippet>614</a>    <span class="kw">let </span>extras = try_gen_trivial_is_bit_valid(ctx, top_level).unwrap_or_else(|| {
+<a href=#615 id=615 data-nosnippet>615</a>        <span class="kw">let </span>fields = unn.fields();
+<a href=#616 id=616 data-nosnippet>616</a>        <span class="kw">let </span>field_names = fields.iter().map(|(_vis, name, _ty)| name);
+<a href=#617 id=617 data-nosnippet>617</a>        <span class="kw">let </span>field_tys = fields.iter().map(|(_vis, _name, ty)| ty);
+<a href=#618 id=618 data-nosnippet>618</a>        <span class="kw">let </span>core = ctx.core_path();
+<a href=#619 id=619 data-nosnippet>619</a>        <span class="macro">quote!</span>(
+<a href=#620 id=620 data-nosnippet>620</a>            <span class="comment">// SAFETY: We use `is_bit_valid` to validate that any field is
+<a href=#621 id=621 data-nosnippet>621</a>            // bit-valid; we only return `true` if at least one of them is.
+<a href=#622 id=622 data-nosnippet>622</a>            // The bit validity of a union is not yet well defined in Rust,
+<a href=#623 id=623 data-nosnippet>623</a>            // but it is guaranteed to be no more strict than this
+<a href=#624 id=624 data-nosnippet>624</a>            // definition. See #696 for a more in-depth discussion.
+<a href=#625 id=625 data-nosnippet>625</a>            </span><span class="attr">#[inline]
+<a href=#626 id=626 data-nosnippet>626</a>            </span><span class="kw">fn </span>is_bit_valid&lt;___ZcAlignment&gt;(
+<a href=#627 id=627 data-nosnippet>627</a>                <span class="kw-2">mut </span>candidate: #zerocopy_crate::Maybe&lt;<span class="lifetime">'_</span>, <span class="self">Self</span>, ___ZcAlignment&gt;,
+<a href=#628 id=628 data-nosnippet>628</a>            ) -&gt; #core::primitive::bool
+<a href=#629 id=629 data-nosnippet>629</a>            <span class="kw">where
+<a href=#630 id=630 data-nosnippet>630</a>                </span>___ZcAlignment: #zerocopy_crate::invariant::Alignment,
+<a href=#631 id=631 data-nosnippet>631</a>            {
+<a href=#632 id=632 data-nosnippet>632</a>                <span class="bool-val">false </span>#(|| {
+<a href=#633 id=633 data-nosnippet>633</a>                    <span class="comment">// SAFETY:
+<a href=#634 id=634 data-nosnippet>634</a>                    // - Since `ReadOnly&lt;Self&gt;: Immutable` unconditionally,
+<a href=#635 id=635 data-nosnippet>635</a>                    //   neither `*slf` nor the returned pointer's referent
+<a href=#636 id=636 data-nosnippet>636</a>                    //   permit interior mutation.
+<a href=#637 id=637 data-nosnippet>637</a>                    // - Both source and destination validity are
+<a href=#638 id=638 data-nosnippet>638</a>                    //   `Initialized`, which is always a sound
+<a href=#639 id=639 data-nosnippet>639</a>                    //   transmutation.
+<a href=#640 id=640 data-nosnippet>640</a>                    </span><span class="kw">let </span>field_candidate = <span class="kw">unsafe </span>{
+<a href=#641 id=641 data-nosnippet>641</a>                        candidate.reborrow().project_transmute_unchecked::&lt;
+<a href=#642 id=642 data-nosnippet>642</a>                            <span class="kw">_</span>,
+<a href=#643 id=643 data-nosnippet>643</a>                            <span class="kw">_</span>,
+<a href=#644 id=644 data-nosnippet>644</a>                            #zerocopy_crate::pointer::cast::Projection&lt;
+<a href=#645 id=645 data-nosnippet>645</a>                                <span class="kw">_</span>,
+<a href=#646 id=646 data-nosnippet>646</a>                                #variant_id,
+<a href=#647 id=647 data-nosnippet>647</a>                                { #<span class="macro">zerocopy_crate::ident_id!</span>(#field_names) }
+<a href=#648 id=648 data-nosnippet>648</a>                            &gt;
+<a href=#649 id=649 data-nosnippet>649</a>                        &gt;()
+<a href=#650 id=650 data-nosnippet>650</a>                    };
+<a href=#651 id=651 data-nosnippet>651</a>
+<a href=#652 id=652 data-nosnippet>652</a>                    &lt;#field_tys <span class="kw">as </span>#zerocopy_crate::TryFromBytes&gt;::is_bit_valid(field_candidate)
+<a href=#653 id=653 data-nosnippet>653</a>                })*
+<a href=#654 id=654 data-nosnippet>654</a>            }
+<a href=#655 id=655 data-nosnippet>655</a>        )
+<a href=#656 id=656 data-nosnippet>656</a>    });
+<a href=#657 id=657 data-nosnippet>657</a>    ImplBlockBuilder::new(ctx, unn, Trait::TryFromBytes, field_type_trait_bounds)
+<a href=#658 id=658 data-nosnippet>658</a>        .inner_extras(extras)
+<a href=#659 id=659 data-nosnippet>659</a>        .outer_extras(derive_has_field_struct_union(ctx, unn))
+<a href=#660 id=660 data-nosnippet>660</a>        .build()
+<a href=#661 id=661 data-nosnippet>661</a>}
+<a href=#662 id=662 data-nosnippet>662</a><span class="kw">fn </span>derive_try_from_bytes_enum(
+<a href=#663 id=663 data-nosnippet>663</a>    ctx: <span class="kw-2">&amp;</span>Ctx,
+<a href=#664 id=664 data-nosnippet>664</a>    enm: <span class="kw-2">&amp;</span>DataEnum,
+<a href=#665 id=665 data-nosnippet>665</a>    top_level: Trait,
+<a href=#666 id=666 data-nosnippet>666</a>) -&gt; <span class="prelude-ty">Result</span>&lt;TokenStream, Error&gt; {
+<a href=#667 id=667 data-nosnippet>667</a>    <span class="kw">let </span>repr = EnumRepr::from_attrs(<span class="kw-2">&amp;</span>ctx.ast.attrs)<span class="question-mark">?</span>;
+<a href=#668 id=668 data-nosnippet>668</a>
+<a href=#669 id=669 data-nosnippet>669</a>    <span class="comment">// If an enum has no fields, it has a well-defined integer representation,
+<a href=#670 id=670 data-nosnippet>670</a>    // and every possible bit pattern corresponds to a valid discriminant tag,
+<a href=#671 id=671 data-nosnippet>671</a>    // then it *could* be `FromBytes` (even if the user hasn't derived
+<a href=#672 id=672 data-nosnippet>672</a>    // `FromBytes`). This holds if, for `repr(uN)` or `repr(iN)`, there are 2^N
+<a href=#673 id=673 data-nosnippet>673</a>    // variants.
+<a href=#674 id=674 data-nosnippet>674</a>    </span><span class="kw">let </span>could_be_from_bytes = enum_size_from_repr(<span class="kw-2">&amp;</span>repr)
+<a href=#675 id=675 data-nosnippet>675</a>        .map(|size| enm.fields().is_empty() &amp;&amp; enm.variants.len() == <span class="number">1usize </span>&lt;&lt; size)
+<a href=#676 id=676 data-nosnippet>676</a>        .unwrap_or(<span class="bool-val">false</span>);
+<a href=#677 id=677 data-nosnippet>677</a>
+<a href=#678 id=678 data-nosnippet>678</a>    <span class="kw">let </span>trivial_is_bit_valid = try_gen_trivial_is_bit_valid(ctx, top_level);
+<a href=#679 id=679 data-nosnippet>679</a>    <span class="kw">let </span>extra = <span class="kw">match </span>(trivial_is_bit_valid, could_be_from_bytes) {
+<a href=#680 id=680 data-nosnippet>680</a>        (<span class="prelude-val">Some</span>(is_bit_valid), <span class="kw">_</span>) =&gt; is_bit_valid,
+<a href=#681 id=681 data-nosnippet>681</a>        <span class="comment">// SAFETY: It would be sound for the enum to implement `FromBytes`, as
+<a href=#682 id=682 data-nosnippet>682</a>        // required by `gen_trivial_is_bit_valid_unchecked`.
+<a href=#683 id=683 data-nosnippet>683</a>        </span>(<span class="prelude-val">None</span>, <span class="bool-val">true</span>) =&gt; <span class="kw">unsafe </span>{ gen_trivial_is_bit_valid_unchecked(ctx) },
+<a href=#684 id=684 data-nosnippet>684</a>        (<span class="prelude-val">None</span>, <span class="bool-val">false</span>) =&gt; <span class="kw">match </span>derive_is_bit_valid(ctx, enm, <span class="kw-2">&amp;</span>repr) {
+<a href=#685 id=685 data-nosnippet>685</a>            <span class="prelude-val">Ok</span>(extra) =&gt; extra,
+<a href=#686 id=686 data-nosnippet>686</a>            <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="kw">if </span>ctx.skip_on_error =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(TokenStream::new()),
+<a href=#687 id=687 data-nosnippet>687</a>            <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(e),
+<a href=#688 id=688 data-nosnippet>688</a>        },
+<a href=#689 id=689 data-nosnippet>689</a>    };
+<a href=#690 id=690 data-nosnippet>690</a>
+<a href=#691 id=691 data-nosnippet>691</a>    <span class="prelude-val">Ok</span>(ImplBlockBuilder::new(ctx, enm, Trait::TryFromBytes, FieldBounds::ALL_SELF)
+<a href=#692 id=692 data-nosnippet>692</a>        .inner_extras(extra)
+<a href=#693 id=693 data-nosnippet>693</a>        .build())
+<a href=#694 id=694 data-nosnippet>694</a>}
+<a href=#695 id=695 data-nosnippet>695</a><span class="kw">fn </span>try_gen_trivial_is_bit_valid(ctx: <span class="kw-2">&amp;</span>Ctx, top_level: Trait) -&gt; <span class="prelude-ty">Option</span>&lt;proc_macro2::TokenStream&gt; {
+<a href=#696 id=696 data-nosnippet>696</a>    <span class="comment">// If the top-level trait is `FromBytes` and `Self` has no type parameters,
+<a href=#697 id=697 data-nosnippet>697</a>    // then the `FromBytes` derive will fail compilation if `Self` is not
+<a href=#698 id=698 data-nosnippet>698</a>    // actually soundly `FromBytes`, and so we can rely on that for our
+<a href=#699 id=699 data-nosnippet>699</a>    // `is_bit_valid` impl. It's plausible that we could make changes - or Rust
+<a href=#700 id=700 data-nosnippet>700</a>    // could make changes (such as the "trivial bounds" language feature) - that
+<a href=#701 id=701 data-nosnippet>701</a>    // make this no longer true. To hedge against these, we include an explicit
+<a href=#702 id=702 data-nosnippet>702</a>    // `Self: FromBytes` check in the generated `is_bit_valid`, which is
+<a href=#703 id=703 data-nosnippet>703</a>    // bulletproof.
+<a href=#704 id=704 data-nosnippet>704</a>    //
+<a href=#705 id=705 data-nosnippet>705</a>    // If `ctx.skip_on_error` is true, we can't rely on the `FromBytes` derive
+<a href=#706 id=706 data-nosnippet>706</a>    // to fail compilation if `Self` is not actually soundly `FromBytes`.
+<a href=#707 id=707 data-nosnippet>707</a>    </span><span class="kw">if </span><span class="macro">matches!</span>(top_level, Trait::FromBytes)
+<a href=#708 id=708 data-nosnippet>708</a>        &amp;&amp; ctx.ast.generics.params.is_empty()
+<a href=#709 id=709 data-nosnippet>709</a>        &amp;&amp; !ctx.skip_on_error
+<a href=#710 id=710 data-nosnippet>710</a>    {
+<a href=#711 id=711 data-nosnippet>711</a>        <span class="kw">let </span>zerocopy_crate = <span class="kw-2">&amp;</span>ctx.zerocopy_crate;
+<a href=#712 id=712 data-nosnippet>712</a>        <span class="kw">let </span>core = ctx.core_path();
+<a href=#713 id=713 data-nosnippet>713</a>        <span class="prelude-val">Some</span>(<span class="macro">quote!</span>(
+<a href=#714 id=714 data-nosnippet>714</a>            <span class="comment">// SAFETY: See inline.
+<a href=#715 id=715 data-nosnippet>715</a>            </span><span class="attr">#[inline(always)]
+<a href=#716 id=716 data-nosnippet>716</a>            </span><span class="kw">fn </span>is_bit_valid&lt;___ZcAlignment&gt;(
+<a href=#717 id=717 data-nosnippet>717</a>                _candidate: #zerocopy_crate::Maybe&lt;<span class="lifetime">'_</span>, <span class="self">Self</span>, ___ZcAlignment&gt;,
+<a href=#718 id=718 data-nosnippet>718</a>            ) -&gt; #core::primitive::bool
+<a href=#719 id=719 data-nosnippet>719</a>            <span class="kw">where
+<a href=#720 id=720 data-nosnippet>720</a>                </span>___ZcAlignment: #zerocopy_crate::invariant::Alignment,
+<a href=#721 id=721 data-nosnippet>721</a>            {
+<a href=#722 id=722 data-nosnippet>722</a>                <span class="kw">if </span><span class="bool-val">false </span>{
+<a href=#723 id=723 data-nosnippet>723</a>                    <span class="kw">fn </span>assert_is_from_bytes&lt;T&gt;()
+<a href=#724 id=724 data-nosnippet>724</a>                    <span class="kw">where
+<a href=#725 id=725 data-nosnippet>725</a>                        </span>T: #zerocopy_crate::FromBytes,
+<a href=#726 id=726 data-nosnippet>726</a>                        T: <span class="question-mark">?</span>#core::marker::Sized,
+<a href=#727 id=727 data-nosnippet>727</a>                    {
+<a href=#728 id=728 data-nosnippet>728</a>                    }
+<a href=#729 id=729 data-nosnippet>729</a>
+<a href=#730 id=730 data-nosnippet>730</a>                    assert_is_from_bytes::&lt;<span class="self">Self</span>&gt;();
+<a href=#731 id=731 data-nosnippet>731</a>                }
+<a href=#732 id=732 data-nosnippet>732</a>
+<a href=#733 id=733 data-nosnippet>733</a>                <span class="comment">// SAFETY: The preceding code only compiles if `Self:
+<a href=#734 id=734 data-nosnippet>734</a>                // FromBytes`. Thus, this code only compiles if all initialized
+<a href=#735 id=735 data-nosnippet>735</a>                // byte sequences represent valid instances of `Self`.
+<a href=#736 id=736 data-nosnippet>736</a>                </span><span class="bool-val">true
+<a href=#737 id=737 data-nosnippet>737</a>            </span>}
+<a href=#738 id=738 data-nosnippet>738</a>        ))
+<a href=#739 id=739 data-nosnippet>739</a>    } <span class="kw">else </span>{
+<a href=#740 id=740 data-nosnippet>740</a>        <span class="prelude-val">None
+<a href=#741 id=741 data-nosnippet>741</a>    </span>}
+<a href=#742 id=742 data-nosnippet>742</a>}
+<a href=#743 id=743 data-nosnippet>743</a>
+<a href=#744 id=744 data-nosnippet>744</a><span class="doccomment">/// # Safety
+<a href=#745 id=745 data-nosnippet>745</a>///
+<a href=#746 id=746 data-nosnippet>746</a>/// All initialized bit patterns must be valid for `Self`.
+<a href=#747 id=747 data-nosnippet>747</a></span><span class="kw">unsafe fn </span>gen_trivial_is_bit_valid_unchecked(ctx: <span class="kw-2">&amp;</span>Ctx) -&gt; proc_macro2::TokenStream {
+<a href=#748 id=748 data-nosnippet>748</a>    <span class="kw">let </span>zerocopy_crate = <span class="kw-2">&amp;</span>ctx.zerocopy_crate;
+<a href=#749 id=749 data-nosnippet>749</a>    <span class="kw">let </span>core = ctx.core_path();
+<a href=#750 id=750 data-nosnippet>750</a>    <span class="macro">quote!</span>(
+<a href=#751 id=751 data-nosnippet>751</a>        <span class="comment">// SAFETY: The caller of `gen_trivial_is_bit_valid_unchecked` has
+<a href=#752 id=752 data-nosnippet>752</a>        // promised that all initialized bit patterns are valid for `Self`.
+<a href=#753 id=753 data-nosnippet>753</a>        </span><span class="attr">#[inline(always)]
+<a href=#754 id=754 data-nosnippet>754</a>        </span><span class="kw">fn </span>is_bit_valid&lt;___ZcAlignment&gt;(
+<a href=#755 id=755 data-nosnippet>755</a>            _candidate: #zerocopy_crate::Maybe&lt;<span class="lifetime">'_</span>, <span class="self">Self</span>, ___ZcAlignment&gt;,
+<a href=#756 id=756 data-nosnippet>756</a>        ) -&gt; #core::primitive::bool
+<a href=#757 id=757 data-nosnippet>757</a>        <span class="kw">where
+<a href=#758 id=758 data-nosnippet>758</a>            </span>___ZcAlignment: #zerocopy_crate::invariant::Alignment,
+<a href=#759 id=759 data-nosnippet>759</a>        {
+<a href=#760 id=760 data-nosnippet>760</a>            <span class="bool-val">true
+<a href=#761 id=761 data-nosnippet>761</a>        </span>}
+<a href=#762 id=762 data-nosnippet>762</a>    )
+<a href=#763 id=763 data-nosnippet>763</a>}
 </code></pre></div></section></main></body></html>
