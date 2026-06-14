@@ -740,6 +740,80 @@ fn trans_struct_or_union<'tcx>(
             }
         };
     }
+
+    // The loop above only emits a multi-variant `enum`'s tag, not its variant
+    // payloads. `rustc_codegen_ssa` accesses payload fields by byte offset
+    // (`inbounds_ptradd` after a downcast), so for `BackendRepr::Memory` `enum`s
+    // the payload fields must be present to recover a valid `OpAccessChain`,
+    // otherwise it's zombie'd as "cannot offset a pointer to an arbitrary element".
+    //
+    // So also emit each variant's non-ZST payload fields at their offsets,
+    // skipping any that overlap an already-present field (struct fields can't
+    // overlap). This should eventually be replaced with untyped memory + `qptr`.
+    if union_case.is_none()
+        && let Variants::Multiple { variants, .. } = &ty.variants
+    {
+        // Track the byte ranges already covered, to reject overlapping payloads.
+        let mut covered: Vec<(Size, Size)> = field_offsets
+            .iter()
+            .zip(&field_types)
+            .map(|(&offset, &field_ty)| {
+                let end = cx
+                    .lookup_type(field_ty)
+                    .sizeof(cx)
+                    .map_or(offset, |size| offset + size);
+                (offset, end)
+            })
+            .collect();
+
+        let mut extra = Vec::new();
+        for variant_idx in variants.indices() {
+            let variant = ty.for_variant(cx, variant_idx);
+            for i in variant.fields.index_by_increasing_offset() {
+                let field = variant.field(cx, i);
+                if field.is_zst() {
+                    continue;
+                }
+                let offset = variant.fields.offset(i);
+                let end = offset + field.size;
+                if covered.iter().any(|&(o, e)| offset < e && o < end) {
+                    continue;
+                }
+                covered.push((offset, end));
+                let name = match ty.ty.kind() {
+                    TyKind::Adt(adt, _) => {
+                        adt.variants()[variant_idx].fields[FieldIdx::new(i)].name
+                    }
+                    _ => Symbol::intern(&format!("variant{}_field{i}", variant_idx.as_usize())),
+                };
+                extra.push((offset, field.spirv_type(span, cx), name));
+            }
+        }
+
+        // Merge in the payload fields, sorted by offset so the tag stays field
+        // `0` (required by `recover_access_chain_from_offset` and discriminant
+        // access).
+        if !extra.is_empty() {
+            let mut merged: Vec<_> = field_offsets
+                .iter()
+                .zip(&field_types)
+                .zip(&field_names)
+                .map(|((&offset, &field_ty), &name)| (offset, field_ty, name))
+                .collect();
+            merged.extend(extra);
+            merged.sort_by_key(|&(offset, ..)| offset);
+
+            field_offsets.clear();
+            field_types.clear();
+            field_names.clear();
+            for (offset, field_ty, name) in merged {
+                field_offsets.push(offset);
+                field_types.push(field_ty);
+                field_names.push(name);
+            }
+        }
+    }
+
     SpirvType::Adt {
         def_id: def_id_for_spirv_type_adt(ty),
         size,
