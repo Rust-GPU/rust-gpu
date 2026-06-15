@@ -17,6 +17,8 @@ Toolchain: `nightly-2026-08-15` (rustc 1.99.0)
 
 Toolchain: `nightly-2026-08-15` (rustc 1.99.0)
 
+We're written a new "Getting started" section for rust-gpu with the new `cargo gpu generate` command to set up a rust-gpu workspace for you. This may be interesting for existing users too for an introduction how we imagine a state-of-the-art rust-gpu setup looks like.
+
 ### 🚨BREAKING🚨️
 
 - [PR#661](https://github.com/Rust-GPU/rust-gpu/pull/661) adds support for glam v0.34 and makes it the default glam version
