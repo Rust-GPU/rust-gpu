@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+We're written a new "Getting started" section for rust-gpu with the new `cargo gpu generate` command to set up a rust-gpu workspace for you. This may be interesting for existing users too for an introduction how we imagine a state-of-the-art rust-gpu setup looks like.
+
 Toolchain: `nightly-2026-07-03` (rustc 1.98.0)
 
 ### Added ⭐
