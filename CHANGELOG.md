@@ -7,10 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Toolchain: `nightly-2026-07-03` (rustc 1.98.0)
+
+### Added ⭐
+
+- [PR#568](https://github.com/Rust-GPU/rust-gpu/pull/568) add `cargo gpu generate` to generate a workspace with a rust-gpu setup
+- [PR#623](https://github.com/Rust-GPU/rust-gpu/pull/623) make `cargo gpu --version` print revision when installed from source
+- [PR#582](https://github.com/Rust-GPU/rust-gpu/pull/582) allow using a tuple within a tuple
+- [PR#640](https://github.com/Rust-GPU/rust-gpu/pull/640) support ScalarPairs like `(u32, u32)` as function args and entry points
+- [PR#589](https://github.com/Rust-GPU/rust-gpu/pull/589) add support for [KHR_cooperative_matrix](https://docs.vulkan.org/features/latest/features/proposals/VK_KHR_cooperative_matrix.html)
+- [PR#595](https://github.com/Rust-GPU/rust-gpu/pull/595) support u128/i128 constants *only* to support more crates
+- [PR#593](https://github.com/Rust-GPU/rust-gpu/pull/593) support f16 constants
+- [PR#634](https://github.com/Rust-GPU/rust-gpu/pull/634) support memset on structs to fix [`blake3`](https://crates.io/crates/blake3) crate
+
 ### Changed 🛠
 
-- [PR#637](https://github.com/Rust-GPU/rust-gpu/pull/637) upgraded `bitflags` dependency from 1.x to 2.x
- 
+- [PR#609](https://github.com/Rust-GPU/rust-gpu/pull/609) support glam v0.33.0, add features `glam_0_30` to `glam_0_33` on spirv-std to support different glam versions
+- [PR#619](https://github.com/Rust-GPU/rust-gpu/pull/619) collapse `#[repr(transparent)]` types in SPIR-V
+- [PR#637](https://github.com/Rust-GPU/rust-gpu/pull/637) upgrade to `bitflags` v2
+- [PR#639](https://github.com/Rust-GPU/rust-gpu/pull/639) upgrade to `syn` v3
+
+### Fixed 🩹
+
+- [PR#591](https://github.com/Rust-GPU/rust-gpu/pull/591) fixed trivial entry points not creating SPIR-V modules
+- [PR#616](https://github.com/Rust-GPU/rust-gpu/pull/616) fixed `u32::try_from(usize)` shaped code not compiling on newer toolchains
+- [PR#622](https://github.com/Rust-GPU/rust-gpu/pull/622) add file locks to prevent two rust-gpu installs from racing
+- [PR#631](https://github.com/Rust-GPU/rust-gpu/pull/631) add file locks to prevent `rustup` from racing
+
 ## [0.10.0-alpha.1](https://github.com/Rust-GPU/rust-gpu/compare/v0.9.0...v0.10.0-alpha.1) - 2026-04-13
 
 Toolchain: `nightly-2026-04-11` (rustc 1.96.0)
