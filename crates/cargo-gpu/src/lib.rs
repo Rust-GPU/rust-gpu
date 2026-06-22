@@ -83,7 +83,7 @@ pub enum Command {
 
     /// Generate a new rust-gpu project from a template
     #[cfg(feature = "cargo-generate")]
-    New(generate::Generate),
+    Generate(generate::Generate),
 
     /// Show some useful values.
     Show(show::Show),
@@ -150,7 +150,7 @@ impl Command {
                 command.run()?;
             }
             #[cfg(feature = "cargo-generate")]
-            Self::New(generate) => generate.run()?,
+            Self::Generate(generate) => generate.run()?,
             Self::Show(show) => show.run()?,
             Self::DumpUsage => dump_usage::dump_full_usage_for_readme()?,
         }
