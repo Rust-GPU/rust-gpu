@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ExtOperandKind"],"static":["NONSEMANTIC_SHADER_DEBUGINFO_100_INSTRUCTION_TABLE"]};
