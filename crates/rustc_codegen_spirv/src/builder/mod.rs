@@ -185,24 +185,15 @@ impl<'a, 'tcx> DebugInfoBuilderMethods<'_> for Builder<'a, 'tcx> {
         _indirect_offsets: &[Size],
         _fragment: &Option<Range<Size>>,
     ) {
-        todo!()
     }
 
-    fn set_dbg_loc(&mut self, _: Self::DILocation) {
-        todo!()
-    }
+    fn set_dbg_loc(&mut self, _: Self::DILocation) {}
 
-    fn clear_dbg_loc(&mut self) {
-        todo!()
-    }
+    fn clear_dbg_loc(&mut self) {}
 
-    fn insert_reference_to_gdb_debug_scripts_section_global(&mut self) {
-        todo!()
-    }
+    fn insert_reference_to_gdb_debug_scripts_section_global(&mut self) {}
 
-    fn set_var_name(&mut self, _value: Self::Value, _name: &str) {
-        todo!()
-    }
+    fn set_var_name(&mut self, _value: Self::Value, _name: &str) {}
 
     fn dbg_var_value(
         &mut self,
@@ -216,7 +207,6 @@ impl<'a, 'tcx> DebugInfoBuilderMethods<'_> for Builder<'a, 'tcx> {
         // if this is a fragment of a composite `DIVariable`.
         _fragment: &Option<Range<Size>>,
     ) {
-        todo!()
     }
 }
 
