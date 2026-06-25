@@ -413,8 +413,6 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
 
     fn va_start(&mut self, _val: Self::Value) {}
 
-    fn va_end(&mut self, _val: Self::Value) {}
-
     fn retag_mem(&mut self, _place: Self::Value, _info: &RetagInfo<Self::Value>) {
         bug!("retag not supported")
     }
