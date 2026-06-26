@@ -272,6 +272,7 @@ pub(super) fn elf_e_flags(architecture: Architecture, sess: &Session) -> u32 {",
                             bx, llarg, arg.layout,
                         ));",
                 );
+                src = src.replace("fx.fill_function_debug_context();", "");
             }
             if relative_path == Path::new("src/mir/block.rs") {
                 src = src.replace(
