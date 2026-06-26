@@ -20,20 +20,19 @@ use rspirv::dr::{Module, Operand};
 use rspirv::spirv::{Decoration, LinkageType, Word};
 use rustc_abi::{AddressSpace, HasDataLayout, TargetDataLayout};
 use rustc_ast::ast::{InlineAsmOptions, InlineAsmTemplatePiece};
-use rustc_codegen_ssa::mir::debuginfo::{FunctionDebugContext, VariableKind};
+use rustc_codegen_ssa::mir::debuginfo::VariableKind;
 use rustc_codegen_ssa::traits::{
     AsmCodegenMethods, BackendTypes, DebugInfoCodegenMethods, GlobalAsmOperandRef,
     MiscCodegenMethods,
 };
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 use rustc_hir::def_id::DefId;
-use rustc_middle::mir;
 use rustc_middle::mono::CodegenUnit;
 use rustc_middle::ty::layout::{HasTyCtxt, HasTypingEnv};
 use rustc_middle::ty::{self, Instance, Ty, TyCtxt, TypingEnv};
 use rustc_session::Session;
 use rustc_span::symbol::Symbol;
-use rustc_span::{DUMMY_SP, SourceFile, Span};
+use rustc_span::{BytePos, DUMMY_SP, SourceFile, Span};
 use rustc_target::callconv::FnAbi;
 use rustc_target::spec::{HasTargetSpec, Target, TargetTuple};
 use std::cell::RefCell;
@@ -930,6 +929,10 @@ impl<'tcx> MiscCodegenMethods<'tcx> for CodegenCx<'tcx> {
     fn declare_c_main(&self, _fn_type: Self::FunctionSignature) -> Option<Self::Function> {
         todo!()
     }
+
+    fn intrinsic_call_expects_place_always(&self, _: Symbol) -> bool {
+        true
+    }
 }
 
 impl<'tcx> DebugInfoCodegenMethods<'tcx> for CodegenCx<'tcx> {
@@ -942,41 +945,39 @@ impl<'tcx> DebugInfoCodegenMethods<'tcx> for CodegenCx<'tcx> {
         // Ignore.
     }
 
+    fn dbg_create_lexical_block(
+        &self,
+        _pos: BytePos,
+        _parent_scope: Self::DIScope,
+    ) -> Self::DIScope {
+    }
+
+    fn dbg_location_clone_with_discriminator(
+        &self,
+        _loc: Self::DILocation,
+        _discriminator: u32,
+    ) -> Option<Self::DILocation> {
+        None
+    }
+
     fn dbg_scope_fn(
         &self,
-        _: rustc_middle::ty::Instance<'tcx>,
+        _: Instance<'tcx>,
         _: &FnAbi<'tcx, Ty<'tcx>>,
         _: Option<Self::Function>,
     ) -> Self::DIScope {
-        todo!()
     }
 
-    fn dbg_loc(&self, _: Self::DIScope, _: Option<Self::DILocation>, _: Span) -> Self::DILocation {
-        todo!()
-    }
-
-    fn create_function_debug_context(
-        &self,
-        _instance: Instance<'tcx>,
-        _fn_abi: &FnAbi<'tcx, Ty<'tcx>>,
-        _llfn: Self::Function,
-        _mir: &mir::Body<'tcx>,
-    ) -> Option<FunctionDebugContext<'tcx, Self::DIScope, Self::DILocation>> {
-        // TODO: This is ignored. Do we want to implement this at some point?
-        None
-    }
+    fn dbg_loc(&self, _: Self::DIScope, _: Option<Self::DILocation>, _: Span) -> Self::DILocation {}
 
     fn extend_scope_to_file(
         &self,
         _scope_metadata: Self::DIScope,
         _file: &SourceFile,
     ) -> Self::DIScope {
-        todo!()
     }
 
-    fn debuginfo_finalize(&self) {
-        todo!()
-    }
+    fn debuginfo_finalize(&self) {}
 
     fn create_dbg_var(
         &self,
@@ -986,7 +987,6 @@ impl<'tcx> DebugInfoCodegenMethods<'tcx> for CodegenCx<'tcx> {
         _variable_kind: VariableKind,
         _span: Span,
     ) -> Self::DIVariable {
-        todo!()
     }
 }
 

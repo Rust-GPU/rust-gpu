@@ -1986,7 +1986,8 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         align: Align,
         flags: MemFlags,
     ) -> Self::Value {
-        if flags != MemFlags::empty() {
+        let allowed_flags = MemFlags::CAPTURES_READ_ONLY;
+        if !(flags & !allowed_flags).is_empty() {
             self.err(format!("store_with_flags is not supported yet: {flags:?}"));
         }
         self.store(val, ptr, align)

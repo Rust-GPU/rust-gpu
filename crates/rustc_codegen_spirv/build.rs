@@ -19,9 +19,9 @@ use std::{env, fs, mem};
 /// `cargo publish`. We need to figure out a way to do this properly, but let's hardcode it for now :/
 //const REQUIRED_RUST_TOOLCHAIN: &str = include_str!("../../rust-toolchain.toml");
 const REQUIRED_RUST_TOOLCHAIN: &str = r#"[toolchain]
-channel = "nightly-2026-05-22"
+channel = "nightly-2026-06-25"
 components = ["rust-src", "rustc-dev", "llvm-tools"]
-# commit_hash = e96c36b6f76833388c519561d145492d2c08db4e"#;
+# commit_hash = f28ac764c36004fa6a6e098d15b4016a838c13c6"#;
 
 fn rustc_output(arg: &str) -> Result<String, Box<dyn Error>> {
     let rustc = env::var("RUSTC").unwrap_or_else(|_| "rustc".into());
@@ -253,6 +253,34 @@ pub(super) fn elf_e_flags(architecture: Architecture, sess: &Session) -> u32 {",
                 src = src.replace(
                     "debug_assert_eq!(bx.cx().val_ty(imm), from_backend_ty);",
                     "",
+                );
+            }
+
+            // HACK(firestar99): Undo code cleanup that prevents passing ScalarPairs as `PassMode::Direct`
+            // https://github.com/rust-lang/rust/commit/dfc475d018c780475ea962f15d86cfa05a50a148
+            if relative_path == Path::new("src/mir/mod.rs") {
+                src = src.replace(
+                    "
+                        debug_assert!(bx.is_backend_immediate(arg.layout));
+                        return local(OperandRef {
+                            val: OperandValue::Immediate(llarg),
+                            layout: arg.layout,
+                            move_annotation: None,
+                        });",
+                    "
+                        return local(OperandRef::from_immediate_or_packed_pair(
+                            bx, llarg, arg.layout,
+                        ));",
+                );
+                src = src.replace("fx.fill_function_debug_context();", "");
+            }
+            if relative_path == Path::new("src/mir/block.rs") {
+                src = src.replace(
+                    r#"
+                PassMode::Direct(_) => (op.immediate(), arg.layout.align.abi, false),
+                PassMode::Ignore | PassMode::Pair(..) => unreachable!("handled above"),"#,
+                    "\
+                _ => (op.immediate_or_packed_pair(bx), arg.layout.align.abi, false),",
                 );
             }
 
