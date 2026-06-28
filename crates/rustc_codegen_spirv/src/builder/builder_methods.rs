@@ -418,6 +418,11 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 )),
             },
             SpirvType::Float(width) => match width {
+                16 => {
+                    let ty = SpirvType::Float(16).def(self.span(), self);
+                    self.def_constant(ty, SpirvConst::Scalar(memset_fill_u16(fill_byte) as u128))
+                        .def(self)
+                }
                 32 => self
                     .constant_f32(self.span(), f32::from_bits(memset_fill_u32(fill_byte)))
                     .def(self),
@@ -472,6 +477,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 )),
             },
             SpirvType::Float(width) => match width {
+                16 => memset_dynamic_scalar(self, fill_var, 2, true),
                 32 => memset_dynamic_scalar(self, fill_var, 4, true),
                 64 => memset_dynamic_scalar(self, fill_var, 8, true),
                 _ => self.fatal(format!("memset on float width {width} not implemented yet")),
