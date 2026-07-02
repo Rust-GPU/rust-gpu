@@ -294,7 +294,6 @@ impl Cli {
                     "--shader-crate",
                     SHADER_CRATE_PATH,
                     "--auto-install-rust-toolchain",
-                    "--rebuild-codegen",
                     "--force-overwrite-lockfiles-v4-to-v3",
                 ])?;
 

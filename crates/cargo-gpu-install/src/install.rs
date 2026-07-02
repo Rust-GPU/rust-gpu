@@ -1,7 +1,7 @@
 //! Install a dedicated per-shader crate that has the `rust-gpu` compiler in it.
 
 use crate::spirv_source::{CrateMetadata, get_channel_from_rustc_codegen_spirv_build_script};
-use crate::{cache_dir, spirv_source::SpirvSource};
+use crate::{cache_dir, spirv_source::SpirvSource, user_output};
 use anyhow::Context as _;
 use spirv_builder::SpirvBuilder;
 use std::path::{Path, PathBuf};
@@ -243,6 +243,7 @@ package = "rustc_codegen_spirv"
             self.spirv_builder_version.as_deref(),
         )?;
         let install_dir = source.install_dir()?;
+        std::fs::create_dir_all(&install_dir)?;
 
         let dylib_filename = format!(
             "{}rustc_codegen_spirv{}",
@@ -263,30 +264,36 @@ package = "rustc_codegen_spirv"
             }
         }
 
-        let (dest_dylib_path, skip_rebuild) = if source.is_path() {
+        let mut _file_lock = None;
+        let (dest_dylib_path, do_build) = if source.is_path() {
             (
-                install_dir
-                    .join("target")
-                    .join("release")
-                    .join(&dylib_filename),
-                // if `source` is a path, always rebuild
-                false,
+                install_dir.join("target/release").join(&dylib_filename),
+                // if `source` is a path, always rebuild and rely on incremental builds
+                true,
             )
         } else {
             let dest_dylib_path = install_dir.join(&dylib_filename);
-            let artifacts_found = dest_dylib_path.is_file()
-                && install_dir.join("Cargo.toml").is_file()
-                && install_dir.join("src").join("lib.rs").is_file();
-            if artifacts_found {
-                log::info!("cargo-gpu artifacts found in '{}'", install_dir.display());
+            let needs_build = || {
+                !(dest_dylib_path.is_file()
+                    && install_dir.join("Cargo.toml").is_file()
+                    && install_dir.join("src/lib.rs").is_file())
+            };
+            let mut do_build = needs_build();
+            if do_build {
+                _file_lock = Some(FileLock::lock(&install_dir.join("lockfile"))?);
+                // check again after acquiring lock, another process could have built it in the meantime
+                do_build = needs_build();
             }
-            (dest_dylib_path, artifacts_found && !self.rebuild_codegen)
+            (dest_dylib_path, do_build || self.rebuild_codegen)
         };
 
-        if skip_rebuild {
-            log::info!("...and so we are aborting the install step.");
-        } else {
+        if do_build {
             Self::write_source_files(&source, &install_dir).context("writing source files")?;
+        } else {
+            log::info!(
+                "cargo-gpu artifacts found in '{}', skipping install",
+                install_dir.display()
+            );
         }
 
         // TODO cache toolchain channel in a file?
@@ -309,7 +316,7 @@ package = "rustc_codegen_spirv"
         )
         .context("ensuring toolchain and components exist")?;
 
-        if !skip_rebuild {
+        if do_build {
             // to prevent unsupported version errors when using older toolchains
             if !source.is_path() {
                 log::debug!("remove Cargo.lock");
@@ -370,5 +377,23 @@ package = "rustc_codegen_spirv"
             toolchain_channel,
             build_script: self.build_script,
         })
+    }
+}
+
+#[allow(dead_code)]
+pub struct FileLock(std::fs::File);
+
+impl FileLock {
+    pub fn lock(path: &Path) -> std::io::Result<Self> {
+        let file = std::fs::File::create(path)?;
+        match file.try_lock() {
+            Ok(_) => (),
+            Err(std::fs::TryLockError::WouldBlock) => {
+                user_output!("Waiting for file lock on codegen backend build...\n");
+                file.lock()?;
+            }
+            Err(std::fs::TryLockError::Error(e)) => return Err(e),
+        }
+        Ok(Self(file))
     }
 }
