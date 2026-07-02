@@ -1086,10 +1086,10 @@ pub fn instruction_signatures(op: Op) -> Option<&'static [InstSig<'static>]> {
         }
         // SPV_KHR_cooperative_matrix
         Op::TypeCooperativeMatrixKHR
-        | Op::CooperativeMatrixLoadKHR
+        | Op::CooperativeMatrixLengthKHR
         | Op::CooperativeMatrixStoreKHR
-        | Op::CooperativeMatrixMulAddKHR
-        | Op::CooperativeMatrixLengthKHR => reserved!(SPV_KHR_cooperative_matrix),
+        | Op::CooperativeMatrixLoadKHR => {}
+        Op::CooperativeMatrixMulAddKHR => sig! { (_, _, T) -> T },
         // SPV_QCOM_image_processing
         Op::ImageSampleWeightedQCOM
         | Op::ImageBoxFilterQCOM
