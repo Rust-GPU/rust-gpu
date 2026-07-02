@@ -79,7 +79,7 @@ contents of `path/to/test.rs.stderr`.
     * `// normalize-stderr-test "OpCapability VulkanMemoryModel\n" -> ""` remove the vulkan memory model *capability*, only used by `vulkan` targets
     * `// normalize-stderr-test "OpExtension .SPV_KHR_vulkan_memory_model.\n" -> ""` remove the vulkan memory model *extension*, only used by `vulkan` targets
     * `// normalize-stderr-test "OpMemoryModel Logical Vulkan" -> "OpMemoryModel Logical Simple"` replace the `Vulkan` memory model with `Simple`, which `spv` targets use
-    * `// normalize-stderr-test "; .*\n" -> ""` remove comments on spirv version by rspirv
+    * `// normalize-stderr-test "^(; .*\n)*" -> ""` remove comments on spirv version by rspirv
   * remove rustc error src paths:
     * `// normalize-stderr-test "\S*/lib/rustlib/" -> "$$SYSROOT/lib/rustlib/"` normalize path to crates delivered with rustc, such as `core`
     * `// normalize-stderr-test "\S*/crates/spirv-std/src/" -> "$$SPIRV_STD_SRC/"` normalize path to the `spirv-std` crate
