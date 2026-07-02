@@ -37,6 +37,8 @@ use std::ops::{BitAnd, BitOr, BitXor, Not, RangeInclusive};
 use tracing::{Level, instrument, span};
 use tracing::{trace, warn};
 
+const LARGE_ARRAY_MEMSET_WARN_THRESHOLD: usize = 1024;
+
 enum ConstValue {
     Unsigned(u128),
     Signed(i128),
@@ -436,8 +438,18 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 .def(self)
             }
             SpirvType::Array { element, count } => {
+                if fill_byte == 0 {
+                    return self.constant_null(ty.def(self.span(), self)).def(self);
+                }
                 let elem_pat = self.memset_const_pattern(&self.lookup_type(element), fill_byte);
                 let count = self.builder.lookup_const_scalar(count).unwrap() as usize;
+                if count > LARGE_ARRAY_MEMSET_WARN_THRESHOLD {
+                    self.warn(format!(
+                        "large array of {count} elements with a non-zero fill will generate a \
+                         SPIR-V constant with {count} operands, which may be slow to compile; \
+                         consider using a storage buffer for large data instead"
+                    ));
+                }
                 self.constant_composite(ty.def(self.span(), self), iter::repeat_n(elem_pat, count))
                     .def(self)
             }
@@ -1939,6 +1951,13 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         count: u64,
         dest: PlaceRef<'tcx, Self::Value>,
     ) {
+        if count > LARGE_ARRAY_MEMSET_WARN_THRESHOLD as u64 {
+            self.warn(format!(
+                "large array of {count} elements with a non-zero fill will generate {count} \
+                 SPIR-V store instructions, which may be slow to compile; \
+                 consider using a storage buffer for large data instead"
+            ));
+        }
         let zero = self.const_usize(0);
         let start = dest.project_index(self, zero).val.llval;
 
