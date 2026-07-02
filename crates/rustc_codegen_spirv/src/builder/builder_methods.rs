@@ -2434,7 +2434,32 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 "pointercast called on non-pointer dest type: {other:?}"
             )),
         };
-        let dest_pointee_size = self.lookup_type(dest_pointee).sizeof(self);
+
+        let dst_pointee_ty = self.lookup_type(dest_pointee);
+        let dest_pointee_size = dst_pointee_ty.sizeof(self);
+        let src_pointee_ty = self.lookup_type(ptr_pointee);
+
+        // *[T; N] -> *RuntimeArray<T>
+        if let SpirvType::Array {
+            element: elem_ty, ..
+        } = src_pointee_ty
+            && let SpirvType::RuntimeArray {
+                element: rt_elem_ty,
+            } = dst_pointee_ty
+            && elem_ty == rt_elem_ty
+        {
+            let zero = self.constant_u32(self.span(), 0).def(self);
+            let elem_ptr_ty = self.type_ptr_to(elem_ty);
+            let elem_ptr = self
+                .emit()
+                .in_bounds_access_chain(elem_ptr_ty, None, ptr.def(self), [zero])
+                .unwrap();
+            return self
+                .emit()
+                .bitcast(dest_ty, None, elem_ptr)
+                .unwrap()
+                .with_type(dest_ty);
+        }
 
         if let Some((indices, _)) = self.recover_access_chain_from_offset(
             ptr_pointee,
