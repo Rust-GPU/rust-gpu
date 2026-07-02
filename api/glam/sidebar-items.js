@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["EulerRot"],"mod":["bool","f32","f64","i32","swizzles","u32"],"trait":["FloatExt"]};
+window.SIDEBAR_ITEMS = {"enum":["EulerRot"],"mod":["bool","camera","dcamera","f32","f64","i32","prelude","swizzles","u32"],"trait":["FloatExt"]};
