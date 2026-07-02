@@ -58,6 +58,8 @@ pub use metadata::MetadataCache;
 mod build;
 mod config;
 mod dump_usage;
+#[cfg(feature = "cargo-generate")]
+mod generate;
 mod linkage;
 mod lockfile;
 mod metadata;
@@ -79,6 +81,10 @@ pub enum Command {
     /// Run clippy on a shader crate with a SPIR-V target
     Clippy(Box<build::Build>),
 
+    /// Generate a new rust-gpu project from a template
+    #[cfg(feature = "cargo-generate")]
+    Generate(generate::Generate),
+
     /// Show some useful values.
     Show(show::Show),
 
@@ -96,11 +102,11 @@ impl Command {
     /// Any errors during execution, usually printed to the user
     #[inline]
     pub fn run(
-        &self,
+        self,
         env_args: Vec<String>,
-        metadata_cache: &mut metadata::MetadataCache,
+        metadata_cache: &mut MetadataCache,
     ) -> anyhow::Result<()> {
-        match &self {
+        match self {
             Self::Install(install) => {
                 let shader_crate_path = &install.shader_crate;
                 let command = config::Config::clap_command_with_cargo_config(
@@ -114,7 +120,7 @@ impl Command {
                 );
                 command.install.run()?;
             }
-            Self::Build(build) | Self::Check(build) | Self::Clippy(build) => {
+            Self::Build(ref build) | Self::Check(ref build) | Self::Clippy(ref build) => {
                 let shader_crate_path = &build.install.shader_crate;
                 let mut command = config::Config::clap_command_with_cargo_config(
                     shader_crate_path,
@@ -143,6 +149,8 @@ impl Command {
                 }
                 command.run()?;
             }
+            #[cfg(feature = "cargo-generate")]
+            Self::Generate(generate) => generate.run()?,
             Self::Show(show) => show.run()?,
             Self::DumpUsage => dump_usage::dump_full_usage_for_readme()?,
         }
