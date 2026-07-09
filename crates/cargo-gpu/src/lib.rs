@@ -153,7 +153,7 @@ impl Command {
 
 /// the Cli struct representing the main cli
 #[derive(clap::Parser)]
-#[clap(author, version, about, subcommand_required = true)]
+#[clap(author, version, long_version = concat!(env!("CARGO_PKG_VERSION"), " (", env!("GIT_HASH"), "; ", env!("GIT_DATE"), ")"), about, subcommand_required = true)]
 #[non_exhaustive]
 pub struct Cli {
     /// The command to run.
