@@ -243,7 +243,10 @@ async fn start_internal(options: &Options, compiled_shader_modules: CompiledShad
             (timestamp_readback_buffer.as_ref(), timestamp_period)
     {
         {
-            let timing_data = timestamp_readback_buffer.slice(..).get_mapped_range();
+            let timing_data = timestamp_readback_buffer
+                .slice(..)
+                .get_mapped_range()
+                .unwrap();
             let timings = timing_data
                 .chunks_exact(8)
                 .map(|b| u64::from_ne_bytes(b.try_into().unwrap()))
@@ -260,7 +263,7 @@ async fn start_internal(options: &Options, compiled_shader_modules: CompiledShad
         }
     }
 
-    let data = buffer_slice.get_mapped_range();
+    let data = buffer_slice.get_mapped_range().unwrap();
     let result = data
         .chunks_exact(4)
         .map(|b| u32::from_ne_bytes(b.try_into().unwrap()))
