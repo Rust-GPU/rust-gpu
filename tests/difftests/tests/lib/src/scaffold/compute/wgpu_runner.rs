@@ -58,11 +58,9 @@ where
 
     pub fn run(&self) -> anyhow::Result<Vec<Option<Vec<u8>>>> {
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle());
-        let adapter = block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
-            power_preference: wgpu::PowerPreference::HighPerformance,
-            compatible_surface: None,
-            force_fallback_adapter: false,
-        }))
+        let adapter = block_on(wgpu::util::initialize_adapter_from_env_or_default(
+            &instance, None,
+        ))
         .context("Failed to find a suitable GPU adapter")?;
         let (device, queue) = block_on(adapter.request_device(&wgpu::DeviceDescriptor {
             label: Some("wgpu Device"),
@@ -218,7 +216,7 @@ where
         // copy data from buffers into Vecs
         let results = download_buffers
             .into_iter()
-            .map(|buffer| buffer.map(|buffer| buffer.get_mapped_range(..).to_vec()))
+            .map(|buffer| buffer.map(|buffer| buffer.get_mapped_range(..).unwrap().to_vec()))
             .collect::<Vec<_>>();
         Ok(results)
     }
