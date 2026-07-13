@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-automata-0.4.14/src/util/search.rs`."><title>search.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.97.0-nightly (e96c36b6f 2026-05-21)" data-channel="nightly" data-search-js="search-fd9372ac.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-fcd733ba.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">regex_automata/util/</div>search.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/*!
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-automata-0.4.15/src/util/search.rs`."><title>search.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.97.0-nightly (e96c36b6f 2026-05-21)" data-channel="nightly" data-search-js="search-fd9372ac.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-fcd733ba.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">regex_automata/util/</div>search.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/*!
 <a href=#2 id=2 data-nosnippet>2</a>Types and routines that support the search APIs of most regex engines.
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a>This sub-module isn't exposed directly, but rather, its contents are exported
@@ -1879,111 +1879,120 @@
 <a href=#1879 id=1879 data-nosnippet>1879</a>    <span class="doccomment">/// An error indicating that a particular type of anchored search was
 <a href=#1880 id=1880 data-nosnippet>1880</a>    /// requested, but that the regex engine does not support it.
 <a href=#1881 id=1881 data-nosnippet>1881</a>    ///
-<a href=#1882 id=1882 data-nosnippet>1882</a>    /// Note that this error should not be returned by a regex engine simply
-<a href=#1883 id=1883 data-nosnippet>1883</a>    /// because the pattern ID is invalid (i.e., equal to or exceeds the number
-<a href=#1884 id=1884 data-nosnippet>1884</a>    /// of patterns in the regex). In that case, the regex engine should report
-<a href=#1885 id=1885 data-nosnippet>1885</a>    /// a non-match.
-<a href=#1886 id=1886 data-nosnippet>1886</a>    </span>UnsupportedAnchored {
-<a href=#1887 id=1887 data-nosnippet>1887</a>        <span class="doccomment">/// The anchored mode given that is unsupported.
-<a href=#1888 id=1888 data-nosnippet>1888</a>        </span>mode: Anchored,
-<a href=#1889 id=1889 data-nosnippet>1889</a>    },
-<a href=#1890 id=1890 data-nosnippet>1890</a>}
-<a href=#1891 id=1891 data-nosnippet>1891</a>
-<a href=#1892 id=1892 data-nosnippet>1892</a><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
-<a href=#1893 id=1893 data-nosnippet>1893</a></span><span class="kw">impl </span>std::error::Error <span class="kw">for </span>MatchError {}
-<a href=#1894 id=1894 data-nosnippet>1894</a>
-<a href=#1895 id=1895 data-nosnippet>1895</a><span class="kw">impl </span>core::fmt::Display <span class="kw">for </span>MatchError {
-<a href=#1896 id=1896 data-nosnippet>1896</a>    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
-<a href=#1897 id=1897 data-nosnippet>1897</a>        <span class="kw">match </span><span class="kw-2">*</span><span class="self">self</span>.kind() {
-<a href=#1898 id=1898 data-nosnippet>1898</a>            MatchErrorKind::Quit { byte, offset } =&gt; <span class="macro">write!</span>(
-<a href=#1899 id=1899 data-nosnippet>1899</a>                f,
-<a href=#1900 id=1900 data-nosnippet>1900</a>                <span class="string">"quit search after observing byte {:?} at offset {}"</span>,
-<a href=#1901 id=1901 data-nosnippet>1901</a>                DebugByte(byte),
-<a href=#1902 id=1902 data-nosnippet>1902</a>                offset,
-<a href=#1903 id=1903 data-nosnippet>1903</a>            ),
-<a href=#1904 id=1904 data-nosnippet>1904</a>            MatchErrorKind::GaveUp { offset } =&gt; {
-<a href=#1905 id=1905 data-nosnippet>1905</a>                <span class="macro">write!</span>(f, <span class="string">"gave up searching at offset {offset}"</span>)
-<a href=#1906 id=1906 data-nosnippet>1906</a>            }
-<a href=#1907 id=1907 data-nosnippet>1907</a>            MatchErrorKind::HaystackTooLong { len } =&gt; {
-<a href=#1908 id=1908 data-nosnippet>1908</a>                <span class="macro">write!</span>(f, <span class="string">"haystack of length {len} is too long"</span>)
-<a href=#1909 id=1909 data-nosnippet>1909</a>            }
-<a href=#1910 id=1910 data-nosnippet>1910</a>            MatchErrorKind::UnsupportedAnchored { mode: Anchored::Yes } =&gt; {
-<a href=#1911 id=1911 data-nosnippet>1911</a>                <span class="macro">write!</span>(f, <span class="string">"anchored searches are not supported or enabled"</span>)
-<a href=#1912 id=1912 data-nosnippet>1912</a>            }
-<a href=#1913 id=1913 data-nosnippet>1913</a>            MatchErrorKind::UnsupportedAnchored { mode: Anchored::No } =&gt; {
-<a href=#1914 id=1914 data-nosnippet>1914</a>                <span class="macro">write!</span>(f, <span class="string">"unanchored searches are not supported or enabled"</span>)
+<a href=#1882 id=1882 data-nosnippet>1882</a>    /// When this error occurs with [`Anchored::Pattern`], then one common
+<a href=#1883 id=1883 data-nosnippet>1883</a>    /// cause is that the underlying regex engine was built without support
+<a href=#1884 id=1884 data-nosnippet>1884</a>    /// for anchored starting states for each pattern. For DFA engines, this
+<a href=#1885 id=1885 data-nosnippet>1885</a>    /// typically means enabling the
+<a href=#1886 id=1886 data-nosnippet>1886</a>    /// [`hybrid::dfa::Config::starts_for_each_pattern`](crate::hybrid::dfa::Config::starts_for_each_pattern)
+<a href=#1887 id=1887 data-nosnippet>1887</a>    /// or
+<a href=#1888 id=1888 data-nosnippet>1888</a>    /// [`dfa::dense::Config::starts_for_each_pattern`](crate::dfa::dense::Config::starts_for_each_pattern)
+<a href=#1889 id=1889 data-nosnippet>1889</a>    /// configuration option, depending on which regex engine is being built.
+<a href=#1890 id=1890 data-nosnippet>1890</a>    ///
+<a href=#1891 id=1891 data-nosnippet>1891</a>    /// Note that this error should not be returned by a regex engine simply
+<a href=#1892 id=1892 data-nosnippet>1892</a>    /// because the pattern ID is invalid (i.e., equal to or exceeds the number
+<a href=#1893 id=1893 data-nosnippet>1893</a>    /// of patterns in the regex). In that case, the regex engine should report
+<a href=#1894 id=1894 data-nosnippet>1894</a>    /// a non-match.
+<a href=#1895 id=1895 data-nosnippet>1895</a>    </span>UnsupportedAnchored {
+<a href=#1896 id=1896 data-nosnippet>1896</a>        <span class="doccomment">/// The anchored mode given that is unsupported.
+<a href=#1897 id=1897 data-nosnippet>1897</a>        </span>mode: Anchored,
+<a href=#1898 id=1898 data-nosnippet>1898</a>    },
+<a href=#1899 id=1899 data-nosnippet>1899</a>}
+<a href=#1900 id=1900 data-nosnippet>1900</a>
+<a href=#1901 id=1901 data-nosnippet>1901</a><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
+<a href=#1902 id=1902 data-nosnippet>1902</a></span><span class="kw">impl </span>std::error::Error <span class="kw">for </span>MatchError {}
+<a href=#1903 id=1903 data-nosnippet>1903</a>
+<a href=#1904 id=1904 data-nosnippet>1904</a><span class="kw">impl </span>core::fmt::Display <span class="kw">for </span>MatchError {
+<a href=#1905 id=1905 data-nosnippet>1905</a>    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
+<a href=#1906 id=1906 data-nosnippet>1906</a>        <span class="kw">match </span><span class="kw-2">*</span><span class="self">self</span>.kind() {
+<a href=#1907 id=1907 data-nosnippet>1907</a>            MatchErrorKind::Quit { byte, offset } =&gt; <span class="macro">write!</span>(
+<a href=#1908 id=1908 data-nosnippet>1908</a>                f,
+<a href=#1909 id=1909 data-nosnippet>1909</a>                <span class="string">"quit search after observing byte {:?} at offset {}"</span>,
+<a href=#1910 id=1910 data-nosnippet>1910</a>                DebugByte(byte),
+<a href=#1911 id=1911 data-nosnippet>1911</a>                offset,
+<a href=#1912 id=1912 data-nosnippet>1912</a>            ),
+<a href=#1913 id=1913 data-nosnippet>1913</a>            MatchErrorKind::GaveUp { offset } =&gt; {
+<a href=#1914 id=1914 data-nosnippet>1914</a>                <span class="macro">write!</span>(f, <span class="string">"gave up searching at offset {offset}"</span>)
 <a href=#1915 id=1915 data-nosnippet>1915</a>            }
-<a href=#1916 id=1916 data-nosnippet>1916</a>            MatchErrorKind::UnsupportedAnchored {
-<a href=#1917 id=1917 data-nosnippet>1917</a>                mode: Anchored::Pattern(pid),
-<a href=#1918 id=1918 data-nosnippet>1918</a>            } =&gt; {
-<a href=#1919 id=1919 data-nosnippet>1919</a>                <span class="macro">write!</span>(
-<a href=#1920 id=1920 data-nosnippet>1920</a>                    f,
-<a href=#1921 id=1921 data-nosnippet>1921</a>                    <span class="string">"anchored searches for a specific pattern ({}) are \
-<a href=#1922 id=1922 data-nosnippet>1922</a>                     not supported or enabled"</span>,
-<a href=#1923 id=1923 data-nosnippet>1923</a>                    pid.as_usize(),
-<a href=#1924 id=1924 data-nosnippet>1924</a>                )
-<a href=#1925 id=1925 data-nosnippet>1925</a>            }
-<a href=#1926 id=1926 data-nosnippet>1926</a>        }
-<a href=#1927 id=1927 data-nosnippet>1927</a>    }
-<a href=#1928 id=1928 data-nosnippet>1928</a>}
-<a href=#1929 id=1929 data-nosnippet>1929</a>
-<a href=#1930 id=1930 data-nosnippet>1930</a><span class="attr">#[cfg(test)]
-<a href=#1931 id=1931 data-nosnippet>1931</a></span><span class="kw">mod </span>tests {
-<a href=#1932 id=1932 data-nosnippet>1932</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#1933 id=1933 data-nosnippet>1933</a>
-<a href=#1934 id=1934 data-nosnippet>1934</a>    <span class="comment">// We test that our 'MatchError' type is the size we expect. This isn't an
-<a href=#1935 id=1935 data-nosnippet>1935</a>    // API guarantee, but if the size increases, we really want to make sure we
-<a href=#1936 id=1936 data-nosnippet>1936</a>    // decide to do that intentionally. So this should be a speed bump. And in
-<a href=#1937 id=1937 data-nosnippet>1937</a>    // general, we should not increase the size without a very good reason.
-<a href=#1938 id=1938 data-nosnippet>1938</a>    //
-<a href=#1939 id=1939 data-nosnippet>1939</a>    // Why? Because low level search APIs return Result&lt;.., MatchError&gt;. When
-<a href=#1940 id=1940 data-nosnippet>1940</a>    // MatchError gets bigger, so to does the Result type.
-<a href=#1941 id=1941 data-nosnippet>1941</a>    //
-<a href=#1942 id=1942 data-nosnippet>1942</a>    // Now, when 'alloc' is enabled, we do box the error, which de-emphasizes
-<a href=#1943 id=1943 data-nosnippet>1943</a>    // the importance of keeping a small error type. But without 'alloc', we
-<a href=#1944 id=1944 data-nosnippet>1944</a>    // still want things to be small.
-<a href=#1945 id=1945 data-nosnippet>1945</a>    </span><span class="attr">#[test]
-<a href=#1946 id=1946 data-nosnippet>1946</a>    </span><span class="kw">fn </span>match_error_size() {
-<a href=#1947 id=1947 data-nosnippet>1947</a>        <span class="kw">let </span>expected_size = <span class="kw">if </span><span class="macro">cfg!</span>(feature = <span class="string">"alloc"</span>) {
-<a href=#1948 id=1948 data-nosnippet>1948</a>            core::mem::size_of::&lt;usize&gt;()
-<a href=#1949 id=1949 data-nosnippet>1949</a>        } <span class="kw">else </span>{
-<a href=#1950 id=1950 data-nosnippet>1950</a>            <span class="number">2 </span>* core::mem::size_of::&lt;usize&gt;()
-<a href=#1951 id=1951 data-nosnippet>1951</a>        };
-<a href=#1952 id=1952 data-nosnippet>1952</a>        <span class="macro">assert_eq!</span>(expected_size, core::mem::size_of::&lt;MatchError&gt;());
-<a href=#1953 id=1953 data-nosnippet>1953</a>    }
-<a href=#1954 id=1954 data-nosnippet>1954</a>
-<a href=#1955 id=1955 data-nosnippet>1955</a>    <span class="comment">// Same as above, but for the underlying match error kind.
-<a href=#1956 id=1956 data-nosnippet>1956</a>    </span><span class="attr">#[cfg(target_pointer_width = <span class="string">"64"</span>)]
-<a href=#1957 id=1957 data-nosnippet>1957</a>    #[test]
-<a href=#1958 id=1958 data-nosnippet>1958</a>    </span><span class="kw">fn </span>match_error_kind_size() {
-<a href=#1959 id=1959 data-nosnippet>1959</a>        <span class="kw">let </span>expected_size = <span class="number">2 </span>* core::mem::size_of::&lt;usize&gt;();
-<a href=#1960 id=1960 data-nosnippet>1960</a>        <span class="macro">assert_eq!</span>(expected_size, core::mem::size_of::&lt;MatchErrorKind&gt;());
-<a href=#1961 id=1961 data-nosnippet>1961</a>    }
-<a href=#1962 id=1962 data-nosnippet>1962</a>
-<a href=#1963 id=1963 data-nosnippet>1963</a>    <span class="attr">#[cfg(target_pointer_width = <span class="string">"32"</span>)]
-<a href=#1964 id=1964 data-nosnippet>1964</a>    #[test]
-<a href=#1965 id=1965 data-nosnippet>1965</a>    </span><span class="kw">fn </span>match_error_kind_size() {
-<a href=#1966 id=1966 data-nosnippet>1966</a>        <span class="kw">let </span>expected_size = <span class="number">3 </span>* core::mem::size_of::&lt;usize&gt;();
-<a href=#1967 id=1967 data-nosnippet>1967</a>        <span class="macro">assert_eq!</span>(expected_size, core::mem::size_of::&lt;MatchErrorKind&gt;());
-<a href=#1968 id=1968 data-nosnippet>1968</a>    }
-<a href=#1969 id=1969 data-nosnippet>1969</a>
-<a href=#1970 id=1970 data-nosnippet>1970</a>    <span class="attr">#[test]
-<a href=#1971 id=1971 data-nosnippet>1971</a>    </span><span class="kw">fn </span>incorrect_asref_guard() {
-<a href=#1972 id=1972 data-nosnippet>1972</a>        <span class="kw">struct </span>Bad(std::cell::Cell&lt;bool&gt;);
-<a href=#1973 id=1973 data-nosnippet>1973</a>
-<a href=#1974 id=1974 data-nosnippet>1974</a>        <span class="kw">impl </span>AsRef&lt;[u8]&gt; <span class="kw">for </span>Bad {
-<a href=#1975 id=1975 data-nosnippet>1975</a>            <span class="kw">fn </span>as_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
-<a href=#1976 id=1976 data-nosnippet>1976</a>                <span class="kw">if </span><span class="self">self</span>.<span class="number">0</span>.replace(<span class="bool-val">false</span>) {
-<a href=#1977 id=1977 data-nosnippet>1977</a>                    <span class="kw-2">&amp;</span>[]
-<a href=#1978 id=1978 data-nosnippet>1978</a>                } <span class="kw">else </span>{
-<a href=#1979 id=1979 data-nosnippet>1979</a>                    <span class="kw-2">&amp;</span>[<span class="number">0</span>; <span class="number">1000</span>]
-<a href=#1980 id=1980 data-nosnippet>1980</a>                }
-<a href=#1981 id=1981 data-nosnippet>1981</a>            }
-<a href=#1982 id=1982 data-nosnippet>1982</a>        }
-<a href=#1983 id=1983 data-nosnippet>1983</a>
-<a href=#1984 id=1984 data-nosnippet>1984</a>        <span class="kw">let </span>bad = Bad(std::cell::Cell::new(<span class="bool-val">true</span>));
-<a href=#1985 id=1985 data-nosnippet>1985</a>        <span class="kw">let </span>input = Input::new(<span class="kw-2">&amp;</span>bad);
-<a href=#1986 id=1986 data-nosnippet>1986</a>        <span class="macro">assert!</span>(input.end() &lt;= input.haystack().len());
-<a href=#1987 id=1987 data-nosnippet>1987</a>    }
-<a href=#1988 id=1988 data-nosnippet>1988</a>}
+<a href=#1916 id=1916 data-nosnippet>1916</a>            MatchErrorKind::HaystackTooLong { len } =&gt; {
+<a href=#1917 id=1917 data-nosnippet>1917</a>                <span class="macro">write!</span>(f, <span class="string">"haystack of length {len} is too long"</span>)
+<a href=#1918 id=1918 data-nosnippet>1918</a>            }
+<a href=#1919 id=1919 data-nosnippet>1919</a>            MatchErrorKind::UnsupportedAnchored { mode: Anchored::Yes } =&gt; {
+<a href=#1920 id=1920 data-nosnippet>1920</a>                <span class="macro">write!</span>(f, <span class="string">"anchored searches are not supported or enabled"</span>)
+<a href=#1921 id=1921 data-nosnippet>1921</a>            }
+<a href=#1922 id=1922 data-nosnippet>1922</a>            MatchErrorKind::UnsupportedAnchored { mode: Anchored::No } =&gt; {
+<a href=#1923 id=1923 data-nosnippet>1923</a>                <span class="macro">write!</span>(f, <span class="string">"unanchored searches are not supported or enabled"</span>)
+<a href=#1924 id=1924 data-nosnippet>1924</a>            }
+<a href=#1925 id=1925 data-nosnippet>1925</a>            MatchErrorKind::UnsupportedAnchored {
+<a href=#1926 id=1926 data-nosnippet>1926</a>                mode: Anchored::Pattern(pid),
+<a href=#1927 id=1927 data-nosnippet>1927</a>            } =&gt; {
+<a href=#1928 id=1928 data-nosnippet>1928</a>                <span class="macro">write!</span>(
+<a href=#1929 id=1929 data-nosnippet>1929</a>                    f,
+<a href=#1930 id=1930 data-nosnippet>1930</a>                    <span class="string">"anchored searches for a specific pattern ({}) are \
+<a href=#1931 id=1931 data-nosnippet>1931</a>                     not supported or enabled"</span>,
+<a href=#1932 id=1932 data-nosnippet>1932</a>                    pid.as_usize(),
+<a href=#1933 id=1933 data-nosnippet>1933</a>                )
+<a href=#1934 id=1934 data-nosnippet>1934</a>            }
+<a href=#1935 id=1935 data-nosnippet>1935</a>        }
+<a href=#1936 id=1936 data-nosnippet>1936</a>    }
+<a href=#1937 id=1937 data-nosnippet>1937</a>}
+<a href=#1938 id=1938 data-nosnippet>1938</a>
+<a href=#1939 id=1939 data-nosnippet>1939</a><span class="attr">#[cfg(test)]
+<a href=#1940 id=1940 data-nosnippet>1940</a></span><span class="kw">mod </span>tests {
+<a href=#1941 id=1941 data-nosnippet>1941</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#1942 id=1942 data-nosnippet>1942</a>
+<a href=#1943 id=1943 data-nosnippet>1943</a>    <span class="comment">// We test that our 'MatchError' type is the size we expect. This isn't an
+<a href=#1944 id=1944 data-nosnippet>1944</a>    // API guarantee, but if the size increases, we really want to make sure we
+<a href=#1945 id=1945 data-nosnippet>1945</a>    // decide to do that intentionally. So this should be a speed bump. And in
+<a href=#1946 id=1946 data-nosnippet>1946</a>    // general, we should not increase the size without a very good reason.
+<a href=#1947 id=1947 data-nosnippet>1947</a>    //
+<a href=#1948 id=1948 data-nosnippet>1948</a>    // Why? Because low level search APIs return Result&lt;.., MatchError&gt;. When
+<a href=#1949 id=1949 data-nosnippet>1949</a>    // MatchError gets bigger, so to does the Result type.
+<a href=#1950 id=1950 data-nosnippet>1950</a>    //
+<a href=#1951 id=1951 data-nosnippet>1951</a>    // Now, when 'alloc' is enabled, we do box the error, which de-emphasizes
+<a href=#1952 id=1952 data-nosnippet>1952</a>    // the importance of keeping a small error type. But without 'alloc', we
+<a href=#1953 id=1953 data-nosnippet>1953</a>    // still want things to be small.
+<a href=#1954 id=1954 data-nosnippet>1954</a>    </span><span class="attr">#[test]
+<a href=#1955 id=1955 data-nosnippet>1955</a>    </span><span class="kw">fn </span>match_error_size() {
+<a href=#1956 id=1956 data-nosnippet>1956</a>        <span class="kw">let </span>expected_size = <span class="kw">if </span><span class="macro">cfg!</span>(feature = <span class="string">"alloc"</span>) {
+<a href=#1957 id=1957 data-nosnippet>1957</a>            core::mem::size_of::&lt;usize&gt;()
+<a href=#1958 id=1958 data-nosnippet>1958</a>        } <span class="kw">else </span>{
+<a href=#1959 id=1959 data-nosnippet>1959</a>            <span class="number">2 </span>* core::mem::size_of::&lt;usize&gt;()
+<a href=#1960 id=1960 data-nosnippet>1960</a>        };
+<a href=#1961 id=1961 data-nosnippet>1961</a>        <span class="macro">assert_eq!</span>(expected_size, core::mem::size_of::&lt;MatchError&gt;());
+<a href=#1962 id=1962 data-nosnippet>1962</a>    }
+<a href=#1963 id=1963 data-nosnippet>1963</a>
+<a href=#1964 id=1964 data-nosnippet>1964</a>    <span class="comment">// Same as above, but for the underlying match error kind.
+<a href=#1965 id=1965 data-nosnippet>1965</a>    </span><span class="attr">#[cfg(target_pointer_width = <span class="string">"64"</span>)]
+<a href=#1966 id=1966 data-nosnippet>1966</a>    #[test]
+<a href=#1967 id=1967 data-nosnippet>1967</a>    </span><span class="kw">fn </span>match_error_kind_size() {
+<a href=#1968 id=1968 data-nosnippet>1968</a>        <span class="kw">let </span>expected_size = <span class="number">2 </span>* core::mem::size_of::&lt;usize&gt;();
+<a href=#1969 id=1969 data-nosnippet>1969</a>        <span class="macro">assert_eq!</span>(expected_size, core::mem::size_of::&lt;MatchErrorKind&gt;());
+<a href=#1970 id=1970 data-nosnippet>1970</a>    }
+<a href=#1971 id=1971 data-nosnippet>1971</a>
+<a href=#1972 id=1972 data-nosnippet>1972</a>    <span class="attr">#[cfg(target_pointer_width = <span class="string">"32"</span>)]
+<a href=#1973 id=1973 data-nosnippet>1973</a>    #[test]
+<a href=#1974 id=1974 data-nosnippet>1974</a>    </span><span class="kw">fn </span>match_error_kind_size() {
+<a href=#1975 id=1975 data-nosnippet>1975</a>        <span class="kw">let </span>expected_size = <span class="number">3 </span>* core::mem::size_of::&lt;usize&gt;();
+<a href=#1976 id=1976 data-nosnippet>1976</a>        <span class="macro">assert_eq!</span>(expected_size, core::mem::size_of::&lt;MatchErrorKind&gt;());
+<a href=#1977 id=1977 data-nosnippet>1977</a>    }
+<a href=#1978 id=1978 data-nosnippet>1978</a>
+<a href=#1979 id=1979 data-nosnippet>1979</a>    <span class="attr">#[test]
+<a href=#1980 id=1980 data-nosnippet>1980</a>    </span><span class="kw">fn </span>incorrect_asref_guard() {
+<a href=#1981 id=1981 data-nosnippet>1981</a>        <span class="kw">struct </span>Bad(std::cell::Cell&lt;bool&gt;);
+<a href=#1982 id=1982 data-nosnippet>1982</a>
+<a href=#1983 id=1983 data-nosnippet>1983</a>        <span class="kw">impl </span>AsRef&lt;[u8]&gt; <span class="kw">for </span>Bad {
+<a href=#1984 id=1984 data-nosnippet>1984</a>            <span class="kw">fn </span>as_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
+<a href=#1985 id=1985 data-nosnippet>1985</a>                <span class="kw">if </span><span class="self">self</span>.<span class="number">0</span>.replace(<span class="bool-val">false</span>) {
+<a href=#1986 id=1986 data-nosnippet>1986</a>                    <span class="kw-2">&amp;</span>[]
+<a href=#1987 id=1987 data-nosnippet>1987</a>                } <span class="kw">else </span>{
+<a href=#1988 id=1988 data-nosnippet>1988</a>                    <span class="kw-2">&amp;</span>[<span class="number">0</span>; <span class="number">1000</span>]
+<a href=#1989 id=1989 data-nosnippet>1989</a>                }
+<a href=#1990 id=1990 data-nosnippet>1990</a>            }
+<a href=#1991 id=1991 data-nosnippet>1991</a>        }
+<a href=#1992 id=1992 data-nosnippet>1992</a>
+<a href=#1993 id=1993 data-nosnippet>1993</a>        <span class="kw">let </span>bad = Bad(std::cell::Cell::new(<span class="bool-val">true</span>));
+<a href=#1994 id=1994 data-nosnippet>1994</a>        <span class="kw">let </span>input = Input::new(<span class="kw-2">&amp;</span>bad);
+<a href=#1995 id=1995 data-nosnippet>1995</a>        <span class="macro">assert!</span>(input.end() &lt;= input.haystack().len());
+<a href=#1996 id=1996 data-nosnippet>1996</a>    }
+<a href=#1997 id=1997 data-nosnippet>1997</a>}
 </code></pre></div></section></main></body></html>
