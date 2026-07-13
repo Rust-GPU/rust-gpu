@@ -591,11 +591,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     }
 
     #[instrument(level = "trace", skip(self))]
-    fn zombie_ptr_equal(&self, def: Word, inst: &str) {
-        self.zombie(
-            def,
-            &format!("{inst} without OpCapability VariablePointers"),
-        );
+    fn zombie_ptr_equal(&self, def: Word) {
+        self.zombie(def, "cannot check pointers for equality");
     }
 
     /// Convenience wrapper for `adjust_pointer_for_sized_access`, falling back
@@ -2594,7 +2591,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                         self.emit()
                             .ptr_equal(b, None, lhs.def(self), rhs.def(self))
                             .inspect(|&result| {
-                                self.zombie_ptr_equal(result, "OpPtrEqual");
+                                self.zombie_ptr_equal(result);
                             })
                     } else {
                         let int_ty = self.type_usize();
@@ -2616,7 +2613,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                         self.emit()
                             .ptr_not_equal(b, None, lhs.def(self), rhs.def(self))
                             .inspect(|&result| {
-                                self.zombie_ptr_equal(result, "OpPtrNotEqual");
+                                self.zombie_ptr_equal(result);
                             })
                     } else {
                         let int_ty = self.type_usize();
