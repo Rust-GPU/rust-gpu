@@ -4,7 +4,7 @@ use spirv_builder::{ModuleResult, SpirvBuilder};
 use std::borrow::Cow;
 use std::path::PathBuf;
 use std::{env, fs};
-use wgpu::ShaderSource;
+use wgpu::{PassthroughShaderEntryPoint, ShaderSource};
 
 /// A compute shader written in Rust compiled with spirv-builder.
 pub struct RustComputeShader {
@@ -83,15 +83,13 @@ impl WgpuShader for RustComputeShader {
         let module = if self.passthrough {
             unsafe {
                 device.create_shader_module_passthrough(wgpu::ShaderModuleDescriptorPassthrough {
-                    label: Some("Rust-GPU Compute Shader"),
-                    num_workgroups: (0, 0, 0),
+                    label: Some("Rust-GPU Compute Shader with SPIR-V passthrough"),
                     spirv: Some(Cow::Owned(shader_words)),
-                    dxil: None,
-                    msl: None,
-                    hlsl: None,
-                    glsl: None,
-                    wgsl: None,
-                    metallib: None,
+                    entry_points: Cow::Borrowed(&[PassthroughShaderEntryPoint {
+                        name: Cow::Borrowed(&entry_point),
+                        workgroup_size: (0, 0, 0),
+                    }]),
+                    ..Default::default()
                 })
             }
         } else {
@@ -104,7 +102,7 @@ impl WgpuShader for RustComputeShader {
             label: Some("Compute Pipeline"),
             layout: Some(layout),
             module: &module,
-            entry_point: Some(&entry_point),
+            entry_point: None,
             compilation_options: wgpu::PipelineCompilationOptions::default(),
             cache: None,
         });
