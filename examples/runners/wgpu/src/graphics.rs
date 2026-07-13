@@ -350,7 +350,7 @@ async fn run(
                     }
 
                     queue.submit(Some(encoder.finish()));
-                    output.present();
+                    queue.present(output);
                 }
             }
             Event::WindowEvent {
