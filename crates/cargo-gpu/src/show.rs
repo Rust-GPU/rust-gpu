@@ -20,8 +20,6 @@ pub enum Info {
     CacheDirectory,
     /// The source location of spirv-std
     SpirvSource(SpirvSourceDep),
-    /// The git commitsh of this cli tool.
-    Commitsh,
     /// All the available SPIR-V capabilities that can be set with `--capabilities`
     Capabilities,
 }
@@ -52,9 +50,6 @@ impl Show {
                 let metadata = CrateMetadata::query(shader_crate.clone())?;
                 let rust_gpu_source = SpirvSource::get_rust_gpu_deps_from_shader(&metadata)?;
                 println!("{rust_gpu_source}\n");
-            }
-            Info::Commitsh => {
-                println!("{}", env!("GIT_HASH"));
             }
             Info::Capabilities => {
                 println!("All available options to the `cargo gpu build --capabilities` argument:");
