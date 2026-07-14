@@ -1868,7 +1868,12 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         order: AtomicOrdering,
         _size: Size,
     ) -> Self::Value {
-        let (ptr, access_ty) = self.adjust_pointer_for_typed_access(ptr, ty);
+        // HACK(eddyb) SPIR-V lacks pointer atomics, have to use integers instead.
+        let atomic_ty = match self.lookup_type(ty) {
+            SpirvType::Pointer { .. } => self.type_usize(),
+            _ => ty,
+        };
+        let (ptr, access_ty) = self.adjust_pointer_for_typed_access(ptr, atomic_ty);
 
         // TODO: Default to device scope
         let memory = self.constant_u32(self.span(), Scope::Device as u32);
@@ -2006,7 +2011,12 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         order: AtomicOrdering,
         _size: Size,
     ) {
-        let (ptr, access_ty) = self.adjust_pointer_for_typed_access(ptr, val.ty);
+        // HACK(eddyb) SPIR-V lacks pointer atomics, have to use integers instead.
+        let atomic_ty = match self.lookup_type(val.ty) {
+            SpirvType::Pointer { .. } => self.type_usize(),
+            _ => val.ty,
+        };
+        let (ptr, access_ty) = self.adjust_pointer_for_typed_access(ptr, atomic_ty);
         let val = self.bitcast(val, access_ty);
 
         // TODO: Default to device scope
@@ -3111,7 +3121,12 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         assert_ty_eq!(self, cmp.ty, src.ty);
         let ty = src.ty;
 
-        let (dst, access_ty) = self.adjust_pointer_for_typed_access(dst, ty);
+        // HACK(eddyb) SPIR-V lacks pointer atomics, have to use integers instead.
+        let atomic_ty = match self.lookup_type(ty) {
+            SpirvType::Pointer { .. } => self.type_usize(),
+            _ => ty,
+        };
+        let (dst, access_ty) = self.adjust_pointer_for_typed_access(dst, atomic_ty);
         let cmp = self.bitcast(cmp, access_ty);
         let src = self.bitcast(src, access_ty);
 
@@ -3137,7 +3152,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             .with_type(access_ty);
 
         let val = self.bitcast(result, ty);
-        let success = self.icmp(IntPredicate::IntEQ, val, cmp);
+        let success = self.icmp(IntPredicate::IntEQ, result, cmp);
 
         (val, success)
     }
@@ -3152,7 +3167,12 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
     ) -> Self::Value {
         let ty = src.ty;
 
-        let (dst, access_ty) = self.adjust_pointer_for_typed_access(dst, ty);
+        // HACK(eddyb) SPIR-V lacks pointer atomics, have to use integers instead.
+        let atomic_ty = match self.lookup_type(ty) {
+            SpirvType::Pointer { .. } => self.type_usize(),
+            _ => ty,
+        };
+        let (dst, access_ty) = self.adjust_pointer_for_typed_access(dst, atomic_ty);
         let src = self.bitcast(src, access_ty);
 
         self.validate_atomic(access_ty, dst.def(self));
