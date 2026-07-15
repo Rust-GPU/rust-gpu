@@ -752,10 +752,17 @@ impl CodegenArgs {
             use rspirv2::core::inst_set::CoreInstSet;
             use rspirv2::dis::DisOptions;
             use rspirv2::module::Module;
+            use rspirv2::operand::LiteralStringEscape;
 
             let words = insts.assemble();
             match Module::<CoreInstSet>::from_words_maybe_header(bytemuck::cast_slice(&words)) {
-                Ok(module) => module.dis(DisOptions::like_rspirv()).to_string(),
+                Ok(module) => module
+                    .dis(DisOptions {
+                        color: false,
+                        literal_string_escape: LiteralStringEscape::EscapeNewlines,
+                        ..DisOptions::default()
+                    })
+                    .to_string(),
                 Err(err) => format!("rspirv2 parsing failed: {err}"),
             }
         }
