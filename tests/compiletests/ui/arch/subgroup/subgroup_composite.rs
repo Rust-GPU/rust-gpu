@@ -1,6 +1,6 @@
 // build-pass
 // compile-flags: -C target-feature=+GroupNonUniform,+GroupNonUniformBallot,+GroupNonUniformShuffle,+GroupNonUniformShuffleRelative,+ext:SPV_KHR_vulkan_memory_model
-// normalize-stderr-test "OpLine .*\n" -> ""
+// normalize-stderr-test "\n\W*OpLine .*" -> ""
 // ignore-vulkan1.0
 // ignore-vulkan1.1
 // ignore-spv1.0

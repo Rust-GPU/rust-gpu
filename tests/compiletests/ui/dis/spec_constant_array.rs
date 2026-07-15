@@ -9,9 +9,9 @@
 // ignore-vulkan1.1
 
 // compile-flags: -C llvm-args=--disassemble
-// normalize-stderr-test "; .*\n" -> ""
-// normalize-stderr-test "OpCapability VulkanMemoryModel\n" -> ""
-// normalize-stderr-test "OpSource .*\n" -> ""
+// normalize-stderr-test "\n\W*; .*" -> ""
+// normalize-stderr-test "\n\W*OpCapability VulkanMemoryModel" -> ""
+// normalize-stderr-test "\n\W*OpSource .*" -> ""
 // normalize-stderr-test "OpMemoryModel Logical Vulkan" -> "OpMemoryModel Logical Simple"
 
 // HACK(eddyb) `compiletest` handles `ui\dis\`, but not `ui\\dis\\`, on Windows.

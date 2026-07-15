@@ -3,11 +3,11 @@
 // compile-flags: -C target-feature=+StorageImageExtendedFormats,+StorageImageReadWithoutFormat
 // compile-flags: -C target-feature=+RuntimeDescriptorArray,+StorageImageArrayDynamicIndexing
 // compile-flags: -C target-feature=+ShaderNonUniform,+StorageImageArrayNonUniformIndexing
-// normalize-stderr-test "OpSource .*\n" -> ""
-// normalize-stderr-test "OpLine .*\n" -> ""
-// normalize-stderr-test "%\d+ = OpString .*\n" -> ""
-// normalize-stderr-test "; .*\n" -> ""
-// normalize-stderr-test "OpCapability VulkanMemoryModel\n" -> ""
+// normalize-stderr-test "\n\W*OpSource .*" -> ""
+// normalize-stderr-test "\n\W*OpLine .*" -> ""
+// normalize-stderr-test "\n\W*%\d+ = OpString .*" -> ""
+// normalize-stderr-test "\n\W*; .*" -> ""
+// normalize-stderr-test "\n\W*OpCapability VulkanMemoryModel" -> ""
 // normalize-stderr-test "OpMemoryModel Logical Vulkan" -> "OpMemoryModel Logical Simple"
 // ignore-spv1.0
 // ignore-spv1.1
