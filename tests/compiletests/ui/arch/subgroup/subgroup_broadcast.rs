@@ -1,7 +1,7 @@
 // build-pass
 // compile-flags: -C target-feature=+GroupNonUniform,+GroupNonUniformBallot,+ext:SPV_KHR_vulkan_memory_model
 // compile-flags: -C llvm-args=--disassemble-fn=subgroup_broadcast::disassembly
-// normalize-stderr-test "OpLine .*\n" -> ""
+// normalize-stderr-test "\n\W*OpLine .*" -> ""
 // ignore-vulkan1.0
 // ignore-vulkan1.1
 // ignore-spv1.0

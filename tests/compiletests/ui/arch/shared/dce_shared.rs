@@ -1,9 +1,9 @@
 // build-pass
 // compile-flags: -C llvm-args=--disassemble-globals
-// normalize-stderr-test "OpSource .*\n" -> ""
-// normalize-stderr-test "%\d+ = OpString .*\n" -> ""
+// normalize-stderr-test "\n\W*OpSource .*" -> ""
+// normalize-stderr-test "\n\W*%\d+ = OpString .*" -> ""
 // normalize-stderr-test "OpMemoryModel Logical Vulkan" -> "OpMemoryModel Logical Simple"
-// normalize-stderr-test "OpCapability VulkanMemoryModel\n" -> ""
+// normalize-stderr-test "\n\W*OpCapability VulkanMemoryModel" -> ""
 // ignore-spv1.0
 // ignore-spv1.1
 // ignore-spv1.2

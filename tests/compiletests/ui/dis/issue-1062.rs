@@ -4,7 +4,7 @@
 
 // build-pass
 // compile-flags: -C llvm-args=--disassemble-entry=main
-// normalize-stderr-test "OpLine .*\n" -> ""
+// normalize-stderr-test "\n\W*OpLine .*" -> ""
 
 use spirv_std::spirv;
 
