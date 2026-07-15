@@ -1,46 +1,46 @@
-OpCapability Shader
-OpCapability StorageImageWriteWithoutFormat
-OpMemoryModel Logical Simple
-OpEntryPoint GLCompute %1 "main" %2 %3 %4
-OpExecutionMode %1 LocalSize 8 8 1
-OpName %2 "global_id"
-OpName %3 "fill_color"
-OpName %4 "image"
-OpDecorate %8 Block
-OpMemberDecorate %8 0 Offset 0
-OpDecorate %2 BuiltIn GlobalInvocationId
-OpDecorate %3 NonWritable
-OpDecorate %3 Binding 0
-OpDecorate %3 DescriptorSet 0
-OpDecorate %4 Binding 1
-OpDecorate %4 DescriptorSet 0
-%9 = OpTypeInt 32 0
-%10 = OpTypeVector %9 3
-%11 = OpTypePointer Input %10
-%12 = OpTypeFloat 32
-%13 = OpTypeVector %12 4
-%8 = OpTypeStruct %13
-%14 = OpTypePointer StorageBuffer %8
-%15 = OpTypeImage %12 2D 2 0 0 2 Unknown
-%16 = OpTypePointer UniformConstant %15
-%17 = OpTypeVoid
-%18 = OpTypeFunction %17
-%2 = OpVariable  %11  Input
-%19 = OpTypePointer StorageBuffer %13
-%3 = OpVariable  %14  StorageBuffer
-%20 = OpConstant  %9  0
-%21 = OpTypeVector %9 2
-%4 = OpVariable  %16  UniformConstant
-%1 = OpFunction  %17  None %18
-%22 = OpLabel
-%23 = OpLoad  %10  %2
-%24 = OpInBoundsAccessChain  %19  %3 %20
-%25 = OpCompositeExtract  %9  %23 0
-%26 = OpCompositeExtract  %9  %23 1
-%27 = OpLoad  %13  %24
-%28 = OpCompositeConstruct  %21  %25 %26
-%29 = OpLoad  %15  %4
-OpImageWrite %29 %28 %27
-OpNoLine
-OpReturn
-OpFunctionEnd
+               OpCapability Shader
+               OpCapability StorageImageWriteWithoutFormat
+               OpMemoryModel Logical Simple
+               OpEntryPoint GLCompute %1 "main" %global_id %fill_color %image
+               OpExecutionMode %1 LocalSize 8 8 1
+               OpName %global_id "global_id"
+               OpName %fill_color "fill_color"
+               OpName %image "image"
+               OpDecorate %_struct_8 Block
+               OpMemberDecorate %_struct_8 0 Offset 0
+               OpDecorate %global_id BuiltIn GlobalInvocationId
+               OpDecorate %fill_color NonWritable
+               OpDecorate %fill_color Binding 0
+               OpDecorate %fill_color DescriptorSet 0
+               OpDecorate %image Binding 1
+               OpDecorate %image DescriptorSet 0
+        %u32 = OpTypeInt 32 0
+      %v3u32 = OpTypeVector %u32 3
+%_ptr_Input_v3u32 = OpTypePointer Input %v3u32
+        %f32 = OpTypeFloat 32
+      %v4f32 = OpTypeVector %f32 4
+  %_struct_8 = OpTypeStruct %v4f32
+%_ptr_StorageBuffer__struct_8 = OpTypePointer StorageBuffer %_struct_8
+         %15 = OpTypeImage %f32 2D 2 0 0 2 Unknown
+%_ptr_UniformConstant_15 = OpTypePointer UniformConstant %15
+       %void = OpTypeVoid
+         %18 = OpTypeFunction %void
+  %global_id = OpVariable %_ptr_Input_v3u32 Input
+%_ptr_StorageBuffer_v4f32 = OpTypePointer StorageBuffer %v4f32
+ %fill_color = OpVariable %_ptr_StorageBuffer__struct_8 StorageBuffer
+      %u32_0 = OpConstant %u32 0
+      %v2u32 = OpTypeVector %u32 2
+      %image = OpVariable %_ptr_UniformConstant_15 UniformConstant
+          %1 = OpFunction %void None %18
+         %22 = OpLabel
+         %23 = OpLoad %v3u32 %global_id
+         %24 = OpInBoundsAccessChain %_ptr_StorageBuffer_v4f32 %fill_color %u32_0
+         %25 = OpCompositeExtract %u32 %23 0
+         %26 = OpCompositeExtract %u32 %23 1
+         %27 = OpLoad %v4f32 %24
+         %28 = OpCompositeConstruct %v2u32 %25 %26
+         %29 = OpLoad %15 %image
+               OpImageWrite %29 %28 %27
+               OpNoLine
+               OpReturn
+               OpFunctionEnd

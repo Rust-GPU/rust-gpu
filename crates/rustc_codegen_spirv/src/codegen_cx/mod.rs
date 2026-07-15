@@ -753,12 +753,19 @@ impl CodegenArgs {
             use rspirv2::core::inst_set::CoreInstSet;
             use rspirv2::dis::DisOptions;
             use rspirv2::module::Module;
+            use rspirv2::operand::LiteralStringEscape;
 
             let words = insts.assemble();
             let module =
                 Module::<CoreInstSet>::from_words_maybe_header(bytemuck::cast_slice(&words))
                     .unwrap();
-            module.dis(DisOptions::like_rspirv()).to_string()
+            module
+                .dis(DisOptions {
+                    color: false,
+                    literal_string_escape: LiteralStringEscape::EscapeNewlines,
+                    ..DisOptions::default()
+                })
+                .to_string()
         }
 
         if self.disassemble {
