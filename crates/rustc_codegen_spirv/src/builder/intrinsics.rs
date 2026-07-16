@@ -77,7 +77,7 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
         let callee_ty = instance.ty(self.tcx, TypingEnv::fully_monomorphized());
 
         let (def_id, fn_args) = match *callee_ty.kind() {
-            FnDef(def_id, fn_args) => (def_id, fn_args),
+            FnDef(def_id, fn_args) => (def_id, fn_args.skip_binder()),
             _ => bug!("expected fn item type, found {}", callee_ty),
         };
 
@@ -360,10 +360,7 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
 
             _ => {
                 // Call the fallback body instead of generating the intrinsic code
-                return IntrinsicResult::Fallback(Instance::new_raw(
-                    instance.def_id(),
-                    instance.args,
-                ));
+                return IntrinsicResult::Fallback(Instance::new_raw(def_id, instance.args));
             }
         };
 
