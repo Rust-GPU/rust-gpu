@@ -6,7 +6,6 @@
 #![feature(trait_alias)]
 #![feature(try_blocks)]
 #![recursion_limit = "256"]
-#![cfg_attr(bootstrap, feature(string_from_utf8_lossy_owned))]
 // HACK(eddyb) end of `rustc_codegen_ssa` crate-level attributes (see `build.rs`).
 
 //! Welcome to the API documentation for the `rust-gpu` project, this API is
