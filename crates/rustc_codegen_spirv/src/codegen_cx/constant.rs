@@ -8,11 +8,10 @@ use crate::spirv_type::SpirvType;
 use itertools::Itertools as _;
 use rspirv::spirv::Word;
 use rustc_abi::{self as abi, AddressSpace, Float, HasDataLayout, Integer, Primitive, Size};
-use rustc_codegen_ssa::traits::{
-    ConstCodegenMethods, MiscCodegenMethods, PacMetadata, StaticCodegenMethods,
-};
+use rustc_codegen_ssa::traits::{ConstCodegenMethods, MiscCodegenMethods, StaticCodegenMethods};
 use rustc_middle::mir::interpret::{AllocError, ConstAllocation, GlobalAlloc, Scalar, alloc_range};
 use rustc_middle::ty::layout::LayoutOf;
+use rustc_session::PointerAuthSchema;
 use rustc_span::{DUMMY_SP, Span};
 
 impl<'tcx> CodegenCx<'tcx> {
@@ -233,7 +232,7 @@ impl ConstCodegenMethods for CodegenCx<'_> {
         cv: Scalar,
         layout: rustc_abi::Scalar,
         ty: Self::Type,
-        _pac: Option<PacMetadata>,
+        _pac: Option<&PointerAuthSchema>,
     ) -> Self::Value {
         self.scalar_to_backend(cv, layout, ty)
     }

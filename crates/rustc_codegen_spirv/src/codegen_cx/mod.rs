@@ -22,14 +22,14 @@ use rustc_abi::{AddressSpace, HasDataLayout, TargetDataLayout};
 use rustc_ast::ast::{InlineAsmOptions, InlineAsmTemplatePiece};
 use rustc_codegen_ssa::traits::{
     AsmCodegenMethods, BackendTypes, DebugInfoCodegenMethods, GlobalAsmOperandRef,
-    MiscCodegenMethods, PacMetadata,
+    MiscCodegenMethods,
 };
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 use rustc_hir::def_id::DefId;
 use rustc_middle::mono::CodegenUnit;
 use rustc_middle::ty::layout::{HasTyCtxt, HasTypingEnv};
 use rustc_middle::ty::{self, Instance, Ty, TyCtxt, TypingEnv};
-use rustc_session::Session;
+use rustc_session::{PointerAuthSchema, Session};
 use rustc_span::symbol::Symbol;
 use rustc_span::{DUMMY_SP, Span};
 use rustc_target::spec::{HasTargetSpec, Target, TargetTuple};
@@ -887,7 +887,11 @@ impl<'tcx> MiscCodegenMethods<'tcx> for CodegenCx<'tcx> {
     // NOTE(eddyb) see the comment on `SpirvValueKind::FnAddr`, this should
     // be fixed upstream, so we never see any "function pointer" values being
     // created just to perform direct calls.
-    fn get_fn_addr(&self, instance: Instance<'tcx>, _pac: Option<PacMetadata>) -> Self::Value {
+    fn get_fn_addr(
+        &self,
+        instance: Instance<'tcx>,
+        _pac: Option<&PointerAuthSchema>,
+    ) -> Self::Value {
         let function = self.get_fn(instance);
         let span = self.tcx.def_span(instance.def_id());
 
