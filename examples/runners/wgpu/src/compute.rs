@@ -248,8 +248,10 @@ async fn start_internal(options: &Options, compiled_shader_modules: CompiledShad
                 .get_mapped_range()
                 .unwrap();
             let timings = timing_data
-                .chunks_exact(8)
-                .map(|b| u64::from_ne_bytes(b.try_into().unwrap()))
+                .as_chunks::<8>()
+                .0
+                .iter()
+                .map(|b| u64::from_ne_bytes(*b))
                 .collect::<Vec<_>>();
 
             println!(
@@ -265,8 +267,10 @@ async fn start_internal(options: &Options, compiled_shader_modules: CompiledShad
 
     let data = buffer_slice.get_mapped_range().unwrap();
     let result = data
-        .chunks_exact(4)
-        .map(|b| u32::from_ne_bytes(b.try_into().unwrap()))
+        .as_chunks::<4>()
+        .0
+        .iter()
+        .map(|b| u32::from_ne_bytes(*b))
         .collect::<Vec<_>>();
     drop(data);
     readback_buffer.unmap();
