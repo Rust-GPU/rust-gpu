@@ -99,14 +99,14 @@ impl<'tcx> LayoutTypeCodegenMethods<'tcx> for CodegenCx<'tcx> {
             BackendRepr::Scalar(_)
             | BackendRepr::SimdScalableVector { .. }
             | BackendRepr::SimdVector { .. } => true,
-            BackendRepr::ScalarPair(..) => false,
+            BackendRepr::ScalarPair { .. } => false,
             BackendRepr::Memory { .. } => layout.is_zst(),
         }
     }
 
     fn is_backend_scalar_pair(&self, layout: TyAndLayout<'tcx>) -> bool {
         match layout.backend_repr {
-            BackendRepr::ScalarPair(..) => true,
+            BackendRepr::ScalarPair { .. } => true,
             BackendRepr::Scalar(_)
             | BackendRepr::SimdScalableVector { .. }
             | BackendRepr::SimdVector { .. }
