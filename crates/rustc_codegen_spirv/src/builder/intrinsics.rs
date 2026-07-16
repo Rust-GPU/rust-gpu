@@ -9,6 +9,7 @@ use crate::custom_insts::CustomInst;
 use crate::spirv_type::SpirvType;
 use rspirv::dr::Operand;
 use rspirv::spirv::GlslStd450Op as GLOp;
+use rustc_abi::Align;
 use rustc_codegen_ssa::RetagInfo;
 use rustc_codegen_ssa::mir::IntrinsicResult;
 use rustc_codegen_ssa::mir::operand::{OperandRef, OperandValue};
@@ -107,7 +108,8 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
             sym::volatile_load | sym::unaligned_volatile_load => {
                 let ptr = args[0].immediate();
                 let layout = self.layout_of(fn_args.type_at(0));
-                let load = self.volatile_load(layout.spirv_type(self.span(), self), ptr);
+                let load =
+                    self.volatile_load(layout.spirv_type(self.span(), self), ptr, Align::ONE);
                 if !result.layout.is_zst() {
                     self.store(load, result.val.llval, result.val.align);
                 }
