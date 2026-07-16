@@ -250,6 +250,16 @@ pub(super) fn elf_e_flags(architecture: Architecture, sess: &Session) -> u32 {",
 
             // HACK(fee1-dead): our backend type number doesn't always match the type of the value. Should fix?
             if relative_path == Path::new("src/mir/rvalue.rs") {
+                // Undo rust-lang/rust commit 87bb7c92132495b7cb0d476bc11b10ac27c2ea24
+                // > codegen_ssa: pack small const aggregates into immediate stores
+                src = src.replace(
+                    "
+                if self.try_codegen_const_aggregate_as_immediate(bx, dest, kind, operands) {
+                    return;
+                }
+",
+                    "",
+                );
                 src = src.replace(
                     "debug_assert_eq!(bx.cx().val_ty(imm), from_backend_ty);",
                     "",
