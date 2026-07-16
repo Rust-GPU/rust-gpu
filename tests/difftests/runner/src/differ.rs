@@ -302,7 +302,6 @@ impl<T: NumericType> Default for NumericDiffer<T> {
 }
 
 impl<T: NumericType> OutputDiffer for NumericDiffer<T> {
-    #[expect(clippy::chunks_exact_to_as_chunks)]
     fn compare(&self, output1: &[u8], output2: &[u8], epsilon: Option<f32>) -> Vec<Difference> {
         if output1.len() != output2.len() {
             return vec![Difference {
@@ -451,7 +450,6 @@ impl<T: NumericType> DifferenceDisplay for NumericDiffer<T> {
         self.format_table(diffs, pkg1, pkg2)
     }
 
-    #[expect(clippy::chunks_exact_to_as_chunks)]
     fn write_human_readable(&self, output: &[u8], path: &std::path::Path) -> std::io::Result<()> {
         use std::io::Write;
         let mut file = std::fs::File::create(path)?;

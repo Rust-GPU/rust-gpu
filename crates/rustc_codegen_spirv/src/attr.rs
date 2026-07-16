@@ -7,7 +7,7 @@ use crate::symbols::Symbols;
 use rspirv::spirv::{BuiltIn, ExecutionMode, ExecutionModel, StorageClass};
 use rustc_ast::{LitKind, MetaItemInner, MetaItemLit};
 use rustc_hir as hir;
-use rustc_hir::def_id::LocalModDefId;
+use rustc_hir::def_id::LocalModId;
 use rustc_hir::intravisit::{self, Visitor};
 use rustc_hir::{Attribute, CRATE_HIR_ID, HirId, MethodKind, Target};
 use rustc_middle::hir::nested_filter;
@@ -503,7 +503,7 @@ impl<'tcx> Visitor<'tcx> for CheckSpirvAttrVisitor<'tcx> {
 }
 
 // FIXME(eddyb) DRY this somehow and make it reusable from somewhere in `rustc`.
-fn check_mod_attrs(tcx: TyCtxt<'_>, module_def_id: LocalModDefId) {
+fn check_mod_attrs(tcx: TyCtxt<'_>, module_def_id: LocalModId) {
     let check_spirv_attr_visitor = &mut CheckSpirvAttrVisitor {
         tcx,
         sym: Symbols::get(),
