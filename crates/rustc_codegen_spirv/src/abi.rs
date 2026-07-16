@@ -87,7 +87,7 @@ pub(crate) fn provide(providers: &mut Providers) {
         fn_abi: &'tcx FnAbi<'tcx, Ty<'tcx>>,
     ) -> &'tcx FnAbi<'tcx, Ty<'tcx>> {
         let readjust_arg_abi = |arg: &ArgAbi<'tcx, Ty<'tcx>>| {
-            let mut arg = ArgAbi::new(&tcx, arg.layout, |_, _| ArgAttributes::new());
+            let mut arg = ArgAbi::new(arg.layout, |_, _| ArgAttributes::new());
             // FIXME: this is bad! https://github.com/rust-lang/rust/issues/115666
             // <https://github.com/rust-lang/rust/commit/eaaa03faf77b157907894a4207d8378ecaec7b45>
             arg.make_direct_deprecated();
@@ -364,7 +364,7 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
             }
             .def_with_name(cx, span, TyLayoutNameKey::from(*self)),
             BackendRepr::Scalar(scalar) => trans_scalar(cx, span, *self, scalar, Size::ZERO),
-            BackendRepr::ScalarPair(a, b) => {
+            BackendRepr::ScalarPair { a, b, .. } => {
                 // NOTE(eddyb) unlike `BackendRepr::Scalar`'s simpler newtype-unpacking
                 // behavior, `BackendRepr::ScalarPair` can be composed in two ways:
                 // * two `BackendRepr::Scalar` fields (and any number of ZST fields),
@@ -465,7 +465,7 @@ pub fn scalar_pair_element_backend_type<'tcx>(
     index: usize,
 ) -> Word {
     let [a, b] = match ty.layout.backend_repr() {
-        BackendRepr::ScalarPair(a, b) => [a, b],
+        BackendRepr::ScalarPair { a, b, .. } => [a, b],
         other => span_bug!(
             span,
             "scalar_pair_element_backend_type invalid abi: {:?}",
