@@ -191,7 +191,7 @@ impl<'tcx> CodegenCx<'tcx> {
             self.get_fn(entry_instance).ty,
             None,
             Some(entry_fn_abi),
-            self.get_fn_addr(entry_instance),
+            self.get_fn_addr(entry_instance, None),
             &call_args,
             None,
             None,

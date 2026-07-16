@@ -19,9 +19,9 @@ use std::{env, fs, mem};
 /// `cargo publish`. We need to figure out a way to do this properly, but let's hardcode it for now :/
 //const REQUIRED_RUST_TOOLCHAIN: &str = include_str!("../../rust-toolchain.toml");
 const REQUIRED_RUST_TOOLCHAIN: &str = r#"[toolchain]
-channel = "nightly-2026-06-25"
+channel = "nightly-2026-07-03"
 components = ["rust-src", "rustc-dev", "llvm-tools"]
-# commit_hash = f28ac764c36004fa6a6e098d15b4016a838c13c6"#;
+# commit_hash = c397dae808f70caebab1fc4e11b3edf7e59f58c7"#;
 
 fn rustc_output(arg: &str) -> Result<String, Box<dyn Error>> {
     let rustc = env::var("RUSTC").unwrap_or_else(|_| "rustc".into());
@@ -272,7 +272,7 @@ pub(super) fn elf_e_flags(architecture: Architecture, sess: &Session) -> u32 {",
                             bx, llarg, arg.layout,
                         ));",
                 );
-                src = src.replace("fx.fill_function_debug_context();", "");
+                src = src.replace("fx.fill_function_debug_context(&mut start_bx);", "");
             }
             if relative_path == Path::new("src/mir/block.rs") {
                 src = src.replace(
