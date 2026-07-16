@@ -153,7 +153,10 @@ fn generate_pqp_cg_ssa() -> Result<(), Box<dyn Error>> {
                 for line in mem::take(&mut src).lines() {
                     if line.starts_with("#!") {
                         src += "// ";
-                        if !line.starts_with("#![doc(") && line != "#![warn(unreachable_pub)]" {
+                        if !line.starts_with("#![doc(")
+                            && line != "#![warn(unreachable_pub)]"
+                            && !line.starts_with("#![cfg_attr(bootstrap,")
+                        {
                             writeln(&mut cg_ssa_lib_rc_attrs, line);
                         }
                     } else if line == "#[macro_use]" || line.starts_with("extern crate ") {
