@@ -38,7 +38,8 @@ macro_rules! user_output {
 #[macro_export]
 #[cfg(not(feature = "tty"))]
 macro_rules! user_output {
-    ($($args: tt)*) => {{}};
+    // reference the args, so they don't count as unused when output is compiled out
+    ($($args: tt)*) => {{ let _ = format_args!($($args)*); }};
 }
 
 /// The central cache directory of cargo gpu

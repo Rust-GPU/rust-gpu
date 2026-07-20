@@ -40,6 +40,17 @@ pub fn ensure_toolchain_and_components_exist(
     let host_tuple = host_tuple.trim_ascii();
     let toolchain = format!("{channel}-{host_tuple}");
 
+    // Two concurrent `cargo-gpu` processes (e.g. build scripts of multiple shader crates running
+    // in parallel) can otherwise observe a toolchain that another process is still in the middle
+    // of installing: `rustup toolchain list` already lists it, but its manifest isn't written yet,
+    // and the `component list` below fails with `error: Missing manifest in toolchain '...'`.
+    //
+    // So hold a lock across the entire check-and-install. It is taken unconditionally, even when
+    // the codegen backend is already built and the `install_dir` lock in `install.rs` is never
+    // taken at all, since we always query `rustup` here.
+    let _rustup_lock = crate::install::FileLock::lock_with_message(&rustup_lock_path()?, "rustup")
+        .context("acquiring rustup file lock")?;
+
     if !is_toolchain_installed(&toolchain, host_tuple)? {
         let message = format!(
             "toolchain {channel} with components {}",
@@ -70,6 +81,19 @@ pub fn ensure_toolchain_and_components_exist(
     }
 
     Ok(())
+}
+
+/// Path of the file lock guarding our `rustup` invocations.
+fn rustup_lock_path() -> anyhow::Result<std::path::PathBuf> {
+    let (home, _) = run_cmd(Command::new("rustup").args(["show", "home"]))?;
+    // FNV-1a, needs to be stable across Rust versions
+    let hash = home
+        .trim_ascii()
+        .bytes()
+        .fold(0xcbf2_9ce4_8422_2325_u64, |hash, byte| {
+            (hash ^ u64::from(byte)).wrapping_mul(0x0000_0100_0000_01b3)
+        });
+    Ok(std::env::temp_dir().join(format!("rust-gpu-rustup-{hash:016x}.lock")))
 }
 
 /// Returns true if the toolchain and required components are installed.
