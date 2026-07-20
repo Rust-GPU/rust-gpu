@@ -1854,7 +1854,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         self.bitcast(loaded_val, ty)
     }
 
-    fn volatile_load(&mut self, ty: Self::Type, ptr: Self::Value) -> Self::Value {
+    fn volatile_load(&mut self, ty: Self::Type, ptr: Self::Value, _align: Align) -> Self::Value {
         // TODO: Implement this
         let result = self.load(ty, ptr, Align::from_bytes(0).unwrap());
         self.zombie(result.def(self), "volatile load is not supported yet");
@@ -1909,7 +1909,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             let b_offset = a
                 .primitive()
                 .size(self)
-                .align_to(b.primitive().align(self).abi);
+                .align_to(b.primitive().default_align(self).abi);
 
             let mut load = |i, scalar: Scalar, align| {
                 let llptr = if i == 0 {
@@ -1993,7 +1993,8 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         align: Align,
         flags: MemFlags,
     ) -> Self::Value {
-        if flags != MemFlags::empty() {
+        let allowed_flags = MemFlags::CAPTURES_READ_ONLY;
+        if !(flags & !allowed_flags).is_empty() {
             self.err(format!("store_with_flags is not supported yet: {flags:?}"));
         }
         self.store(val, ptr, align)
@@ -3483,5 +3484,9 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
 
     fn alloca_with_ty(&mut self, _layout: TyAndLayout<'tcx>) -> Self::Value {
         bug!("scalable alloca is not supported in SPIR-V backend")
+    }
+
+    fn vscale(&mut self, _ty: Self::Type) -> Self::Value {
+        self.fatal("scalable vectors not supported");
     }
 }

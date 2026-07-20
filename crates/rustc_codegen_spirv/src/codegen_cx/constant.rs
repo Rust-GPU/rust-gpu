@@ -8,7 +8,9 @@ use crate::spirv_type::SpirvType;
 use itertools::Itertools as _;
 use rspirv::spirv::Word;
 use rustc_abi::{self as abi, AddressSpace, Float, HasDataLayout, Integer, Primitive, Size};
-use rustc_codegen_ssa::traits::{ConstCodegenMethods, MiscCodegenMethods, StaticCodegenMethods};
+use rustc_codegen_ssa::traits::{
+    ConstCodegenMethods, MiscCodegenMethods, PacMetadata, StaticCodegenMethods,
+};
 use rustc_middle::mir::interpret::{AllocError, ConstAllocation, GlobalAlloc, Scalar, alloc_range};
 use rustc_middle::ty::layout::LayoutOf;
 use rustc_span::{DUMMY_SP, Span};
@@ -226,6 +228,16 @@ impl ConstCodegenMethods for CodegenCx<'_> {
         self.builder.lookup_const_scalar(v)
     }
 
+    fn scalar_to_backend_with_pac(
+        &self,
+        cv: Scalar,
+        layout: rustc_abi::Scalar,
+        ty: Self::Type,
+        _pac: Option<PacMetadata>,
+    ) -> Self::Value {
+        self.scalar_to_backend(cv, layout, ty)
+    }
+
     fn scalar_to_backend(
         &self,
         scalar: Scalar,
@@ -268,7 +280,7 @@ impl ConstCodegenMethods for CodegenCx<'_> {
                         (value, AddressSpace::ZERO)
                     }
                     GlobalAlloc::Function { instance } => (
-                        self.get_fn_addr(instance),
+                        self.get_fn_addr(instance, None),
                         self.data_layout().instruction_address_space,
                     ),
                     GlobalAlloc::VTable(vty, dyn_ty) => {

@@ -474,14 +474,18 @@ impl Runner {
                     None => output1 == output2, // Exact comparison if no epsilon
                     Some(eps) => {
                         let floats1: Vec<f32> = output1
-                            .chunks_exact(4)
+                            .as_chunks::<4>()
+                            .0
+                            .iter()
                             .map(|chunk| {
                                 f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]])
                             })
                             .collect();
 
                         let floats2: Vec<f32> = output2
-                            .chunks_exact(4)
+                            .as_chunks::<4>()
+                            .0
+                            .iter()
                             .map(|chunk| {
                                 f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]])
                             })
@@ -503,7 +507,9 @@ impl Runner {
                     None => output1 == output2, // Exact comparison if no epsilon
                     Some(eps) => {
                         let floats1: Vec<f64> = output1
-                            .chunks_exact(8)
+                            .as_chunks::<8>()
+                            .0
+                            .iter()
                             .map(|chunk| {
                                 f64::from_le_bytes([
                                     chunk[0], chunk[1], chunk[2], chunk[3], chunk[4], chunk[5],
@@ -513,7 +519,9 @@ impl Runner {
                             .collect();
 
                         let floats2: Vec<f64> = output2
-                            .chunks_exact(8)
+                            .as_chunks::<8>()
+                            .0
+                            .iter()
                             .map(|chunk| {
                                 f64::from_le_bytes([
                                     chunk[0], chunk[1], chunk[2], chunk[3], chunk[4], chunk[5],
