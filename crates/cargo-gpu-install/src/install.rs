@@ -385,11 +385,15 @@ pub struct FileLock(std::fs::File);
 
 impl FileLock {
     pub fn lock(path: &Path) -> std::io::Result<Self> {
+        Self::lock_with_message(path, "codegen backend build")
+    }
+
+    pub fn lock_with_message(path: &Path, what: &str) -> std::io::Result<Self> {
         let file = std::fs::File::create(path)?;
         match file.try_lock() {
             Ok(_) => (),
             Err(std::fs::TryLockError::WouldBlock) => {
-                user_output!("Waiting for file lock on codegen backend build...\n");
+                user_output!("Waiting for file lock on {what}...\n");
                 file.lock()?;
             }
             Err(std::fs::TryLockError::Error(e)) => return Err(e),
