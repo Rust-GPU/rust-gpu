@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+Toolchain: `nightly-2026-05-22` (rustc 1.97.0)
+
+### Changed 🛠
+
+* [PR#609](https://github.com/Rust-GPU/rust-gpu/pull/609) introduces features on `spirv-std` for glam versions `glam_0_30` to `glam_0_33` to fix glam 0.33 incompatibility
+
+### Fixed 🩹
+
+* [PR#591](https://github.com/Rust-GPU/rust-gpu/pull/591) fixed trivial entry points not creating SPIR-V modules
+* [PR#616](https://github.com/Rust-GPU/rust-gpu/pull/616) fixes `u32::try_from(usize)` shaped code not compiling on newer toolchains 
+
 ## [0.10.0-alpha.1](https://github.com/Rust-GPU/rust-gpu/compare/v0.9.0...v0.10.0-alpha.1) - 2026-04-13
 
 Toolchain: `nightly-2026-04-11` (rustc 1.96.0)
