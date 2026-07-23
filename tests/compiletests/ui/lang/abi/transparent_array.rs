@@ -13,24 +13,22 @@
 // ignore-vulkan1.0
 // ignore-vulkan1.1
 
-use core::arch::asm;
+use core::marker::PhantomData;
 use spirv_std::glam::*;
 use spirv_std::spirv;
 
-pub fn main() {
-    spirv_std::arch::kill()
-}
+#[derive(Default)]
+pub struct A([u32; 3]);
+#[repr(transparent)]
+#[derive(Default)]
+pub struct AT([u32; 3]);
 
-pub fn entry() {
-    main();
-}
-
-pub fn non_global_asm() {
-    unsafe {
-        asm! {
-            "OpEntryPoint Fragment {entry} \"main\"",
-            "OpExecutionMode {entry} OriginUpperLeft",
-            entry = in(reg) entry,
-        }
-    }
+#[spirv(vertex)]
+pub fn main(a: &mut A, at: &mut AT, #[spirv(local_invocation_index)] tid: u32) {
+    *a = A([tid, 1, 2]);
+    a.0 = [tid, 1, 2];
+    a.0[2] += 4;
+    *at = AT([tid, 1, 2]);
+    at.0 = [tid, 1, 2];
+    at.0[2] += 5;
 }
