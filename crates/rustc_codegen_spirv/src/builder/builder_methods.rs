@@ -431,7 +431,16 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                     .def(self),
                 _ => self.fatal(format!("memset on float width {width} not implemented yet")),
             },
-            SpirvType::Adt { .. } => self.fatal("memset on structs not implemented yet"),
+            SpirvType::Adt { field_types, .. } => {
+                let field_pats: Vec<_> = field_types
+                    .iter()
+                    .map(|&field_ty| {
+                        self.memset_const_pattern(&self.lookup_type(field_ty), fill_byte)
+                    })
+                    .collect();
+                self.constant_composite(ty.def(self.span(), self), field_pats.into_iter())
+                    .def(self)
+            }
             SpirvType::Vector { element, count, .. } | SpirvType::Matrix { element, count } => {
                 let elem_pat = self.memset_const_pattern(&self.lookup_type(element), fill_byte);
                 self.constant_composite(
@@ -485,7 +494,17 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 64 => memset_dynamic_scalar(self, fill_var, 8, true),
                 _ => self.fatal(format!("memset on float width {width} not implemented yet")),
             },
-            SpirvType::Adt { .. } => self.fatal("memset on structs not implemented yet"),
+            SpirvType::Adt { field_types, .. } => {
+                let field_pats: Vec<_> = field_types
+                    .iter()
+                    .map(|&field_ty| {
+                        self.memset_dynamic_pattern(&self.lookup_type(field_ty), fill_var)
+                    })
+                    .collect();
+                self.emit()
+                    .composite_construct(ty.def(self.span(), self), None, field_pats)
+                    .unwrap()
+            }
             SpirvType::Array { element, count } => {
                 let elem_pat = self.memset_dynamic_pattern(&self.lookup_type(element), fill_var);
                 let count = self.builder.lookup_const_scalar(count).unwrap() as usize;
