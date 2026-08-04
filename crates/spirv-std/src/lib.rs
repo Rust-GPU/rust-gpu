@@ -4,6 +4,7 @@
     allow(internal_features),
     feature(asm_experimental_arch, core_intrinsics, lang_items, rustc_attrs)
 )]
+#![cfg_attr(feature = "adt_const_params", feature(adt_const_params))]
 // FIXME(eddyb) update/review these lints.
 //
 // BEGIN - Embark standard lints v0.4
