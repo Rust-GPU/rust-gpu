@@ -10,8 +10,8 @@ pub fn main_cs(
     #[spirv(storage_buffer, descriptor_set = 0, binding = 1)] output: &mut [u32],
     #[spirv(global_invocation_id)] global_id: spirv_std::glam::UVec3,
 ) {
-    const SCOPE: u32 = Scope::Workgroup as u32;
-    const SEMANTICS: u32 = Semantics::NONE.bits();
+    const SCOPE: Scope = Scope::Workgroup;
+    const SEMANTICS: Semantics = Semantics::NONE;
 
     let tid = global_id.x;
 

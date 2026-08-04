@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### Changed 🛠
+
+- [PR#635](https://github.com/Rust-GPU/rust-gpu/pull/635) started using `Scope`- and `Semantics`-typed const generics (`control_barrier`, `memory_barrier`, atomic intrinsics, `read_clock_khr`/`read_clock_uvec2_khr`) now take `spirv_std::memory::Scope`/`Semantics` directly (e.g. `{ Scope::Workgroup }`, `{ Semantics::WORKGROUP_MEMORY.union(Semantics::ACQUIRE_RELEASE) }`) instead of raw `u32` bit patterns, using `adt_const_params`. Composing `Semantics` flags now compiles with an assertion that at most one memory-ordering flag (`ACQUIRE`/`RELEASE`/`ACQUIRE_RELEASE`/`SEQUENTIALLY_CONST`) is set, per the SPIR-V spec.
+
 ## [0.10.0-alpha.1](https://github.com/Rust-GPU/rust-gpu/compare/v0.9.0...v0.10.0-alpha.1) - 2026-04-13
 
 Toolchain: `nightly-2026-04-11` (rustc 1.96.0)

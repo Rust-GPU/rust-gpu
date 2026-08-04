@@ -10,7 +10,7 @@ use spirv_std::{
 
 #[spirv(fragment)]
 pub fn main() {
-    let clock_time = unsafe { read_clock_khr::<{ Scope::Subgroup as u32 }>() };
+    let clock_time = unsafe { read_clock_khr::<{ Scope::Subgroup }>() };
 
-    let clock_time_uvec2: UVec2 = unsafe { read_clock_uvec2_khr::<{ Scope::Subgroup as u32 }>() };
+    let clock_time_uvec2: UVec2 = unsafe { read_clock_uvec2_khr::<{ Scope::Subgroup }>() };
 }

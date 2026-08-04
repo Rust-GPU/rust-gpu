@@ -3,9 +3,11 @@
 // NOTE(eddyb) "&-masking with zero", likely due to `NONE = 0` in `bitflags!`.
 #![allow(clippy::bad_bit_mask)]
 
+use core::marker::ConstParamTy;
+
 /// Specification for how large of a scope some instructions should operate on - used when calling
 /// functions that take a configurable scope.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(ConstParamTy, Debug, PartialEq, Eq)]
 pub enum Scope {
     /// Crosses multiple devices.
     CrossDevice = 0,
@@ -29,6 +31,7 @@ pub enum Scope {
 bitflags::bitflags! {
     /// Memory semantics to determine how some operations should function - used when calling such
     /// configurable operations.
+    #[derive(ConstParamTy)]
     #[repr(transparent)]
     #[cfg_attr(feature = "bytemuck", derive(bytemuck::Zeroable, bytemuck::Pod))]
     pub struct Semantics: u32 {
@@ -98,5 +101,21 @@ bitflags::bitflags! {
         /// This access cannot be eliminated, duplicated, or combined with
         /// other accesses.
         const VOLATILE = 0x8000;
+    }
+}
+
+impl Semantics {
+    const ORDERING_MASK: Semantics = Self::ACQUIRE
+        .union(Self::RELEASE)
+        .union(Self::ACQUIRE_RELEASE)
+        .union(Self::SEQUENTIALLY_CONST);
+
+    /// Verify whether the [`Semantics`] flags are valid
+    pub const fn assert_valid(self) {
+        assert!(
+            self.intersection(Self::ORDERING_MASK).bits().count_ones() <= 1,
+            "at most one memory-ordering flag (ACQUIRE, RELEASE, ACQUIRE_RELEASE or \
+            SEQUENTIALLY_CONST) may be set"
+        );
     }
 }
