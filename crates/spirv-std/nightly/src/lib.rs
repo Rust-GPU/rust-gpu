@@ -1,6 +1,6 @@
 #![no_std]
 #![feature(adt_const_params)]
-#![feature(generic_const_exprs)]
+#![cfg_attr(target_arch = "spirv", feature(asm_experimental_arch))]
 
 pub mod arch;
 pub use spirv_std::*;
