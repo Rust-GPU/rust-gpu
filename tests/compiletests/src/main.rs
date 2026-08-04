@@ -207,6 +207,7 @@ impl Runner {
                 self.find_lib("core", DepKind::SpirvLib, target)?
                     .no_prelude(),
                 self.find_lib("spirv-std", DepKind::SpirvLib, target)?,
+                self.find_lib("spirv-std-nightly", DepKind::SpirvLib, target)?,
                 self.find_lib("glam", DepKind::SpirvLib, target)?,
                 self.find_lib("spirv-std-macros", DepKind::ProcMacro, target)?,
             ])
