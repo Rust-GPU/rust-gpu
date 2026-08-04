@@ -60,13 +60,13 @@ pub enum GroupOperation {
 #[inline]
 pub fn subgroup_barrier() {
     barrier::control_barrier::<
-        SUBGROUP,
-        SUBGROUP,
+        { Scope::Subgroup },
+        { Scope::Subgroup },
         {
-            Semantics::ACQUIRE_RELEASE.bits()
-                | Semantics::UNIFORM_MEMORY.bits()
-                | Semantics::WORKGROUP_MEMORY.bits()
-                | Semantics::IMAGE_MEMORY.bits()
+            Semantics::ACQUIRE_RELEASE
+                .union(Semantics::UNIFORM_MEMORY)
+                .union(Semantics::WORKGROUP_MEMORY)
+                .union(Semantics::IMAGE_MEMORY)
         },
     >();
 }
@@ -81,12 +81,12 @@ pub fn subgroup_barrier() {
 #[inline]
 pub fn subgroup_memory_barrier() {
     barrier::memory_barrier::<
-        SUBGROUP,
+        { Scope::Subgroup },
         {
-            Semantics::ACQUIRE_RELEASE.bits()
-                | Semantics::UNIFORM_MEMORY.bits()
-                | Semantics::WORKGROUP_MEMORY.bits()
-                | Semantics::IMAGE_MEMORY.bits()
+            Semantics::ACQUIRE_RELEASE
+                .union(Semantics::UNIFORM_MEMORY)
+                .union(Semantics::WORKGROUP_MEMORY)
+                .union(Semantics::IMAGE_MEMORY)
         },
     >();
 }
@@ -101,8 +101,8 @@ pub fn subgroup_memory_barrier() {
 #[inline]
 pub fn subgroup_memory_barrier_buffer() {
     barrier::memory_barrier::<
-        SUBGROUP,
-        { Semantics::ACQUIRE_RELEASE.bits() | Semantics::UNIFORM_MEMORY.bits() },
+        { Scope::Subgroup },
+        { Semantics::ACQUIRE_RELEASE.union(Semantics::UNIFORM_MEMORY) },
     >();
 }
 
@@ -118,8 +118,8 @@ pub fn subgroup_memory_barrier_buffer() {
 #[inline]
 pub fn subgroup_memory_barrier_shared() {
     barrier::memory_barrier::<
-        SUBGROUP,
-        { Semantics::ACQUIRE_RELEASE.bits() | Semantics::WORKGROUP_MEMORY.bits() },
+        { Scope::Subgroup },
+        { Semantics::ACQUIRE_RELEASE.union(Semantics::WORKGROUP_MEMORY) },
     >();
 }
 
@@ -133,8 +133,8 @@ pub fn subgroup_memory_barrier_shared() {
 #[inline]
 pub fn subgroup_memory_barrier_image() {
     barrier::memory_barrier::<
-        SUBGROUP,
-        { Semantics::ACQUIRE_RELEASE.bits() | Semantics::IMAGE_MEMORY.bits() },
+        { Scope::Subgroup },
+        { Semantics::ACQUIRE_RELEASE.union(Semantics::IMAGE_MEMORY) },
     >();
 }
 

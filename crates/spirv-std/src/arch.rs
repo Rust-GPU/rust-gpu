@@ -6,6 +6,7 @@
 #[cfg(target_arch = "spirv")]
 use crate::Integer;
 use crate::glam::UVec2;
+use crate::memory::Scope;
 use crate::{Scalar, SignedInteger, UnsignedInteger, Vector};
 #[cfg(target_arch = "spirv")]
 use core::arch::asm;
@@ -150,7 +151,7 @@ pub fn kill() -> ! {
 /// <https://htmlpreview.github.io/?https://github.com/KhronosGroup/SPIRV-Registry/blob/master/extensions/KHR/SPV_KHR_shader_clock.html>
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpReadClockKHR")]
-pub fn read_clock_khr<const SCOPE: u32>() -> u64 {
+pub fn read_clock_khr<const SCOPE: Scope>() -> u64 {
     unsafe {
         let mut result: u64;
 
@@ -159,7 +160,7 @@ pub fn read_clock_khr<const SCOPE: u32>() -> u64 {
             "%scope = OpConstant %uint {scope}",
             "{result} = OpReadClockKHR typeof*{result} %scope",
             result = out(reg) result,
-            scope = const SCOPE,
+            scope = const { SCOPE as u32 },
         };
 
         result
@@ -172,7 +173,7 @@ pub fn read_clock_khr<const SCOPE: u32>() -> u64 {
 /// bits and the second component containing the 32 most significant bits.'
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpReadClockKHR")]
-pub fn read_clock_uvec2_khr<const SCOPE: u32>() -> UVec2 {
+pub fn read_clock_uvec2_khr<const SCOPE: Scope>() -> UVec2 {
     unsafe {
         let mut result = UVec2::default();
 
@@ -182,7 +183,7 @@ pub fn read_clock_uvec2_khr<const SCOPE: u32>() -> UVec2 {
             "%result = OpReadClockKHR typeof*{result} %scope",
             "OpStore {result} %result",
             result = in(reg) &mut result,
-            scope = const SCOPE,
+            scope = const { SCOPE as u32 },
         };
 
         result

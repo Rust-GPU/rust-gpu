@@ -10,8 +10,8 @@ use spirv_std::spirv;
 pub fn main() {
     unsafe {
         spirv_std::arch::memory_barrier::<
-            { Scope::Subgroup as u32 },
-            { Semantics::ACQUIRE_RELEASE.bits() | Semantics::UNIFORM_MEMORY.bits() },
+            { Scope::Subgroup },
+            { Semantics::ACQUIRE_RELEASE.union(Semantics::UNIFORM_MEMORY) },
         >();
     }
 }

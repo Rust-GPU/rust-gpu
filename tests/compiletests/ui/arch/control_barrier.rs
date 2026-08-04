@@ -10,9 +10,9 @@ use spirv_std::spirv;
 pub fn main() {
     unsafe {
         spirv_std::arch::control_barrier::<
-            { Scope::Subgroup as u32 },
-            { Scope::Subgroup as u32 },
-            { Semantics::NONE.bits() },
+            { Scope::Subgroup },
+            { Scope::Subgroup },
+            { Semantics::NONE },
         >();
     }
 }

@@ -1,25 +1,27 @@
 #[cfg(target_arch = "spirv")]
 use core::arch::asm;
 
+use crate::memory::{Scope, Semantics};
+
 /// Wait for other invocations of this module to reach the current point
 /// of execution.
 ///
 /// All invocations of this module within Execution scope reach this point of
 /// execution before any invocation proceeds beyond it.
 ///
-/// When Execution is [`crate::memory::Scope::Workgroup`] or larger, behavior is
+/// When Execution is [`Scope::Workgroup`] or larger, behavior is
 /// undefined unless all invocations within Execution execute the same dynamic
 /// instance of this instruction. When Execution is Subgroup or Invocation, the
 /// behavior of this instruction in non-uniform control flow is defined by the
 /// client API.
 ///
-/// If [`crate::memory::Semantics`] is not [`crate::memory::Semantics::NONE`],
+/// If [`Semantics`] is not [`Semantics::NONE`],
 /// this instruction also serves as an [`memory_barrier`] function call, and
 /// also performs and adheres to the description and semantics of an
 /// [`memory_barrier`] function with the same `MEMORY` and `SEMANTICS` operands.
 /// This allows atomically specifying both a control barrier and a memory
 /// barrier (that is, without needing two instructions). If
-/// [`crate::memory::Semantics`] is [`crate::memory::Semantics::NONE`], `MEMORY`
+/// [`Semantics`] is [`Semantics::NONE`], `MEMORY`
 /// is ignored.
 ///
 /// Before SPIRV-V version 1.3, it is only valid to use this instruction with
@@ -33,11 +35,8 @@ use core::arch::asm;
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpControlBarrier")]
 #[inline]
-pub fn control_barrier<
-    const EXECUTION: u32, // Scope
-    const MEMORY: u32,    // Scope
-    const SEMANTICS: u32, // Semantics
->() {
+pub fn control_barrier<const EXECUTION: Scope, const MEMORY: Scope, const SEMANTICS: Semantics>() {
+    const { SEMANTICS.assert_valid() }
     unsafe {
         asm! {
             "%u32 = OpTypeInt 32 0",
@@ -45,9 +44,9 @@ pub fn control_barrier<
             "%memory = OpConstant %u32 {memory}",
             "%semantics = OpConstant %u32 {semantics}",
             "OpControlBarrier %execution %memory %semantics",
-            execution = const EXECUTION,
-            memory = const MEMORY,
-            semantics = const SEMANTICS,
+            execution = const { EXECUTION as u32 },
+            memory = const { MEMORY as u32 },
+            semantics = const { SEMANTICS.bits() },
         }
     }
 }
@@ -70,18 +69,16 @@ pub fn control_barrier<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpMemoryBarrier")]
 #[inline]
-pub fn memory_barrier<
-    const MEMORY: u32,    // Scope
-    const SEMANTICS: u32, // Semantics
->() {
+pub fn memory_barrier<const MEMORY: Scope, const SEMANTICS: Semantics>() {
+    const { SEMANTICS.assert_valid() }
     unsafe {
         asm! {
             "%u32 = OpTypeInt 32 0",
             "%memory = OpConstant %u32 {memory}",
             "%semantics = OpConstant %u32 {semantics}",
             "OpMemoryBarrier %memory %semantics",
-            memory = const MEMORY,
-            semantics = const SEMANTICS,
+            memory = const { MEMORY as u32 },
+            semantics = const { SEMANTICS.bits() },
         }
     }
 }
@@ -95,11 +92,8 @@ pub fn memory_barrier<
 #[inline]
 pub fn workgroup_memory_barrier() {
     memory_barrier::<
-        { crate::memory::Scope::Workgroup as u32 },
-        {
-            crate::memory::Semantics::WORKGROUP_MEMORY.bits()
-                | crate::memory::Semantics::ACQUIRE_RELEASE.bits()
-        },
+        { Scope::Workgroup },
+        { Semantics::WORKGROUP_MEMORY.union(Semantics::ACQUIRE_RELEASE) },
     >();
 }
 
@@ -112,12 +106,9 @@ pub fn workgroup_memory_barrier() {
 #[inline]
 pub fn workgroup_memory_barrier_with_group_sync() {
     control_barrier::<
-        { crate::memory::Scope::Workgroup as u32 },
-        { crate::memory::Scope::Workgroup as u32 },
-        {
-            crate::memory::Semantics::WORKGROUP_MEMORY.bits()
-                | crate::memory::Semantics::ACQUIRE_RELEASE.bits()
-        },
+        { Scope::Workgroup },
+        { Scope::Workgroup },
+        { Semantics::WORKGROUP_MEMORY.union(Semantics::ACQUIRE_RELEASE) },
     >();
 }
 
@@ -130,11 +121,11 @@ pub fn workgroup_memory_barrier_with_group_sync() {
 #[inline]
 pub fn device_memory_barrier() {
     memory_barrier::<
-        { crate::memory::Scope::Device as u32 },
+        { Scope::Device },
         {
-            crate::memory::Semantics::IMAGE_MEMORY.bits()
-                | crate::memory::Semantics::UNIFORM_MEMORY.bits()
-                | crate::memory::Semantics::ACQUIRE_RELEASE.bits()
+            Semantics::IMAGE_MEMORY
+                .union(Semantics::UNIFORM_MEMORY)
+                .union(Semantics::ACQUIRE_RELEASE)
         },
     >();
 }
@@ -148,12 +139,12 @@ pub fn device_memory_barrier() {
 #[inline]
 pub fn device_memory_barrier_with_group_sync() {
     control_barrier::<
-        { crate::memory::Scope::Workgroup as u32 },
-        { crate::memory::Scope::Device as u32 },
+        { Scope::Workgroup },
+        { Scope::Device },
         {
-            crate::memory::Semantics::IMAGE_MEMORY.bits()
-                | crate::memory::Semantics::UNIFORM_MEMORY.bits()
-                | crate::memory::Semantics::ACQUIRE_RELEASE.bits()
+            Semantics::IMAGE_MEMORY
+                .union(Semantics::UNIFORM_MEMORY)
+                .union(Semantics::ACQUIRE_RELEASE)
         },
     >();
 }
@@ -167,12 +158,12 @@ pub fn device_memory_barrier_with_group_sync() {
 #[inline]
 pub fn all_memory_barrier() {
     memory_barrier::<
-        { crate::memory::Scope::Device as u32 },
+        { Scope::Device },
         {
-            crate::memory::Semantics::WORKGROUP_MEMORY.bits()
-                | crate::memory::Semantics::IMAGE_MEMORY.bits()
-                | crate::memory::Semantics::UNIFORM_MEMORY.bits()
-                | crate::memory::Semantics::ACQUIRE_RELEASE.bits()
+            Semantics::WORKGROUP_MEMORY
+                .union(Semantics::IMAGE_MEMORY)
+                .union(Semantics::UNIFORM_MEMORY)
+                .union(Semantics::ACQUIRE_RELEASE)
         },
     >();
 }
@@ -186,13 +177,13 @@ pub fn all_memory_barrier() {
 #[inline]
 pub fn all_memory_barrier_with_group_sync() {
     control_barrier::<
-        { crate::memory::Scope::Workgroup as u32 },
-        { crate::memory::Scope::Device as u32 },
+        { Scope::Workgroup },
+        { Scope::Device },
         {
-            crate::memory::Semantics::WORKGROUP_MEMORY.bits()
-                | crate::memory::Semantics::IMAGE_MEMORY.bits()
-                | crate::memory::Semantics::UNIFORM_MEMORY.bits()
-                | crate::memory::Semantics::ACQUIRE_RELEASE.bits()
+            Semantics::WORKGROUP_MEMORY
+                .union(Semantics::IMAGE_MEMORY)
+                .union(Semantics::UNIFORM_MEMORY)
+                .union(Semantics::ACQUIRE_RELEASE)
         },
     >();
 }

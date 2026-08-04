@@ -1,6 +1,7 @@
 #[cfg(target_arch = "spirv")]
 use core::arch::asm;
 
+use crate::memory::{Scope, Semantics};
 use crate::{Float, Integer, Number, SignedInteger, UnsignedInteger};
 
 /// Atomically load through `ptr` using the given `SEMANTICS`. All subparts of
@@ -9,7 +10,8 @@ use crate::{Float, Integer, Number, SignedInteger, UnsignedInteger};
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpAtomicLoad")]
 #[inline]
-pub unsafe fn atomic_load<N: Number, const SCOPE: u32, const SEMANTICS: u32>(ptr: &N) -> N {
+pub unsafe fn atomic_load<N: Number, const SCOPE: Scope, const SEMANTICS: Semantics>(ptr: &N) -> N {
+    const { SEMANTICS.assert_valid() }
     unsafe {
         let mut result = N::default();
 
@@ -19,8 +21,8 @@ pub unsafe fn atomic_load<N: Number, const SCOPE: u32, const SEMANTICS: u32>(ptr
             "%semantics = OpConstant %u32 {semantics}",
             "%result = OpAtomicLoad _ {ptr} %scope %semantics",
             "OpStore {result} %result",
-            scope = const SCOPE,
-            semantics = const SEMANTICS,
+            scope = const { SCOPE as u32 },
+            semantics = const { SEMANTICS.bits() },
             ptr = in(reg) ptr,
             result = in(reg) &mut result
         }
@@ -35,10 +37,11 @@ pub unsafe fn atomic_load<N: Number, const SCOPE: u32, const SEMANTICS: u32>(ptr
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpAtomicStore")]
 #[inline]
-pub unsafe fn atomic_store<N: Number, const SCOPE: u32, const SEMANTICS: u32>(
+pub unsafe fn atomic_store<N: Number, const SCOPE: Scope, const SEMANTICS: Semantics>(
     ptr: &mut N,
     value: N,
 ) {
+    const { SEMANTICS.assert_valid() }
     unsafe {
         asm! {
             "%u32 = OpTypeInt 32 0",
@@ -46,8 +49,8 @@ pub unsafe fn atomic_store<N: Number, const SCOPE: u32, const SEMANTICS: u32>(
             "%semantics = OpConstant %u32 {semantics}",
             "%value = OpLoad _ {value}",
             "OpAtomicStore {ptr} %scope %semantics %value",
-            scope = const SCOPE,
-            semantics = const SEMANTICS,
+            scope = const { SCOPE as u32 },
+            semantics = const { SEMANTICS.bits() },
             ptr = in(reg) ptr,
             value = in(reg) &value
         }
@@ -65,10 +68,11 @@ pub unsafe fn atomic_store<N: Number, const SCOPE: u32, const SEMANTICS: u32>(
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpAtomicExchange")]
 #[inline]
-pub unsafe fn atomic_exchange<N: Number, const SCOPE: u32, const SEMANTICS: u32>(
+pub unsafe fn atomic_exchange<N: Number, const SCOPE: Scope, const SEMANTICS: Semantics>(
     ptr: &mut N,
     value: N,
 ) -> N {
+    const { SEMANTICS.assert_valid() }
     unsafe {
         let mut old = N::default();
 
@@ -79,8 +83,8 @@ pub unsafe fn atomic_exchange<N: Number, const SCOPE: u32, const SEMANTICS: u32>
             "%value = OpLoad _ {value}",
             "%old = OpAtomicExchange _ {ptr} %scope %semantics %value",
             "OpStore {old} %old",
-            scope = const SCOPE,
-            semantics = const SEMANTICS,
+            scope = const { SCOPE as u32 },
+            semantics = const { SEMANTICS.bits() },
             ptr = in(reg) ptr,
             old = in(reg) &mut old,
             value = in(reg) &value
@@ -105,14 +109,19 @@ pub unsafe fn atomic_exchange<N: Number, const SCOPE: u32, const SEMANTICS: u32>
 #[inline]
 pub unsafe fn atomic_compare_exchange<
     I: Integer,
-    const SCOPE: u32,
-    const EQUAL: u32,
-    const UNEQUAL: u32,
+    const SCOPE: Scope,
+    const EQUAL: Semantics,
+    const UNEQUAL: Semantics,
 >(
     ptr: &mut I,
     value: I,
     comparator: I,
 ) -> I {
+    const {
+        EQUAL.assert_valid();
+        UNEQUAL.assert_valid();
+    }
+
     unsafe {
         let mut old = I::default();
 
@@ -125,9 +134,9 @@ pub unsafe fn atomic_compare_exchange<
             "%comparator = OpLoad _ {comparator}",
             "%old = OpAtomicCompareExchange _ {ptr} %scope %equal %unequal %value %comparator",
             "OpStore {old} %old",
-            scope = const SCOPE,
-            equal = const EQUAL,
-            unequal = const UNEQUAL,
+            scope = const { SCOPE as u32 },
+            equal = const { EQUAL.bits() },
+            unequal = const { UNEQUAL.bits() },
             ptr = in(reg) ptr,
             value = in(reg) &value,
             comparator = in(reg) &comparator,
@@ -149,9 +158,10 @@ pub unsafe fn atomic_compare_exchange<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpAtomicIIncrement")]
 #[inline]
-pub unsafe fn atomic_i_increment<I: Integer, const SCOPE: u32, const SEMANTICS: u32>(
+pub unsafe fn atomic_i_increment<I: Integer, const SCOPE: Scope, const SEMANTICS: Semantics>(
     ptr: &mut I,
 ) -> I {
+    const { SEMANTICS.assert_valid() }
     unsafe {
         let mut old = I::default();
 
@@ -161,8 +171,8 @@ pub unsafe fn atomic_i_increment<I: Integer, const SCOPE: u32, const SEMANTICS: 
             "%semantics = OpConstant %u32 {semantics}",
             "%old = OpAtomicIIncrement _ {ptr} %scope %semantics",
             "OpStore {old} %old",
-            scope = const SCOPE,
-            semantics = const SEMANTICS,
+            scope = const { SCOPE as u32 },
+            semantics = const { SEMANTICS.bits() },
             ptr = in(reg) ptr,
             old = in(reg) &mut old
         }
@@ -182,9 +192,10 @@ pub unsafe fn atomic_i_increment<I: Integer, const SCOPE: u32, const SEMANTICS: 
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpAtomicIDecrement")]
 #[inline]
-pub unsafe fn atomic_i_decrement<I: Integer, const SCOPE: u32, const SEMANTICS: u32>(
+pub unsafe fn atomic_i_decrement<I: Integer, const SCOPE: Scope, const SEMANTICS: Semantics>(
     ptr: &mut I,
 ) -> I {
+    const { SEMANTICS.assert_valid() }
     unsafe {
         let mut old = I::default();
 
@@ -194,8 +205,8 @@ pub unsafe fn atomic_i_decrement<I: Integer, const SCOPE: u32, const SEMANTICS: 
             "%semantics = OpConstant %u32 {semantics}",
             "%old = OpAtomicIDecrement _ {ptr} %scope %semantics",
             "OpStore {old} %old",
-            scope = const SCOPE,
-            semantics = const SEMANTICS,
+            scope = const { SCOPE as u32 },
+            semantics = const { SEMANTICS.bits() },
             ptr = in(reg) ptr,
             old = in(reg) &mut old
         }
@@ -215,10 +226,11 @@ pub unsafe fn atomic_i_decrement<I: Integer, const SCOPE: u32, const SEMANTICS: 
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpAtomicIAdd")]
 #[inline]
-pub unsafe fn atomic_i_add<I: Integer, const SCOPE: u32, const SEMANTICS: u32>(
+pub unsafe fn atomic_i_add<I: Integer, const SCOPE: Scope, const SEMANTICS: Semantics>(
     ptr: &mut I,
     value: I,
 ) -> I {
+    const { SEMANTICS.assert_valid() }
     unsafe {
         let mut old = I::default();
 
@@ -229,8 +241,8 @@ pub unsafe fn atomic_i_add<I: Integer, const SCOPE: u32, const SEMANTICS: u32>(
             "%value = OpLoad _ {value}",
             "%old = OpAtomicIAdd _ {ptr} %scope %semantics %value",
             "OpStore {old} %old",
-            scope = const SCOPE,
-            semantics = const SEMANTICS,
+            scope = const { SCOPE as u32 },
+            semantics = const { SEMANTICS.bits() },
             ptr = in(reg) ptr,
             old = in(reg) &mut old,
             value = in(reg) &value
@@ -251,10 +263,11 @@ pub unsafe fn atomic_i_add<I: Integer, const SCOPE: u32, const SEMANTICS: u32>(
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpAtomicISub")]
 #[inline]
-pub unsafe fn atomic_i_sub<I: Integer, const SCOPE: u32, const SEMANTICS: u32>(
+pub unsafe fn atomic_i_sub<I: Integer, const SCOPE: Scope, const SEMANTICS: Semantics>(
     ptr: &mut I,
     value: I,
 ) -> I {
+    const { SEMANTICS.assert_valid() }
     unsafe {
         let mut old = I::default();
 
@@ -265,8 +278,8 @@ pub unsafe fn atomic_i_sub<I: Integer, const SCOPE: u32, const SEMANTICS: u32>(
             "%value = OpLoad _ {value}",
             "%old = OpAtomicISub _ {ptr} %scope %semantics %value",
             "OpStore {old} %old",
-            scope = const SCOPE,
-            semantics = const SEMANTICS,
+            scope = const { SCOPE as u32 },
+            semantics = const { SEMANTICS.bits() },
             ptr = in(reg) ptr,
             old = in(reg) &mut old,
             value = in(reg) &value
@@ -288,10 +301,11 @@ pub unsafe fn atomic_i_sub<I: Integer, const SCOPE: u32, const SEMANTICS: u32>(
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpAtomicSMin")]
 #[inline]
-pub unsafe fn atomic_s_min<S: SignedInteger, const SCOPE: u32, const SEMANTICS: u32>(
+pub unsafe fn atomic_s_min<S: SignedInteger, const SCOPE: Scope, const SEMANTICS: Semantics>(
     ptr: &mut S,
     value: S,
 ) -> S {
+    const { SEMANTICS.assert_valid() }
     unsafe {
         let mut old = S::default();
 
@@ -302,8 +316,8 @@ pub unsafe fn atomic_s_min<S: SignedInteger, const SCOPE: u32, const SEMANTICS: 
             "%value = OpLoad _ {value}",
             "%old = OpAtomicSMin _ {ptr} %scope %semantics %value",
             "OpStore {old} %old",
-            scope = const SCOPE,
-            semantics = const SEMANTICS,
+            scope = const { SCOPE as u32 },
+            semantics = const { SEMANTICS.bits() },
             ptr = in(reg) ptr,
             old = in(reg) &mut old,
             value = in(reg) &value
@@ -325,10 +339,11 @@ pub unsafe fn atomic_s_min<S: SignedInteger, const SCOPE: u32, const SEMANTICS: 
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpAtomicUMin")]
 #[inline]
-pub unsafe fn atomic_u_min<U: UnsignedInteger, const SCOPE: u32, const SEMANTICS: u32>(
+pub unsafe fn atomic_u_min<U: UnsignedInteger, const SCOPE: Scope, const SEMANTICS: Semantics>(
     ptr: &mut U,
     value: U,
 ) -> U {
+    const { SEMANTICS.assert_valid() }
     unsafe {
         let mut old = U::default();
 
@@ -339,8 +354,8 @@ pub unsafe fn atomic_u_min<U: UnsignedInteger, const SCOPE: u32, const SEMANTICS
             "%value = OpLoad _ {value}",
             "%old = OpAtomicUMin _ {ptr} %scope %semantics %value",
             "OpStore {old} %old",
-            scope = const SCOPE,
-            semantics = const SEMANTICS,
+            scope = const { SCOPE as u32 },
+            semantics = const { SEMANTICS.bits() },
             ptr = in(reg) ptr,
             old = in(reg) &mut old,
             value = in(reg) &value
@@ -362,10 +377,11 @@ pub unsafe fn atomic_u_min<U: UnsignedInteger, const SCOPE: u32, const SEMANTICS
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpAtomicSMax")]
 #[inline]
-pub unsafe fn atomic_s_max<S: SignedInteger, const SCOPE: u32, const SEMANTICS: u32>(
+pub unsafe fn atomic_s_max<S: SignedInteger, const SCOPE: Scope, const SEMANTICS: Semantics>(
     ptr: &mut S,
     value: S,
 ) -> S {
+    const { SEMANTICS.assert_valid() }
     unsafe {
         let mut old = S::default();
 
@@ -376,8 +392,8 @@ pub unsafe fn atomic_s_max<S: SignedInteger, const SCOPE: u32, const SEMANTICS: 
             "%value = OpLoad _ {value}",
             "%old = OpAtomicSMax _ {ptr} %scope %semantics %value",
             "OpStore {old} %old",
-            scope = const SCOPE,
-            semantics = const SEMANTICS,
+            scope = const { SCOPE as u32 },
+            semantics = const { SEMANTICS.bits() },
             ptr = in(reg) ptr,
             old = in(reg) &mut old,
             value = in(reg) &value
@@ -399,10 +415,11 @@ pub unsafe fn atomic_s_max<S: SignedInteger, const SCOPE: u32, const SEMANTICS: 
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpAtomicUMax")]
 #[inline]
-pub unsafe fn atomic_u_max<U: UnsignedInteger, const SCOPE: u32, const SEMANTICS: u32>(
+pub unsafe fn atomic_u_max<U: UnsignedInteger, const SCOPE: Scope, const SEMANTICS: Semantics>(
     ptr: &mut U,
     value: U,
 ) -> U {
+    const { SEMANTICS.assert_valid() }
     unsafe {
         let mut old = U::default();
 
@@ -413,8 +430,8 @@ pub unsafe fn atomic_u_max<U: UnsignedInteger, const SCOPE: u32, const SEMANTICS
             "%value = OpLoad _ {value}",
             "%old = OpAtomicUMax _ {ptr} %scope %semantics %value",
             "OpStore {old} %old",
-            scope = const SCOPE,
-            semantics = const SEMANTICS,
+            scope = const { SCOPE as u32 },
+            semantics = const { SEMANTICS.bits() },
             ptr = in(reg) ptr,
             old = in(reg) &mut old,
             value = in(reg) &value
@@ -435,10 +452,11 @@ pub unsafe fn atomic_u_max<U: UnsignedInteger, const SCOPE: u32, const SEMANTICS
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpAtomicAnd")]
 #[inline]
-pub unsafe fn atomic_and<I: Integer, const SCOPE: u32, const SEMANTICS: u32>(
+pub unsafe fn atomic_and<I: Integer, const SCOPE: Scope, const SEMANTICS: Semantics>(
     ptr: &mut I,
     value: I,
 ) -> I {
+    const { SEMANTICS.assert_valid() }
     unsafe {
         let mut old = I::default();
 
@@ -449,8 +467,8 @@ pub unsafe fn atomic_and<I: Integer, const SCOPE: u32, const SEMANTICS: u32>(
             "%value = OpLoad _ {value}",
             "%old = OpAtomicAnd _ {ptr} %scope %semantics %value",
             "OpStore {old} %old",
-            scope = const SCOPE,
-            semantics = const SEMANTICS,
+            scope = const { SCOPE as u32 },
+            semantics = const { SEMANTICS.bits() },
             ptr = in(reg) ptr,
             old = in(reg) &mut old,
             value = in(reg) &value
@@ -471,10 +489,11 @@ pub unsafe fn atomic_and<I: Integer, const SCOPE: u32, const SEMANTICS: u32>(
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpAtomicOr")]
 #[inline]
-pub unsafe fn atomic_or<I: Integer, const SCOPE: u32, const SEMANTICS: u32>(
+pub unsafe fn atomic_or<I: Integer, const SCOPE: Scope, const SEMANTICS: Semantics>(
     ptr: &mut I,
     value: I,
 ) -> I {
+    const { SEMANTICS.assert_valid() }
     unsafe {
         let mut old = I::default();
 
@@ -485,8 +504,8 @@ pub unsafe fn atomic_or<I: Integer, const SCOPE: u32, const SEMANTICS: u32>(
             "%value = OpLoad _ {value}",
             "%old = OpAtomicOr _ {ptr} %scope %semantics %value",
             "OpStore {old} %old",
-            scope = const SCOPE,
-            semantics = const SEMANTICS,
+            scope = const { SCOPE as u32 },
+            semantics = const { SEMANTICS.bits() },
             ptr = in(reg) ptr,
             old = in(reg) &mut old,
             value = in(reg) &value
@@ -507,10 +526,11 @@ pub unsafe fn atomic_or<I: Integer, const SCOPE: u32, const SEMANTICS: u32>(
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpAtomicXor")]
 #[inline]
-pub unsafe fn atomic_xor<I: Integer, const SCOPE: u32, const SEMANTICS: u32>(
+pub unsafe fn atomic_xor<I: Integer, const SCOPE: Scope, const SEMANTICS: Semantics>(
     ptr: &mut I,
     value: I,
 ) -> I {
+    const { SEMANTICS.assert_valid() }
     unsafe {
         let mut old = I::default();
 
@@ -521,8 +541,8 @@ pub unsafe fn atomic_xor<I: Integer, const SCOPE: u32, const SEMANTICS: u32>(
             "%value = OpLoad _ {value}",
             "%old = OpAtomicXor _ {ptr} %scope %semantics %value",
             "OpStore {old} %old",
-            scope = const SCOPE,
-            semantics = const SEMANTICS,
+            scope = const { SCOPE as u32 },
+            semantics = const { SEMANTICS.bits() },
             ptr = in(reg) ptr,
             old = in(reg) &mut old,
             value = in(reg) &value
@@ -544,10 +564,11 @@ pub unsafe fn atomic_xor<I: Integer, const SCOPE: u32, const SEMANTICS: u32>(
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpAtomicFMinEXT")]
 #[inline]
-pub unsafe fn atomic_f_min<F: Float, const SCOPE: u32, const SEMANTICS: u32>(
+pub unsafe fn atomic_f_min<F: Float, const SCOPE: Scope, const SEMANTICS: Semantics>(
     ptr: &mut F,
     value: F,
 ) -> F {
+    const { SEMANTICS.assert_valid() }
     unsafe {
         let mut old = F::default();
 
@@ -558,8 +579,8 @@ pub unsafe fn atomic_f_min<F: Float, const SCOPE: u32, const SEMANTICS: u32>(
             "%value = OpLoad _ {value}",
             "%old = OpAtomicFMinEXT _ {ptr} %scope %semantics %value",
             "OpStore {old} %old",
-            scope = const SCOPE,
-            semantics = const SEMANTICS,
+            scope = const { SCOPE as u32 },
+            semantics = const { SEMANTICS.bits() },
             ptr = in(reg) ptr,
             old = in(reg) &mut old,
             value = in(reg) &value
@@ -581,10 +602,11 @@ pub unsafe fn atomic_f_min<F: Float, const SCOPE: u32, const SEMANTICS: u32>(
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpAtomicFMaxEXT")]
 #[inline]
-pub unsafe fn atomic_f_max<F: Float, const SCOPE: u32, const SEMANTICS: u32>(
+pub unsafe fn atomic_f_max<F: Float, const SCOPE: Scope, const SEMANTICS: Semantics>(
     ptr: &mut F,
     value: F,
 ) -> F {
+    const { SEMANTICS.assert_valid() }
     unsafe {
         let mut old = F::default();
 
@@ -595,8 +617,8 @@ pub unsafe fn atomic_f_max<F: Float, const SCOPE: u32, const SEMANTICS: u32>(
             "%value = OpLoad _ {value}",
             "%old = OpAtomicFMaxEXT _ {ptr} %scope %semantics %value",
             "OpStore {old} %old",
-            scope = const SCOPE,
-            semantics = const SEMANTICS,
+            scope = const { SCOPE as u32 },
+            semantics = const { SEMANTICS.bits() },
             ptr = in(reg) ptr,
             old = in(reg) &mut old,
             value = in(reg) &value
@@ -617,10 +639,11 @@ pub unsafe fn atomic_f_max<F: Float, const SCOPE: u32, const SEMANTICS: u32>(
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpAtomicFAddEXT")]
 #[inline]
-pub unsafe fn atomic_f_add<F: Float, const SCOPE: u32, const SEMANTICS: u32>(
+pub unsafe fn atomic_f_add<F: Float, const SCOPE: Scope, const SEMANTICS: Semantics>(
     ptr: &mut F,
     value: F,
 ) -> F {
+    const { SEMANTICS.assert_valid() }
     unsafe {
         let mut old = F::default();
 
@@ -631,8 +654,8 @@ pub unsafe fn atomic_f_add<F: Float, const SCOPE: u32, const SEMANTICS: u32>(
             "%value = OpLoad _ {value}",
             "%old = OpAtomicFAddEXT _ {ptr} %scope %semantics %value",
             "OpStore {old} %old",
-            scope = const SCOPE,
-            semantics = const SEMANTICS,
+            scope = const { SCOPE as u32 },
+            semantics = const { SEMANTICS.bits() },
             ptr = in(reg) ptr,
             old = in(reg) &mut old,
             value = in(reg) &value
