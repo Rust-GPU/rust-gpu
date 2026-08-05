@@ -45,7 +45,7 @@ impl SampleImplRewriter {
         // e.g., `ImageWithMethods<Dummy>` becomes `ImageWithMethods<SampleParams<SomeTy<B>, NoneTy, NoneTy>>`
         if let Some(t) = &mut new_impl.trait_
             && let syn::PathArguments::AngleBracketed(a) =
-                &mut t.1.segments.last_mut().unwrap().arguments
+                &mut t.0.segments.last_mut().unwrap().arguments
             && let Some(syn::GenericArgument::Type(t)) = a.args.last_mut()
         {
             *t = ty.clone();

@@ -263,6 +263,7 @@ pub fn gpu_only(_attr: TokenStream, item: TokenStream) -> TokenStream {
         vis,
         sig,
         block,
+        ..
     } = syn::parse_macro_input!(item as syn::ItemFn);
 
     let fn_name = sig.ident.clone();
