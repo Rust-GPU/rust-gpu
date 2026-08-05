@@ -263,72 +263,73 @@
 <a href=#263 id=263 data-nosnippet>263</a>        vis,
 <a href=#264 id=264 data-nosnippet>264</a>        sig,
 <a href=#265 id=265 data-nosnippet>265</a>        block,
-<a href=#266 id=266 data-nosnippet>266</a>    } = <span class="macro">syn::parse_macro_input!</span>(item <span class="kw">as </span>syn::ItemFn);
-<a href=#267 id=267 data-nosnippet>267</a>
-<a href=#268 id=268 data-nosnippet>268</a>    <span class="kw">let </span>fn_name = sig.ident.clone();
-<a href=#269 id=269 data-nosnippet>269</a>
-<a href=#270 id=270 data-nosnippet>270</a>    <span class="kw">let </span>sig_cpu = syn::Signature {
-<a href=#271 id=271 data-nosnippet>271</a>        abi: <span class="prelude-val">None</span>,
-<a href=#272 id=272 data-nosnippet>272</a>        ..sig.clone()
-<a href=#273 id=273 data-nosnippet>273</a>    };
-<a href=#274 id=274 data-nosnippet>274</a>
-<a href=#275 id=275 data-nosnippet>275</a>    <span class="kw">let </span>output = <span class="macro">quote::quote!</span> {
-<a href=#276 id=276 data-nosnippet>276</a>        <span class="comment">// Don't warn on unused arguments on the CPU side.
-<a href=#277 id=277 data-nosnippet>277</a>        </span><span class="attr">#[cfg(not(target_arch=<span class="string">"spirv"</span>))]
-<a href=#278 id=278 data-nosnippet>278</a>        #[allow(unused_variables)]
-<a href=#279 id=279 data-nosnippet>279</a>        </span>#(#attrs)* #vis #sig_cpu {
-<a href=#280 id=280 data-nosnippet>280</a>            <span class="macro">unimplemented!</span>(
-<a href=#281 id=281 data-nosnippet>281</a>                <span class="macro">concat!</span>(<span class="string">"`"</span>, <span class="macro">stringify!</span>(#fn_name), <span class="string">"` is only available on SPIR-V platforms."</span>)
-<a href=#282 id=282 data-nosnippet>282</a>            )
-<a href=#283 id=283 data-nosnippet>283</a>        }
-<a href=#284 id=284 data-nosnippet>284</a>
-<a href=#285 id=285 data-nosnippet>285</a>        <span class="attr">#[cfg(target_arch=<span class="string">"spirv"</span>)]
-<a href=#286 id=286 data-nosnippet>286</a>        </span>#(#attrs)* #vis #sig {
-<a href=#287 id=287 data-nosnippet>287</a>            #block
-<a href=#288 id=288 data-nosnippet>288</a>        }
-<a href=#289 id=289 data-nosnippet>289</a>    };
-<a href=#290 id=290 data-nosnippet>290</a>
-<a href=#291 id=291 data-nosnippet>291</a>    output.into()
-<a href=#292 id=292 data-nosnippet>292</a>}
-<a href=#293 id=293 data-nosnippet>293</a>
-<a href=#294 id=294 data-nosnippet>294</a><span class="doccomment">/// Print a formatted string using the debug printf extension.
-<a href=#295 id=295 data-nosnippet>295</a>///
-<a href=#296 id=296 data-nosnippet>296</a>/// Examples:
-<a href=#297 id=297 data-nosnippet>297</a>///
-<a href=#298 id=298 data-nosnippet>298</a>/// ```rust,ignore
-<a href=#299 id=299 data-nosnippet>299</a>/// debug_printf!("uv: %v2f\n", uv);
-<a href=#300 id=300 data-nosnippet>300</a>/// debug_printf!("pos.x: %f, pos.z: %f, int: %i\n", pos.x, pos.z, int);
-<a href=#301 id=301 data-nosnippet>301</a>/// ```
-<a href=#302 id=302 data-nosnippet>302</a>///
-<a href=#303 id=303 data-nosnippet>303</a>/// See &lt;https://github.com/KhronosGroup/Vulkan-ValidationLayers/blob/main/docs/debug_printf.md#debug-printf-format-string&gt; for formatting rules.
-<a href=#304 id=304 data-nosnippet>304</a></span><span class="attr">#[proc_macro]
-<a href=#305 id=305 data-nosnippet>305</a></span><span class="kw">pub fn </span>debug_printf(input: TokenStream) -&gt; TokenStream {
-<a href=#306 id=306 data-nosnippet>306</a>    debug_printf_inner(<span class="macro">syn::parse_macro_input!</span>(input <span class="kw">as </span>DebugPrintfInput))
-<a href=#307 id=307 data-nosnippet>307</a>}
-<a href=#308 id=308 data-nosnippet>308</a>
-<a href=#309 id=309 data-nosnippet>309</a><span class="doccomment">/// Similar to `debug_printf` but appends a newline to the format string.
-<a href=#310 id=310 data-nosnippet>310</a></span><span class="attr">#[proc_macro]
-<a href=#311 id=311 data-nosnippet>311</a></span><span class="kw">pub fn </span>debug_printfln(input: TokenStream) -&gt; TokenStream {
-<a href=#312 id=312 data-nosnippet>312</a>    <span class="kw">let </span><span class="kw-2">mut </span>input = <span class="macro">syn::parse_macro_input!</span>(input <span class="kw">as </span>DebugPrintfInput);
-<a href=#313 id=313 data-nosnippet>313</a>    input.format_string.push(<span class="string">'\n'</span>);
-<a href=#314 id=314 data-nosnippet>314</a>    debug_printf_inner(input)
-<a href=#315 id=315 data-nosnippet>315</a>}
-<a href=#316 id=316 data-nosnippet>316</a>
-<a href=#317 id=317 data-nosnippet>317</a><span class="doccomment">/// Generates permutations of an `ImageWithMethods` implementation containing sampling functions
-<a href=#318 id=318 data-nosnippet>318</a>/// that have asm instruction ending with a placeholder `$PARAMS` operand. The last parameter
-<a href=#319 id=319 data-nosnippet>319</a>/// of each function must be named `params`, its type will be rewritten. Relevant generic
-<a href=#320 id=320 data-nosnippet>320</a>/// arguments are added to the impl generics.
-<a href=#321 id=321 data-nosnippet>321</a>/// See `SAMPLE_PARAM_GENERICS` for a list of names you cannot use as generic arguments.
-<a href=#322 id=322 data-nosnippet>322</a></span><span class="attr">#[proc_macro_attribute]
-<a href=#323 id=323 data-nosnippet>323</a>#[doc(hidden)]
-<a href=#324 id=324 data-nosnippet>324</a></span><span class="kw">pub fn </span>gen_sample_param_permutations(_attr: TokenStream, item: TokenStream) -&gt; TokenStream {
-<a href=#325 id=325 data-nosnippet>325</a>    sample_param_permutations::gen_sample_param_permutations(item)
-<a href=#326 id=326 data-nosnippet>326</a>}
-<a href=#327 id=327 data-nosnippet>327</a>
-<a href=#328 id=328 data-nosnippet>328</a><span class="attr">#[proc_macro_derive(ScalarComposite)]
-<a href=#329 id=329 data-nosnippet>329</a></span><span class="kw">pub fn </span>derive_scalar_or_vector_composite(item: TokenStream) -&gt; TokenStream {
-<a href=#330 id=330 data-nosnippet>330</a>    scalar_or_vector_composite::derive(item.into())
-<a href=#331 id=331 data-nosnippet>331</a>        .unwrap_or_else(syn::Error::into_compile_error)
-<a href=#332 id=332 data-nosnippet>332</a>        .into()
-<a href=#333 id=333 data-nosnippet>333</a>}
+<a href=#266 id=266 data-nosnippet>266</a>        ..
+<a href=#267 id=267 data-nosnippet>267</a>    } = <span class="macro">syn::parse_macro_input!</span>(item <span class="kw">as </span>syn::ItemFn);
+<a href=#268 id=268 data-nosnippet>268</a>
+<a href=#269 id=269 data-nosnippet>269</a>    <span class="kw">let </span>fn_name = sig.ident.clone();
+<a href=#270 id=270 data-nosnippet>270</a>
+<a href=#271 id=271 data-nosnippet>271</a>    <span class="kw">let </span>sig_cpu = syn::Signature {
+<a href=#272 id=272 data-nosnippet>272</a>        abi: <span class="prelude-val">None</span>,
+<a href=#273 id=273 data-nosnippet>273</a>        ..sig.clone()
+<a href=#274 id=274 data-nosnippet>274</a>    };
+<a href=#275 id=275 data-nosnippet>275</a>
+<a href=#276 id=276 data-nosnippet>276</a>    <span class="kw">let </span>output = <span class="macro">quote::quote!</span> {
+<a href=#277 id=277 data-nosnippet>277</a>        <span class="comment">// Don't warn on unused arguments on the CPU side.
+<a href=#278 id=278 data-nosnippet>278</a>        </span><span class="attr">#[cfg(not(target_arch=<span class="string">"spirv"</span>))]
+<a href=#279 id=279 data-nosnippet>279</a>        #[allow(unused_variables)]
+<a href=#280 id=280 data-nosnippet>280</a>        </span>#(#attrs)* #vis #sig_cpu {
+<a href=#281 id=281 data-nosnippet>281</a>            <span class="macro">unimplemented!</span>(
+<a href=#282 id=282 data-nosnippet>282</a>                <span class="macro">concat!</span>(<span class="string">"`"</span>, <span class="macro">stringify!</span>(#fn_name), <span class="string">"` is only available on SPIR-V platforms."</span>)
+<a href=#283 id=283 data-nosnippet>283</a>            )
+<a href=#284 id=284 data-nosnippet>284</a>        }
+<a href=#285 id=285 data-nosnippet>285</a>
+<a href=#286 id=286 data-nosnippet>286</a>        <span class="attr">#[cfg(target_arch=<span class="string">"spirv"</span>)]
+<a href=#287 id=287 data-nosnippet>287</a>        </span>#(#attrs)* #vis #sig {
+<a href=#288 id=288 data-nosnippet>288</a>            #block
+<a href=#289 id=289 data-nosnippet>289</a>        }
+<a href=#290 id=290 data-nosnippet>290</a>    };
+<a href=#291 id=291 data-nosnippet>291</a>
+<a href=#292 id=292 data-nosnippet>292</a>    output.into()
+<a href=#293 id=293 data-nosnippet>293</a>}
+<a href=#294 id=294 data-nosnippet>294</a>
+<a href=#295 id=295 data-nosnippet>295</a><span class="doccomment">/// Print a formatted string using the debug printf extension.
+<a href=#296 id=296 data-nosnippet>296</a>///
+<a href=#297 id=297 data-nosnippet>297</a>/// Examples:
+<a href=#298 id=298 data-nosnippet>298</a>///
+<a href=#299 id=299 data-nosnippet>299</a>/// ```rust,ignore
+<a href=#300 id=300 data-nosnippet>300</a>/// debug_printf!("uv: %v2f\n", uv);
+<a href=#301 id=301 data-nosnippet>301</a>/// debug_printf!("pos.x: %f, pos.z: %f, int: %i\n", pos.x, pos.z, int);
+<a href=#302 id=302 data-nosnippet>302</a>/// ```
+<a href=#303 id=303 data-nosnippet>303</a>///
+<a href=#304 id=304 data-nosnippet>304</a>/// See &lt;https://github.com/KhronosGroup/Vulkan-ValidationLayers/blob/main/docs/debug_printf.md#debug-printf-format-string&gt; for formatting rules.
+<a href=#305 id=305 data-nosnippet>305</a></span><span class="attr">#[proc_macro]
+<a href=#306 id=306 data-nosnippet>306</a></span><span class="kw">pub fn </span>debug_printf(input: TokenStream) -&gt; TokenStream {
+<a href=#307 id=307 data-nosnippet>307</a>    debug_printf_inner(<span class="macro">syn::parse_macro_input!</span>(input <span class="kw">as </span>DebugPrintfInput))
+<a href=#308 id=308 data-nosnippet>308</a>}
+<a href=#309 id=309 data-nosnippet>309</a>
+<a href=#310 id=310 data-nosnippet>310</a><span class="doccomment">/// Similar to `debug_printf` but appends a newline to the format string.
+<a href=#311 id=311 data-nosnippet>311</a></span><span class="attr">#[proc_macro]
+<a href=#312 id=312 data-nosnippet>312</a></span><span class="kw">pub fn </span>debug_printfln(input: TokenStream) -&gt; TokenStream {
+<a href=#313 id=313 data-nosnippet>313</a>    <span class="kw">let </span><span class="kw-2">mut </span>input = <span class="macro">syn::parse_macro_input!</span>(input <span class="kw">as </span>DebugPrintfInput);
+<a href=#314 id=314 data-nosnippet>314</a>    input.format_string.push(<span class="string">'\n'</span>);
+<a href=#315 id=315 data-nosnippet>315</a>    debug_printf_inner(input)
+<a href=#316 id=316 data-nosnippet>316</a>}
+<a href=#317 id=317 data-nosnippet>317</a>
+<a href=#318 id=318 data-nosnippet>318</a><span class="doccomment">/// Generates permutations of an `ImageWithMethods` implementation containing sampling functions
+<a href=#319 id=319 data-nosnippet>319</a>/// that have asm instruction ending with a placeholder `$PARAMS` operand. The last parameter
+<a href=#320 id=320 data-nosnippet>320</a>/// of each function must be named `params`, its type will be rewritten. Relevant generic
+<a href=#321 id=321 data-nosnippet>321</a>/// arguments are added to the impl generics.
+<a href=#322 id=322 data-nosnippet>322</a>/// See `SAMPLE_PARAM_GENERICS` for a list of names you cannot use as generic arguments.
+<a href=#323 id=323 data-nosnippet>323</a></span><span class="attr">#[proc_macro_attribute]
+<a href=#324 id=324 data-nosnippet>324</a>#[doc(hidden)]
+<a href=#325 id=325 data-nosnippet>325</a></span><span class="kw">pub fn </span>gen_sample_param_permutations(_attr: TokenStream, item: TokenStream) -&gt; TokenStream {
+<a href=#326 id=326 data-nosnippet>326</a>    sample_param_permutations::gen_sample_param_permutations(item)
+<a href=#327 id=327 data-nosnippet>327</a>}
+<a href=#328 id=328 data-nosnippet>328</a>
+<a href=#329 id=329 data-nosnippet>329</a><span class="attr">#[proc_macro_derive(ScalarComposite)]
+<a href=#330 id=330 data-nosnippet>330</a></span><span class="kw">pub fn </span>derive_scalar_or_vector_composite(item: TokenStream) -&gt; TokenStream {
+<a href=#331 id=331 data-nosnippet>331</a>    scalar_or_vector_composite::derive(item.into())
+<a href=#332 id=332 data-nosnippet>332</a>        .unwrap_or_else(syn::Error::into_compile_error)
+<a href=#333 id=333 data-nosnippet>333</a>        .into()
+<a href=#334 id=334 data-nosnippet>334</a>}
 </code></pre></div></section></main></body></html>

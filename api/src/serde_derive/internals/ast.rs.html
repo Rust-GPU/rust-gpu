@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_derive-1.0.228/src/internals/ast.rs`."><title>ast.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="serde_derive" data-themes="" data-resource-suffix="" data-rustdoc-version="1.97.0-nightly (e96c36b6f 2026-05-21)" data-channel="nightly" data-search-js="search-fd9372ac.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-fcd733ba.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">serde_derive/internals/</div>ast.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! A Serde ast, parsed from the Syn ast and ready to generate Rust code.
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_derive-1.0.229/src/internals/ast.rs`."><title>ast.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="serde_derive" data-themes="" data-resource-suffix="" data-rustdoc-version="1.97.0-nightly (e96c36b6f 2026-05-21)" data-channel="nightly" data-search-js="search-fd9372ac.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-fcd733ba.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">serde_derive/internals/</div>ast.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! A Serde ast, parsed from the Syn ast and ready to generate Rust code.
 <a href=#2 id=2 data-nosnippet>2</a>
 <a href=#3 id=3 data-nosnippet>3</a></span><span class="kw">use </span><span class="kw">crate</span>::internals::{attr, check, Ctxt, Derive};
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span>proc_macro2::Ident;
@@ -202,18 +202,25 @@
 <a href=#202 id=202 data-nosnippet>202</a>    container_default: <span class="kw-2">&amp;</span>attr::Default,
 <a href=#203 id=203 data-nosnippet>203</a>    private: <span class="kw-2">&amp;</span>Ident,
 <a href=#204 id=204 data-nosnippet>204</a>) -&gt; Vec&lt;Field&lt;<span class="lifetime">'a</span>&gt;&gt; {
-<a href=#205 id=205 data-nosnippet>205</a>    fields
-<a href=#206 id=206 data-nosnippet>206</a>        .iter()
-<a href=#207 id=207 data-nosnippet>207</a>        .enumerate()
-<a href=#208 id=208 data-nosnippet>208</a>        .map(|(i, field)| Field {
-<a href=#209 id=209 data-nosnippet>209</a>            member: <span class="kw">match </span><span class="kw-2">&amp;</span>field.ident {
-<a href=#210 id=210 data-nosnippet>210</a>                <span class="prelude-val">Some</span>(ident) =&gt; syn::Member::Named(ident.clone()),
-<a href=#211 id=211 data-nosnippet>211</a>                <span class="prelude-val">None </span>=&gt; syn::Member::Unnamed(i.into()),
-<a href=#212 id=212 data-nosnippet>212</a>            },
-<a href=#213 id=213 data-nosnippet>213</a>            attrs: attr::Field::from_ast(cx, i, field, attrs, container_default, private),
-<a href=#214 id=214 data-nosnippet>214</a>            ty: <span class="kw-2">&amp;</span>field.ty,
-<a href=#215 id=215 data-nosnippet>215</a>            original: field,
-<a href=#216 id=216 data-nosnippet>216</a>        })
-<a href=#217 id=217 data-nosnippet>217</a>        .collect()
-<a href=#218 id=218 data-nosnippet>218</a>}
+<a href=#205 id=205 data-nosnippet>205</a>    <span class="kw">let </span><span class="kw-2">mut </span>dst_fields = Vec::with_capacity(fields.len());
+<a href=#206 id=206 data-nosnippet>206</a>    <span class="kw">for </span>field <span class="kw">in </span>fields {
+<a href=#207 id=207 data-nosnippet>207</a>        dst_fields.push(Field {
+<a href=#208 id=208 data-nosnippet>208</a>            member: <span class="kw">match </span><span class="kw-2">&amp;</span>field.ident {
+<a href=#209 id=209 data-nosnippet>209</a>                <span class="prelude-val">Some</span>(ident) =&gt; syn::Member::Named(ident.clone()),
+<a href=#210 id=210 data-nosnippet>210</a>                <span class="prelude-val">None </span>=&gt; syn::Member::Unnamed(dst_fields.len().into()),
+<a href=#211 id=211 data-nosnippet>211</a>            },
+<a href=#212 id=212 data-nosnippet>212</a>            attrs: attr::Field::from_ast(
+<a href=#213 id=213 data-nosnippet>213</a>                cx,
+<a href=#214 id=214 data-nosnippet>214</a>                dst_fields.len(),
+<a href=#215 id=215 data-nosnippet>215</a>                field,
+<a href=#216 id=216 data-nosnippet>216</a>                attrs,
+<a href=#217 id=217 data-nosnippet>217</a>                container_default,
+<a href=#218 id=218 data-nosnippet>218</a>                private,
+<a href=#219 id=219 data-nosnippet>219</a>            ),
+<a href=#220 id=220 data-nosnippet>220</a>            ty: <span class="kw-2">&amp;</span>field.ty,
+<a href=#221 id=221 data-nosnippet>221</a>            original: field,
+<a href=#222 id=222 data-nosnippet>222</a>        });
+<a href=#223 id=223 data-nosnippet>223</a>    }
+<a href=#224 id=224 data-nosnippet>224</a>    dst_fields
+<a href=#225 id=225 data-nosnippet>225</a>}
 </code></pre></div></section></main></body></html>

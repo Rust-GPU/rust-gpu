@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["discouraged"],"struct":["End","Error","Lookahead1","Nothing","ParseBuffer","StepCursor"],"trait":["Parse","Parser","Peek"],"type":["ParseStream","Result"]};
