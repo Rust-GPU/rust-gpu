@@ -30,6 +30,7 @@ bitflags::bitflags! {
     /// Memory semantics to determine how some operations should function - used when calling such
     /// configurable operations.
     #[repr(transparent)]
+    #[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Clone, Copy)]
     #[cfg_attr(feature = "bytemuck", derive(bytemuck::Zeroable, bytemuck::Pod))]
     pub struct Semantics: u32 {
         /// No memory semantics.
@@ -98,5 +99,16 @@ bitflags::bitflags! {
         /// This access cannot be eliminated, duplicated, or combined with
         /// other accesses.
         const VOLATILE = 0x8000;
+    }
+}
+
+#[cfg(all(test, feature = "bytemuck"))]
+mod test_bytemuck {
+    fn is_pod<T: bytemuck::Pod>() {}
+
+    #[test]
+    fn test() {
+        is_pod::<crate::memory::Semantics>();
+        is_pod::<crate::ray_tracing::RayFlags>();
     }
 }
