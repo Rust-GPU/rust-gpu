@@ -444,7 +444,7 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                 let elem_spirv = trans_scalar(cx, span, *self, element, Size::ZERO);
                 SpirvType::Vector {
                     element: elem_spirv,
-                    count: count as u32,
+                    count: count.as_u32(),
                     size: self.size,
                     align: self.align.abi,
                 }
