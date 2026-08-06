@@ -98,7 +98,7 @@ fn link_with_linker_opts(
     // is really a silent unwinding device, that should be treated the same as
     // `Err(ErrorGuaranteed)` returns from `link`).
     rustc_driver::catch_fatal_errors(|| {
-        rustc_data_structures::jobserver::initialize_checked(|err| {
+        rustc_data_structures::jobserver::initialize(99, |err| {
             unreachable!("jobserver error: {err}");
         });
 
