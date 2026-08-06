@@ -5,7 +5,7 @@ use super::CodegenCx;
 use crate::abi::ConvSpirvType;
 use crate::spirv_type::SpirvType;
 use rspirv::spirv::Word;
-use rustc_abi::{AddressSpace, BackendRepr, Reg};
+use rustc_abi::{AddressSpace, Reg};
 use rustc_codegen_ssa::common::TypeKind;
 use rustc_codegen_ssa::traits::{BaseTypeCodegenMethods, LayoutTypeCodegenMethods};
 use rustc_middle::ty::Ty;
@@ -92,26 +92,6 @@ impl<'tcx> LayoutTypeCodegenMethods<'tcx> for CodegenCx<'tcx> {
 
     fn immediate_backend_type(&self, layout: TyAndLayout<'tcx>) -> Self::Type {
         layout.spirv_type(DUMMY_SP, self)
-    }
-
-    fn is_backend_immediate(&self, layout: TyAndLayout<'tcx>) -> bool {
-        match layout.backend_repr {
-            BackendRepr::Scalar(_)
-            | BackendRepr::SimdScalableVector { .. }
-            | BackendRepr::SimdVector { .. } => true,
-            BackendRepr::ScalarPair { .. } => false,
-            BackendRepr::Memory { .. } => layout.is_zst(),
-        }
-    }
-
-    fn is_backend_scalar_pair(&self, layout: TyAndLayout<'tcx>) -> bool {
-        match layout.backend_repr {
-            BackendRepr::ScalarPair { .. } => true,
-            BackendRepr::Scalar(_)
-            | BackendRepr::SimdScalableVector { .. }
-            | BackendRepr::SimdVector { .. }
-            | BackendRepr::Memory { .. } => false,
-        }
     }
 
     fn scalar_pair_element_backend_type(
