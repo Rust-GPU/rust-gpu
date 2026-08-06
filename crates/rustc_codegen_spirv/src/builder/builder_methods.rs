@@ -1917,7 +1917,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
 
         let val = if place.val.llextra.is_some() {
             OperandValue::Ref(place.val)
-        } else if self.cx.is_backend_immediate(place.layout) {
+        } else if place.layout.backend_repr.is_scalar_or_simd() {
             let llval = self.load(
                 place.layout.spirv_type(self.span(), self),
                 place.val.llval,
