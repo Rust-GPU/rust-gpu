@@ -159,8 +159,8 @@ use rustc_middle::dep_graph::{WorkProduct, WorkProductMap};
 use rustc_middle::mono::{MonoItem, MonoItemData};
 use rustc_middle::ty::print::with_no_trimmed_paths;
 use rustc_middle::ty::{InstanceKind, TyCtxt};
-use rustc_session::Session;
 use rustc_session::config::{self, OutputFilenames, OutputType};
+use rustc_session::{IncrCompSession, Session};
 use rustc_span::symbol::Symbol;
 use std::any::Any;
 use std::fs;
@@ -255,13 +255,14 @@ impl CodegenBackend for SpirvCodegenBackend {
         &self,
         ongoing_codegen: Box<dyn Any>,
         sess: &Session,
+        incr_comp_session: Option<&IncrCompSession>,
         _outputs: &OutputFilenames,
         crate_info: &CrateInfo,
     ) -> (CompiledModules, WorkProductMap) {
         ongoing_codegen
             .downcast::<OngoingCodegen<Self>>()
             .expect("Expected OngoingCodegen, found Box<Any>")
-            .join(sess, crate_info)
+            .join(sess, incr_comp_session, crate_info)
     }
 
     fn link(
