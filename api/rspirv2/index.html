@@ -1,0 +1,125 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="rspirv2"><title>rspirv2 - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="rspirv2" data-themes="" data-resource-suffix="" data-rustdoc-version="1.97.0-nightly (e96c36b6f 2026-05-21)" data-channel="nightly" data-search-js="search-fd9372ac.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../static.files/storage-41dd4d93.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-fcd733ba.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc mod crate"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Crate rspirv2</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../rspirv2/index.html">rspirv2</a><span class="version">0.1.0+sdk-1.4.357</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#rspirv2" title="rspirv2">rspirv2</a><ul><li><a href="#features" title="Features">Features</a></li><li><a href="#performance" title="Performance">Performance</a></li></ul></li></ul><h3><a href="#modules">Crate Items</a></h3><ul class="block"><li><a href="#modules" title="Modules">Modules</a></li><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1>Crate <span>rspirv2</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/rspirv2/lib.rs.html#1-18">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="rspirv2"><a class="doc-anchor" href="#rspirv2">§</a>rspirv2</h2>
+<p><a href="https://crates.io/crates/rspirv2"><img src="https://img.shields.io/crates/v/rspirv2" alt="Crates.io Version" /></a></p>
+<p>SPIR-V is the binary format for Vulkan shaders (and <code>OpenCL</code> kernels). This crate provides a strongly typed SPIR-V representation for all instructions, efficient encoded instruction storage, manipulation tools, disassembler and support for custom instruction sets. Built primarily for <a href="https://github.com/Rust-GPU/rust-gpu/">rust-gpu</a>.</p>
+<p>Created and sponsored by <a href="https://www.vectorware.com/"><img src="./docs/vectorware_logo.png" alt="Vectorware" style="max-width: 12pt; height: 12pt;"> Vectorware</a>.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="comment">// an allocator for `IdResult`s (SSA value IDs)
+</span><span class="kw">let </span><span class="kw-2">mut </span>alloc = IdResultAlloc::new();
+<span class="comment">// a `Vec` for instructions that stores them in SPIR-V encoded form
+</span><span class="kw">let </span><span class="kw-2">mut </span>vec = InstVec::&lt;CoreInstSet&gt;::new();
+
+<span class="comment">// add some SPIR-V instructions
+// declare u32 type
+</span><span class="kw">let </span>u32 = vec.push_inst(OpTypeInt {
+    id_result: alloc.alloc_id(),
+    width: LiteralInteger::new(<span class="number">32</span>),
+    signedness: LiteralInteger::new(<span class="number">0</span>),
+});
+<span class="comment">// let a: u32 = 42;
+</span><span class="kw">let </span>a = vec.push_inst(OpConstant {
+    id_result_type: IdResultType(u32),
+    id_result: alloc.alloc_id(),
+    value: LiteralConst::from(<span class="number">42u32</span>),
+});
+<span class="comment">// let b: u32 = a + a;
+</span><span class="kw">let </span>b = vec.push_inst(OpIAdd {
+    id_result_type: IdResultType(u32),
+    id_result: alloc.alloc_id(),
+    operand_1: IdRef(a),
+    operand_2: IdRef(a),
+});
+
+<span class="comment">// replace `b = a + a` with `b = a * a`
+</span><span class="kw">let </span><span class="kw-2">mut </span>modified = vec
+    .iter()
+    .map(|inst| <span class="kw">match </span>inst {
+        CoreInstSet::IAdd(OpIAdd {
+            id_result,
+            operand_1,
+            operand_2,
+            ..
+        }) =&gt; OpIMul {
+            id_result_type: IdResultType(u32),
+            id_result,
+            operand_1,
+            operand_2,
+        }
+        .into(),
+        inst =&gt; inst,
+    })
+    .collect::&lt;InstVec&lt;<span class="kw">_</span>&gt;&gt;();
+
+<span class="comment">// append InstVec to each other
+</span><span class="kw">let </span><span class="kw-2">mut </span>vec2 = InstVec::new();
+vec2.push_inst(OpISub {
+    id_result_type: IdResultType(u32),
+    id_result: alloc.alloc_id(),
+    operand_1: IdRef(a),
+    operand_2: IdRef(b),
+});
+modified.append(<span class="kw-2">&amp;mut </span>vec2);
+
+<span class="comment">// disassembly with various settings:
+// `default()` for colorful terminal output
+// `simple()` to remove color and padding
+// `like_spirv_tools()` and `like_rspirv()` to mimic output of other disassemblers
+</span><span class="kw">let </span>disassembly = <span class="macro">format!</span>(<span class="string">"{}"</span>, modified.dis(DisOptions::simple()));
+<span class="macro">expect_test::expect!</span>[[<span class="string">r#"
+    %u32 = OpTypeInt 32 0
+    %u32_42 = OpConstant %u32 42
+    %2 = OpIMul %u32 %u32_42 %u32_42
+    %3 = OpISub %u32 %u32_42 %2
+"#</span>]]
+.assert_eq(<span class="kw-2">&amp;</span>disassembly);</code></pre></div><h3 id="features"><a class="doc-anchor" href="#features">§</a>Features</h3>
+<ul>
+<li>strongly typed: Each instruction has their own struct with pub fields for each operand, to make it easy to access and modify them. The <code>CoreInstSet</code> type is a plain enum of all available instructions, which you can just match on.</li>
+<li>efficient storage: A <code>Vec&lt;CoreInstSet&gt;</code> consumes a lot of memory as it needs to reserve space for the largest instruction. <code>InstVec</code> store instructions efficiently in their variable-length SPIR-V encoded form, but you can’t trivially replace instructions.</li>
+<li>iteration and slicing: When you iterate over the <code>InstVec</code>, it’ll decode instructions on the fly, so it doesn’t look any different to a <code>Vec</code>. It also gives you various offsets to the instructions, so you can slice it as you’d slice a string.</li>
+<li>bring your own builder: You’re not locked into using <code>InstVec</code> to encode instructions, you can implement <code>trait WordWriter</code> to write the binary form into your own data structure.</li>
+<li>custom instruction sets: We codegen all instructions from the SPIR-V grammar. This makes updating to newer versions easy, and by modifying the grammar or creating your own you can make custom instruction sets.</li>
+<li>tooling: A disassembler that doesn’t fail with unknown instruction and supports custom instruction sets as a generic.</li>
+</ul>
+<h4 id="caveats"><a class="doc-anchor" href="#caveats">§</a>Caveats</h4>
+<ul>
+<li>Assumes SPIR-V instructions can be encoded, decoded and processed independently without requiring context from any other instruction. This is true for almost all instructions, except for <code>OpSwitch</code> and <code>ExtInstSet</code>.</li>
+<li><code>OpSwitch</code> has a custom implementation where anyone accessing must first define whether the labels are 32 or 64bit wide.</li>
+<li>Extended instruction sets (<code>ExtInstSet</code>) are not properly supported. We do of course support declaring <code>ExtInstSet</code> and calling their functions, but the API will say you’re calling function id 69. You’ll need to resolve that yourself, e.g. if the associated <code>ExtInstSet</code> declaration is <code>glsl.std.450</code>, it’s the vector <code>Normalize()</code> function from glsl.</li>
+<li>No SPIR-V assembler</li>
+<li>Contributions welcome!</li>
+</ul>
+<h4 id="compared-to-rspirv"><a class="doc-anchor" href="#compared-to-rspirv">§</a>Compared to <a href="https://github.com/gfx-rs/rspirv/">rspirv</a></h4>
+<ul>
+<li>rspirv has a <a href="https://github.com/gfx-rs/rspirv/blob/3e8814d838a49a98084ada2d1a8677e3281c6d33/rspirv/sr/autogen_ops.rs#L67">structured representation</a>, which you can only load from a binary, but not write back into a binary.</li>
+<li><a href="https://github.com/gfx-rs/rspirv/blob/3e8814d838a49a98084ada2d1a8677e3281c6d33/rspirv/dr/build/autogen_norm_insts.rs#L21-L63">rspirv’s builder is a singleton cursor</a>, rust-gpu needs multiple cursors, so <a href="https://github.com/Rust-GPU/rust-gpu/blob/8b85962188181817aaaf3aee431677e078ff2a68/crates/rustc_codegen_spirv/src/builder_spirv.rs#L399-L430">working around this limitation has been awkward</a>. In rspirv2, you can have as many <code>InstVec</code> as you want and concat them together arbitrarily.</li>
+<li>Accessing operands of instructions is dynamic, so to <a href="https://github.com/Rust-GPU/rust-gpu/blob/c2de01373cc65372a2d438a8bf1dec1465fe450d/crates/rustc_codegen_spirv/src/linker/simple_passes.rs#L353-L367">modify SPIR-V</a> you need to cast operands to concrete types manually.</li>
+<li><a href="https://github.com/gfx-rs/rspirv/blob/3e8814d838a49a98084ada2d1a8677e3281c6d33/rspirv/binary/assemble.rs#L4-L16">rspirv’s instruction encode function</a> takes an <code>&amp;mut Vec&lt;u32&gt;</code> as an arg, limiting in the kinds of buffers you can write to. In rspirv2 you can write to anything that implements <code>WordWriter</code>.</li>
+<li>Their Module has a Vec of Instructions, and each <a href="https://github.com/gfx-rs/rspirv/blob/3e8814d838a49a98084ada2d1a8677e3281c6d33/rspirv/dr/constructs.rs#L84-L95">Instruction contains a Vec of parameters</a>, with no pooling or arena, leading to a lot of small individual allocations.</li>
+<li>rust-gpu’s custom <a href="https://github.com/Rust-GPU/rust-gpu/blob/8b85962188181817aaaf3aee431677e078ff2a68/crates/rustc_codegen_spirv/src/custom_insts.rs">instructions</a> and <a href="https://github.com/Rust-GPU/rust-gpu/blob/8b85962188181817aaaf3aee431677e078ff2a68/crates/rustc_codegen_spirv/src/custom_decorations.rs">decorations</a> are messy and most disassemblers refuse to disassemble unknown instructions. We need tooling that supports custom instruction sets for rust-gpu internal IRs.</li>
+</ul>
+<h3 id="performance"><a class="doc-anchor" href="#performance">§</a>Performance</h3>
+<p>Testing disassembler performance on an unreasonably large 87MiB SPIR-V file:</p>
+<div class="example-wrap"><pre class="language-text"><code># rspirv2
+$ cargo b --bin rspirv2-dis --release
+$ time ./target/release/rspirv2-dis huge.spv &gt;/dev/null
+
+real    0m1.363s
+user    0m1.231s
+sys     0m0.122s
+
+# official C++ spirv tooling
+$ time spirv-dis ./huge.spv &gt;/dev/null
+
+real    0m7.262s
+user    0m6.873s
+sys     0m0.333s
+
+# rspirv
+$ time ~/.cargo/bin/rspirv-dis ./huge.spv &gt;/dev/null
+
+# RSPIRV NUMBERS ARE NOT COMPARABLE
+# rspirv&#39;s output is considerably simpler and cheaper to compute, using only ids (`%3`)
+# instead of trying to resolve a human readable name (`%u32`).
+real    0m4.679s
+user    0m4.223s
+sys     0m0.423s</code></pre></div></div></details><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><dl class="item-table"><dt><a class="mod" href="binary/index.html" title="mod rspirv2::binary">binary</a></dt><dt><a class="mod" href="core/index.html" title="mod rspirv2::core">core</a></dt><dt><a class="mod" href="custom_inst/index.html" title="mod rspirv2::custom_inst">custom_<wbr>inst</a></dt><dd>custom instructions</dd><dt><a class="mod" href="dis/index.html" title="mod rspirv2::dis">dis</a></dt><dt><a class="mod" href="inst/index.html" title="mod rspirv2::inst">inst</a></dt><dt><a class="mod" href="meta/index.html" title="mod rspirv2::meta">meta</a></dt><dd>Rust structs containing metadata information about SPIR-V instructions, directly deserialized from the SPIR-V
+grammar JSON.</dd><dt><a class="mod" href="module/index.html" title="mod rspirv2::module">module</a></dt><dt><a class="mod" href="operand/index.html" title="mod rspirv2::operand">operand</a></dt><dt><a class="mod" href="slice/index.html" title="mod rspirv2::slice">slice</a></dt><dt><a class="mod" href="vec/index.html" title="mod rspirv2::vec">vec</a></dt></dl><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.Word.html" title="struct rspirv2::Word">Word</a></dt><dd>A 32bit SPIR-V Word</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.cast_words_to_ne_bytes.html" title="fn rspirv2::cast_words_to_ne_bytes">cast_<wbr>words_<wbr>to_<wbr>ne_<wbr>bytes</a></dt><dd>Convert a slice of <a href="struct.Word.html" title="struct rspirv2::Word"><code>Word</code></a>s to a slice of <code>u8</code>s in native endian.</dd></dl></section></div></main></body></html>

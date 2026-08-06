@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ID_RESULT_MAX"],"enum":["DecodeErrorKind","EncodeError"],"struct":["DecodeError","FnWriter","IdResultAlloc","InstOffset","InstReader","OperandReader","WordCounter","WordSliceWriter"],"trait":["WordWriter"]};

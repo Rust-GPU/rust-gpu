@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["SPIRV_MAGIC"],"enum":["ParseError"],"struct":["Module","SpirvHeader","SpirvVersion"]};

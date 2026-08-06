@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["STR_15_SPACES"],"enum":["IdName","IdNaming","PrimitiveType","ResolvedIdName","TypeNaming"],"fn":["escape_cow","escape_cow_str","escape_id_name"],"struct":["DisContext","DisInstSlice","DisOptions","SeparatorJoiner","StrCharIter"],"trait":["InstSetDisCtx","IntoDisContext"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["OpSwitchError","OpSwitchTarget","OpSwitchTargetLen"],"struct":["OpSwitch","OpSwitchResolvedTarget"]};

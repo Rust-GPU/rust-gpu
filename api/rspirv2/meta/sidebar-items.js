@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Category","Quantifier"],"struct":["CoreGrammar","Enumerant","ExtInstSetGrammar","Extension","Grammar","InstClass","InstMeta","OperandKind","OperandSpecMeta"],"trait":["AnyCapability"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["InstDis","InstRef"],"trait":["Inst","InstEncoding","MaybeIdResult"]};
