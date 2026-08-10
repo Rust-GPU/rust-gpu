@@ -121,6 +121,10 @@ impl Runner {
                     deps.spirv_std_macros.display()
                 ),
                 &*format!("--extern spirv_std={}", deps.spirv_std.display()),
+                &*format!(
+                    "--extern spirv_std_nightly={}",
+                    deps.spirv_std_nightly.display()
+                ),
                 &*format!("--extern glam={}", deps.glam.display()),
                 "--crate-type dylib",
                 "-Zunstable-options",
@@ -224,6 +228,7 @@ impl Runner {
         let spirv_std = self.find_lib("spirv_std", DepKind::SpirvLib, target);
         let glam = self.find_lib("glam", DepKind::SpirvLib, target);
         let spirv_std_macros = self.find_lib("spirv_std_macros", DepKind::ProcMacro, target);
+        let spirv_std_nightly = self.find_lib("spirv_std_nightly", DepKind::SpirvLib, target);
 
         let all_libs = [
             &compiler_builtins,
@@ -231,6 +236,7 @@ impl Runner {
             &spirv_std,
             &glam,
             &spirv_std_macros,
+            &spirv_std_nightly,
         ];
         if all_libs.iter().any(|r| r.is_err()) {
             // FIXME(eddyb) `missing_count` should always be `0` anyway.
@@ -256,6 +262,7 @@ impl Runner {
                 compiler_builtins: compiler_builtins.ok().unwrap(),
                 spirv_std: spirv_std.ok().unwrap(),
                 spirv_std_macros: spirv_std_macros.ok().unwrap(),
+                spirv_std_nightly: spirv_std_nightly.ok().unwrap(),
             }
         }
     }
@@ -345,6 +352,7 @@ struct TestDeps {
     compiler_builtins: PathBuf,
     spirv_std: PathBuf,
     spirv_std_macros: PathBuf,
+    spirv_std_nightly: PathBuf,
     glam: PathBuf,
 }
 
