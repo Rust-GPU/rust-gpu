@@ -45,8 +45,8 @@ impl DepKind {
 
     fn target_dir_suffix(self, target: &SpirvTarget) -> String {
         match self {
-            Self::SpirvLib => format!("{}/debug/deps", target.target()),
-            Self::ProcMacro => "debug/deps".into(),
+            Self::SpirvLib => format!("{}/debug/build", target.target()),
+            Self::ProcMacro => "debug/build".into(),
         }
     }
 }
@@ -102,16 +102,16 @@ impl Runner {
         fn test_rustc_flags(
             codegen_backend_path: &Path,
             deps: &[TestDep],
-            indirect_deps_dirs: &[&Path],
+            search_dirs: &[PathBuf],
         ) -> String {
             [
                 &*rust_flags(codegen_backend_path),
-                &*indirect_deps_dirs
+                &*search_dirs
                     .iter()
                     .map(|dir| format!("-L dependency={}", dir.display()))
-                    .fold(String::new(), |a, b| b + " " + &a),
+                    .join(" "),
                 "--edition 2021",
-                &*deps.iter().map(TestDep::to_rustc_param).join(" "),
+                &*deps.iter().map(TestDep::to_rustc_extern).join(" "),
                 "--crate-type dylib",
                 "-Zunstable-options",
                 "-Zcrate-attr=no_std",
@@ -156,18 +156,8 @@ impl Runner {
                     .unwrap();
 
             let libs = self.build_deps(&target, &target_spec);
-            let mut flags = test_rustc_flags(
-                &self.codegen_backend_path,
-                &libs,
-                &[
-                    &self
-                        .deps_target_dir
-                        .join(DepKind::SpirvLib.target_dir_suffix(&target)),
-                    &self
-                        .deps_target_dir
-                        .join(DepKind::ProcMacro.target_dir_suffix(&target)),
-                ],
-            );
+            let search_dirs = self.dep_search_dirs(&target);
+            let mut flags = test_rustc_flags(&self.codegen_backend_path, &libs, &search_dirs);
             flags += variation.extra_flags;
 
             let config = compiletest::Config {
@@ -198,6 +188,7 @@ impl Runner {
             "compiletests-deps-helper",
             "-Zbuild-std=core",
             "-Zbuild-std-features=compiler-builtins-mem",
+            "-Zbuild-dir-new-layout",
         ]);
         target_spec.append_to_cmd(&mut cmd);
         cmd.arg("--target-dir")
@@ -215,9 +206,9 @@ impl Runner {
                     .no_prelude(),
                 self.find_lib("core", DepKind::SpirvLib, target)?
                     .no_prelude(),
-                self.find_lib("spirv_std", DepKind::SpirvLib, target)?,
+                self.find_lib("spirv-std", DepKind::SpirvLib, target)?,
                 self.find_lib("glam", DepKind::SpirvLib, target)?,
-                self.find_lib("spirv_std_macros", DepKind::ProcMacro, target)?,
+                self.find_lib("spirv-std-macros", DepKind::ProcMacro, target)?,
             ])
         })();
         if let Ok(all_deps) = all_deps {
@@ -241,55 +232,54 @@ impl Runner {
 }
 
 impl Runner {
+    /// search for `out` dirs for all compiled libraries
+    fn dep_search_dirs(&self, target: &SpirvTarget) -> Vec<PathBuf> {
+        [
+            self.deps_target_dir
+                .join(DepKind::SpirvLib.target_dir_suffix(target)),
+            self.deps_target_dir
+                .join(DepKind::ProcMacro.target_dir_suffix(target)),
+        ]
+        .iter()
+        .filter_map(|build_dir| std::fs::read_dir(build_dir).ok())
+        .flatten()
+        .filter_map(|crate_dir| std::fs::read_dir(crate_dir.ok()?.path()).ok())
+        .flatten()
+        .filter_map(|hash_dir| {
+            let out_dir = hash_dir.ok()?.path().join("out");
+            out_dir.is_dir().then_some(out_dir)
+        })
+        .collect()
+    }
+
     /// Attempt find the rlib that matches `base`, if multiple rlibs are found then
     /// a clean build is required and `Err(FindLibError::Duplicate)` is returned.
     fn find_lib(&self, name: &str, dep_kind: DepKind, target: &SpirvTarget) -> Result<TestDep, ()> {
-        let (expected_prefix, expected_extension) = dep_kind.prefix_and_extension();
-        let expected_prefix = format!("{expected_prefix}{name}");
-
-        let dir = self
+        let ident_name = name.replace("-", "_");
+        let (expected_prefix, expected_suffix) = dep_kind.prefix_and_extension();
+        let expected_prefix = format!("{expected_prefix}{}", ident_name);
+        let build_dir = self
             .deps_target_dir
-            .join(dep_kind.target_dir_suffix(target));
+            .join(dep_kind.target_dir_suffix(target))
+            .join(name);
 
-        let rlib = std::fs::read_dir(dir)
-            .unwrap()
-            .map(|entry| entry.unwrap().path())
-            .filter(move |path| {
-                let name = {
-                    let name = path.file_stem();
-                    if name.is_none() {
-                        return false;
-                    }
-                    name.unwrap()
-                };
-
-                let name_matches = name.to_str().unwrap().starts_with(&expected_prefix)
-                    && name.len() == expected_prefix.len() + 17   // we expect our name, '-', and then 16 hexadecimal digits
-                    && ends_with_dash_hash(name.to_str().unwrap());
-                let extension_matches = path
-                    .extension()
-                    .is_some_and(|ext| ext == expected_extension);
-
-                name_matches && extension_matches
+        let rlib = std::fs::read_dir(&build_dir)
+            .unwrap_or_else(|_| panic!("Couldn't read dir {}", build_dir.display()))
+            .filter_map(|entry| {
+                let out_dir = entry.ok()?.path().join("out");
+                std::fs::read_dir(out_dir).ok()
+            })
+            .flatten()
+            .filter_map(|entry| {
+                let path = entry.ok()?.path();
+                let file_name = path.file_name()?.to_str()?;
+                (file_name.starts_with(&expected_prefix) && file_name.ends_with(expected_suffix))
+                    .then_some(path)
             })
             .exactly_one()
             .map_err(|_e| ())?;
-        Ok(TestDep::new(name.to_owned(), rlib))
+        Ok(TestDep::new(ident_name, rlib))
     }
-}
-
-/// Returns whether this string ends with a dash ('-'), followed by 16 lowercase hexadecimal characters
-fn ends_with_dash_hash(s: &str) -> bool {
-    let n = s.len();
-    if n < 17 {
-        return false;
-    }
-    let mut bytes = s.bytes().skip(n - 17);
-    if bytes.next() != Some(b'-') {
-        return false;
-    }
-
-    bytes.all(|b| b.is_ascii_hexdigit())
 }
 
 struct TestDep {
@@ -314,7 +304,7 @@ impl TestDep {
         }
     }
 
-    pub fn to_rustc_param(&self) -> String {
+    pub fn to_rustc_extern(&self) -> String {
         let noprelude = if self.no_prelude { "noprelude:" } else { "" };
         format!("--extern {noprelude}{}={}", self.name, self.rlib.display())
     }
