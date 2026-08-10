@@ -433,19 +433,19 @@ impl<'tcx> Visitor<'tcx> for CheckSpirvAttrVisitor<'tcx> {
     }
 
     fn visit_item(&mut self, item: &'tcx hir::Item<'tcx>) {
-        let target = Target::from_item(item);
+        let target = Target::from(item);
         self.check_spirv_attributes(item.hir_id(), target);
         intravisit::walk_item(self, item);
     }
 
     fn visit_generic_param(&mut self, generic_param: &'tcx hir::GenericParam<'tcx>) {
-        let target = Target::from_generic_param(generic_param);
+        let target = Target::from(generic_param);
         self.check_spirv_attributes(generic_param.hir_id, target);
         intravisit::walk_generic_param(self, generic_param);
     }
 
     fn visit_trait_item(&mut self, trait_item: &'tcx hir::TraitItem<'tcx>) {
-        let target = Target::from_trait_item(trait_item);
+        let target = Target::from(trait_item);
         self.check_spirv_attributes(trait_item.hir_id(), target);
         intravisit::walk_trait_item(self, trait_item);
     }
@@ -461,7 +461,7 @@ impl<'tcx> Visitor<'tcx> for CheckSpirvAttrVisitor<'tcx> {
     }
 
     fn visit_foreign_item(&mut self, f_item: &'tcx hir::ForeignItem<'tcx>) {
-        let target = Target::from_foreign_item(f_item);
+        let target = Target::from(f_item);
         self.check_spirv_attributes(f_item.hir_id(), target);
         intravisit::walk_foreign_item(self, f_item);
     }
