@@ -6,11 +6,14 @@
     reason = "This is just a workflow tool"
 )]
 
+use crate::toolchain::SetToolchain;
 use anyhow::Context as _;
 use clap::Parser as _;
 use std::borrow::Cow;
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
+
+mod toolchain;
 
 /// Path to the shader crate
 const SHADER_CRATE_PATH: &str = "crates/shader-crate-template";
@@ -41,6 +44,7 @@ enum Cli {
     RustGpuRev {
         rev: String,
     },
+    SetToolchain(#[clap(flatten)] SetToolchain),
 }
 
 /// run some cmd
@@ -352,6 +356,7 @@ impl Cli {
                 )?;
                 Cli::UpdateExpect.run()?;
             }
+            Cli::SetToolchain(inner) => inner.run()?,
         }
         Ok(())
     }
