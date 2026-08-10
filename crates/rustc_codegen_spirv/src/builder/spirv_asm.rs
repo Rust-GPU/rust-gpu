@@ -3,8 +3,10 @@ use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 
 use super::Builder;
 use crate::abi::ConvSpirvType;
-use crate::builder_spirv::{SpirvValue, SpirvValueExt, SpirvValueKind};
+use crate::builder_spirv::{SpirvBlockCursor, SpirvValue, SpirvValueExt, SpirvValueKind};
 use crate::codegen_cx::CodegenCx;
+use crate::maybe_pqp_cg_ssa::mir::operand::OperandRef;
+use crate::maybe_pqp_cg_ssa::traits::BackendTypes;
 use crate::spirv_type::SpirvType;
 use rspirv::dr;
 use rspirv::grammar::{LogicalOperand, OperandKind, OperandQuantifier, reflect};
@@ -17,11 +19,12 @@ use rustc_abi::{BackendRepr, Primitive};
 use rustc_ast::ast::{InlineAsmOptions, InlineAsmTemplatePiece};
 use rustc_codegen_ssa::mir::operand::OperandValue;
 use rustc_codegen_ssa::mir::place::PlaceRef;
-use rustc_codegen_ssa::traits::{
-    AsmBuilderMethods, BackendTypes, BuilderMethods, InlineAsmOperandRef,
-};
+use rustc_codegen_ssa::traits::{AsmBuilderMethods, BuilderMethods, InlineAsmOperandRef};
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
-use rustc_middle::{bug, ty::Instance};
+use rustc_middle::mir::interpret::Scalar;
+use rustc_middle::ty::layout::LayoutOf;
+use rustc_middle::{bug, span_bug, ty::Instance};
+use rustc_span::def_id::DefId;
 use rustc_span::{DUMMY_SP, Span};
 use rustc_target::asm::{InlineAsmRegClass, InlineAsmRegOrRegClass, SpirVInlineAsmRegClass};
 use smallvec::SmallVec;
@@ -40,32 +43,80 @@ impl InstructionTable {
     }
 }
 
-// HACK(eddyb) `InlineAsmOperandRef` lacks `#[derive(Clone)]`
-fn inline_asm_operand_ref_clone<'tcx, B: BackendTypes + ?Sized>(
-    operand: &InlineAsmOperandRef<'tcx, B>,
-) -> InlineAsmOperandRef<'tcx, B> {
-    use InlineAsmOperandRef::*;
+#[expect(
+    dead_code,
+    reason = "keep asm structs like upstream with minimal changes"
+)]
+#[derive(Debug)]
+pub enum SpvInlineAsmOperandRef<'tcx> {
+    In {
+        reg: InlineAsmRegOrRegClass,
+        value: OperandRef<'tcx, SpirvValue>,
+    },
+    Out {
+        reg: InlineAsmRegOrRegClass,
+        late: bool,
+        place: Option<PlaceRef<'tcx, SpirvValue>>,
+    },
+    InOut {
+        reg: InlineAsmRegOrRegClass,
+        late: bool,
+        in_value: OperandRef<'tcx, SpirvValue>,
+        out_place: Option<PlaceRef<'tcx, SpirvValue>>,
+    },
+    Const {
+        string: String,
+    },
+    SymThreadLocalStatic {
+        def_id: DefId,
+    },
+    Label {
+        label: SpirvBlockCursor,
+    },
+}
 
-    match operand {
-        &In { reg, value } => In { reg, value },
-        &Out { reg, late, place } => Out { reg, late, place },
-        &InOut {
-            reg,
-            late,
-            in_value,
-            out_place,
-        } => InOut {
-            reg,
-            late,
-            in_value,
-            out_place,
-        },
-        Const { string } => Const {
-            string: string.clone(),
-        },
-        &SymFn { instance } => SymFn { instance },
-        &SymStatic { def_id } => SymStatic { def_id },
-        &Label { label } => Label { label },
+impl<'tcx> SpvInlineAsmOperandRef<'tcx> {
+    fn from<B: BackendTypes<Value = SpirvValue, BasicBlock = SpirvBlockCursor> + ?Sized>(
+        cx: &CodegenCx<'tcx>,
+        operand: &InlineAsmOperandRef<'tcx, B>,
+        span: Span,
+    ) -> Self {
+        match *operand {
+            InlineAsmOperandRef::In { reg, value } => Self::In { reg, value },
+            InlineAsmOperandRef::Out { reg, late, place } => Self::Out { reg, late, place },
+            InlineAsmOperandRef::InOut {
+                reg,
+                late,
+                in_value,
+                out_place,
+            } => Self::InOut {
+                reg,
+                late,
+                in_value,
+                out_place,
+            },
+            InlineAsmOperandRef::Const { value, ty } => match value {
+                Scalar::Int(value) => {
+                    let string = rustc_codegen_ssa::common::asm_const_to_str(
+                        cx.tcx,
+                        span,
+                        value,
+                        cx.layout_of(ty),
+                    );
+                    Self::Const { string }
+                }
+                Scalar::Ptr(_, _) => {
+                    span_bug!(
+                        span,
+                        "spirv can't handle `InlineAsmOperandRef::Const {{ value: Scalar::Ptr(_, _) }}`",
+                    )
+                }
+            },
+            InlineAsmOperandRef::Label { label } => Self::Label { label },
+            InlineAsmOperandRef::SymThreadLocalStatic { def_id } => {
+                Self::SymThreadLocalStatic { def_id }
+            }
+        }
     }
 }
 
@@ -109,22 +160,24 @@ impl<'a, 'tcx> AsmBuilderMethods<'tcx> for Builder<'a, 'tcx> {
 
         // HACK(eddyb) get more accurate pointers types, for pointer operands,
         // from the Rust types available in their respective `OperandRef`s.
-        let mut operands: SmallVec<[_; 8]> =
-            operands.iter().map(inline_asm_operand_ref_clone).collect();
+        let span = line_spans.first().copied().unwrap_or_default();
+        let mut operands: SmallVec<[_; 8]> = operands
+            .iter()
+            .map(|operand| SpvInlineAsmOperandRef::from(self.cx, operand, span))
+            .collect();
         for operand in &mut operands {
             let (in_value, out_place) = match operand {
-                InlineAsmOperandRef::In { value, .. } => (Some(value), None),
-                InlineAsmOperandRef::InOut {
+                SpvInlineAsmOperandRef::In { value, .. } => (Some(value), None),
+                SpvInlineAsmOperandRef::InOut {
                     in_value,
                     out_place,
                     ..
                 } => (Some(in_value), out_place.as_mut()),
-                InlineAsmOperandRef::Out { place, .. } => (None, place.as_mut()),
+                SpvInlineAsmOperandRef::Out { place, .. } => (None, place.as_mut()),
 
-                InlineAsmOperandRef::Const { .. }
-                | InlineAsmOperandRef::SymFn { .. }
-                | InlineAsmOperandRef::SymStatic { .. }
-                | InlineAsmOperandRef::Label { .. } => (None, None),
+                SpvInlineAsmOperandRef::Const { .. }
+                | SpvInlineAsmOperandRef::Label { .. }
+                | SpvInlineAsmOperandRef::SymThreadLocalStatic { .. } => (None, None),
             };
 
             if let Some(in_value) = in_value
@@ -201,7 +254,9 @@ impl<'a, 'tcx> AsmBuilderMethods<'tcx> for Builder<'a, 'tcx> {
                                 Token::Typeof(&operands[operand_idx], span, kind);
                         }
                         None => match &operands[operand_idx] {
-                            InlineAsmOperandRef::Const { string } => line.push(Token::Word(string)),
+                            SpvInlineAsmOperandRef::Const { string } => {
+                                line.push(Token::Word(string));
+                            }
                             item => line.push(Token::Placeholder(item, span)),
                         },
                     }
@@ -213,7 +268,7 @@ impl<'a, 'tcx> AsmBuilderMethods<'tcx> for Builder<'a, 'tcx> {
         let mut defined_ids = FxHashSet::default();
         let mut id_to_type_map = FxHashMap::default();
         for operand in &operands {
-            if let InlineAsmOperandRef::In { reg: _, value } = operand {
+            if let SpvInlineAsmOperandRef::In { reg: _, value } = operand {
                 let value = value.immediate();
                 id_to_type_map.insert(value.def(self), value.ty);
             }
@@ -275,15 +330,11 @@ enum TypeofKind {
     Dereference,
 }
 
-enum Token<'a, 'cx, 'tcx> {
+enum Token<'a, 'tcx> {
     Word(&'a str),
     String(String),
-    Placeholder(&'a InlineAsmOperandRef<'tcx, Builder<'cx, 'tcx>>, Span),
-    Typeof(
-        &'a InlineAsmOperandRef<'tcx, Builder<'cx, 'tcx>>,
-        Span,
-        TypeofKind,
-    ),
+    Placeholder(&'a SpvInlineAsmOperandRef<'tcx>, Span),
+    Typeof(&'a SpvInlineAsmOperandRef<'tcx>, Span, TypeofKind),
 }
 
 enum OutRegister<'tcx> {
@@ -297,7 +348,7 @@ enum AsmBlock {
 }
 
 impl<'cx, 'tcx> Builder<'cx, 'tcx> {
-    fn lex_word<'a>(&self, line: &mut std::str::Chars<'a>) -> Option<Token<'a, 'cx, 'tcx>> {
+    fn lex_word<'a>(&self, line: &mut std::str::Chars<'a>) -> Option<Token<'a, 'tcx>> {
         loop {
             let start = line.as_str();
             match line.next()? {
@@ -512,7 +563,7 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
         defined_ids: &mut FxHashSet<Word>,
         id_to_type_map: &mut FxHashMap<Word, Word>,
         asm_block: &mut AsmBlock,
-        mut tokens: impl Iterator<Item = Token<'a, 'cx, 'tcx>>,
+        mut tokens: impl Iterator<Item = Token<'a, 'tcx>>,
     ) where
         'cx: 'a,
         'tcx: 'a,
@@ -601,7 +652,7 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
         &mut self,
         id_map: &mut FxHashMap<&'a str, Word>,
         id_to_type_map: &FxHashMap<Word, Word>,
-        mut tokens: impl Iterator<Item = Token<'a, 'cx, 'tcx>>,
+        mut tokens: impl Iterator<Item = Token<'a, 'tcx>>,
         instruction: &mut dr::Instruction,
     ) where
         'cx: 'a,
@@ -909,7 +960,7 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
         &mut self,
         id_map: &mut FxHashMap<&'a str, Word>,
         defined_ids: &mut FxHashSet<Word>,
-        token: Token<'a, 'cx, 'tcx>,
+        token: Token<'a, 'tcx>,
     ) -> Option<OutRegister<'tcx>> {
         match token {
             Token::Word(word) => {
@@ -937,14 +988,14 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
                 None
             }
             Token::Placeholder(hole, span) => match hole {
-                InlineAsmOperandRef::In { reg, value: _ } => {
+                SpvInlineAsmOperandRef::In { reg, value: _ } => {
                     self.check_reg(span, reg);
                     self.tcx
                         .dcx()
                         .span_err(span, "in register cannot be assigned to");
                     None
                 }
-                InlineAsmOperandRef::Out {
+                SpvInlineAsmOperandRef::Out {
                     reg,
                     late: _,
                     place,
@@ -957,7 +1008,7 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
                         None
                     }
                 }
-                InlineAsmOperandRef::InOut {
+                SpvInlineAsmOperandRef::InOut {
                     reg,
                     late: _,
                     in_value: _,
@@ -971,28 +1022,22 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
                         None
                     }
                 }
-                InlineAsmOperandRef::Const { string: _ } => {
+                SpvInlineAsmOperandRef::Const { .. } => {
                     self.tcx
                         .dcx()
                         .span_err(span, "cannot write to const asm argument");
                     None
                 }
-                InlineAsmOperandRef::SymFn { instance: _ } => {
-                    self.tcx
-                        .dcx()
-                        .span_err(span, "cannot write to function asm argument");
-                    None
-                }
-                InlineAsmOperandRef::SymStatic { def_id: _ } => {
-                    self.tcx
-                        .dcx()
-                        .span_err(span, "cannot write to static variable asm argument");
-                    None
-                }
-                InlineAsmOperandRef::Label { label: _ } => {
+                SpvInlineAsmOperandRef::Label { label: _ } => {
                     self.tcx
                         .dcx()
                         .span_err(span, "cannot write to label asm argument");
+                    None
+                }
+                SpvInlineAsmOperandRef::SymThreadLocalStatic { .. } => {
+                    self.tcx
+                        .dcx()
+                        .span_err(span, "cannot write to SymThreadLocalStatic asm argument");
                     None
                 }
             },
@@ -1002,7 +1047,7 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
     fn parse_id_in<'a>(
         &mut self,
         id_map: &mut FxHashMap<&'a str, Word>,
-        token: Token<'a, 'cx, 'tcx>,
+        token: Token<'a, 'tcx>,
     ) -> Option<Word> {
         match token {
             Token::Word(word) => {
@@ -1018,7 +1063,7 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
                 None
             }
             Token::Typeof(hole, span, kind) => match hole {
-                InlineAsmOperandRef::In { reg, value } => {
+                SpvInlineAsmOperandRef::In { reg, value } => {
                     self.check_reg(span, reg);
                     let ty = value.immediate().ty;
                     Some(match kind {
@@ -1038,7 +1083,7 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
                         },
                     })
                 }
-                InlineAsmOperandRef::Out {
+                SpvInlineAsmOperandRef::Out {
                     reg,
                     late: _,
                     place,
@@ -1065,7 +1110,7 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
                         None
                     }
                 }
-                InlineAsmOperandRef::InOut {
+                SpvInlineAsmOperandRef::InOut {
                     reg,
                     late: _,
                     in_value,
@@ -1074,38 +1119,31 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
                     self.check_reg(span, reg);
                     Some(in_value.immediate().ty)
                 }
-                InlineAsmOperandRef::Const { string: _ } => {
+                SpvInlineAsmOperandRef::Const { .. } => {
                     self.tcx
                         .dcx()
                         .span_err(span, "cannot take the type of a const asm argument");
                     None
                 }
-                InlineAsmOperandRef::SymFn { instance: _ } => {
-                    self.tcx
-                        .dcx()
-                        .span_err(span, "cannot take the type of a function asm argument");
-                    None
-                }
-                InlineAsmOperandRef::SymStatic { def_id: _ } => {
-                    self.tcx.dcx().span_err(
-                        span,
-                        "cannot take the type of a static variable asm argument",
-                    );
-                    None
-                }
-                InlineAsmOperandRef::Label { label: _ } => {
+                SpvInlineAsmOperandRef::Label { label: _ } => {
                     self.tcx
                         .dcx()
                         .span_err(span, "cannot take the type of a label asm argument");
                     None
                 }
+                SpvInlineAsmOperandRef::SymThreadLocalStatic { .. } => {
+                    self.tcx
+                        .dcx()
+                        .span_err(span, "cannot write to SymThreadLocalStatic asm argument");
+                    None
+                }
             },
             Token::Placeholder(hole, span) => match hole {
-                InlineAsmOperandRef::In { reg, value } => {
+                SpvInlineAsmOperandRef::In { reg, value } => {
                     self.check_reg(span, reg);
                     Some(value.immediate().def(self))
                 }
-                InlineAsmOperandRef::Out {
+                SpvInlineAsmOperandRef::Out {
                     reg,
                     late: _,
                     place: _,
@@ -1116,7 +1154,7 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
                         .span_err(span, "out register cannot be used as a value");
                     None
                 }
-                InlineAsmOperandRef::InOut {
+                SpvInlineAsmOperandRef::InOut {
                     reg,
                     late: _,
                     in_value,
@@ -1125,28 +1163,22 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
                     self.check_reg(span, reg);
                     Some(in_value.immediate().def(self))
                 }
-                InlineAsmOperandRef::Const { string: _ } => {
+                SpvInlineAsmOperandRef::Const { .. } => {
                     self.tcx
                         .dcx()
                         .span_err(span, "const asm argument not supported yet");
                     None
                 }
-                InlineAsmOperandRef::SymFn { instance: _ } => {
-                    self.tcx
-                        .dcx()
-                        .span_err(span, "function asm argument not supported yet");
-                    None
-                }
-                InlineAsmOperandRef::SymStatic { def_id: _ } => {
-                    self.tcx
-                        .dcx()
-                        .span_err(span, "static variable asm argument not supported yet");
-                    None
-                }
-                InlineAsmOperandRef::Label { label: _ } => {
+                SpvInlineAsmOperandRef::Label { label: _ } => {
                     self.tcx
                         .dcx()
                         .span_err(span, "label asm argument not supported yet");
+                    None
+                }
+                SpvInlineAsmOperandRef::SymThreadLocalStatic { .. } => {
+                    self.tcx
+                        .dcx()
+                        .span_err(span, "cannot write to SymThreadLocalStatic asm argument");
                     None
                 }
             },
@@ -1158,7 +1190,7 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
         id_map: &mut FxHashMap<&'a str, Word>,
         inst: &mut dr::Instruction,
         kind: OperandKind,
-        tokens: &mut impl Iterator<Item = Token<'a, 'cx, 'tcx>>,
+        tokens: &mut impl Iterator<Item = Token<'a, 'tcx>>,
     ) -> bool
     where
         'cx: 'a,
