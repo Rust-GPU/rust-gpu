@@ -101,7 +101,7 @@ impl Runner {
         /// RUSTFLAGS passed to all test files.
         fn test_rustc_flags(
             codegen_backend_path: &Path,
-            deps: &TestDeps,
+            deps: &[TestDep],
             indirect_deps_dirs: &[&Path],
         ) -> String {
             [
@@ -111,17 +111,7 @@ impl Runner {
                     .map(|dir| format!("-L dependency={}", dir.display()))
                     .fold(String::new(), |a, b| b + " " + &a),
                 "--edition 2021",
-                &*format!("--extern noprelude:core={}", deps.core.display()),
-                &*format!(
-                    "--extern noprelude:compiler_builtins={}",
-                    deps.compiler_builtins.display()
-                ),
-                &*format!(
-                    "--extern spirv_std_macros={}",
-                    deps.spirv_std_macros.display()
-                ),
-                &*format!("--extern spirv_std={}", deps.spirv_std.display()),
-                &*format!("--extern glam={}", deps.glam.display()),
+                &*deps.iter().map(TestDep::to_rustc_param).join(" "),
                 "--crate-type dylib",
                 "-Zunstable-options",
                 "-Zcrate-attr=no_std",
@@ -199,7 +189,7 @@ impl Runner {
     }
 
     /// Runs the processes needed to build `spirv-std` & other deps.
-    fn build_deps(&self, target: &SpirvTarget, target_spec: &TargetSpec) -> TestDeps {
+    fn build_deps(&self, target: &SpirvTarget, target_spec: &TargetSpec) -> Vec<TestDep> {
         // Build compiletests-deps-helper
         let mut cmd = std::process::Command::new("cargo");
         cmd.args([
@@ -219,44 +209,23 @@ impl Runner {
             .and_then(map_status_to_result)
             .unwrap();
 
-        let compiler_builtins = self.find_lib("compiler_builtins", DepKind::SpirvLib, target);
-        let core = self.find_lib("core", DepKind::SpirvLib, target);
-        let spirv_std = self.find_lib("spirv_std", DepKind::SpirvLib, target);
-        let glam = self.find_lib("glam", DepKind::SpirvLib, target);
-        let spirv_std_macros = self.find_lib("spirv_std_macros", DepKind::ProcMacro, target);
-
-        let all_libs = [
-            &compiler_builtins,
-            &core,
-            &spirv_std,
-            &glam,
-            &spirv_std_macros,
-        ];
-        if all_libs.iter().any(|r| r.is_err()) {
-            // FIXME(eddyb) `missing_count` should always be `0` anyway.
-            // FIXME(eddyb) use `--message-format=json-render-diagnostics` to
-            // avoid caring about duplicates (or search within files at all).
-            let missing_count = all_libs
-                .iter()
-                .filter(|r| matches!(r, Err(FindLibError::Missing)))
-                .count();
-            let duplicate_count = all_libs
-                .iter()
-                .filter(|r| matches!(r, Err(FindLibError::Duplicate)))
-                .count();
-            eprintln!(
-                "warning: cleaning deps ({missing_count} missing libs, {duplicate_count} duplicated libs)"
-            );
+        let all_deps: Result<_, ()> = (|| {
+            Ok([
+                self.find_lib("compiler_builtins", DepKind::SpirvLib, target)?
+                    .no_prelude(),
+                self.find_lib("core", DepKind::SpirvLib, target)?
+                    .no_prelude(),
+                self.find_lib("spirv_std", DepKind::SpirvLib, target)?,
+                self.find_lib("glam", DepKind::SpirvLib, target)?,
+                self.find_lib("spirv_std_macros", DepKind::ProcMacro, target)?,
+            ])
+        })();
+        if let Ok(all_deps) = all_deps {
+            Vec::from(all_deps)
+        } else {
+            eprintln!("warning: cleaning and rebuilding deps");
             self.clean_deps();
             self.build_deps(target, target_spec)
-        } else {
-            TestDeps {
-                core: core.ok().unwrap(),
-                glam: glam.ok().unwrap(),
-                compiler_builtins: compiler_builtins.ok().unwrap(),
-                spirv_std: spirv_std.ok().unwrap(),
-                spirv_std_macros: spirv_std_macros.ok().unwrap(),
-            }
         }
     }
 
@@ -271,29 +240,18 @@ impl Runner {
     }
 }
 
-enum FindLibError {
-    Missing,
-    Duplicate,
-}
-
 impl Runner {
     /// Attempt find the rlib that matches `base`, if multiple rlibs are found then
     /// a clean build is required and `Err(FindLibError::Duplicate)` is returned.
-    fn find_lib(
-        &self,
-        base: impl AsRef<Path>,
-        dep_kind: DepKind,
-        target: &SpirvTarget,
-    ) -> Result<PathBuf, FindLibError> {
-        let base = base.as_ref();
+    fn find_lib(&self, name: &str, dep_kind: DepKind, target: &SpirvTarget) -> Result<TestDep, ()> {
         let (expected_prefix, expected_extension) = dep_kind.prefix_and_extension();
-        let expected_name = format!("{}{}", expected_prefix, base.display());
+        let expected_prefix = format!("{expected_prefix}{name}");
 
         let dir = self
             .deps_target_dir
             .join(dep_kind.target_dir_suffix(target));
 
-        std::fs::read_dir(dir)
+        let rlib = std::fs::read_dir(dir)
             .unwrap()
             .map(|entry| entry.unwrap().path())
             .filter(move |path| {
@@ -305,9 +263,9 @@ impl Runner {
                     name.unwrap()
                 };
 
-                let name_matches = name.to_str().unwrap().starts_with(&expected_name)
-                && name.len() == expected_name.len() + 17   // we expect our name, '-', and then 16 hexadecimal digits
-                && ends_with_dash_hash(name.to_str().unwrap());
+                let name_matches = name.to_str().unwrap().starts_with(&expected_prefix)
+                    && name.len() == expected_prefix.len() + 17   // we expect our name, '-', and then 16 hexadecimal digits
+                    && ends_with_dash_hash(name.to_str().unwrap());
                 let extension_matches = path
                     .extension()
                     .is_some_and(|ext| ext == expected_extension);
@@ -315,13 +273,8 @@ impl Runner {
                 name_matches && extension_matches
             })
             .exactly_one()
-            .map_err(|mut iter| {
-                if iter.next().is_none() {
-                    FindLibError::Missing
-                } else {
-                    FindLibError::Duplicate
-                }
-            })
+            .map_err(|_e| ())?;
+        Ok(TestDep::new(name.to_owned(), rlib))
     }
 }
 
@@ -339,13 +292,32 @@ fn ends_with_dash_hash(s: &str) -> bool {
     bytes.all(|b| b.is_ascii_hexdigit())
 }
 
-/// Paths to all of the library artifacts of dependencies needed to compile tests.
-struct TestDeps {
-    core: PathBuf,
-    compiler_builtins: PathBuf,
-    spirv_std: PathBuf,
-    spirv_std_macros: PathBuf,
-    glam: PathBuf,
+struct TestDep {
+    name: String,
+    rlib: PathBuf,
+    no_prelude: bool,
+}
+
+impl TestDep {
+    pub fn new(name: String, rlib: PathBuf) -> Self {
+        Self {
+            name,
+            rlib,
+            no_prelude: false,
+        }
+    }
+
+    pub fn no_prelude(self) -> Self {
+        Self {
+            no_prelude: true,
+            ..self
+        }
+    }
+
+    pub fn to_rustc_param(&self) -> String {
+        let noprelude = if self.no_prelude { "noprelude:" } else { "" };
+        format!("--extern {noprelude}{}={}", self.name, self.rlib.display())
+    }
 }
 
 /// The RUSTFLAGS passed to all SPIR-V builds.
