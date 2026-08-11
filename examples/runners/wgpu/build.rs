@@ -1,6 +1,5 @@
 use std::env;
 use std::error::Error;
-use std::path::PathBuf;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let target_os = env::var("CARGO_CFG_TARGET_OS")?;
@@ -12,27 +11,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     if target_os != "android" && target_arch != "wasm32" {
         return Ok(());
     }
-    let profile = env::var("PROFILE").unwrap();
-    let mut dir = PathBuf::from(env::var_os("OUT_DIR").unwrap());
-    // Strip `$profile/build/*/out`.
-    let ok = dir.ends_with("out")
-        && dir.pop()
-        && dir.pop()
-        && dir.ends_with("build")
-        && dir.pop()
-        && dir.ends_with(profile)
-        && dir.pop();
-    assert!(ok);
-    let dir = dir.join("example-runner-wgpu-builder");
     let status = std::process::Command::new("cargo")
-        .args([
-            "run",
-            "--release",
-            "-p",
-            "example-runner-wgpu-builder",
-            "--target-dir",
-        ])
-        .arg(dir)
+        .args(["run", "--release", "-p", "example-runner-wgpu-builder"])
         .env_remove("CARGO_ENCODED_RUSTFLAGS")
         .stderr(std::process::Stdio::inherit())
         .stdout(std::process::Stdio::inherit())
