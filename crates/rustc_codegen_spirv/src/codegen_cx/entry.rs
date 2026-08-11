@@ -12,10 +12,9 @@ use rspirv::spirv::{
     BuiltIn, Decoration, Dim, ExecutionModel, FunctionControl, StorageClass, Word,
 };
 use rustc_abi::FieldsShape;
-use rustc_codegen_ssa::traits::{
-    BaseTypeCodegenMethods, BuilderMethods, ConstCodegenMethods, LayoutTypeCodegenMethods,
-    MiscCodegenMethods as _,
-};
+use rustc_codegen_ssa::mir::operand::{OperandRef, OperandValue};
+use rustc_codegen_ssa::mir::place::PlaceRef;
+use rustc_codegen_ssa::traits::{BaseTypeCodegenMethods, BuilderMethods, MiscCodegenMethods as _};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::MultiSpan;
 use rustc_hir as hir;
@@ -676,29 +675,17 @@ impl<'tcx> CodegenCx<'tcx> {
                 PassMode::Pair(..) => {
                     // Load both elements of the scalar pair from the input variable.
                     assert_eq!(storage_class, Ok(StorageClass::Input));
-                    let layout = entry_arg_abi.layout;
-                    let (a, b) = match layout.backend_repr {
-                        rustc_abi::BackendRepr::ScalarPair(a, b) => (a, b),
-                        other => span_bug!(
-                            hir_param.ty_span,
-                            "ScalarPair expected for entry param, found {other:?}"
-                        ),
+                    let OperandRef {
+                        val: OperandValue::Pair(v0, v1),
+                        ..
+                    } = bx.load_operand(PlaceRef::new_sized(
+                        value_ptr.unwrap(),
+                        entry_arg_abi.layout,
+                    ))
+                    else {
+                        unreachable!();
                     };
-                    let b_offset = a
-                        .primitive()
-                        .size(self)
-                        .align_to(b.primitive().align(self).abi);
-
-                    let elem0_ty = self.scalar_pair_element_backend_type(layout, 0, false);
-                    let elem1_ty = self.scalar_pair_element_backend_type(layout, 1, false);
-
-                    let base_ptr = value_ptr.unwrap();
-                    let ptr1 = bx.inbounds_ptradd(base_ptr, self.const_usize(b_offset.bytes()));
-
-                    let v0 = bx.load(elem0_ty, base_ptr, layout.align.abi);
-                    let v1 = bx.load(elem1_ty, ptr1, layout.align.restrict_for_offset(b_offset));
-                    call_args.push(v0);
-                    call_args.push(v1);
+                    call_args.extend([v0, v1]);
                     assert_eq!(value_len, None);
                 }
                 _ => unreachable!(),
