@@ -102,6 +102,15 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     }
 
     #[track_caller]
+    pub fn warn(&self, msg: impl Into<DiagMessage>) {
+        if let Some(current_span) = self.current_span {
+            self.tcx.dcx().span_warn(current_span, msg);
+        } else {
+            self.tcx.dcx().warn(msg);
+        }
+    }
+
+    #[track_caller]
     pub fn err(&self, msg: impl Into<DiagMessage>) {
         if let Some(current_span) = self.current_span {
             self.tcx.dcx().span_err(current_span, msg);
