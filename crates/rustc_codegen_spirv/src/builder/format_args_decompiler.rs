@@ -557,16 +557,19 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
             if let Some((template_id, template_ty_id, rt_args_ptr_id, rt_args_ptr_ty_id)) =
                 split_fmt_args
             {
-                let ctor = if let (Some(template_len), Some(rt_args_count)) = (
+                if let (Some(template_len), Some(rt_args_count)) = (
                     const_ptr_to_composite_len(template_id)
                         .or_else(|| array_len_from_ptr_type(template_ty_id)),
                     const_ptr_to_composite_len(rt_args_ptr_id)
                         .or_else(|| array_len_from_ptr_type(rt_args_ptr_ty_id)),
                 ) {
-                    FmtArgsCtor::NewTemplate {
-                        template_len,
-                        rt_args_count,
-                    }
+                    (
+                        FmtArgsCtor::NewTemplate {
+                            template_len,
+                            rt_args_count,
+                        },
+                        SmallVec::<[Word; 8]>::from_slice(&[template_id, rt_args_ptr_id]),
+                    )
                 } else if let Some(&[Inst::Call(_, callee_id, ref call_args)]) =
                     try_rev_take(-1).as_deref()
                     && call_args.len() == 2
@@ -574,18 +577,40 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                 {
                     // Consume the matched call instruction.
                     try_rev_take(1).unwrap();
-                    lookup_fmt_args_ctor(callee_id)?
+                    (
+                        lookup_fmt_args_ctor(callee_id)?,
+                        SmallVec::<[Word; 8]>::from_slice(&[template_id, rt_args_ptr_id]),
+                    )
+                } else if let Some(
+                    &[
+                        Inst::Call(call_ret_id, callee_id, ref call_args),
+                        Inst::CompositeExtract(extracted0, from0, 0),
+                        Inst::CompositeExtract(extracted1, from1, 1),
+                    ],
+                ) = try_rev_take(-3).as_deref()
+                    && [from0, from1] == [call_ret_id; 2]
+                    && [extracted0, extracted1] == [template_id, rt_args_ptr_id]
+                {
+                    // Newer rustc, since `BackendRepr::ScalarPair` args are no
+                    // longer forced to `PassMode::Direct`, returns the whole
+                    // `fmt::Arguments` from its `new_*` constructor as a scalar
+                    // pair, and splits it (via `OpCompositeExtract`s) into the
+                    // two scalar values passed to the panic entry-point.
+                    //
+                    // The constructor's own arguments (i.e. `pieces`/`template`
+                    // and the `rt::Argument` slice pointers) still carry the
+                    // recoverable const data, so use those, like the aggregate
+                    // (non-split) `Call`+`extract`+`insert` case does below.
+                    let call_args_storage = call_args.iter().copied().collect();
+                    // Consume the matched call + both `OpCompositeExtract`s.
+                    try_rev_take(3).unwrap();
+                    (lookup_fmt_args_ctor(callee_id)?, call_args_storage)
                 } else {
                     // We failed to recover constructor metadata for an already-split
                     // `fmt::Arguments` value. Keep panic lowering sound by falling
                     // back to an unknown panic message, without requiring decompilation.
                     return Ok(decoded_format_args);
-                };
-
-                (
-                    ctor,
-                    SmallVec::<[Word; 8]>::from_slice(&[template_id, rt_args_ptr_id]),
-                )
+                }
             } else {
                 // Newer rustc can pass the `fmt::Arguments::new_*` result directly to
                 // panic entry points (single trailing call), while older versions go

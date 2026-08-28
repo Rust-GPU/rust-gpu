@@ -152,11 +152,10 @@ use maybe_pqp_cg_ssa::{
 };
 use rspirv::binary::Assemble;
 use rustc_ast::expand::allocator::AllocatorMethod;
-use rustc_data_structures::fx::FxIndexMap;
 use rustc_data_structures::profiling::SelfProfilerRef;
 use rustc_errors::DiagCtxtHandle;
 use rustc_metadata::EncodedMetadata;
-use rustc_middle::dep_graph::{WorkProduct, WorkProductId};
+use rustc_middle::dep_graph::{WorkProduct, WorkProductMap};
 use rustc_middle::mono::{MonoItem, MonoItemData};
 use rustc_middle::ty::print::with_no_trimmed_paths;
 use rustc_middle::ty::{InstanceKind, TyCtxt};
@@ -258,7 +257,7 @@ impl CodegenBackend for SpirvCodegenBackend {
         sess: &Session,
         _outputs: &OutputFilenames,
         crate_info: &CrateInfo,
-    ) -> (CompiledModules, FxIndexMap<WorkProductId, WorkProduct>) {
+    ) -> (CompiledModules, WorkProductMap) {
         ongoing_codegen
             .downcast::<OngoingCodegen<Self>>()
             .expect("Expected OngoingCodegen, found Box<Any>")
@@ -411,6 +410,7 @@ impl WriteBackendMethods for SpirvCodegenBackend {
             name,
             kind,
             object: Some(path),
+            global_asm_object: None,
             dwarf_object: None,
             bytecode: None,
             assembly: None,
@@ -434,6 +434,8 @@ impl WriteBackendMethods for SpirvCodegenBackend {
 }
 
 impl ExtraBackendMethods for SpirvCodegenBackend {
+    type Module = rspirv::dr::Module;
+
     fn codegen_allocator(&self, _: TyCtxt<'_>, _: &str, _: &[AllocatorMethod]) -> Self::Module {
         todo!()
     }

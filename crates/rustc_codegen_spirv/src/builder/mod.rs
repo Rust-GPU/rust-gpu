@@ -7,7 +7,7 @@ pub mod libm_intrinsics;
 mod spirv_asm;
 
 pub use ext_inst::ExtInst;
-use rustc_span::DUMMY_SP;
+use rustc_span::{BytePos, DUMMY_SP, SourceFile, Symbol};
 pub use spirv_asm::InstructionTable;
 
 // HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
@@ -185,24 +185,15 @@ impl<'a, 'tcx> DebugInfoBuilderMethods<'_> for Builder<'a, 'tcx> {
         _indirect_offsets: &[Size],
         _fragment: &Option<Range<Size>>,
     ) {
-        todo!()
     }
 
-    fn set_dbg_loc(&mut self, _: Self::DILocation) {
-        todo!()
-    }
+    fn set_dbg_loc(&mut self, _: Self::DILocation) {}
 
-    fn clear_dbg_loc(&mut self) {
-        todo!()
-    }
+    fn clear_dbg_loc(&mut self) {}
 
-    fn insert_reference_to_gdb_debug_scripts_section_global(&mut self) {
-        todo!()
-    }
+    fn insert_reference_to_gdb_debug_scripts_section_global(&mut self) {}
 
-    fn set_var_name(&mut self, _value: Self::Value, _name: &str) {
-        todo!()
-    }
+    fn set_var_name(&mut self, _value: Self::Value, _name: &str) {}
 
     fn dbg_var_value(
         &mut self,
@@ -216,7 +207,54 @@ impl<'a, 'tcx> DebugInfoBuilderMethods<'_> for Builder<'a, 'tcx> {
         // if this is a fragment of a composite `DIVariable`.
         _fragment: &Option<Range<Size>>,
     ) {
-        todo!()
+    }
+
+    fn dbg_scope_fn(
+        &mut self,
+        _instance: Instance<'_>,
+        _fn_abi: &FnAbi<'_, Ty<'_>>,
+        _maybe_definition_llfn: Option<Self::Function>,
+    ) -> Self::DIScope {
+    }
+
+    fn dbg_create_lexical_block(
+        &mut self,
+        _pos: BytePos,
+        _parent_scope: Self::DIScope,
+    ) -> Self::DIScope {
+    }
+
+    fn dbg_location_clone_with_discriminator(
+        &mut self,
+        _loc: Self::DILocation,
+        _discriminator: u32,
+    ) -> Option<Self::DILocation> {
+        None
+    }
+
+    fn dbg_loc(
+        &mut self,
+        _scope: Self::DIScope,
+        _inlined_at: Option<Self::DILocation>,
+        _span: Span,
+    ) -> Self::DILocation {
+    }
+
+    fn extend_scope_to_file(
+        &mut self,
+        _scope_metadata: Self::DIScope,
+        _file: &SourceFile,
+    ) -> Self::DIScope {
+    }
+
+    fn create_dbg_var(
+        &mut self,
+        _variable_name: Symbol,
+        _variable_type: Ty<'_>,
+        _scope_metadata: Self::DIScope,
+        _variable_kind: rustc_codegen_ssa::mir::debuginfo::VariableKind,
+        _span: Span,
+    ) -> Self::DIVariable {
     }
 }
 

@@ -12,6 +12,8 @@ use rspirv::spirv::{
     BuiltIn, Decoration, Dim, ExecutionModel, FunctionControl, StorageClass, Word,
 };
 use rustc_abi::FieldsShape;
+use rustc_codegen_ssa::mir::operand::{OperandRef, OperandValue};
+use rustc_codegen_ssa::mir::place::PlaceRef;
 use rustc_codegen_ssa::traits::{BaseTypeCodegenMethods, BuilderMethods, MiscCodegenMethods as _};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::MultiSpan;
@@ -87,22 +89,7 @@ impl<'tcx> CodegenCx<'tcx> {
         };
         for (arg_abi, hir_param) in fn_abi.args.iter().zip(hir_params) {
             match arg_abi.mode {
-                PassMode::Direct(_) | PassMode::Ignore => {}
-                PassMode::Pair(..) => {
-                    // FIXME(eddyb) implement `ScalarPair` `Input`s, or change
-                    // the `FnAbi` readjustment to only use `PassMode::Pair` for
-                    // pointers to `!Sized` types, but not other `ScalarPair`s.
-                    if !matches!(arg_abi.layout.ty.kind(), ty::Ref(..)) {
-                        self.tcx.dcx().span_err(
-                            hir_param.ty_span,
-                            format!(
-                                "entry point parameter type not yet supported \
-                                 (`{}` has `ScalarPair` ABI but is not a `&T`)",
-                                arg_abi.layout.ty
-                            ),
-                        );
-                    }
-                }
+                PassMode::Direct(_) | PassMode::Pair(..) | PassMode::Ignore => {}
                 _ => span_bug!(
                     hir_param.ty_span,
                     "query hooks should've made this `PassMode` impossible: {:#?}",
@@ -191,7 +178,7 @@ impl<'tcx> CodegenCx<'tcx> {
             self.get_fn(entry_instance).ty,
             None,
             Some(entry_fn_abi),
-            self.get_fn_addr(entry_instance),
+            self.get_fn_addr(entry_instance, None),
             &call_args,
             None,
             None,
@@ -517,14 +504,6 @@ impl<'tcx> CodegenCx<'tcx> {
              vs layout:\n{value_layout:#?}",
             entry_arg_abi.layout.ty
         );
-        if is_pair && !is_unsized {
-            // If PassMode is Pair, then we need to fill in the second part of the pair with a
-            // value. We currently only do that with unsized types, so if a type is a pair for some
-            // other reason (e.g. a tuple), we bail.
-            self.tcx
-                .dcx()
-                .span_fatal(hir_param.ty_span, "pair type not supported yet")
-        }
         // FIXME(eddyb) should this talk about "typed buffers" instead of "interface blocks"?
         // FIXME(eddyb) should we talk about "descriptor indexing" or
         // actually use more reasonable terms like "resource arrays"?
@@ -647,8 +626,8 @@ impl<'tcx> CodegenCx<'tcx> {
                 }
             }
 
-            let value_len = if is_pair {
-                // We've already emitted an error, fill in a placeholder value
+            let value_len = if is_pair && is_unsized {
+                // For wide references (e.g., slices), the second component is a length.
                 Some(bx.undef(self.type_isize()))
             } else {
                 None
@@ -691,6 +670,22 @@ impl<'tcx> CodegenCx<'tcx> {
                         }
                     };
                     call_args.push(value);
+                    assert_eq!(value_len, None);
+                }
+                PassMode::Pair(..) => {
+                    // Load both elements of the scalar pair from the input variable.
+                    assert_eq!(storage_class, Ok(StorageClass::Input));
+                    let OperandRef {
+                        val: OperandValue::Pair(v0, v1),
+                        ..
+                    } = bx.load_operand(PlaceRef::new_sized(
+                        value_ptr.unwrap(),
+                        entry_arg_abi.layout,
+                    ))
+                    else {
+                        unreachable!();
+                    };
+                    call_args.extend([v0, v1]);
                     assert_eq!(value_len, None);
                 }
                 _ => unreachable!(),

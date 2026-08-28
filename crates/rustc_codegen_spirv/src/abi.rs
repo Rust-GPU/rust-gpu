@@ -92,15 +92,6 @@ pub(crate) fn provide(providers: &mut Providers) {
             // <https://github.com/rust-lang/rust/commit/eaaa03faf77b157907894a4207d8378ecaec7b45>
             arg.make_direct_deprecated();
 
-            // FIXME(eddyb) detect `#[rust_gpu::vector::v1]` more specifically,
-            // to avoid affecting anything should actually be passed as a pair.
-            if let PassMode::Pair(..) = arg.mode {
-                // HACK(eddyb) this avoids breaking e.g. `&[T]` pairs.
-                if let TyKind::Adt(..) = arg.layout.ty.kind() {
-                    arg.mode = PassMode::Direct(ArgAttributes::new());
-                }
-            }
-
             // Avoid pointlessly passing ZSTs, just like the official Rust ABI.
             if arg.layout.is_zst() {
                 arg.mode = PassMode::Ignore;
@@ -414,7 +405,10 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                 // Note: We can't use auto_struct_layout here because the spirv types here might be undefined due to
                 // recursive pointer types.
                 let a_offset = Size::ZERO;
-                let b_offset = a.primitive().size(cx).align_to(b.primitive().align(cx).abi);
+                let b_offset = a
+                    .primitive()
+                    .size(cx)
+                    .align_to(b.primitive().default_align(cx).abi);
                 let a = trans_scalar(cx, span, *self, a, a_offset);
                 let b = trans_scalar(cx, span, *self, b, b_offset);
                 let size = if self.is_unsized() {
@@ -490,7 +484,7 @@ pub fn scalar_pair_element_backend_type<'tcx>(
     ty: TyAndLayout<'tcx>,
     index: usize,
 ) -> Word {
-    let [a, b] = match ty.layout.backend_repr() {
+    let [a, b] = match ty.backend_repr {
         BackendRepr::ScalarPair(a, b) => [a, b],
         other => span_bug!(
             span,
@@ -500,7 +494,10 @@ pub fn scalar_pair_element_backend_type<'tcx>(
     };
     let offset = match index {
         0 => Size::ZERO,
-        1 => a.primitive().size(cx).align_to(b.primitive().align(cx).abi),
+        1 => a
+            .primitive()
+            .size(cx)
+            .align_to(b.primitive().default_align(cx).abi),
         _ => unreachable!(),
     };
     trans_scalar(cx, span, ty, [a, b][index], offset)
