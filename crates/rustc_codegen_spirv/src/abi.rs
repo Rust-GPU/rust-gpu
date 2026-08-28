@@ -87,19 +87,10 @@ pub(crate) fn provide(providers: &mut Providers) {
         fn_abi: &'tcx FnAbi<'tcx, Ty<'tcx>>,
     ) -> &'tcx FnAbi<'tcx, Ty<'tcx>> {
         let readjust_arg_abi = |arg: &ArgAbi<'tcx, Ty<'tcx>>| {
-            let mut arg = ArgAbi::new(&tcx, arg.layout, |_, _| ArgAttributes::new());
+            let mut arg = ArgAbi::new(arg.layout, |_, _| ArgAttributes::new());
             // FIXME: this is bad! https://github.com/rust-lang/rust/issues/115666
             // <https://github.com/rust-lang/rust/commit/eaaa03faf77b157907894a4207d8378ecaec7b45>
             arg.make_direct_deprecated();
-
-            // FIXME(eddyb) detect `#[rust_gpu::vector::v1]` more specifically,
-            // to avoid affecting anything should actually be passed as a pair.
-            if let PassMode::Pair(..) = arg.mode {
-                // HACK(eddyb) this avoids breaking e.g. `&[T]` pairs.
-                if let TyKind::Adt(..) = arg.layout.ty.kind() {
-                    arg.mode = PassMode::Direct(ArgAttributes::new());
-                }
-            }
 
             // Avoid pointlessly passing ZSTs, just like the official Rust ABI.
             if arg.layout.is_zst() {
@@ -391,7 +382,7 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
             }
             .def_with_name(cx, span, TyLayoutNameKey::from(*self)),
             BackendRepr::Scalar(scalar) => trans_scalar(cx, span, *self, scalar, Size::ZERO),
-            BackendRepr::ScalarPair(a, b) => {
+            BackendRepr::ScalarPair { a, b, .. } => {
                 // NOTE(eddyb) unlike `BackendRepr::Scalar`'s simpler newtype-unpacking
                 // behavior, `BackendRepr::ScalarPair` can be composed in two ways:
                 // * two `BackendRepr::Scalar` fields (and any number of ZST fields),
@@ -414,7 +405,10 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                 // Note: We can't use auto_struct_layout here because the spirv types here might be undefined due to
                 // recursive pointer types.
                 let a_offset = Size::ZERO;
-                let b_offset = a.primitive().size(cx).align_to(b.primitive().align(cx).abi);
+                let b_offset = a
+                    .primitive()
+                    .size(cx)
+                    .align_to(b.primitive().default_align(cx).abi);
                 let a = trans_scalar(cx, span, *self, a, a_offset);
                 let b = trans_scalar(cx, span, *self, b, b_offset);
                 let size = if self.is_unsized() {
@@ -450,7 +444,7 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                 let elem_spirv = trans_scalar(cx, span, *self, element, Size::ZERO);
                 SpirvType::Vector {
                     element: elem_spirv,
-                    count: count as u32,
+                    count: count.as_u32(),
                     size: self.size,
                     align: self.align.abi,
                 }
@@ -490,8 +484,8 @@ pub fn scalar_pair_element_backend_type<'tcx>(
     ty: TyAndLayout<'tcx>,
     index: usize,
 ) -> Word {
-    let [a, b] = match ty.layout.backend_repr() {
-        BackendRepr::ScalarPair(a, b) => [a, b],
+    let [a, b] = match ty.backend_repr {
+        BackendRepr::ScalarPair { a, b, .. } => [a, b],
         other => span_bug!(
             span,
             "scalar_pair_element_backend_type invalid abi: {:?}",
@@ -500,7 +494,10 @@ pub fn scalar_pair_element_backend_type<'tcx>(
     };
     let offset = match index {
         0 => Size::ZERO,
-        1 => a.primitive().size(cx).align_to(b.primitive().align(cx).abi),
+        1 => a
+            .primitive()
+            .size(cx)
+            .align_to(b.primitive().default_align(cx).abi),
         _ => unreachable!(),
     };
     trans_scalar(cx, span, ty, [a, b][index], offset)

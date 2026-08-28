@@ -19,9 +19,9 @@ use std::{env, fs, mem};
 /// `cargo publish`. We need to figure out a way to do this properly, but let's hardcode it for now :/
 //const REQUIRED_RUST_TOOLCHAIN: &str = include_str!("../../rust-toolchain.toml");
 const REQUIRED_RUST_TOOLCHAIN: &str = r#"[toolchain]
-channel = "nightly-2026-05-22"
+channel = "nightly-2026-08-06"
 components = ["rust-src", "rustc-dev", "llvm-tools"]
-# commit_hash = e96c36b6f76833388c519561d145492d2c08db4e"#;
+# commit_hash = 7608eb7b07eaf93f16d7cf5bcb2098eca87503df"#;
 
 fn rustc_output(arg: &str) -> Result<String, Box<dyn Error>> {
     let rustc = env::var("RUSTC").unwrap_or_else(|_| "rustc".into());
@@ -153,7 +153,10 @@ fn generate_pqp_cg_ssa() -> Result<(), Box<dyn Error>> {
                 for line in mem::take(&mut src).lines() {
                     if line.starts_with("#!") {
                         src += "// ";
-                        if !line.starts_with("#![doc(") && line != "#![warn(unreachable_pub)]" {
+                        if !line.starts_with("#![doc(")
+                            && line != "#![warn(unreachable_pub)]"
+                            && !line.starts_with("#![cfg_attr(bootstrap,")
+                        {
                             writeln(&mut cg_ssa_lib_rc_attrs, line);
                         }
                     } else if line == "#[macro_use]" || line.starts_with("extern crate ") {
@@ -254,6 +257,10 @@ pub(super) fn elf_e_flags(architecture: Architecture, sess: &Session) -> u32 {",
                     "debug_assert_eq!(bx.cx().val_ty(imm), from_backend_ty);",
                     "",
                 );
+            }
+
+            if relative_path == Path::new("src/mir/mod.rs") {
+                src = src.replace("fx.fill_function_debug_context(&mut start_bx);", "");
             }
 
             fs::write(out_path, src)?;

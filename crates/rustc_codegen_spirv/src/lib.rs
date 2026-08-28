@@ -2,7 +2,7 @@
 #![feature(deref_patterns)]
 #![feature(file_buffered)]
 #![feature(negative_impls)]
-#![feature(string_from_utf8_lossy_owned)]
+#![feature(option_into_flat_iter)]
 #![feature(trait_alias)]
 #![feature(try_blocks)]
 #![recursion_limit = "256"]
@@ -152,16 +152,15 @@ use maybe_pqp_cg_ssa::{
 };
 use rspirv::binary::Assemble;
 use rustc_ast::expand::allocator::AllocatorMethod;
-use rustc_data_structures::fx::FxIndexMap;
 use rustc_data_structures::profiling::SelfProfilerRef;
 use rustc_errors::DiagCtxtHandle;
 use rustc_metadata::EncodedMetadata;
-use rustc_middle::dep_graph::{WorkProduct, WorkProductId};
+use rustc_middle::dep_graph::{WorkProduct, WorkProductMap};
 use rustc_middle::mono::{MonoItem, MonoItemData};
 use rustc_middle::ty::print::with_no_trimmed_paths;
 use rustc_middle::ty::{InstanceKind, TyCtxt};
-use rustc_session::Session;
 use rustc_session::config::{self, OutputFilenames, OutputType};
+use rustc_session::{IncrCompSession, Session};
 use rustc_span::symbol::Symbol;
 use std::any::Any;
 use std::fs;
@@ -256,13 +255,14 @@ impl CodegenBackend for SpirvCodegenBackend {
         &self,
         ongoing_codegen: Box<dyn Any>,
         sess: &Session,
+        incr_comp_session: Option<&IncrCompSession>,
         _outputs: &OutputFilenames,
         crate_info: &CrateInfo,
-    ) -> (CompiledModules, FxIndexMap<WorkProductId, WorkProduct>) {
+    ) -> (CompiledModules, WorkProductMap) {
         ongoing_codegen
             .downcast::<OngoingCodegen<Self>>()
             .expect("Expected OngoingCodegen, found Box<Any>")
-            .join(sess, crate_info)
+            .join(sess, incr_comp_session, crate_info)
     }
 
     fn link(
@@ -411,6 +411,7 @@ impl WriteBackendMethods for SpirvCodegenBackend {
             name,
             kind,
             object: Some(path),
+            global_asm_object: None,
             dwarf_object: None,
             bytecode: None,
             assembly: None,
@@ -434,6 +435,8 @@ impl WriteBackendMethods for SpirvCodegenBackend {
 }
 
 impl ExtraBackendMethods for SpirvCodegenBackend {
+    type Module = rspirv::dr::Module;
+
     fn codegen_allocator(&self, _: TyCtxt<'_>, _: &str, _: &[AllocatorMethod]) -> Self::Module {
         todo!()
     }
