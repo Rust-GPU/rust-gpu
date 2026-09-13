@@ -205,7 +205,7 @@ impl<'tcx> CodegenCx<'tcx> {
 
         let mut feature_names = tcx
             .sess
-            .target_features
+            .internal_target_features
             .iter()
             .map(|s| s.as_str())
             .collect::<Vec<_>>();

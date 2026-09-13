@@ -90,7 +90,16 @@ pub(crate) fn provide(providers: &mut Providers) {
             let mut arg = ArgAbi::new(arg.layout, |_, _| ArgAttributes::new());
             // FIXME: this is bad! https://github.com/rust-lang/rust/issues/115666
             // <https://github.com/rust-lang/rust/commit/eaaa03faf77b157907894a4207d8378ecaec7b45>
-            arg.make_direct_deprecated();
+            // replaces removed `arg.make_direct_deprecated();`
+            arg.mode = if let PassMode::Indirect { .. } = arg.mode {
+                PassMode::Direct(ArgAttributes::new())
+            } else if arg.layout.is_zst() {
+                PassMode::Ignore
+            } else if let PassMode::Ignore | PassMode::Direct(..) | PassMode::Pair(..) = arg.mode {
+                arg.mode
+            } else {
+                panic!("Tried to make {:?} direct", arg.mode)
+            };
 
             // Avoid pointlessly passing ZSTs, just like the official Rust ABI.
             if arg.layout.is_zst() {
