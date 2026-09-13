@@ -212,14 +212,9 @@ impl CodegenBackend for SpirvCodegenBackend {
             .map(Symbol::intern)
             .collect();
 
-        // HACK(eddyb) this should be a superset of `target_features`,
-        // which *additionally* also includes unstable target features,
-        // but there is no reason to make a distinction for SPIR-V ones.
-        let unstable_target_features = target_features.clone();
-
         TargetConfig {
-            target_features,
-            unstable_target_features,
+            // There is no stable/unstable distinction for SPIR-V target features.
+            internal_target_features: target_features.into_iter().collect(),
 
             // FIXME(eddyb) support and/or emulate `f16` and `f128`.
             has_reliable_f16: false,
