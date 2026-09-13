@@ -12,6 +12,8 @@ use rspirv::spirv::{
     BuiltIn, Decoration, Dim, ExecutionModel, FunctionControl, StorageClass, Word,
 };
 use rustc_abi::FieldsShape;
+use rustc_codegen_ssa::mir::operand::{OperandRef, OperandValue};
+use rustc_codegen_ssa::mir::place::PlaceRef;
 use rustc_codegen_ssa::traits::{BaseTypeCodegenMethods, BuilderMethods, MiscCodegenMethods as _};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::MultiSpan;
@@ -87,22 +89,7 @@ impl<'tcx> CodegenCx<'tcx> {
         };
         for (arg_abi, hir_param) in fn_abi.args.iter().zip(hir_params) {
             match arg_abi.mode {
-                PassMode::Direct(_) | PassMode::Ignore => {}
-                PassMode::Pair(..) => {
-                    // FIXME(eddyb) implement `ScalarPair` `Input`s, or change
-                    // the `FnAbi` readjustment to only use `PassMode::Pair` for
-                    // pointers to `!Sized` types, but not other `ScalarPair`s.
-                    if !matches!(arg_abi.layout.ty.kind(), ty::Ref(..)) {
-                        self.tcx.dcx().span_err(
-                            hir_param.ty_span,
-                            format!(
-                                "entry point parameter type not yet supported \
-                                 (`{}` has `ScalarPair` ABI but is not a `&T`)",
-                                arg_abi.layout.ty
-                            ),
-                        );
-                    }
-                }
+                PassMode::Direct(_) | PassMode::Pair(..) | PassMode::Ignore => {}
                 _ => span_bug!(
                     hir_param.ty_span,
                     "query hooks should've made this `PassMode` impossible: {:#?}",
@@ -191,7 +178,7 @@ impl<'tcx> CodegenCx<'tcx> {
             self.get_fn(entry_instance).ty,
             None,
             Some(entry_fn_abi),
-            self.get_fn_addr(entry_instance),
+            self.get_fn_addr(entry_instance, None),
             &call_args,
             None,
             None,
@@ -504,27 +491,19 @@ impl<'tcx> CodegenCx<'tcx> {
         // Certain storage classes require an `OpTypeStruct` decorated with `Block`,
         // which we represent with `SpirvType::InterfaceBlock` (see its doc comment).
         // This "interface block" construct is also required for "runtime arrays".
-        let is_unsized = self.lookup_type(value_spirv_type).sizeof(self).is_none();
+        let pointee_is_unsized = self.lookup_type(value_spirv_type).sizeof(self).is_none();
         let is_pair = matches!(entry_arg_abi.mode, PassMode::Pair(..));
-        let is_unsized_with_len = is_pair && is_unsized;
+        let is_unsized_with_len = is_pair && pointee_is_unsized;
         // HACK(eddyb) sanity check because we get the same information in two
         // very different ways, and going out of sync could cause subtle issues.
         assert_eq!(
             is_unsized_with_len,
             value_layout.is_unsized(),
             "`{}` param mismatch in call ABI (is_pair={is_pair}) + \
-             SPIR-V type (is_unsized={is_unsized}) \
+             SPIR-V type (is_unsized={pointee_is_unsized}) \
              vs layout:\n{value_layout:#?}",
             entry_arg_abi.layout.ty
         );
-        if is_pair && !is_unsized {
-            // If PassMode is Pair, then we need to fill in the second part of the pair with a
-            // value. We currently only do that with unsized types, so if a type is a pair for some
-            // other reason (e.g. a tuple), we bail.
-            self.tcx
-                .dcx()
-                .span_fatal(hir_param.ty_span, "pair type not supported yet")
-        }
         // FIXME(eddyb) should this talk about "typed buffers" instead of "interface blocks"?
         // FIXME(eddyb) should we talk about "descriptor indexing" or
         // actually use more reasonable terms like "resource arrays"?
@@ -591,7 +570,7 @@ impl<'tcx> CodegenCx<'tcx> {
 
                 Some(len.with_type(len_spirv_type))
             } else {
-                if is_unsized {
+                if pointee_is_unsized {
                     // It's OK to use a RuntimeArray<u32> and not have a length parameter, but
                     // it's just nicer ergonomics to use a slice.
                     self.tcx
@@ -621,7 +600,7 @@ impl<'tcx> CodegenCx<'tcx> {
                         }
                     }
                     _ => {
-                        if is_unsized {
+                        if pointee_is_unsized {
                             self.tcx.dcx().span_err(
                                 hir_param.ty_span,
                                 "only RuntimeArray is supported, not other unsized types",
@@ -633,7 +612,7 @@ impl<'tcx> CodegenCx<'tcx> {
                 // FIXME(eddyb) determine, based on the type, what kind of type
                 // this is, to narrow it further to e.g. "buffer in a non-buffer
                 // storage class" or "storage class expects fixed data sizes".
-                if is_unsized {
+                if pointee_is_unsized {
                     self.tcx.dcx().span_fatal(
                         hir_param.ty_span,
                         format!(
@@ -647,7 +626,8 @@ impl<'tcx> CodegenCx<'tcx> {
                 }
             }
 
-            let value_len = if is_pair {
+            let value_len = if is_pair && pointee_is_unsized {
+                // A slice *cannot* be passed as anything other than a StorageBuffer or Uniform
                 // We've already emitted an error, fill in a placeholder value
                 Some(bx.undef(self.type_isize()))
             } else {
@@ -691,6 +671,22 @@ impl<'tcx> CodegenCx<'tcx> {
                         }
                     };
                     call_args.push(value);
+                    assert_eq!(value_len, None);
+                }
+                PassMode::Pair(..) => {
+                    // Load both elements of the scalar pair from the input variable.
+                    assert_eq!(storage_class, Ok(StorageClass::Input));
+                    let OperandRef {
+                        val: OperandValue::Pair(v0, v1),
+                        ..
+                    } = bx.load_operand(PlaceRef::new_sized(
+                        value_ptr.unwrap(),
+                        entry_arg_abi.layout,
+                    ))
+                    else {
+                        unreachable!();
+                    };
+                    call_args.extend([v0, v1]);
                     assert_eq!(value_len, None);
                 }
                 _ => unreachable!(),

@@ -310,7 +310,7 @@ fn memset_fill_u64(b: u8) -> u64 {
 
 fn memset_fill_u128(b: u8) -> u128 {
     let b64 = memset_fill_u64(b) as u128;
-    b64 | b64 >> 64
+    b64 | b64 << 64
 }
 
 fn memset_dynamic_scalar(
@@ -484,6 +484,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 16 => memset_dynamic_scalar(self, fill_var, 2, false),
                 32 => memset_dynamic_scalar(self, fill_var, 4, false),
                 64 => memset_dynamic_scalar(self, fill_var, 8, false),
+                128 => memset_dynamic_scalar(self, fill_var, 16, false),
                 _ => self.fatal(format!(
                     "memset on integer width {width} not implemented yet"
                 )),
@@ -1873,7 +1874,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         self.bitcast(loaded_val, ty)
     }
 
-    fn volatile_load(&mut self, ty: Self::Type, ptr: Self::Value) -> Self::Value {
+    fn volatile_load(&mut self, ty: Self::Type, ptr: Self::Value, _align: Align) -> Self::Value {
         // TODO: Implement this
         let result = self.load(ty, ptr, Align::from_bytes(0).unwrap());
         self.zombie(result.def(self), "volatile load is not supported yet");
@@ -1917,18 +1918,18 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
 
         let val = if place.val.llextra.is_some() {
             OperandValue::Ref(place.val)
-        } else if self.cx.is_backend_immediate(place.layout) {
+        } else if place.layout.backend_repr.is_scalar_or_simd() {
             let llval = self.load(
                 place.layout.spirv_type(self.span(), self),
                 place.val.llval,
                 place.val.align,
             );
             OperandValue::Immediate(llval)
-        } else if let BackendRepr::ScalarPair(a, b) = place.layout.backend_repr {
+        } else if let BackendRepr::ScalarPair { a, b, .. } = place.layout.backend_repr {
             let b_offset = a
                 .primitive()
                 .size(self)
-                .align_to(b.primitive().align(self).abi);
+                .align_to(b.primitive().default_align(self).abi);
 
             let mut load = |i, scalar: Scalar, align| {
                 let llptr = if i == 0 {
@@ -2012,7 +2013,8 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         align: Align,
         flags: MemFlags,
     ) -> Self::Value {
-        if flags != MemFlags::empty() {
+        let allowed_flags = MemFlags::CAPTURES_READ_ONLY;
+        if !(flags & !allowed_flags).is_empty() {
             self.err(format!("store_with_flags is not supported yet: {flags:?}"));
         }
         self.store(val, ptr, align)
@@ -3502,5 +3504,9 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
 
     fn alloca_with_ty(&mut self, _layout: TyAndLayout<'tcx>) -> Self::Value {
         bug!("scalable alloca is not supported in SPIR-V backend")
+    }
+
+    fn vscale(&mut self, _ty: Self::Type) -> Self::Value {
+        self.fatal("scalable vectors not supported");
     }
 }
