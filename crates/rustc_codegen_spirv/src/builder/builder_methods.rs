@@ -310,7 +310,7 @@ fn memset_fill_u64(b: u8) -> u64 {
 
 fn memset_fill_u128(b: u8) -> u128 {
     let b64 = memset_fill_u64(b) as u128;
-    b64 | b64 >> 64
+    b64 | b64 << 64
 }
 
 fn memset_dynamic_scalar(
@@ -484,6 +484,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 16 => memset_dynamic_scalar(self, fill_var, 2, false),
                 32 => memset_dynamic_scalar(self, fill_var, 4, false),
                 64 => memset_dynamic_scalar(self, fill_var, 8, false),
+                128 => memset_dynamic_scalar(self, fill_var, 16, false),
                 _ => self.fatal(format!(
                     "memset on integer width {width} not implemented yet"
                 )),
