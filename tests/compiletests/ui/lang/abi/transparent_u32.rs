@@ -25,7 +25,7 @@ pub struct A(u32);
 pub struct AT(u32);
 
 #[spirv(vertex)]
-pub fn main(a: &mut A, at: &mut AT, #[spirv(local_invocation_index)] tid: u32) {
+pub fn main(a: &mut A, at: &mut AT, #[spirv(vertex_index)] tid: u32) {
     *a = A(tid);
     a.0 = tid + 1;
     a.0 += 4;

@@ -33,7 +33,7 @@ pub struct AT(UVec3);
 pub struct BT(AT);
 
 #[spirv(vertex)]
-pub fn main(a: &mut B, at: &mut BT, #[spirv(local_invocation_index)] tid: u32) {
+pub fn main(a: &mut B, at: &mut BT, #[spirv(vertex_index)] tid: u32) {
     *a = B(A(UVec3::new(tid, 1, 2)));
     a.0.0.y = tid + 1;
     a.0.0.x += 4;
