@@ -680,3 +680,105 @@ pub fn fold_load_from_constant_variable(module: &mut Module) {
         }
     }
 }
+
+/// Eliminate the `OpBitcast` that arises from `*[T; N] → *RuntimeArray<T>` pointer casts.
+///
+/// When a local array is coerced to a slice (`&[T;N] as &[T]`), codegen emits:
+/// ```text
+/// %elem0 = OpInBoundsAccessChain %arr 0      ; pointer to arr[0]
+/// %rta   = OpBitcast %elem0                  ; *RuntimeArray<T>  (invalid in Logical SPIR-V)
+/// ```
+/// After inlining the slice-taking function, indexing becomes:
+/// ```text
+/// %ei = OpInBoundsAccessChain %rta i         ; data[i]
+///
+pub fn fold_array_bitcast_access_chain(
+    types: &FxHashMap<Word, Instruction>,
+    function: &mut Function,
+) {
+    let func_defs: FxHashMap<Word, Instruction> = function
+        .all_inst_iter()
+        .filter_map(|inst| Some((inst.result_id?, inst.clone())))
+        .collect();
+
+    // look up an ID in either function-local defs or module-level types/globals.
+    let lookup =
+        |id: Word| -> Option<&Instruction> { func_defs.get(&id).or_else(|| types.get(&id)) };
+
+    for block in &mut function.blocks {
+        for inst in &mut block.instructions {
+            if !matches!(inst.class.opcode, Op::AccessChain | Op::InBoundsAccessChain) {
+                continue;
+            }
+            if inst.operands.is_empty() {
+                continue;
+            }
+            let base_id = inst.operands[0].unwrap_id_ref();
+
+            // base must be an OpBitcast
+            let Some(bitcast) = lookup(base_id) else {
+                continue;
+            };
+            if bitcast.class.opcode != Op::Bitcast {
+                continue;
+            }
+
+            // bitcast result type must be *SC RuntimeArray<T>
+            let Some(bitcast_dst_ptr) = lookup(bitcast.result_type.unwrap()) else {
+                continue;
+            };
+            if bitcast_dst_ptr.class.opcode != Op::TypePointer {
+                continue;
+            }
+            let rta_type_id = bitcast_dst_ptr.operands[1].unwrap_id_ref();
+            let Some(rta_ty) = lookup(rta_type_id) else {
+                continue;
+            };
+            if rta_ty.class.opcode != Op::TypeRuntimeArray {
+                continue;
+            }
+            let rta_elem_ty = rta_ty.operands[0].unwrap_id_ref();
+
+            // bitcast source must be OpInBoundsAccessChain(arr, 0)
+            let bitcast_src_id = bitcast.operands[0].unwrap_id_ref();
+            let Some(inner_ac) = lookup(bitcast_src_id) else {
+                continue;
+            };
+            if inner_ac.class.opcode != Op::InBoundsAccessChain {
+                continue;
+            }
+            // Exactly one index operand
+            if inner_ac.operands.len() != 2 {
+                continue;
+            }
+            // That index must be the constant 0
+            let idx0_id = inner_ac.operands[1].unwrap_id_ref();
+            let Some(idx0) = lookup(idx0_id) else {
+                continue;
+            };
+            if idx0.class.opcode != Op::Constant {
+                continue;
+            }
+            if !matches!(idx0.operands[0], Operand::LiteralBit32(0)) {
+                continue;
+            }
+
+            // inner AccessChain result type must be *SC T where T == rta_elem_ty
+            let Some(inner_dst_ptr) = lookup(inner_ac.result_type.unwrap()) else {
+                continue;
+            };
+            if inner_dst_ptr.class.opcode != Op::TypePointer {
+                continue;
+            }
+            let elem_ty = inner_dst_ptr.operands[1].unwrap_id_ref();
+            if elem_ty != rta_elem_ty {
+                continue;
+            }
+
+            // AccessChain(Bitcast(InBoundsAccessChain(arr, 0)), i)
+            // Replace base with arr — the dead bitcast and intermediate AC are cleaned by DCE.
+            let arr_id = inner_ac.operands[0].unwrap_id_ref();
+            inst.operands[0] = Operand::IdRef(arr_id);
+        }
+    }
+}
