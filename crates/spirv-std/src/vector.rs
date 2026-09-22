@@ -76,7 +76,6 @@ macro_rules! impl_vector {
 impl_vector! {
     glam::Vec2: [f32; 2];
     glam::Vec3: [f32; 3];
-    glam::Vec3A: [f32; 3];
     glam::Vec4: [f32; 4];
     glam::DVec2: [f64; 2];
     glam::DVec3: [f64; 3];

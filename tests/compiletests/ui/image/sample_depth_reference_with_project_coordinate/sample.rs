@@ -10,6 +10,6 @@ pub fn main(
     #[spirv(descriptor_set = 1, binding = 1)] sampler: &Sampler,
     output: &mut f32,
 ) {
-    let v3 = glam::Vec3A::new(0.0, 0.0, 1.0);
+    let v3 = glam::Vec3::new(0.0, 0.0, 1.0);
     *output = image.sample_depth_reference_with_project_coordinate(*sampler, v3, 1.0);
 }

@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### 🚨BREAKING🚨️
+
+- [PR#660](https://github.com/Rust-GPU/rust-gpu/pull/660) disallows `Vec3A` for SPIR-V intrinsics and asm. Migration: use Vec3 instead and convert back and forward with `Vec3::to_vec3a()` and `Vec3A::to_vec3()`.
+
 ## [0.10.0](https://github.com/Rust-GPU/rust-gpu/compare/v0.10.0-alpha.1...v0.10.0) - 2026-10-01
 
 Toolchain: `nightly-2026-07-03` (rustc 1.98.0)
