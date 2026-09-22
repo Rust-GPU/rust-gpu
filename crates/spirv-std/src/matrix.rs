@@ -1,6 +1,6 @@
 //! a set of common SPIR-V Matrices, used for intrinsics
 
-use crate::glam::{Affine3A, Mat3, Mat3A, Mat4, Vec3, Vec3A};
+use crate::glam::{Affine3A, Mat3, Mat3A, Mat4, Vec3};
 use core::fmt::{Debug, Display, Formatter};
 
 /// A Matrix with 4 columns of [`Vec3`], very similar to glam's [`Affine3A`].
@@ -18,10 +18,10 @@ use core::fmt::{Debug, Display, Formatter};
 #[spirv(matrix)]
 #[allow(missing_docs)]
 pub struct Matrix4x3 {
-    pub x_axis: Vec3A,
-    pub y_axis: Vec3A,
-    pub z_axis: Vec3A,
-    pub w_axis: Vec3A,
+    pub x_axis: Vec3,
+    pub y_axis: Vec3,
+    pub z_axis: Vec3,
+    pub w_axis: Vec3,
 }
 
 /// The `from_*` fn signatures should match [`Affine3A`], to make it easier to switch to [`Affine3A`] later.
@@ -30,10 +30,10 @@ impl Matrix4x3 {
     /// Convert from glam's [`Affine3A`]
     pub fn from_affine3a(affine: Affine3A) -> Self {
         Self {
-            x_axis: affine.x_axis,
-            y_axis: affine.y_axis,
-            z_axis: affine.z_axis,
-            w_axis: affine.w_axis,
+            x_axis: affine.x_axis.to_vec3(),
+            y_axis: affine.y_axis.to_vec3(),
+            z_axis: affine.z_axis.to_vec3(),
+            w_axis: affine.w_axis.to_vec3(),
         }
     }
 
@@ -61,11 +61,11 @@ impl Matrix4x3 {
     pub fn to_affine3a(self) -> Affine3A {
         Affine3A {
             matrix3: Mat3A {
-                x_axis: self.x_axis,
-                y_axis: self.y_axis,
-                z_axis: self.z_axis,
+                x_axis: self.x_axis.to_vec3a(),
+                y_axis: self.y_axis.to_vec3a(),
+                z_axis: self.z_axis.to_vec3a(),
             },
-            translation: self.w_axis,
+            translation: self.w_axis.to_vec3a(),
         }
     }
 
