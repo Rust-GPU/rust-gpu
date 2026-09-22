@@ -23,7 +23,7 @@ pub struct A([u32; 3]);
 pub struct AT([u32; 3]);
 
 #[spirv(vertex)]
-pub fn main(a: &mut A, at: &mut AT, #[spirv(local_invocation_index)] tid: u32) {
+pub fn main(a: &mut A, at: &mut AT, #[spirv(vertex_index)] tid: u32) {
     *a = A([tid, 1, 2]);
     a.0 = [tid, 1, 2];
     a.0[2] += 4;

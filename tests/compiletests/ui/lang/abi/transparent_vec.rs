@@ -25,7 +25,7 @@ pub struct A(UVec3);
 pub struct AT(UVec3);
 
 #[spirv(vertex)]
-pub fn main(a: &mut A, at: &mut AT, #[spirv(local_invocation_index)] tid: u32) {
+pub fn main(a: &mut A, at: &mut AT, #[spirv(vertex_index)] tid: u32) {
     *a = A(UVec3::new(tid, 1, 2));
     a.0 = UVec3::new(tid, 1, 3);
     a.0.y += 10;

@@ -87,10 +87,19 @@ pub(crate) fn provide(providers: &mut Providers) {
         fn_abi: &'tcx FnAbi<'tcx, Ty<'tcx>>,
     ) -> &'tcx FnAbi<'tcx, Ty<'tcx>> {
         let readjust_arg_abi = |arg: &ArgAbi<'tcx, Ty<'tcx>>| {
-            let mut arg = ArgAbi::new(&tcx, arg.layout, |_, _| ArgAttributes::new());
+            let mut arg = ArgAbi::new(arg.layout, |_, _| ArgAttributes::new());
             // FIXME: this is bad! https://github.com/rust-lang/rust/issues/115666
             // <https://github.com/rust-lang/rust/commit/eaaa03faf77b157907894a4207d8378ecaec7b45>
-            arg.make_direct_deprecated();
+            // replaces removed `arg.make_direct_deprecated();`
+            arg.mode = if let PassMode::Indirect { .. } = arg.mode {
+                PassMode::Direct(ArgAttributes::new())
+            } else if arg.layout.is_zst() {
+                PassMode::Ignore
+            } else if let PassMode::Ignore | PassMode::Direct(..) | PassMode::Pair(..) = arg.mode {
+                arg.mode
+            } else {
+                panic!("Tried to make {:?} direct", arg.mode)
+            };
 
             // Avoid pointlessly passing ZSTs, just like the official Rust ABI.
             if arg.layout.is_zst() {
@@ -382,7 +391,7 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
             }
             .def_with_name(cx, span, TyLayoutNameKey::from(*self)),
             BackendRepr::Scalar(scalar) => trans_scalar(cx, span, *self, scalar, Size::ZERO),
-            BackendRepr::ScalarPair(a, b) => {
+            BackendRepr::ScalarPair { a, b, .. } => {
                 // NOTE(eddyb) unlike `BackendRepr::Scalar`'s simpler newtype-unpacking
                 // behavior, `BackendRepr::ScalarPair` can be composed in two ways:
                 // * two `BackendRepr::Scalar` fields (and any number of ZST fields),
@@ -444,7 +453,7 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                 let elem_spirv = trans_scalar(cx, span, *self, element, Size::ZERO);
                 SpirvType::Vector {
                     element: elem_spirv,
-                    count: count as u32,
+                    count: count.as_u32(),
                     size: self.size,
                     align: self.align.abi,
                 }
@@ -485,7 +494,7 @@ pub fn scalar_pair_element_backend_type<'tcx>(
     index: usize,
 ) -> Word {
     let [a, b] = match ty.backend_repr {
-        BackendRepr::ScalarPair(a, b) => [a, b],
+        BackendRepr::ScalarPair { a, b, .. } => [a, b],
         other => span_bug!(
             span,
             "scalar_pair_element_backend_type invalid abi: {:?}",
