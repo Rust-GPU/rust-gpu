@@ -121,6 +121,9 @@ pub use vector::*;
 // Even though it doesn't immediately fail, enabling multiple glam features at the same time will lead to weirdness in
 // downstream crates, as any traits in spirv_std will only be implemented on the most recent glam version.
 cfg_select! {
+    feature = "glam_0_34" => {
+        pub use ::glam_0_34 as glam;
+    }
     feature = "glam_0_33" => {
         pub use ::glam_0_33 as glam;
     }
