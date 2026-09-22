@@ -1,4 +1,4 @@
-use crate::glam::{Vec2, Vec3, Vec3A, Vec4};
+use crate::glam::{Vec2, Vec3, Vec4};
 use crate::sealed::Sealed;
 
 #[cfg(target_arch = "spirv")]
@@ -148,4 +148,3 @@ unsafe impl Derivative for f32 {}
 unsafe impl Derivative for Vec2 {}
 unsafe impl Derivative for Vec3 {}
 unsafe impl Derivative for Vec4 {}
-unsafe impl Derivative for Vec3A {}

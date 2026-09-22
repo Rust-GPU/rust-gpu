@@ -1,3 +1,4 @@
+use crate::glam::Vec3A;
 use crate::{Scalar, Vector};
 use core::num::NonZeroUsize;
 
@@ -81,5 +82,17 @@ impl<T: ScalarComposite + Default, const N: usize> ScalarComposite for [T; N] {
             out[i] = self[i].transform(f);
         }
         out
+    }
+}
+
+/// `glam::Vec3A` is not considered a SPIR-V vector and thus needs a manual implementation
+impl ScalarComposite for Vec3A {
+    #[inline]
+    fn transform<F: ScalarOrVectorTransform>(self, f: &mut F) -> Self {
+        Vec3A::new(
+            f.transform_scalar(self.x),
+            f.transform_scalar(self.y),
+            f.transform_scalar(self.z),
+        )
     }
 }

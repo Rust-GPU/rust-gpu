@@ -14,7 +14,7 @@ pub fn main(
     let v2 = glam::Vec2::new(0.0, 1.0);
     let v2_dx = glam::Vec2::new(0.0, 1.0);
     let v2_dy = glam::Vec2::new(0.0, 1.0);
-    let v3 = glam::Vec3A::new(0.0, 0.0, 1.0);
+    let v3 = glam::Vec3::new(0.0, 0.0, 1.0);
     *output = image.sample_depth_reference_by_gradient(*sampler, v2, 1.0, v2_dx, v2_dy);
     *output += image_array.sample_depth_reference_by_gradient(*sampler, v3, 1.0, v2_dx, v2_dy);
 }
@@ -37,8 +37,8 @@ pub fn main_cubemap(
     #[spirv(descriptor_set = 3, binding = 3)] cubemap: &Image!(3D, type=f32, sampled),
     output: &mut f32,
 ) {
-    let v3 = glam::Vec3A::new(0.0, 0.0, 1.0);
-    let v3_dx = glam::Vec3A::new(0.0, 1.0, 0.5);
-    let v3_dy = glam::Vec3A::new(0.0, 1.0, 0.5);
+    let v3 = glam::Vec3::new(0.0, 0.0, 1.0);
+    let v3_dx = glam::Vec3::new(0.0, 1.0, 0.5);
+    let v3_dy = glam::Vec3::new(0.0, 1.0, 0.5);
     *output += cubemap.sample_depth_reference_by_gradient(*sampler, v3, 1.0, v3_dx, v3_dy);
 }
