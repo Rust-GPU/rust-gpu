@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/indexmap-2.14.0/src/set/slice.rs`."><title>slice.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="indexmap" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.0-nightly (c397dae80 2026-07-02)" data-channel="nightly" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">indexmap/set/</div>slice.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use super</span>::{Bucket, IndexSet, IntoIter, Iter};
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/indexmap-2.14.2/src/set/slice.rs`."><title>slice.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="indexmap" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.0-nightly (c397dae80 2026-07-02)" data-channel="nightly" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">indexmap/set/</div>slice.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use super</span>::{Bucket, IndexSet, IntoIter, Iter};
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span><span class="kw">crate</span>::util::{slice_eq, try_simplify_range};
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span>alloc::boxed::Box;
@@ -394,36 +394,37 @@
 <a href=#394 id=394 data-nosnippet>394</a>        <span class="kw">let </span>slice = set.as_slice();
 <a href=#395 id=395 data-nosnippet>395</a>
 <a href=#396 id=396 data-nosnippet>396</a>        <span class="comment">// RangeFull
-<a href=#397 id=397 data-nosnippet>397</a>        </span>check(<span class="kw-2">&amp;</span>vec[..], <span class="kw-2">&amp;</span>set[..], <span class="kw-2">&amp;</span>slice[..]);
-<a href=#398 id=398 data-nosnippet>398</a>
-<a href=#399 id=399 data-nosnippet>399</a>        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0usize</span>..<span class="number">10 </span>{
-<a href=#400 id=400 data-nosnippet>400</a>            <span class="comment">// Index
-<a href=#401 id=401 data-nosnippet>401</a>            </span><span class="macro">assert_eq!</span>(vec[i], set[i]);
-<a href=#402 id=402 data-nosnippet>402</a>            <span class="macro">assert_eq!</span>(vec[i], slice[i]);
-<a href=#403 id=403 data-nosnippet>403</a>
-<a href=#404 id=404 data-nosnippet>404</a>            <span class="comment">// RangeFrom
-<a href=#405 id=405 data-nosnippet>405</a>            </span>check(<span class="kw-2">&amp;</span>vec[i..], <span class="kw-2">&amp;</span>set[i..], <span class="kw-2">&amp;</span>slice[i..]);
-<a href=#406 id=406 data-nosnippet>406</a>
-<a href=#407 id=407 data-nosnippet>407</a>            <span class="comment">// RangeTo
-<a href=#408 id=408 data-nosnippet>408</a>            </span>check(<span class="kw-2">&amp;</span>vec[..i], <span class="kw-2">&amp;</span>set[..i], <span class="kw-2">&amp;</span>slice[..i]);
-<a href=#409 id=409 data-nosnippet>409</a>
-<a href=#410 id=410 data-nosnippet>410</a>            <span class="comment">// RangeToInclusive
-<a href=#411 id=411 data-nosnippet>411</a>            </span>check(<span class="kw-2">&amp;</span>vec[..=i], <span class="kw-2">&amp;</span>set[..=i], <span class="kw-2">&amp;</span>slice[..=i]);
-<a href=#412 id=412 data-nosnippet>412</a>
-<a href=#413 id=413 data-nosnippet>413</a>            <span class="comment">// (Bound&lt;usize&gt;, Bound&lt;usize&gt;)
-<a href=#414 id=414 data-nosnippet>414</a>            </span><span class="kw">let </span>bounds = (Bound::Excluded(i), Bound::Unbounded);
-<a href=#415 id=415 data-nosnippet>415</a>            check(<span class="kw-2">&amp;</span>vec[i + <span class="number">1</span>..], <span class="kw-2">&amp;</span>set[bounds], <span class="kw-2">&amp;</span>slice[bounds]);
-<a href=#416 id=416 data-nosnippet>416</a>
-<a href=#417 id=417 data-nosnippet>417</a>            <span class="kw">for </span>j <span class="kw">in </span>i..=<span class="number">10 </span>{
-<a href=#418 id=418 data-nosnippet>418</a>                <span class="comment">// Range
-<a href=#419 id=419 data-nosnippet>419</a>                </span>check(<span class="kw-2">&amp;</span>vec[i..j], <span class="kw-2">&amp;</span>set[i..j], <span class="kw-2">&amp;</span>slice[i..j]);
-<a href=#420 id=420 data-nosnippet>420</a>            }
-<a href=#421 id=421 data-nosnippet>421</a>
-<a href=#422 id=422 data-nosnippet>422</a>            <span class="kw">for </span>j <span class="kw">in </span>i..<span class="number">10 </span>{
-<a href=#423 id=423 data-nosnippet>423</a>                <span class="comment">// RangeInclusive
-<a href=#424 id=424 data-nosnippet>424</a>                </span>check(<span class="kw-2">&amp;</span>vec[i..=j], <span class="kw-2">&amp;</span>set[i..=j], <span class="kw-2">&amp;</span>slice[i..=j]);
-<a href=#425 id=425 data-nosnippet>425</a>            }
-<a href=#426 id=426 data-nosnippet>426</a>        }
-<a href=#427 id=427 data-nosnippet>427</a>    }
-<a href=#428 id=428 data-nosnippet>428</a>}
+<a href=#397 id=397 data-nosnippet>397</a>        </span><span class="attr">#[expect(clippy::redundant_slicing)]
+<a href=#398 id=398 data-nosnippet>398</a>        </span>check(<span class="kw-2">&amp;</span>vec[..], <span class="kw-2">&amp;</span>set[..], <span class="kw-2">&amp;</span>slice[..]);
+<a href=#399 id=399 data-nosnippet>399</a>
+<a href=#400 id=400 data-nosnippet>400</a>        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0usize</span>..<span class="number">10 </span>{
+<a href=#401 id=401 data-nosnippet>401</a>            <span class="comment">// Index
+<a href=#402 id=402 data-nosnippet>402</a>            </span><span class="macro">assert_eq!</span>(vec[i], set[i]);
+<a href=#403 id=403 data-nosnippet>403</a>            <span class="macro">assert_eq!</span>(vec[i], slice[i]);
+<a href=#404 id=404 data-nosnippet>404</a>
+<a href=#405 id=405 data-nosnippet>405</a>            <span class="comment">// RangeFrom
+<a href=#406 id=406 data-nosnippet>406</a>            </span>check(<span class="kw-2">&amp;</span>vec[i..], <span class="kw-2">&amp;</span>set[i..], <span class="kw-2">&amp;</span>slice[i..]);
+<a href=#407 id=407 data-nosnippet>407</a>
+<a href=#408 id=408 data-nosnippet>408</a>            <span class="comment">// RangeTo
+<a href=#409 id=409 data-nosnippet>409</a>            </span>check(<span class="kw-2">&amp;</span>vec[..i], <span class="kw-2">&amp;</span>set[..i], <span class="kw-2">&amp;</span>slice[..i]);
+<a href=#410 id=410 data-nosnippet>410</a>
+<a href=#411 id=411 data-nosnippet>411</a>            <span class="comment">// RangeToInclusive
+<a href=#412 id=412 data-nosnippet>412</a>            </span>check(<span class="kw-2">&amp;</span>vec[..=i], <span class="kw-2">&amp;</span>set[..=i], <span class="kw-2">&amp;</span>slice[..=i]);
+<a href=#413 id=413 data-nosnippet>413</a>
+<a href=#414 id=414 data-nosnippet>414</a>            <span class="comment">// (Bound&lt;usize&gt;, Bound&lt;usize&gt;)
+<a href=#415 id=415 data-nosnippet>415</a>            </span><span class="kw">let </span>bounds = (Bound::Excluded(i), Bound::Unbounded);
+<a href=#416 id=416 data-nosnippet>416</a>            check(<span class="kw-2">&amp;</span>vec[i + <span class="number">1</span>..], <span class="kw-2">&amp;</span>set[bounds], <span class="kw-2">&amp;</span>slice[bounds]);
+<a href=#417 id=417 data-nosnippet>417</a>
+<a href=#418 id=418 data-nosnippet>418</a>            <span class="kw">for </span>j <span class="kw">in </span>i..=<span class="number">10 </span>{
+<a href=#419 id=419 data-nosnippet>419</a>                <span class="comment">// Range
+<a href=#420 id=420 data-nosnippet>420</a>                </span>check(<span class="kw-2">&amp;</span>vec[i..j], <span class="kw-2">&amp;</span>set[i..j], <span class="kw-2">&amp;</span>slice[i..j]);
+<a href=#421 id=421 data-nosnippet>421</a>            }
+<a href=#422 id=422 data-nosnippet>422</a>
+<a href=#423 id=423 data-nosnippet>423</a>            <span class="kw">for </span>j <span class="kw">in </span>i..<span class="number">10 </span>{
+<a href=#424 id=424 data-nosnippet>424</a>                <span class="comment">// RangeInclusive
+<a href=#425 id=425 data-nosnippet>425</a>                </span>check(<span class="kw-2">&amp;</span>vec[i..=j], <span class="kw-2">&amp;</span>set[i..=j], <span class="kw-2">&amp;</span>slice[i..=j]);
+<a href=#426 id=426 data-nosnippet>426</a>            }
+<a href=#427 id=427 data-nosnippet>427</a>        }
+<a href=#428 id=428 data-nosnippet>428</a>    }
+<a href=#429 id=429 data-nosnippet>429</a>}
 </code></pre></div></section></main></body></html>

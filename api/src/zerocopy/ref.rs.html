@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerocopy-0.8.55/src/ref.rs`."><title>ref.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="zerocopy" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.0-nightly (c397dae80 2026-07-02)" data-channel="nightly" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">zerocopy/</div>ref.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0 OR MIT
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerocopy-0.8.59/src/ref.rs`."><title>ref.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="zerocopy" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.0-nightly (c397dae80 2026-07-02)" data-channel="nightly" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">zerocopy/</div>ref.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0 OR MIT
 <a href=#2 id=2 data-nosnippet>2</a>//
 <a href=#3 id=3 data-nosnippet>3</a>// Copyright 2024 The Fuchsia Authors
 <a href=#4 id=4 data-nosnippet>4</a>//
@@ -10,7 +10,7 @@
 <a href=#10 id=10 data-nosnippet>10</a>// those terms.
 <a href=#11 id=11 data-nosnippet>11</a></span><span class="kw">use super</span>::<span class="kw-2">*</span>;
 <a href=#12 id=12 data-nosnippet>12</a><span class="kw">use </span><span class="kw">crate</span>::pointer::{
-<a href=#13 id=13 data-nosnippet>13</a>    BecauseInvariantsEq, BecauseMutationCompatible, MutationCompatible, TransmuteFromPtr,
+<a href=#13 id=13 data-nosnippet>13</a>    BecauseMutationCompatible, BecauseSharedCompatible, MutationCompatible, TransmuteFromPtr,
 <a href=#14 id=14 data-nosnippet>14</a>};
 <a href=#15 id=15 data-nosnippet>15</a>
 <a href=#16 id=16 data-nosnippet>16</a><span class="kw">mod </span>def {
@@ -198,7 +198,7 @@
 <a href=#198 id=198 data-nosnippet>198</a></span><span class="kw">pub use </span>def::Ref;
 <a href=#199 id=199 data-nosnippet>199</a>
 <a href=#200 id=200 data-nosnippet>200</a><span class="kw">use </span><span class="kw">crate</span>::pointer::{
-<a href=#201 id=201 data-nosnippet>201</a>    invariant::{Aligned, BecauseExclusive, Initialized, Unaligned, Valid},
+<a href=#201 id=201 data-nosnippet>201</a>    invariant::{Aligned, BecauseExclusive, Initialized, Safe, Unaligned},
 <a href=#202 id=202 data-nosnippet>202</a>    BecauseRead, PtrInner,
 <a href=#203 id=203 data-nosnippet>203</a>};
 <a href=#204 id=204 data-nosnippet>204</a>
@@ -686,7 +686,7 @@
 <a href=#686 id=686 data-nosnippet>686</a>                    T,
 <a href=#687 id=687 data-nosnippet>687</a>                    <span class="kw">_</span>,
 <a href=#688 id=688 data-nosnippet>688</a>                    (BecauseRead, BecauseExclusive),
-<a href=#689 id=689 data-nosnippet>689</a>                    (BecauseMutationCompatible, BecauseInvariantsEq),
+<a href=#689 id=689 data-nosnippet>689</a>                    (BecauseMutationCompatible, BecauseSharedCompatible),
 <a href=#690 id=690 data-nosnippet>690</a>                &gt;(ptr)
 <a href=#691 id=691 data-nosnippet>691</a>            };
 <a href=#692 id=692 data-nosnippet>692</a>
@@ -703,7 +703,7 @@
 <a href=#703 id=703 data-nosnippet>703</a>        // address and length to that produced by `b.deref_mut()`.
 <a href=#704 id=704 data-nosnippet>704</a>        </span><span class="kw">let </span>ptr = Ptr::from_mut(b.into_byte_slice_mut())
 <a href=#705 id=705 data-nosnippet>705</a>            .try_cast_into_no_leftover::&lt;T, BecauseExclusive&gt;(<span class="prelude-val">None</span>)
-<a href=#706 id=706 data-nosnippet>706</a>            .expect(<span class="string">"zerocopy internal error: into_ref should be infallible"</span>);
+<a href=#706 id=706 data-nosnippet>706</a>            .expect(<span class="string">"zerocopy internal error: into_mut should be infallible"</span>);
 <a href=#707 id=707 data-nosnippet>707</a>        <span class="kw">let </span>ptr = ptr.recall_validity::&lt;<span class="kw">_</span>, (<span class="kw">_</span>, (<span class="kw">_</span>, <span class="kw">_</span>))&gt;();
 <a href=#708 id=708 data-nosnippet>708</a>        ptr.as_mut()
 <a href=#709 id=709 data-nosnippet>709</a>    }
@@ -786,8 +786,8 @@
 <a href=#786 id=786 data-nosnippet>786</a>        // `ByteSliceMut`.
 <a href=#787 id=787 data-nosnippet>787</a>        </span><span class="kw">let </span>b = <span class="kw">unsafe </span>{ r.as_byte_slice_mut() };
 <a href=#788 id=788 data-nosnippet>788</a>
-<a href=#789 id=789 data-nosnippet>789</a>        <span class="comment">// SAFETY: By postcondition on `as_byte_slice_mut`, we know that `b` is
-<a href=#790 id=790 data-nosnippet>790</a>        // a valid size and alignment for `T`. By safety invariant on
+<a href=#789 id=789 data-nosnippet>789</a>        <span class="comment">// SAFETY: By postcondition on `as_byte_slice_mut`, we know that `b` is a
+<a href=#790 id=790 data-nosnippet>790</a>        // valid size and alignment for `T`. By safety invariant on
 <a href=#791 id=791 data-nosnippet>791</a>        // `ByteSlice`, we know that this is preserved via `.deref()`. Writing
 <a href=#792 id=792 data-nosnippet>792</a>        // `t` to the buffer will allow all of the bytes of `t` to be accessed
 <a href=#793 id=793 data-nosnippet>793</a>        // as a `[u8]`, but because `T: IntoBytes`, we know that this is sound.
@@ -862,7 +862,7 @@
 <a href=#862 id=862 data-nosnippet>862</a>                    T,
 <a href=#863 id=863 data-nosnippet>863</a>                    <span class="kw">_</span>,
 <a href=#864 id=864 data-nosnippet>864</a>                    (BecauseRead, BecauseExclusive),
-<a href=#865 id=865 data-nosnippet>865</a>                    (BecauseMutationCompatible, BecauseInvariantsEq),
+<a href=#865 id=865 data-nosnippet>865</a>                    (BecauseMutationCompatible, BecauseSharedCompatible),
 <a href=#866 id=866 data-nosnippet>866</a>                &gt;(ptr)
 <a href=#867 id=867 data-nosnippet>867</a>            };
 <a href=#868 id=868 data-nosnippet>868</a>
@@ -958,13 +958,13 @@
 <a href=#958 id=958 data-nosnippet>958</a>/// `T: Sized` and `ptr`'s referent must have size `size_of::&lt;T&gt;()`.
 <a href=#959 id=959 data-nosnippet>959</a></span><span class="attr">#[inline(always)]
 <a href=#960 id=960 data-nosnippet>960</a></span><span class="kw">unsafe fn </span>cast_for_sized&lt;<span class="lifetime">'a</span>, T, A, R, S&gt;(
-<a href=#961 id=961 data-nosnippet>961</a>    ptr: Ptr&lt;<span class="lifetime">'a</span>, [u8], (A, Aligned, Valid)&gt;,
-<a href=#962 id=962 data-nosnippet>962</a>) -&gt; Ptr&lt;<span class="lifetime">'a</span>, T, (A, Unaligned, Valid)&gt;
+<a href=#961 id=961 data-nosnippet>961</a>    ptr: Ptr&lt;<span class="lifetime">'a</span>, [u8], (A, Aligned, Safe)&gt;,
+<a href=#962 id=962 data-nosnippet>962</a>) -&gt; Ptr&lt;<span class="lifetime">'a</span>, T, (A, Unaligned, Safe)&gt;
 <a href=#963 id=963 data-nosnippet>963</a><span class="kw">where
 <a href=#964 id=964 data-nosnippet>964</a>    </span>T: FromBytes + KnownLayout + <span class="question-mark">?</span>Sized,
 <a href=#965 id=965 data-nosnippet>965</a>    A: <span class="kw">crate</span>::invariant::Aliasing,
 <a href=#966 id=966 data-nosnippet>966</a>    [u8]: MutationCompatible&lt;T, A, Initialized, Initialized, R&gt;,
-<a href=#967 id=967 data-nosnippet>967</a>    T: TransmuteFromPtr&lt;T, A, Initialized, Valid, <span class="kw">crate</span>::pointer::cast::IdCast, S&gt;,
+<a href=#967 id=967 data-nosnippet>967</a>    T: TransmuteFromPtr&lt;T, A, Initialized, Safe, <span class="kw">crate</span>::pointer::cast::IdCast, S&gt;,
 <a href=#968 id=968 data-nosnippet>968</a>{
 <a href=#969 id=969 data-nosnippet>969</a>    <span class="kw">use </span><span class="kw">crate</span>::pointer::cast::{Cast, Project};
 <a href=#970 id=970 data-nosnippet>970</a>
@@ -990,7 +990,7 @@
 <a href=#990 id=990 data-nosnippet>990</a>
 <a href=#991 id=991 data-nosnippet>991</a>    ptr.recall_validity::&lt;Initialized, (<span class="kw">_</span>, (<span class="kw">_</span>, <span class="kw">_</span>))&gt;()
 <a href=#992 id=992 data-nosnippet>992</a>        .cast::&lt;<span class="kw">_</span>, CastForSized, <span class="kw">_</span>&gt;()
-<a href=#993 id=993 data-nosnippet>993</a>        .recall_validity::&lt;Valid, <span class="kw">_</span>&gt;()
+<a href=#993 id=993 data-nosnippet>993</a>        .recall_validity::&lt;Safe, <span class="kw">_</span>&gt;()
 <a href=#994 id=994 data-nosnippet>994</a>}
 <a href=#995 id=995 data-nosnippet>995</a>
 <a href=#996 id=996 data-nosnippet>996</a><span class="attr">#[cfg(test)]
