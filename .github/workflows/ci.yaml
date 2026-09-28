@@ -16,6 +16,45 @@ concurrency:
 permissions: { }
 
 jobs:
+  cache-warming:
+    if: github.ref_name == 'main'
+    name: cache warming
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macOS-latest ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+      - &install-rust-toolchain
+        name: install rust-toolchain
+        run: echo "TARGET=$(rustc --print host-tuple)" >> "$GITHUB_ENV"
+      - uses: Swatinem/rust-cache@v2
+        with:
+          add-job-id-key: "false"
+          shared-key: "base"
+          save-if: true
+          lookup-only: true
+      # Fetch dependencies in a separate step to clearly show how long each part
+      # of the testing takes
+      - &cargo-fetch-target
+        name: cargo fetch --locked
+        run: cargo fetch --locked --target $TARGET
+      # Our test runners select very different features for dependencies, so they need to be two separate builds.
+      # * compiletests depends on `rustc_codegen_spirv` directly with features `use-installed-tools`
+      # * difftests depends on `spirv-builder` with no features, which excludes `rustc_codegen_spirv` entirely.
+      #   The individual difftest crates depend on it and run the spirv compile, never the test runner itself.
+      - name: warm workspace build (excluding examples)
+        run: cargo nextest run --release --workspace --exclude "example-runner-*" --exclude "cargo-gpu*" --no-default-features --features "use-installed-tools,clap,bytemuck" --no-run
+      - name: warm example-runner-wgpu-builder
+        run: cargo build -p example-runner-wgpu-builder --release --no-default-features --features "use-installed-tools"
+      - name: warm example-runner-wgpu-builder debug
+        run: cargo build -p example-runner-wgpu-builder --no-default-features --features "use-installed-tools"
+      - name: warm compiletests
+        run: cargo build -p compiletests --release --no-default-features --features "use-installed-tools"
+      - name: warm difftests
+        run: cargo build -p difftests --release --no-default-features --features "use-installed-tools"
+
   test:
     name: Test
     strategy:
@@ -38,44 +77,33 @@ jobs:
         run: sudo apt install libwayland-cursor0 libxkbcommon-dev libwayland-dev
       # just need a random command that forces the installation of rust-toolchain
       # figure out native target triple while we're at it
-      - &install-rust-toolchain
-        name: install rust-toolchain
-        run: echo "TARGET=$(rustc --print host-tuple)" >> "$GITHUB_ENV"
+      - *install-rust-toolchain
       - &install-nextest
         name: install nextest
         uses: taiki-e/install-action@nextest
-      - uses: Swatinem/rust-cache@v2
+      - &rust-cache-workspace
+        uses: Swatinem/rust-cache@v2
         with:
           add-job-id-key: "false"
           shared-key: "base"
-          save-if: ${{ github.ref_name == 'main' }}
-      # Fetch dependencies in a separate step to clearly show how long each part
-      # of the testing takes
-      - &cargo-fetch-target
-        name: cargo fetch --locked
-        run: cargo fetch --locked --target $TARGET
+          save-if: false
+      - *cargo-fetch-target
 
       # Core crates
       # Compiled in --release because cargo compiletest would otherwise compile in release again.
-      - name: rustc_codegen_spirv build
-        run: cargo nextest run -p rustc_codegen_spirv --release --no-default-features --features "use-installed-tools" --no-run
-
-      - name: rustc_codegen_spirv test
-        run: cargo nextest run -p rustc_codegen_spirv --release --no-default-features --features "use-installed-tools"
-
+      - name: workspace build (excluding examples)
+        run: cargo nextest run --release --workspace --exclude "example-runner-*" --exclude "cargo-gpu*" --no-default-features --features "use-installed-tools,clap,bytemuck" --no-run
       - name: workspace test (excluding examples)
         run: cargo nextest run --release --workspace --exclude "example-runner-*" --exclude "cargo-gpu*" --no-default-features --features "use-installed-tools,clap,bytemuck"
 
       # Examples
       - name: cargo check examples
         run: cargo check -p example-runner-ash -p example-runner-wgpu -p example-runner-cpu -p compute-shader -p mouse-shader -p simplest-shader -p sky-shader --no-default-features --features "use-installed-tools"
-
       - name: build example shaders
         env:
           PROFILE: release
           OUT_DIR: "target/release/ci/out"
         run: cargo run -p example-runner-wgpu-builder --release --no-default-features --features "use-installed-tools"
-
       - name: build example shaders (dev aka "debug mode")
         env:
           # HACK(eddyb) see `[profile.dev]` in `Cargo.toml` for more on why
@@ -84,17 +112,6 @@ jobs:
           PROFILE: debug
           OUT_DIR: "target/debug/ci/out"
         run: cargo run -p example-runner-wgpu-builder --no-default-features --features "use-installed-tools"
-
-      # Our test runners select very different features for dependencies, so they need to be two separate builds.
-      # * compiletests depends on `rustc_codegen_spirv` directly with features `use-installed-tools`
-      # * difftests depends on `spirv-builder` with no features, which excludes `rustc_codegen_spirv` entirely.
-      #   The individual difftest crates depend on it and run the spirv compile, never the test runner itself.
-      - name: prep cache for other jobs
-        if: github.ref_name == 'main'
-        run: |
-          cargo build -p compiletests --release --no-default-features --features "use-installed-tools"
-          cargo build -p difftests --release --no-default-features --features "use-installed-tools"
-
 
   android:
     name: Android
@@ -149,12 +166,7 @@ jobs:
       - uses: actions/checkout@v6
       - *install-vulkan-sdk
       - *install-rust-toolchain
-      - &rust-cache-workspace
-        uses: Swatinem/rust-cache@v2
-        with:
-          add-job-id-key: "false"
-          shared-key: "base"
-          save-if: "false"
+      - *rust-cache-workspace
       - *cargo-fetch-target
       - name: build compiletest
         run: cargo build -p compiletests --release --no-default-features --features "use-installed-tools"
