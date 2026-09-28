@@ -13,7 +13,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
   cancel-in-progress: true
 
-permissions: {}
+permissions: { }
 
 jobs:
   test:
@@ -30,10 +30,8 @@ jobs:
         with:
           vulkan_version: 1.4.321.0
           install_runtime: true
-          # cache restore on mac is broken
-          # see https://github.com/jakoch/install-vulkan-sdk-action/issues/558
-          cache: ${{ runner.os != 'macOS' }}
           stripdown: true
+          cache_save_if: ${{ github.ref_name == 'main' }}
       - if: ${{ runner.os == 'Linux' }}
         name: Linux - Install native dependencies
         run: sudo apt install libwayland-cursor0 libxkbcommon-dev libwayland-dev
@@ -110,6 +108,7 @@ jobs:
           install_runtime: true
           cache: true
           stripdown: true
+          cache_save_if: ${{ github.ref_name == 'main' }}
       - name: install rust-toolchain
         run: cargo version
       - uses: Swatinem/rust-cache@v2
@@ -159,6 +158,7 @@ jobs:
           install_runtime: true
           cache: true
           stripdown: true
+          cache_save_if: ${{ github.ref_name == 'main' }}
       - name: install rust-toolchain
         run: echo "TARGET=$(rustc --print host-tuple)" >> "$GITHUB_ENV"
       - uses: Swatinem/rust-cache@v2
@@ -205,6 +205,7 @@ jobs:
           stripdown: true
           install_lavapipe: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          cache_save_if: ${{ github.ref_name == 'main' }}
       - if: ${{ runner.os == 'Linux' }}
         name: Linux - Install native dependencies
         run: sudo apt install libwayland-cursor0 libxkbcommon-dev libwayland-dev
@@ -267,7 +268,7 @@ jobs:
   cargo-gpu-backwards-compat:
     # The dependency is technically unnecessary, this is just to delay the launch of this job, so that github prefers
     # launching long-running jobs first. Currently, these jobs take only about 7min compared to 22min of others.
-    needs: [cargo-deny]
+    needs: [ cargo-deny ]
     strategy:
       fail-fast: false
       matrix:
@@ -366,7 +367,7 @@ jobs:
   # to update the branch protection rules when the test matrix changes
   test_success:
     runs-on: ubuntu-latest
-    needs: [test, compiletest, difftest, android, lint, cargo-deny, release-dry-run, cargo-gpu-os, cargo-gpu-backwards-compat]
+    needs: [ test, compiletest, difftest, android, lint, cargo-deny, release-dry-run, cargo-gpu-os, cargo-gpu-backwards-compat ]
     # Hack for buggy GitHub Actions behavior with skipped checks: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/troubleshooting-required-status-checks#handling-skipped-but-required-checks
     if: ${{ always() }}
     steps:
@@ -402,6 +403,7 @@ jobs:
           install_runtime: true
           cache: true
           stripdown: true
+          cache_save_if: ${{ github.ref_name == 'main' }}
       # cargo version is a random command that forces the installation of rust-toolchain
       - name: install rust-toolchain
         run: cargo version
