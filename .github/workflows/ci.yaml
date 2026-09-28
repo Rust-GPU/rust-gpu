@@ -82,6 +82,12 @@ jobs:
         # but I don't think that will improve on CI times, since it's bottlenecked on rustc compilation on windows.
       - name: warm difftests
         run: cargo nextest run -P difftests -p difftests --release --no-default-features --features "use-installed-tools"
+      - name: warm xtask
+        run: cargo build -p xtask --release
+      - name: warm cargo-gpu
+        run: cargo build -p cargo-gpu --release
+      - name: warm cargo-gpu tests
+        run: cargo nextest run --release -p cargo-gpu -p cargo-gpu-install --no-run
 
   test:
     name: Test
@@ -249,19 +255,18 @@ jobs:
           - macos-latest
           - windows-latest
     runs-on: ${{ matrix.os }}
-    env:
-      RUST_LOG: debug
     steps:
       - uses: actions/checkout@v6
       - *install-rust-toolchain
       - *install-nextest
+      - *rust-cache-workspace
       - *cargo-fetch-target
       - &cargo-fetch-shader-crate-template
         name: cargo fetch --locked shader-crate-template
         run: cargo fetch --locked --manifest-path=crates/shader-crate-template/Cargo.toml --target $TARGET
-      - run: cargo nextest run -p cargo-gpu -p cargo-gpu-install
+      - run: cargo nextest run --release -p cargo-gpu -p cargo-gpu-install
       - name: Run a full build
-        run: cargo xtask test-build
+        run: RUST_LOG=debug cargo run -p xtask --release -- test-build
 
   cargo-gpu-backwards-compat:
     # The dependency is technically unnecessary, this is just to delay the launch of this job, so that github prefers
@@ -341,18 +346,17 @@ jobs:
             glam-version: 0.33.0
           # after to be added later
     runs-on: ubuntu-latest
-    env:
-      RUST_LOG: debug
     steps:
       - uses: actions/checkout@v6
       - *install-rust-toolchain
+      - *rust-cache-workspace
       - *cargo-fetch-target
       - *cargo-fetch-shader-crate-template
       - if: ${{ matrix.glam-version }}
         name: set glam version
-        run: cargo xtask set-dependency glam ${{ matrix.glam-version }}
+        run: RUST_LOG=debug cargo run -p xtask --release -- set-dependency glam ${{ matrix.glam-version }}
       - name: Run a full build
-        run: cargo xtask test-build --rust-gpu-version ${{ matrix.rust-gpu-version }}
+        run: RUST_LOG=debug cargo run -p xtask --release -- test-build --rust-gpu-version ${{ matrix.rust-gpu-version }}
 
   release-dry-run:
     runs-on: ubuntu-latest
