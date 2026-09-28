@@ -276,8 +276,8 @@ impl Cli {
                 rust_gpu_version,
                 glam_version,
             } => {
-                log::info!("installing cargo gpu");
-                cmd(["cargo", "install", "--path", "crates/cargo-gpu"])?;
+                log::info!("building cargo gpu");
+                cmd(["cargo", "b", "-p", "cargo-gpu", "--release"])?;
 
                 log::info!("setup project");
                 let mut overwriter = ShaderCrateTemplateCargoTomlWriter::default();
@@ -293,7 +293,10 @@ impl Cli {
                 log::info!("building with auto-install");
                 cmd([
                     "cargo",
-                    "gpu",
+                    "run",
+                    "-p",
+                    "cargo-gpu",
+                    "--release",
                     "build",
                     "--shader-crate",
                     SHADER_CRATE_PATH,
