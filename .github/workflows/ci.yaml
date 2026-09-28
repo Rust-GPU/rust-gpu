@@ -25,7 +25,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
-      - name: Install Vulkan SDK
+      - &install-vulkan-sdk
+        name: Install Vulkan SDK
         uses: jakoch/install-vulkan-sdk-action@v1
         with:
           vulkan_version: 1.4.321.0
@@ -37,9 +38,11 @@ jobs:
         run: sudo apt install libwayland-cursor0 libxkbcommon-dev libwayland-dev
       # just need a random command that forces the installation of rust-toolchain
       # figure out native target triple while we're at it
-      - name: install rust-toolchain
+      - &install-rust-toolchain
+        name: install rust-toolchain
         run: echo "TARGET=$(rustc --print host-tuple)" >> "$GITHUB_ENV"
-      - name: install nextest
+      - &install-nextest
+        name: install nextest
         uses: taiki-e/install-action@nextest
       - uses: Swatinem/rust-cache@v2
         with:
@@ -48,7 +51,8 @@ jobs:
           save-if: ${{ github.ref_name == 'main' }}
       # Fetch dependencies in a separate step to clearly show how long each part
       # of the testing takes
-      - name: cargo fetch --locked
+      - &cargo-fetch-target
+        name: cargo fetch --locked
         run: cargo fetch --locked --target $TARGET
 
       # Core crates
@@ -101,16 +105,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
-      - name: Install Vulkan SDK
-        uses: jakoch/install-vulkan-sdk-action@v1
-        with:
-          vulkan_version: 1.4.321.0
-          install_runtime: true
-          cache: true
-          stripdown: true
-          cache_save_if: ${{ github.ref_name == 'main' }}
-      - name: install rust-toolchain
-        run: cargo version
+      - *install-vulkan-sdk
+      - *install-rust-toolchain
       - uses: Swatinem/rust-cache@v2
         with:
           add-job-id-key: "false"
@@ -151,23 +147,15 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
-      - name: Install Vulkan SDK
-        uses: jakoch/install-vulkan-sdk-action@v1
-        with:
-          vulkan_version: 1.4.321.0
-          install_runtime: true
-          cache: true
-          stripdown: true
-          cache_save_if: ${{ github.ref_name == 'main' }}
-      - name: install rust-toolchain
-        run: echo "TARGET=$(rustc --print host-tuple)" >> "$GITHUB_ENV"
-      - uses: Swatinem/rust-cache@v2
+      - *install-vulkan-sdk
+      - *install-rust-toolchain
+      - &rust-cache-workspace
+        uses: Swatinem/rust-cache@v2
         with:
           add-job-id-key: "false"
           shared-key: "base"
           save-if: "false"
-      - name: cargo fetch --locked
-        run: cargo fetch --locked --target $TARGET
+      - *cargo-fetch-target
       - name: build compiletest
         run: cargo build -p compiletests --release --no-default-features --features "use-installed-tools"
       - name: compiletest vulkan1.1
@@ -216,23 +204,16 @@ jobs:
           sudo add-apt-repository ppa:kisak/turtle -y
           sudo apt-get update
           sudo apt install -y xvfb libgl1-mesa-dri libxcb-xfixes0-dev mesa-vulkan-drivers
-      - name: install rust-toolchain
-        run: echo "TARGET=$(rustc --print host-tuple)" >> "$GITHUB_ENV"
-      - name: install nextest
-        uses: taiki-e/install-action@nextest
-      - uses: Swatinem/rust-cache@v2
-        with:
-          add-job-id-key: "false"
-          shared-key: "base"
-          save-if: "false"
+      - *install-rust-toolchain
+      - *install-nextest
+      - *rust-cache-workspace
       - uses: Swatinem/rust-cache@v2
         with:
           add-job-id-key: "false"
           shared-key: "difftest"
           workspaces: "tests/difftests/tests"
           save-if: ${{ github.ref_name == 'main' }}
-      - name: cargo fetch --locked
-        run: cargo fetch --locked --target $TARGET
+      - *cargo-fetch-target
       - name: cargo fetch --locked difftests
         run: cargo fetch --locked --manifest-path=tests/difftests/tests/Cargo.toml --target $TARGET
       - name: build difftests (without shaders)
@@ -253,14 +234,12 @@ jobs:
       RUST_LOG: debug
     steps:
       - uses: actions/checkout@v6
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: nextest
-      - run: cargo fetch --locked
-      - name: shader-crate-template cargo fetch --locked
-        run: |
-          cd ./crates/shader-crate-template
-          cargo fetch --locked
+      - *install-rust-toolchain
+      - *install-nextest
+      - *cargo-fetch-target
+      - &cargo-fetch-shader-crate-template
+        name: cargo fetch --locked shader-crate-template
+        run: cargo fetch --locked --manifest-path=crates/shader-crate-template/Cargo.toml --target $TARGET
       - run: cargo nextest run -p cargo-gpu -p cargo-gpu-install
       - name: Run a full build
         run: cargo xtask test-build
@@ -347,6 +326,9 @@ jobs:
       RUST_LOG: debug
     steps:
       - uses: actions/checkout@v6
+      - *install-rust-toolchain
+      - *cargo-fetch-target
+      - *cargo-fetch-shader-crate-template
       - if: ${{ matrix.glam-version }}
         name: set glam version
         run: cargo xtask set-dependency glam ${{ matrix.glam-version }}
@@ -357,10 +339,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - name: install rust-toolchain
-        run: echo "TARGET=$(rustc --print host-tuple)" >> "$GITHUB_ENV"
-      - name: cargo fetch --locked
-        run: cargo fetch --locked --target $TARGET
+      - *install-rust-toolchain
+      - *cargo-fetch-target
       - run: cargo publish --dry-run
 
   # This allows us to have a single job we can branch protect on, rather than needing
@@ -396,17 +376,9 @@ jobs:
           submodules: "false"
       - name: Install native dependencies
         run: sudo apt install libwayland-cursor0 libxkbcommon-dev libwayland-dev
-      - name: Install Vulkan SDK
-        uses: jakoch/install-vulkan-sdk-action@v1
-        with:
-          vulkan_version: 1.4.321.0
-          install_runtime: true
-          cache: true
-          stripdown: true
-          cache_save_if: ${{ github.ref_name == 'main' }}
+      - *install-vulkan-sdk
       # cargo version is a random command that forces the installation of rust-toolchain
-      - name: install rust-toolchain
-        run: cargo version
+      - *install-rust-toolchain
       - name: Install rustup components
         run: rustup component add rustfmt clippy
       - name: cargo fetch --locked
