@@ -19,6 +19,15 @@ pub struct Generate {
         default_value = "https://github.com/Rust-GPU/rust-gpu-template.git"
     )]
     pub git: Option<String>,
+    /// Branch to use when installing from git
+    #[arg(short, long, conflicts_with_all = ["revision", "tag"])]
+    pub branch: Option<String>,
+    /// Tag to use when installing from git
+    #[arg(short, long, conflicts_with_all = ["revision", "branch"])]
+    pub tag: Option<String>,
+    /// Git revision to use when installing from git (e.g. a commit hash)
+    #[arg(short, long, conflicts_with_all = ["tag", "branch"], alias = "rev")]
+    pub revision: Option<String>,
     /// Specify the VCS used to initialize the generated template.
     #[arg(long, value_parser)]
     pub vcs: Option<Vcs>,
@@ -43,6 +52,9 @@ impl Generate {
             template_path: TemplatePath {
                 auto_path: Some("".to_owned()),
                 git: self.git,
+                branch: self.branch,
+                tag: self.tag,
+                revision: self.revision,
                 ..TemplatePath::default()
             },
             vcs: self.vcs,
