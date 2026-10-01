@@ -38,7 +38,11 @@ mod transpile {
         spv_binary: &[u32],
     ) -> Result<Vec<u8>, ErrorGuaranteed> {
         // these should be params via spirv-builder
-        let opts = naga::front::spv::Options::default();
+        let opts = naga::front::spv::Options {
+            adjust_coordinate_space: false,
+            strict_capabilities: false,
+            ..Default::default()
+        };
         let capabilities = Capabilities::all();
         let writer_flags = naga::back::wgsl::WriterFlags::empty();
 
