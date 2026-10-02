@@ -19,9 +19,9 @@ use std::{env, fs, mem};
 /// `cargo publish`. We need to figure out a way to do this properly, but let's hardcode it for now :/
 //const REQUIRED_RUST_TOOLCHAIN: &str = include_str!("../../rust-toolchain.toml");
 const REQUIRED_RUST_TOOLCHAIN: &str = r#"[toolchain]
-channel = "nightly-2026-07-03"
+channel = "nightly-2026-08-15"
 components = ["rust-src", "rustc-dev", "llvm-tools"]
-# commit_hash = c397dae808f70caebab1fc4e11b3edf7e59f58c7"#;
+# commit_hash = d453bdd8f092d099bc336f0bda4163f809ad18e0"#;
 
 fn rustc_output(arg: &str) -> Result<String, Box<dyn Error>> {
     let rustc = env::var("RUSTC").unwrap_or_else(|_| "rustc".into());
@@ -153,7 +153,10 @@ fn generate_pqp_cg_ssa() -> Result<(), Box<dyn Error>> {
                 for line in mem::take(&mut src).lines() {
                     if line.starts_with("#!") {
                         src += "// ";
-                        if !line.starts_with("#![doc(") && line != "#![warn(unreachable_pub)]" {
+                        if !line.starts_with("#![doc(")
+                            && line != "#![warn(unreachable_pub)]"
+                            && !line.starts_with("#![cfg_attr(bootstrap,")
+                        {
                             writeln(&mut cg_ssa_lib_rc_attrs, line);
                         }
                     } else if line == "#[macro_use]" || line.starts_with("extern crate ") {
