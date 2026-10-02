@@ -3,7 +3,7 @@ use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 
 use crate::codegen_cx::{CodegenArgs, SpirvMetadata};
 use crate::linker;
-use crate::naga_transpile::should_transpile;
+use crate::naga_transpile::transpile;
 use crate::target::{SpirvTarget, SpirvTargetVariant};
 use ar::{Archive, GnuBuilder, Header};
 use rspirv::binary::Assemble;
@@ -302,10 +302,17 @@ fn post_link_single_module(
         do_spirv_val(sess, &spv_binary, out_filename, val_options);
     }
 
+    let binary = {
+        let _transpile_timer = sess.timer("link_transpile");
+        match transpile(sess, cg_args, &spv_binary) {
+            Ok(e) => e,
+            Err(_) => return,
+        }
+    };
+
     {
         let save_modules_timer = sess.timer("link_save_modules");
-        if let Err(e) = std::fs::write(out_filename, spirv_tools::binary::from_binary(&spv_binary))
-        {
+        if let Err(e) = std::fs::write(out_filename, binary) {
             let mut err = sess
                 .dcx()
                 .struct_err("failed to serialize spirv-binary to disk");
@@ -315,10 +322,6 @@ fn post_link_single_module(
         }
 
         drop(save_modules_timer);
-    }
-
-    if let Ok(Some(transpile)) = should_transpile(sess) {
-        transpile(sess, cg_args, &spv_binary, out_filename).ok();
     }
 }
 

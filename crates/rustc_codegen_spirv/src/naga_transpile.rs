@@ -2,31 +2,26 @@ use crate::codegen_cx::CodegenArgs;
 use crate::target::{NagaTarget, SpirvTarget};
 use rustc_session::Session;
 use rustc_span::ErrorGuaranteed;
-use std::path::Path;
 
-pub type NagaTranspile = fn(
+pub fn transpile(
     sess: &Session,
     cg_args: &CodegenArgs,
     spv_binary: &[u32],
-    out_filename: &Path,
-) -> Result<(), ErrorGuaranteed>;
-
-pub fn should_transpile(sess: &Session) -> Result<Option<NagaTranspile>, ErrorGuaranteed> {
+) -> Result<Vec<u8>, ErrorGuaranteed> {
     let target = SpirvTarget::parse_target(sess.opts.target_triple.tuple())
         .expect("parsing should fail earlier");
-    let result: Result<Option<NagaTranspile>, ()> = match target {
+    match target {
         #[cfg(feature = "naga")]
-        SpirvTarget::Naga(NagaTarget::NAGA_WGSL) => Ok(Some(transpile::wgsl_transpile)),
+        SpirvTarget::Naga(NagaTarget::NAGA_WGSL) => {
+            transpile::wgsl_transpile(sess, cg_args, spv_binary)
+        }
         #[cfg(not(feature = "naga"))]
-        SpirvTarget::Naga(NagaTarget::NAGA_WGSL) => Err(()),
-        _ => Ok(None),
-    };
-    result.map_err(|_e| {
-        sess.dcx().err(format!(
+        SpirvTarget::Naga(_) => Err(sess.dcx().err(format!(
             "Target `{}` requires feature \"naga\" on rustc_codegen_spirv",
             target.target()
-        ))
-    })
+        ))),
+        _ => Ok(bytemuck::cast_slice::<_, u8>(spv_binary).to_vec()),
+    }
 }
 
 #[cfg(feature = "naga")]
@@ -36,16 +31,18 @@ mod transpile {
     use naga::valid::Capabilities;
     use rustc_session::Session;
     use rustc_span::ErrorGuaranteed;
-    use std::path::Path;
 
     pub fn wgsl_transpile(
         sess: &Session,
         _cg_args: &CodegenArgs,
         spv_binary: &[u32],
-        out_filename: &Path,
-    ) -> Result<(), ErrorGuaranteed> {
+    ) -> Result<Vec<u8>, ErrorGuaranteed> {
         // these should be params via spirv-builder
-        let opts = naga::front::spv::Options::default();
+        let opts = naga::front::spv::Options {
+            adjust_coordinate_space: false,
+            strict_capabilities: false,
+            ..Default::default()
+        };
         let capabilities = Capabilities::all();
         let writer_flags = naga::back::wgsl::WriterFlags::empty();
 
@@ -73,17 +70,10 @@ mod transpile {
             ))
         })?;
 
-        let wgsl_dst = out_filename.with_extension("wgsl");
         let wgsl = naga::back::wgsl::write_string(&module, &info, writer_flags).map_err(|err| {
             sess.dcx()
                 .err(format!("Naga failed to write wgsl : \n{err}"))
         })?;
-
-        std::fs::write(&wgsl_dst, wgsl).map_err(|err| {
-            sess.dcx()
-                .err(format!("failed to write wgsl to file: {err}"))
-        })?;
-
-        Ok(())
+        Ok(wgsl.into_bytes())
     }
 }
