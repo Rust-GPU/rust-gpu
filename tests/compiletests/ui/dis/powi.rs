@@ -4,7 +4,6 @@
 // build-pass
 // compile-flags: -C llvm-args=--disassemble-entry=main
 
-use spirv_std::num_traits::Float;
 use spirv_std::spirv;
 
 #[spirv(fragment)]
