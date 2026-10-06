@@ -1,6 +1,6 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/spirv-std/src/matrix.rs`."><title>matrix.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="spirv_std" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.0-nightly (c397dae80 2026-07-02)" data-channel="nightly" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">spirv_std/</div>matrix.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-2"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! a set of common SPIR-V Matrices, used for intrinsics
 <a href=#2 id=2 data-nosnippet>2</a>
-<a href=#3 id=3 data-nosnippet>3</a></span><span class="kw">use </span><span class="kw">crate</span>::glam::{Affine3A, Mat3, Mat3A, Mat4, Vec3, Vec3A};
+<a href=#3 id=3 data-nosnippet>3</a></span><span class="kw">use </span><span class="kw">crate</span>::glam::{Affine3A, Mat3, Mat3A, Mat4, Vec3};
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span>core::fmt::{Debug, Display, Formatter};
 <a href=#5 id=5 data-nosnippet>5</a>
 <a href=#6 id=6 data-nosnippet>6</a><span class="doccomment">/// A Matrix with 4 columns of [`Vec3`], very similar to glam's [`Affine3A`].
@@ -18,10 +18,10 @@
 <a href=#18 id=18 data-nosnippet>18</a>#[spirv(matrix)]
 <a href=#19 id=19 data-nosnippet>19</a>#[allow(missing_docs)]
 <a href=#20 id=20 data-nosnippet>20</a></span><span class="kw">pub struct </span>Matrix4x3 {
-<a href=#21 id=21 data-nosnippet>21</a>    <span class="kw">pub </span>x_axis: Vec3A,
-<a href=#22 id=22 data-nosnippet>22</a>    <span class="kw">pub </span>y_axis: Vec3A,
-<a href=#23 id=23 data-nosnippet>23</a>    <span class="kw">pub </span>z_axis: Vec3A,
-<a href=#24 id=24 data-nosnippet>24</a>    <span class="kw">pub </span>w_axis: Vec3A,
+<a href=#21 id=21 data-nosnippet>21</a>    <span class="kw">pub </span>x_axis: Vec3,
+<a href=#22 id=22 data-nosnippet>22</a>    <span class="kw">pub </span>y_axis: Vec3,
+<a href=#23 id=23 data-nosnippet>23</a>    <span class="kw">pub </span>z_axis: Vec3,
+<a href=#24 id=24 data-nosnippet>24</a>    <span class="kw">pub </span>w_axis: Vec3,
 <a href=#25 id=25 data-nosnippet>25</a>}
 <a href=#26 id=26 data-nosnippet>26</a>
 <a href=#27 id=27 data-nosnippet>27</a><span class="doccomment">/// The `from_*` fn signatures should match [`Affine3A`], to make it easier to switch to [`Affine3A`] later.
@@ -30,10 +30,10 @@
 <a href=#30 id=30 data-nosnippet>30</a>    <span class="doccomment">/// Convert from glam's [`Affine3A`]
 <a href=#31 id=31 data-nosnippet>31</a>    </span><span class="kw">pub fn </span>from_affine3a(affine: Affine3A) -&gt; <span class="self">Self </span>{
 <a href=#32 id=32 data-nosnippet>32</a>        <span class="self">Self </span>{
-<a href=#33 id=33 data-nosnippet>33</a>            x_axis: affine.x_axis,
-<a href=#34 id=34 data-nosnippet>34</a>            y_axis: affine.y_axis,
-<a href=#35 id=35 data-nosnippet>35</a>            z_axis: affine.z_axis,
-<a href=#36 id=36 data-nosnippet>36</a>            w_axis: affine.w_axis,
+<a href=#33 id=33 data-nosnippet>33</a>            x_axis: affine.x_axis.to_vec3(),
+<a href=#34 id=34 data-nosnippet>34</a>            y_axis: affine.y_axis.to_vec3(),
+<a href=#35 id=35 data-nosnippet>35</a>            z_axis: affine.z_axis.to_vec3(),
+<a href=#36 id=36 data-nosnippet>36</a>            w_axis: affine.w_axis.to_vec3(),
 <a href=#37 id=37 data-nosnippet>37</a>        }
 <a href=#38 id=38 data-nosnippet>38</a>    }
 <a href=#39 id=39 data-nosnippet>39</a>
@@ -61,11 +61,11 @@
 <a href=#61 id=61 data-nosnippet>61</a>    </span><span class="kw">pub fn </span>to_affine3a(<span class="self">self</span>) -&gt; Affine3A {
 <a href=#62 id=62 data-nosnippet>62</a>        Affine3A {
 <a href=#63 id=63 data-nosnippet>63</a>            matrix3: Mat3A {
-<a href=#64 id=64 data-nosnippet>64</a>                x_axis: <span class="self">self</span>.x_axis,
-<a href=#65 id=65 data-nosnippet>65</a>                y_axis: <span class="self">self</span>.y_axis,
-<a href=#66 id=66 data-nosnippet>66</a>                z_axis: <span class="self">self</span>.z_axis,
+<a href=#64 id=64 data-nosnippet>64</a>                x_axis: <span class="self">self</span>.x_axis.to_vec3a(),
+<a href=#65 id=65 data-nosnippet>65</a>                y_axis: <span class="self">self</span>.y_axis.to_vec3a(),
+<a href=#66 id=66 data-nosnippet>66</a>                z_axis: <span class="self">self</span>.z_axis.to_vec3a(),
 <a href=#67 id=67 data-nosnippet>67</a>            },
-<a href=#68 id=68 data-nosnippet>68</a>            translation: <span class="self">self</span>.w_axis,
+<a href=#68 id=68 data-nosnippet>68</a>            translation: <span class="self">self</span>.w_axis.to_vec3a(),
 <a href=#69 id=69 data-nosnippet>69</a>        }
 <a href=#70 id=70 data-nosnippet>70</a>    }
 <a href=#71 id=71 data-nosnippet>71</a>
