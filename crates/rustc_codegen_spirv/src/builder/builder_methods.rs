@@ -1886,6 +1886,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         ty: Self::Type,
         ptr: Self::Value,
         order: AtomicOrdering,
+        _volatile: bool,
         _size: Size,
     ) -> Self::Value {
         let (ptr, access_ty) = self.adjust_pointer_for_typed_access(ptr, ty);
@@ -2025,6 +2026,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         val: Self::Value,
         ptr: Self::Value,
         order: AtomicOrdering,
+        _volatile: bool,
         _size: Size,
     ) {
         let (ptr, access_ty) = self.adjust_pointer_for_typed_access(ptr, val.ty);
@@ -2069,7 +2071,6 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
 
         self.maybe_inbounds_gep(ty, ptr, indices, true)
     }
-
     // intcast has the logic for dealing with bools, so use that
     fn trunc(&mut self, val: Self::Value, dest_ty: Self::Type) -> Self::Value {
         self.intcast(val, dest_ty, false)
@@ -2077,6 +2078,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
     fn sext(&mut self, val: Self::Value, dest_ty: Self::Type) -> Self::Value {
         self.intcast(val, dest_ty, true)
     }
+
     fn fptoui_sat(&mut self, val: Self::Value, dest_ty: Self::Type) -> Self::Value {
         self.fptoint_sat(false, val, dest_ty)
     }

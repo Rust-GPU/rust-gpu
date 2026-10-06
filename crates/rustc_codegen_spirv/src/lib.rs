@@ -105,6 +105,8 @@ extern crate rustc_session;
 #[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_span;
 #[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
+extern crate rustc_structures;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_target;
 
 macro_rules! assert_ty_eq {

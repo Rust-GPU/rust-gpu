@@ -516,12 +516,6 @@ impl<'tcx> CodegenCx<'tcx> {
                         AllocError::ReadPartialPointer(_) => {
                             Err("partially overlaps another pointer".into())
                         }
-
-                        // HACK(eddyb) these should never happen when using
-                        // `read_scalar`, but better not outright crash.
-                        AllocError::ScalarSizeMismatch(_) => {
-                            Err(format!("unrecognized `AllocError::{err:?}`"))
-                        }
                     },
                 };
                 let result = scalar_or_zombie.unwrap_or_else(|reason| {
