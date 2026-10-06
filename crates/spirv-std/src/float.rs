@@ -3,6 +3,28 @@
 use crate::glam::{Vec2, Vec4};
 #[cfg(target_arch = "spirv")]
 use core::arch::asm;
+#[cfg(target_arch = "spirv")]
+use core::intrinsics;
+
+#[cfg(target_arch = "spirv")]
+impl f32 {
+    /// Raises a number to an integer power.
+    #[inline]
+    #[rustc_allow_incoherent_impl]
+    pub fn powi(self, n: i32) -> f32 {
+        intrinsics::powif32(self, n)
+    }
+}
+
+#[cfg(target_arch = "spirv")]
+impl f64 {
+    /// Raises a number to an integer power.
+    #[inline]
+    #[rustc_allow_incoherent_impl]
+    pub fn powi(self, n: i32) -> f64 {
+        intrinsics::powif64(self, n)
+    }
+}
 
 /// Converts two f32 values (floats) into two f16 values (halfs). The result is a u32, with the low
 /// 16 bits being the first f16, and the high 16 bits being the second f16.

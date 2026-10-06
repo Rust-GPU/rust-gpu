@@ -30,7 +30,6 @@ pub enum LibmCustomIntrinsic {
     Tgamma,
     Log1p,
     NextAfter,
-    Powi,
     Remainder,
     RemQuo,
     Scalbn,
@@ -199,9 +198,6 @@ pub const LIBM_TABLE: &[(&str, LibmIntrinsic)] = &[
     ("truncf", LibmIntrinsic::GLOp(GLOp::Trunc)),
 ];
 
-pub const NUM_TRAITS_TABLE: &[(&str, LibmIntrinsic)] =
-    &[("powi", LibmIntrinsic::Custom(LibmCustomIntrinsic::Powi))];
-
 impl Builder<'_, '_> {
     pub fn call_libm_intrinsic(
         &mut self,
@@ -309,12 +305,6 @@ impl Builder<'_, '_> {
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::NextAfter) => {
                 self.undef_zombie(result_type, "NextAfter not supported yet")
-            }
-            LibmIntrinsic::Custom(LibmCustomIntrinsic::Powi) => {
-                assert_eq!(args.len(), 2);
-                // Convert integer exponent to float, then use GLOp::Pow
-                let float_exp = self.sitofp(args[1], args[0].ty);
-                self.gl_op(GLOp::Pow, result_type, [args[0], float_exp])
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Remainder) => {
                 self.undef_zombie(result_type, "Remainder not supported yet")

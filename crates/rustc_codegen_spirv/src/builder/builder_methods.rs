@@ -3389,8 +3389,6 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
 
         let libm_intrinsic =
             instance_def_id.and_then(|def_id| self.libm_intrinsics.borrow().get(&def_id).copied());
-        let num_traits_intrinsics = instance_def_id
-            .and_then(|def_id| self.num_traits_intrinsics.borrow().get(&def_id).copied());
         let buffer_load_intrinsic = instance_def_id
             .is_some_and(|def_id| self.buffer_load_intrinsics.borrow().contains(&def_id));
         let buffer_store_intrinsic = instance_def_id
@@ -3400,7 +3398,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         let from_trait_impl =
             instance_def_id.and_then(|def_id| self.from_trait_impls.borrow().get(&def_id).copied());
 
-        if let Some(libm_intrinsic) = libm_intrinsic.or(num_traits_intrinsics) {
+        if let Some(libm_intrinsic) = libm_intrinsic {
             let result = self.call_libm_intrinsic(libm_intrinsic, result_type, args);
             if result_type != result.ty {
                 bug!(
