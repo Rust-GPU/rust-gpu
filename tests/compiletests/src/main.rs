@@ -188,7 +188,6 @@ impl Runner {
             "compiletests-deps-helper",
             "-Zbuild-std=core",
             "-Zbuild-std-features=compiler-builtins-mem",
-            "-Zbuild-dir-new-layout",
         ]);
         target_spec.append_to_cmd(&mut cmd);
         cmd.arg("--target-dir")
@@ -307,7 +306,13 @@ impl TestDep {
 
     pub fn to_rustc_extern(&self) -> String {
         let noprelude = if self.no_prelude { "noprelude:" } else { "" };
-        format!("--extern {noprelude}{}={}", self.name, self.rlib.display())
+        let name = &self.name;
+        let rmeta = self.rlib.with_extension("rmeta");
+        format!(
+            "--extern {noprelude}{name}={} --extern {noprelude}{name}={}",
+            self.rlib.display(),
+            rmeta.display()
+        )
     }
 }
 
