@@ -142,7 +142,7 @@ impl AccelerationStructure {
 }
 
 bitflags::bitflags! {
-    /// Flags controlling the properties of an OpTraceRayKHR instruction.
+    /// Flags controlling the properties of an `OpTraceRayKHR` instruction.
     /// Despite being a mask and allowing multiple bits to be combined, it is
     /// invalid for more than one of these four bits to be set: `OPAQUE`,
     /// `NO_OPAQUE`, `CULL_OPAQUE`, `CULL_NO_OPAQUE`, only one of
