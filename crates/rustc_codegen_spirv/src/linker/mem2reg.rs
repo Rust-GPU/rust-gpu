@@ -14,7 +14,7 @@ use super::{apply_rewrite_rules, id};
 use rspirv::dr::{Block, Function, Instruction, ModuleHeader, Operand};
 use rspirv::spirv::{Op, Word};
 use rustc_data_structures::fx::{FxHashMap, FxHashSet, FxIndexMap};
-use rustc_middle::bug;
+use rustc_span::bug;
 use std::collections::hash_map;
 
 // HACK(eddyb) newtype instead of type alias to avoid mistakes.

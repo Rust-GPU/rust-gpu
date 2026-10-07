@@ -81,6 +81,8 @@ extern crate rustc_arena;
 #[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_ast;
 #[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
+extern crate rustc_attr_ir;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_attr_parsing;
 #[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_codegen_ssa;
@@ -162,7 +164,7 @@ use rustc_middle::mono::{MonoItem, MonoItemData};
 use rustc_middle::ty::print::with_no_trimmed_paths;
 use rustc_middle::ty::{InstanceKind, TyCtxt};
 use rustc_session::config::{self, OutputFilenames, OutputType};
-use rustc_session::{IncrCompSession, Session};
+use rustc_session::{CodegenBackendInit, EarlySession, IncrCompSession, Session};
 use rustc_span::symbol::Symbol;
 use std::any::Any;
 use std::fs;
@@ -197,12 +199,17 @@ fn dump_mir<'tcx>(
 struct SpirvCodegenBackend;
 
 impl CodegenBackend for SpirvCodegenBackend {
-    fn init(&self, sess: &Session) {
+    fn init(&mut self, sess: &EarlySession) -> CodegenBackendInit {
         // Set up logging/tracing. See https://github.com/Rust-GPU/rust-gpu/issues/192.
         init_logging(sess);
+        CodegenBackendInit {
+            global_backend_features: Vec::new(),
+            thin_lto_supported: false,
+            ..CodegenBackendInit::default()
+        }
     }
 
-    fn target_config(&self, sess: &Session) -> TargetConfig {
+    fn target_config(&self, sess: &EarlySession) -> TargetConfig {
         let cmdline = sess.opts.cg.target_feature.split(',');
         let cfg = sess.target.options.features.split(',');
 
@@ -221,17 +228,13 @@ impl CodegenBackend for SpirvCodegenBackend {
             // FIXME(eddyb) support and/or emulate `f16` and `f128`.
             has_reliable_f16: false,
             has_reliable_f16_math: false,
+            has_reliable_f16b: false,
             has_reliable_f128: false,
             has_reliable_f128_math: false,
         }
     }
 
     fn provide(&self, providers: &mut rustc_middle::util::Providers) {
-        // FIXME(eddyb) this is currently only passed back to us, specifically
-        // into `target_machine_factory` (which is a noop), but it might make
-        // sense to move some of the target feature parsing into here.
-        providers.queries.global_backend_features = |_tcx, ()| vec![];
-
         crate::abi::provide(providers);
         crate::attr::provide(&mut providers.queries);
     }
@@ -413,7 +416,6 @@ impl WriteBackendMethods for SpirvCodegenBackend {
             bytecode: None,
             assembly: None,
             llvm_ir: None,
-            links_from_incr_cache: vec![],
         }
     }
 
@@ -425,7 +427,6 @@ impl WriteBackendMethods for SpirvCodegenBackend {
         &self,
         _sess: &Session,
         _opt_level: config::OptLevel,
-        _target_features: &[String],
     ) -> TargetMachineFactoryFn<Self> {
         Arc::new(|_, _| ())
     }
@@ -442,6 +443,7 @@ impl ExtraBackendMethods for SpirvCodegenBackend {
         &self,
         tcx: TyCtxt<'tcx>,
         cgu_name: Symbol,
+        _bitcode_needed: bool,
     ) -> (ModuleCodegen<Self::Module>, u64) {
         let _timer = tcx
             .prof
@@ -525,7 +527,7 @@ impl Drop for DumpModuleOnPanic<'_, '_, '_> {
 pub fn __rustc_codegen_backend() -> Box<dyn CodegenBackend> {
     // Tweak rustc's default ICE panic hook, to direct people to `rust-gpu`.
     rustc_driver::install_ice_hook("https://github.com/rust-gpu/rust-gpu/issues/new", |dcx| {
-        dcx.handle().note(concat!(
+        dcx.note(concat!(
             "`rust-gpu` version `",
             env!("CARGO_PKG_VERSION"),
             "`"
@@ -536,7 +538,7 @@ pub fn __rustc_codegen_backend() -> Box<dyn CodegenBackend> {
 }
 
 // Set up logging/tracing. See https://github.com/Rust-GPU/rust-gpu/issues/192.
-fn init_logging(sess: &Session) {
+fn init_logging(sess: &EarlySession) {
     use std::env::{self, VarError};
     use std::io::{self, IsTerminal};
     use tracing_subscriber::layer::SubscriberExt;
