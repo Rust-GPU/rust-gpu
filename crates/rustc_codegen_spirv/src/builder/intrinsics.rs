@@ -15,11 +15,11 @@ use rustc_codegen_ssa::mir::IntrinsicResult;
 use rustc_codegen_ssa::mir::operand::{OperandRef, OperandValue};
 use rustc_codegen_ssa::mir::place::{PlaceRef, PlaceValue};
 use rustc_codegen_ssa::traits::{BuilderMethods, IntrinsicCallBuilderMethods};
+use rustc_middle::ty;
 use rustc_middle::ty::layout::LayoutOf;
 use rustc_middle::ty::{FnDef, Instance, Ty, TyKind, TypingEnv};
-use rustc_middle::{bug, ty};
-use rustc_span::sym;
 use rustc_span::{Span, Symbol};
+use rustc_span::{bug, sym};
 
 fn int_type_width_signed(ty: Ty<'_>, cx: &CodegenCx<'_>) -> Option<(u64, bool)> {
     match ty.kind() {

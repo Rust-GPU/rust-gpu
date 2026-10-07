@@ -12,8 +12,7 @@ use rustc_middle::ty::Ty;
 use rustc_middle::ty::layout::{
     FnAbiError, FnAbiOfHelpers, FnAbiRequest, LayoutError, LayoutOfHelpers, TyAndLayout,
 };
-use rustc_middle::{bug, span_bug};
-use rustc_span::{DUMMY_SP, Span, Spanned};
+use rustc_span::{DUMMY_SP, Span, Spanned, bug, span_bug};
 use rustc_target::callconv::{CastTarget, FnAbi};
 
 impl<'tcx> LayoutOfHelpers<'tcx> for CodegenCx<'tcx> {
@@ -135,6 +134,11 @@ impl BaseTypeCodegenMethods for CodegenCx<'_> {
     fn type_f16(&self) -> Self::Type {
         SpirvType::Float(16).def(DUMMY_SP, self)
     }
+
+    fn type_f16b(&self) -> Self::Type {
+        bug!("f16b not supported")
+    }
+
     fn type_f32(&self) -> Self::Type {
         SpirvType::Float(32).def(DUMMY_SP, self)
     }

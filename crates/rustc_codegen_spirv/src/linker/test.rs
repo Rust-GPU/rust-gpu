@@ -1,8 +1,12 @@
+use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
+
 use super::{LinkResult, link};
+use crate::SpirvCodegenBackend;
 use crate::target::SpirvTarget;
 use rspirv::dr::Module;
-use rustc_session::CompilerIO;
+use rustc_codegen_ssa::traits::CodegenBackend;
 use rustc_session::config::{Input, OutputFilenames, OutputTypes};
+use rustc_session::{CompilerIO, build_early_session};
 use rustc_span::FileName;
 use std::io::Write;
 use std::sync::{Arc, Mutex};
@@ -124,8 +128,11 @@ fn link_with_linker_opts(
         rustc_span::create_session_globals_then(sopts.edition, &[], Some(sm_inputs), || {
             extern crate rustc_driver_impl;
 
+            let early_sess = build_early_session(sopts, target, None);
+            let codegen_backend_init = SpirvCodegenBackend.init(&early_sess);
             let mut sess = rustc_session::build_session(
-                sopts,
+                early_sess,
+                codegen_backend_init,
                 CompilerIO {
                     input: Input::Str {
                         name: FileName::Custom(String::new()),
@@ -136,9 +143,7 @@ fn link_with_linker_opts(
                     temps_dir: None,
                 },
                 Default::default(),
-                target,
                 rustc_interface::util::rustc_version_str().unwrap_or("unknown"),
-                None,
                 &rustc_driver_impl::USING_INTERNAL_FEATURES,
             );
 

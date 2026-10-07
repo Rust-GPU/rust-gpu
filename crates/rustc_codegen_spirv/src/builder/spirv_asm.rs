@@ -22,10 +22,10 @@ use rustc_codegen_ssa::mir::place::PlaceRef;
 use rustc_codegen_ssa::traits::{AsmBuilderMethods, BuilderMethods, InlineAsmOperandRef};
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 use rustc_middle::mir::interpret::Scalar;
+use rustc_middle::ty::Instance;
 use rustc_middle::ty::layout::LayoutOf;
-use rustc_middle::{bug, span_bug, ty::Instance};
 use rustc_span::def_id::DefId;
-use rustc_span::{DUMMY_SP, Span};
+use rustc_span::{DUMMY_SP, Span, bug, span_bug};
 use rustc_target::asm::{InlineAsmRegClass, InlineAsmRegOrRegClass, SpirVInlineAsmRegClass};
 use smallvec::SmallVec;
 
