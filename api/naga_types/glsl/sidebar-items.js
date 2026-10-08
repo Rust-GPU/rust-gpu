@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["FIRST_INSTANCE_BINDING","SUPPORTED_CORE_VERSIONS","SUPPORTED_ES_VERSIONS"],"enum":["GlslScalarKind","GlslUniformType","GlslVectorSize","Version"],"struct":["GlslScalar"],"type":["BindingMap"]};

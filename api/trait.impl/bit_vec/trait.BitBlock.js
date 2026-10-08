@@ -1,9 +1,9 @@
 (function() {
-    const implementors = Object.fromEntries([["bit_vec",[]]]);
+    const implementors = Object.fromEntries([["bit_set",[]],["bit_vec",[]]]);
     if (window.register_implementors) {
         window.register_implementors(implementors);
     } else {
         window.pending_implementors = implementors;
     }
 })()
-//{"start":59,"fragment_lengths":[14]}
+//{"start":59,"fragment_lengths":[14,15]}

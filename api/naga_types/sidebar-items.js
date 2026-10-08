@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ShaderStage","VertexFormat"],"macro":[["link_to_wgc_docs",1],["link_to_wgpu_docs",1],["link_to_wgpu_item",1]],"mod":["glsl","hlsl","msl","spv"],"struct":["ResourceBinding","TaskDispatchLimits"],"type":["FastHashMap","FastHashSet","FastIndexMap","FastIndexSet"]};
