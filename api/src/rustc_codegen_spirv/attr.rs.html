@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/attr.rs`."><title>attr.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.0-nightly (c397dae80 2026-07-02)" data-channel="nightly" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/</div>attr.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! `#[spirv(...)]` attribute support.
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/attr.rs`."><title>attr.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-0c87338a.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.99.0-nightly (d453bdd8f 2026-08-14)" data-channel="nightly" data-search-js="search-cf4fc35e.js" data-stringdex-js="stringdex-b5109af9.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-9f56287d.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/</div>attr.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! `#[spirv(...)]` attribute support.
 <a href=#2 id=2 data-nosnippet>2</a>//!
 <a href=#3 id=3 data-nosnippet>3</a>//! The attribute-checking parts of this try to follow `rustc_passes::check_attr`.
 <a href=#4 id=4 data-nosnippet>4</a>
@@ -7,7 +7,7 @@
 <a href=#7 id=7 data-nosnippet>7</a><span class="kw">use </span>rspirv::spirv::{BuiltIn, ExecutionMode, ExecutionModel, StorageClass};
 <a href=#8 id=8 data-nosnippet>8</a><span class="kw">use </span>rustc_ast::{LitKind, MetaItemInner, MetaItemLit};
 <a href=#9 id=9 data-nosnippet>9</a><span class="kw">use </span>rustc_hir <span class="kw">as </span>hir;
-<a href=#10 id=10 data-nosnippet>10</a><span class="kw">use </span>rustc_hir::def_id::LocalModDefId;
+<a href=#10 id=10 data-nosnippet>10</a><span class="kw">use </span>rustc_hir::def_id::LocalModId;
 <a href=#11 id=11 data-nosnippet>11</a><span class="kw">use </span>rustc_hir::intravisit::{<span class="self">self</span>, Visitor};
 <a href=#12 id=12 data-nosnippet>12</a><span class="kw">use </span>rustc_hir::{Attribute, CRATE_HIR_ID, HirId, MethodKind, Target};
 <a href=#13 id=13 data-nosnippet>13</a><span class="kw">use </span>rustc_middle::hir::nested_filter;
@@ -433,19 +433,19 @@
 <a href=#433 id=433 data-nosnippet>433</a>    }
 <a href=#434 id=434 data-nosnippet>434</a>
 <a href=#435 id=435 data-nosnippet>435</a>    <span class="kw">fn </span>visit_item(<span class="kw-2">&amp;mut </span><span class="self">self</span>, item: <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>hir::Item&lt;<span class="lifetime">'tcx</span>&gt;) {
-<a href=#436 id=436 data-nosnippet>436</a>        <span class="kw">let </span>target = Target::from_item(item);
+<a href=#436 id=436 data-nosnippet>436</a>        <span class="kw">let </span>target = Target::from(item);
 <a href=#437 id=437 data-nosnippet>437</a>        <span class="self">self</span>.check_spirv_attributes(item.hir_id(), target);
 <a href=#438 id=438 data-nosnippet>438</a>        intravisit::walk_item(<span class="self">self</span>, item);
 <a href=#439 id=439 data-nosnippet>439</a>    }
 <a href=#440 id=440 data-nosnippet>440</a>
 <a href=#441 id=441 data-nosnippet>441</a>    <span class="kw">fn </span>visit_generic_param(<span class="kw-2">&amp;mut </span><span class="self">self</span>, generic_param: <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>hir::GenericParam&lt;<span class="lifetime">'tcx</span>&gt;) {
-<a href=#442 id=442 data-nosnippet>442</a>        <span class="kw">let </span>target = Target::from_generic_param(generic_param);
+<a href=#442 id=442 data-nosnippet>442</a>        <span class="kw">let </span>target = Target::from(generic_param);
 <a href=#443 id=443 data-nosnippet>443</a>        <span class="self">self</span>.check_spirv_attributes(generic_param.hir_id, target);
 <a href=#444 id=444 data-nosnippet>444</a>        intravisit::walk_generic_param(<span class="self">self</span>, generic_param);
 <a href=#445 id=445 data-nosnippet>445</a>    }
 <a href=#446 id=446 data-nosnippet>446</a>
 <a href=#447 id=447 data-nosnippet>447</a>    <span class="kw">fn </span>visit_trait_item(<span class="kw-2">&amp;mut </span><span class="self">self</span>, trait_item: <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>hir::TraitItem&lt;<span class="lifetime">'tcx</span>&gt;) {
-<a href=#448 id=448 data-nosnippet>448</a>        <span class="kw">let </span>target = Target::from_trait_item(trait_item);
+<a href=#448 id=448 data-nosnippet>448</a>        <span class="kw">let </span>target = Target::from(trait_item);
 <a href=#449 id=449 data-nosnippet>449</a>        <span class="self">self</span>.check_spirv_attributes(trait_item.hir_id(), target);
 <a href=#450 id=450 data-nosnippet>450</a>        intravisit::walk_trait_item(<span class="self">self</span>, trait_item);
 <a href=#451 id=451 data-nosnippet>451</a>    }
@@ -461,7 +461,7 @@
 <a href=#461 id=461 data-nosnippet>461</a>    }
 <a href=#462 id=462 data-nosnippet>462</a>
 <a href=#463 id=463 data-nosnippet>463</a>    <span class="kw">fn </span>visit_foreign_item(<span class="kw-2">&amp;mut </span><span class="self">self</span>, f_item: <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>hir::ForeignItem&lt;<span class="lifetime">'tcx</span>&gt;) {
-<a href=#464 id=464 data-nosnippet>464</a>        <span class="kw">let </span>target = Target::from_foreign_item(f_item);
+<a href=#464 id=464 data-nosnippet>464</a>        <span class="kw">let </span>target = Target::from(f_item);
 <a href=#465 id=465 data-nosnippet>465</a>        <span class="self">self</span>.check_spirv_attributes(f_item.hir_id(), target);
 <a href=#466 id=466 data-nosnippet>466</a>        intravisit::walk_foreign_item(<span class="self">self</span>, f_item);
 <a href=#467 id=467 data-nosnippet>467</a>    }
@@ -503,7 +503,7 @@
 <a href=#503 id=503 data-nosnippet>503</a>}
 <a href=#504 id=504 data-nosnippet>504</a>
 <a href=#505 id=505 data-nosnippet>505</a><span class="comment">// FIXME(eddyb) DRY this somehow and make it reusable from somewhere in `rustc`.
-<a href=#506 id=506 data-nosnippet>506</a></span><span class="kw">fn </span>check_mod_attrs(tcx: TyCtxt&lt;<span class="lifetime">'_</span>&gt;, module_def_id: LocalModDefId) {
+<a href=#506 id=506 data-nosnippet>506</a></span><span class="kw">fn </span>check_mod_attrs(tcx: TyCtxt&lt;<span class="lifetime">'_</span>&gt;, module_def_id: LocalModId) {
 <a href=#507 id=507 data-nosnippet>507</a>    <span class="kw">let </span>check_spirv_attr_visitor = <span class="kw-2">&amp;mut </span>CheckSpirvAttrVisitor {
 <a href=#508 id=508 data-nosnippet>508</a>        tcx,
 <a href=#509 id=509 data-nosnippet>509</a>        sym: Symbols::get(),
