@@ -344,8 +344,7 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
                         let (message_debug_printf_fmt_str, message_debug_printf_args) =
                             message_debug_printf
                                 .split_first()
-                                .map(|(&fmt_str, args)| (&cx[const_str(fmt_str)], args))
-                                .unwrap_or_default();
+                                .map_or_default(|(&fmt_str, args)| (&cx[const_str(fmt_str)], args));
 
                         let fmt_dbg_src_loc = |(file, line, col)| {
                             // FIXME(eddyb) figure out what is going on with

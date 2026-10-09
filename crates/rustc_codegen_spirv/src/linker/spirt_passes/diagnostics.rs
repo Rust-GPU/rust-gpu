@@ -3,7 +3,6 @@ use crate::custom_decorations::{
 };
 use crate::custom_insts::{self, CustomInst, CustomOp};
 use rustc_data_structures::fx::FxIndexSet;
-use rustc_errors::EmissionGuarantee;
 use rustc_session::Session;
 use rustc_span::{DUMMY_SP, Span};
 use smallvec::SmallVec;
@@ -303,11 +302,11 @@ impl UseOrigin<'_> {
         }
     }
 
-    fn note<G: EmissionGuarantee>(
+    fn note(
         &self,
         cx: &Context,
         span_regen: &mut SpanRegenerator<'_>,
-        err: &mut rustc_errors::Diag<'_, G>,
+        err: &mut rustc_errors::Diag<'_>,
     ) {
         let wk = &super::SpvSpecWithExtras::get().well_known;
 
@@ -426,7 +425,7 @@ impl DiagnosticReporter<'_> {
             for use_origin in use_stack_for_def.iter().rev() {
                 use_origin.note(self.cx, &mut self.span_regen, &mut err);
             }
-            self.overall_result = Err(err.emit());
+            self.overall_result = Err(err.emit_err());
         }
 
         let diags = attrs_def.attrs.iter().flat_map(|attr| match attr {
@@ -468,7 +467,7 @@ impl DiagnosticReporter<'_> {
                     for use_origin in use_stack_for_def.iter().rev() {
                         use_origin.note(self.cx, &mut self.span_regen, &mut err);
                     }
-                    self.overall_result = Err(err.emit());
+                    self.overall_result = Err(err.emit_err());
                 }
                 DiagLevel::Warning => {
                     let mut warn = self.sess.dcx().struct_span_warn(def_span, msg);
