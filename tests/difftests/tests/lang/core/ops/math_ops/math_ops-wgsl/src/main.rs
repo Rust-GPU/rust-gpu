@@ -36,7 +36,7 @@ fn main() {
             initial_data: Some(input_bytes),
         },
         BufferConfig {
-            size: 2688, // 672 f32 values (32 threads * 21 outputs each)
+            size: 3840, // 960 f32 values (32 threads * 30 outputs each)
             usage: BufferUsage::Storage,
             initial_data: None,
         },

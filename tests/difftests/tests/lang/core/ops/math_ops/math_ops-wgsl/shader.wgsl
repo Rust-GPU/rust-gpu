@@ -9,6 +9,55 @@ fn compat_round(v: f32) -> f32 {
     return round(v * 100000.0) / 100000.0;
 }
 
+fn is_even_int(x: f32) -> bool {
+    return (x * 0.5) == floor(x * 0.5);
+}
+
+fn round_ties_even(x: f32) -> f32 {
+    let floored = floor(x);
+    let frac = x - floored;
+
+    if (frac == 0.5) {
+        return select(floored + 1.0, floored, is_even_int(floored));
+    } else if (frac > 0.5) {
+        return floored + 1.0;
+    } else {
+        return floored;
+    }
+}
+
+fn div_euclid(x: f32, rhs: f32) -> f32 {
+    let q = trunc(x / rhs);
+
+    if (x % rhs < 0.0) {
+        return select(q + 1.0, q - 1.0, rhs > 0.0);
+    }
+
+    return q;
+}
+
+fn rem_euclid(x: f32, rhs: f32) -> f32 {
+    let r = x % rhs;
+
+    if (r < 0.0) {
+        return r + abs(rhs);
+    }
+
+    return r;
+}
+
+fn abs_sub(x: f32, other: f32) -> f32 {
+    let r = x - other;
+
+    if (r != r) {
+        return r;
+    } else if (r > 0.0) {
+        return r;
+    } else {
+        return 0.0;
+    }
+}
+
 @compute @workgroup_size(32, 1, 1)
 fn main_cs(@builtin(global_invocation_id) global_id: vec3<u32>) {
     let tid = global_id.x;
@@ -18,9 +67,9 @@ fn main_cs(@builtin(global_invocation_id) global_id: vec3<u32>) {
     }
     
     let x = input[tid];
-    let base_offset = tid * 21u;
+    let base_offset = tid * 30u;
     
-    if (base_offset + 20u >= arrayLength(&output)) {
+    if (base_offset + 29u >= arrayLength(&output)) {
         return;
     }
     
@@ -53,4 +102,15 @@ fn main_cs(@builtin(global_invocation_id) global_id: vec3<u32>) {
     // Special values and conversions
     let int_val = i32(x);
     output[base_offset + 20u] = f32(int_val);
+
+    // core_float_math methods not covered above
+    output[base_offset + 21u] = round_ties_even(x);
+    output[base_offset + 22u] = trunc(x);
+    output[base_offset + 23u] = compat_round(x - trunc(x));
+    output[base_offset + 24u] = compat_round(fma(x, 2.0, 1.0));
+    output[base_offset + 25u] = compat_round(div_euclid(x, 3.0));
+    output[base_offset + 26u] = compat_round(rem_euclid(x, 3.0));
+    output[base_offset + 27u] = compat_round(pow(x, 2.0));
+    output[base_offset + 28u] = compat_round(pow(abs(x), 1.0 / 3.0));
+    output[base_offset + 29u] = compat_round(abs_sub(x, 1.0));
 }
