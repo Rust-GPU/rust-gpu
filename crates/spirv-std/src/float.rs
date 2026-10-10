@@ -8,21 +8,233 @@ use core::intrinsics;
 
 #[cfg(target_arch = "spirv")]
 impl f32 {
+    /// Returns the largest integer that is less than or equal to `self`.
+    #[inline]
+    #[rustc_allow_incoherent_impl]
+    pub fn floor(self) -> f32 {
+        intrinsics::floorf32(self)
+    }
+
+    /// Returns the smallest integer that is greater than or equal to `self`.
+    #[inline]
+    #[rustc_allow_incoherent_impl]
+    pub fn ceil(self) -> f32 {
+        intrinsics::ceilf32(self)
+    }
+
+    /// Returns the nearest integer to `self`.
+    #[inline]
+    #[rustc_allow_incoherent_impl]
+    pub fn round(self) -> f32 {
+        intrinsics::roundf32(self)
+    }
+
+    /// Returns the nearest integer to a number.
+    #[inline]
+    #[rustc_allow_incoherent_impl]
+    pub fn round_ties_even(self) -> f32 {
+        intrinsics::round_ties_even_f32(self)
+    }
+
+    /// Returns the integer part of `self`.
+    #[inline]
+    #[rustc_allow_incoherent_impl]
+    pub fn trunc(self) -> f32 {
+        intrinsics::truncf32(self)
+    }
+
+    /// Returns the fractional part of `self`.
+    #[inline]
+    #[rustc_allow_incoherent_impl]
+    pub fn fract(self) -> f32 {
+        self - self.trunc()
+    }
+
+    /// Fused multiply-add.
+    #[inline]
+    #[rustc_allow_incoherent_impl]
+    pub fn mul_add(self, a: f32, b: f32) -> f32 {
+        intrinsics::fmaf32(self, a, b)
+    }
+
+    /// Calculates Euclidean division, the matching method for `rem_euclid`.
+    #[inline]
+    #[rustc_allow_incoherent_impl]
+    pub fn div_euclid(self, rhs: f32) -> f32 {
+        let q = (self / rhs).trunc();
+        if self % rhs < 0.0 {
+            return if rhs > 0.0 { q - 1.0 } else { q + 1.0 };
+        }
+        q
+    }
+
+    /// Calculates the least nonnegative remainder of `self` when divided by `rhs`.
+    #[inline]
+    #[rustc_allow_incoherent_impl]
+    pub fn rem_euclid(self, rhs: f32) -> f32 {
+        let r = self % rhs;
+        if r < 0.0 { r + rhs.abs() } else { r }
+    }
+
     /// Raises a number to an integer power.
     #[inline]
     #[rustc_allow_incoherent_impl]
     pub fn powi(self, n: i32) -> f32 {
         intrinsics::powif32(self, n)
     }
+
+    /// Returns the square root of a number.
+    #[inline]
+    #[rustc_allow_incoherent_impl]
+    pub fn sqrt(self) -> f32 {
+        intrinsics::sqrtf32(self)
+    }
+
+    /// Returns the cube root of a number.
+    #[inline]
+    #[rustc_allow_incoherent_impl]
+    pub fn cbrt(self) -> f32 {
+        intrinsics::powf32(self, 1.0 / 3.0)
+    }
+
+    /// The positive difference of two numbers.
+    #[inline]
+    #[rustc_allow_incoherent_impl]
+    #[deprecated(
+        since = "0.10.0",
+        note = "you probably meant `(self - other).abs()`: \
+            this operation is `(self - other).max(0.0)` \
+            except that `abs_sub` also propagates NaNs (also \
+            known as `fdimf` in C). If you truly need the positive \
+            difference, consider using that expression or the C function \
+            `fdimf`, depending on how you wish to handle NaN (please consider \
+            filing an issue describing your use-case too)."
+    )]
+    pub fn abs_sub(self, other: f32) -> f32 {
+        let r = self - other;
+        if r.is_nan() {
+            r
+        } else if r > 0.0 {
+            r
+        } else {
+            0.0
+        }
+    }
 }
 
 #[cfg(target_arch = "spirv")]
 impl f64 {
+    /// Returns the largest integer that is less than or equal to `self`.
+    #[inline]
+    #[rustc_allow_incoherent_impl]
+    pub fn floor(self) -> f64 {
+        intrinsics::floorf64(self)
+    }
+
+    /// Returns the smallest integer that is greater than or equal to `self`.
+    #[inline]
+    #[rustc_allow_incoherent_impl]
+    pub fn ceil(self) -> f64 {
+        intrinsics::ceilf64(self)
+    }
+
+    /// Returns the nearest integer to `self`.
+    #[inline]
+    #[rustc_allow_incoherent_impl]
+    pub fn round(self) -> f64 {
+        intrinsics::roundf64(self)
+    }
+
+    /// Returns the nearest integer to a number.
+    #[inline]
+    #[rustc_allow_incoherent_impl]
+    pub fn round_ties_even(self) -> f64 {
+        intrinsics::round_ties_even_f64(self)
+    }
+
+    /// Returns the integer part of `self`.
+    #[inline]
+    #[rustc_allow_incoherent_impl]
+    pub fn trunc(self) -> f64 {
+        intrinsics::truncf64(self)
+    }
+
+    /// Returns the fractional part of `self`.
+    #[inline]
+    #[rustc_allow_incoherent_impl]
+    pub fn fract(self) -> f64 {
+        self - self.trunc()
+    }
+
+    /// Fused multiply-add.
+    #[inline]
+    #[rustc_allow_incoherent_impl]
+    pub fn mul_add(self, a: f64, b: f64) -> f64 {
+        intrinsics::fmaf64(self, a, b)
+    }
+
+    /// Calculates Euclidean division, the matching method for `rem_euclid`.
+    #[inline]
+    #[rustc_allow_incoherent_impl]
+    pub fn div_euclid(self, rhs: f64) -> f64 {
+        let q = (self / rhs).trunc();
+        if self % rhs < 0.0 {
+            return if rhs > 0.0 { q - 1.0 } else { q + 1.0 };
+        }
+        q
+    }
+
+    /// Calculates the least nonnegative remainder of `self` when divided by `rhs`.
+    #[inline]
+    #[rustc_allow_incoherent_impl]
+    pub fn rem_euclid(self, rhs: f64) -> f64 {
+        let r = self % rhs;
+        if r < 0.0 { r + rhs.abs() } else { r }
+    }
+
     /// Raises a number to an integer power.
     #[inline]
     #[rustc_allow_incoherent_impl]
     pub fn powi(self, n: i32) -> f64 {
         intrinsics::powif64(self, n)
+    }
+
+    /// Returns the square root of a number.
+    #[inline]
+    #[rustc_allow_incoherent_impl]
+    pub fn sqrt(self) -> f64 {
+        intrinsics::sqrtf64(self)
+    }
+
+    /// Returns the cube root of a number.
+    #[inline]
+    #[rustc_allow_incoherent_impl]
+    pub fn cbrt(self) -> f64 {
+        intrinsics::powf64(self, 1.0 / 3.0)
+    }
+
+    /// The positive difference of two numbers.
+    #[inline]
+    #[rustc_allow_incoherent_impl]
+    #[deprecated(
+        since = "0.10.0",
+        note = "you probably meant `(self - other).abs()`: \
+            this operation is `(self - other).max(0.0)` \
+            except that `abs_sub` also propagates NaNs (also \
+            known as `fdim` in C). If you truly need the positive \
+            difference, consider using that expression or the C function \
+            `fdim`, depending on how you wish to handle NaN (please consider \
+            filing an issue describing your use-case too)."
+    )]
+    pub fn abs_sub(self, other: f64) -> f64 {
+        let r = self - other;
+        if r.is_nan() {
+            r
+        } else if r > 0.0 {
+            r
+        } else {
+            0.0
+        }
     }
 }
 

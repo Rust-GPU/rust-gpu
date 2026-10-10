@@ -18,9 +18,9 @@ pub fn main_cs(
     }
 
     let x = input[tid];
-    let base_offset = tid * 21;
+    let base_offset = tid * 30;
 
-    if base_offset + 20 >= output.len() {
+    if base_offset + 29 >= output.len() {
         return;
     }
 
@@ -53,4 +53,17 @@ pub fn main_cs(
     // Special values and conversions
     let int_val = x as i32;
     output[base_offset + 20] = int_val as f32;
+
+    // core_float_math methods not covered above
+    output[base_offset + 21] = x.round_ties_even();
+    output[base_offset + 22] = x.trunc();
+    output[base_offset + 23] = compat_round!(x.fract());
+    output[base_offset + 24] = compat_round!(x.mul_add(2.0, 1.0));
+    output[base_offset + 25] = compat_round!(x.div_euclid(3.0));
+    output[base_offset + 26] = compat_round!(x.rem_euclid(3.0));
+    output[base_offset + 27] = compat_round!(x.powi(2));
+    output[base_offset + 28] = compat_round!(x.abs().cbrt());
+    #[allow(deprecated)]
+    let abs_sub = x.abs_sub(1.0);
+    output[base_offset + 29] = compat_round!(abs_sub);
 }
