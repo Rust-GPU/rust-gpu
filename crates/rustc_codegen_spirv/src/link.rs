@@ -174,8 +174,12 @@ fn link_exe(
 
     let cg_args = CodegenArgs::from_session(sess);
 
-    // HACK(eddyb) this removes the `.json` in `.spv.json`, from `out_filename`.
+    let target = SpirvTarget::parse_target(sess.opts.target_triple.tuple())
+        .expect("parsing should fail earlier");
+    // this removes the `.json` in `.spv.json`, from `out_filename`.
     let out_path_spv = out_filename.with_extension("");
+    // this replaces the `.spv` with a target-specific file extension, like `.wgsl` for `naga-wgsl`
+    let out_path_spv = out_path_spv.with_extension(target.file_extension());
 
     let link_result = do_link(
         sess,
@@ -188,7 +192,7 @@ fn link_exe(
     let compile_result = match link_result {
         linker::LinkResult::SingleModule(module) => {
             let entry_points = entry_points(&module);
-            post_link_single_module(sess, &cg_args, *module, &out_path_spv, None);
+            post_link_single_module(sess, &cg_args, target, *module, &out_path_spv, None);
             CompileResult {
                 entry_points,
                 module: ModuleResult::SingleModule(out_path_spv),
@@ -211,6 +215,7 @@ fn link_exe(
                     post_link_single_module(
                         sess,
                         &cg_args,
+                        target,
                         module,
                         &out_file_path,
                         Some(disambiguated_crate_name_for_dumps),
@@ -243,6 +248,7 @@ fn entry_points(module: &rspirv::dr::Module) -> Vec<String> {
 fn post_link_single_module(
     sess: &Session,
     cg_args: &CodegenArgs,
+    target: SpirvTarget,
     module: Module,
     out_filename: &Path,
     dump_prefix: Option<&OsStr>,
@@ -304,7 +310,7 @@ fn post_link_single_module(
 
     let binary = {
         let _transpile_timer = sess.timer("link_transpile");
-        match transpile(sess, cg_args, &spv_binary) {
+        match transpile(sess, target, cg_args, &spv_binary) {
             Ok(e) => e,
             Err(_) => return,
         }

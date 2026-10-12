@@ -5,11 +5,10 @@ use rustc_span::ErrorGuaranteed;
 
 pub fn transpile(
     sess: &Session,
+    target: SpirvTarget,
     cg_args: &CodegenArgs,
     spv_binary: &[u32],
 ) -> Result<Vec<u8>, ErrorGuaranteed> {
-    let target = SpirvTarget::parse_target(sess.opts.target_triple.tuple())
-        .expect("parsing should fail earlier");
     match target {
         #[cfg(feature = "naga")]
         SpirvTarget::Naga(NagaTarget::NAGA_WGSL) => {

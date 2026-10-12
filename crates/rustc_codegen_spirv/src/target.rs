@@ -469,6 +469,12 @@ impl NagaTarget {
     pub const fn new(out: NagaOut) -> Self {
         Self { out }
     }
+
+    pub fn file_extension(&self) -> String {
+        match self.out {
+            NagaOut::WGSL => "wgsl".to_string(),
+        }
+    }
 }
 
 impl SpirvTargetVariant for NagaTarget {
@@ -615,6 +621,15 @@ impl SpirvTarget {
     /// returns the full target, e.g. `spirv-unknown-vulkan1.3`
     pub fn target(&self) -> String {
         format!("{}{}", SPIRV_TARGET_PREFIX, self.env())
+    }
+
+    pub fn file_extension(&self) -> String {
+        match self {
+            SpirvTarget::Universal(_) | SpirvTarget::Vulkan(_) | SpirvTarget::OpenGL(_) => {
+                "spv".to_string()
+            }
+            SpirvTarget::Naga(t) => t.file_extension(),
+        }
     }
 
     pub fn all_targets() -> impl Iterator<Item = Self> {
