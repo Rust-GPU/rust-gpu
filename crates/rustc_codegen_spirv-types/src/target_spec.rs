@@ -28,6 +28,8 @@ pub enum TargetSpecVersion {
     Rustc_1_94_0,
     /// rustc 1.97.0 removed "allows-weak-linkage" key
     Rustc_1_97_0,
+    /// rustc 1.99.0 didn't change anything upstream, we just made i128 be aligned to 16 to match most CPU platforms
+    Rustc_1_99_0,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -72,7 +74,9 @@ impl TargetSpecVersion {
     /// Returns the version of the target spec required for a certain rustc version. May return `None` if the version
     /// is old enough to not need target specs.
     pub fn from_rustc_version(rustc_version: Version) -> Self {
-        if rustc_version >= Version::new(1, 97, 0) {
+        if rustc_version >= Version::new(1, 99, 0) {
+            Rustc_1_99_0
+        } else if rustc_version >= Version::new(1, 97, 0) {
             Rustc_1_97_0
         } else if rustc_version >= Version::new(1, 94, 0) {
             Rustc_1_94_0
@@ -99,6 +103,11 @@ impl TargetSpecVersion {
         } else {
             r#""allows-weak-linkage": false,"#
         };
+        let data_layout = if self >= Rustc_1_99_0 {
+            "e-m:e-p:32:32:32-i64:64-i128:128-n8:16:32:64"
+        } else {
+            "e-m:e-p:32:32:32-i64:64-n8:16:32:64"
+        };
         let os_crt_static_respected = if self >= Rustc_1_85_0 {
             r#""crt-static-respected": true,"#
         } else {
@@ -111,7 +120,7 @@ impl TargetSpecVersion {
   "arch": "spirv",
   "crt-objects-fallback": "false",
   "crt-static-allows-dylibs": true,
-  "data-layout": "e-m:e-p:32:32:32-i64:64-n8:16:32:64",
+  "data-layout": "{data_layout}",
   "dll-prefix": "",
   "dll-suffix": ".spv.json",
   "dynamic-linking": true,
