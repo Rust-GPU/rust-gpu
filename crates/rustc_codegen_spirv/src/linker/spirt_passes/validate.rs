@@ -53,7 +53,7 @@ struct Validator<'a> {
     cx: &'a Context,
     wk: &'static super::SpvWellKnownWithExtras,
     spv_spec_caps: &'static spv::spec::indexed::NamedIdxMap<
-        u16,
+        u32,
         spv::spec::Enumerant,
         spv::spec::indexed::KhrSegmented,
     >,
@@ -242,9 +242,7 @@ impl Validator<'_> {
         if !enabled_by_default_or_cap {
             let caps = caps_enabling
                 .map(|cap| {
-                    let cap_name = u16::try_from(cap)
-                        .ok()
-                        .and_then(|cap| Some(self.spv_spec_caps.get_named(cap)?.0));
+                    let cap_name = self.spv_spec_caps.get_named(cap).map(|(name, _)| name);
                     match cap_name {
                         Some(name) => format!("`{name}`"),
                         None => format!("<unknown Capability 0x{cap:04x}>"),
@@ -283,7 +281,7 @@ impl Validator<'_> {
         let int_or_float = |type_name: &str, cap_name: &str| {
             // FIXME(eddyb) find a consistent style between all the error messages
             // (mentioning `OpCapability` seems unfortunate, for example).
-            match self.spv_spec_caps.lookup(cap_name).map(u32::from) {
+            match self.spv_spec_caps.lookup(cap_name) {
                 None => Err(format!("`{type_name}` type unsupported in SPIR-V")),
                 Some(cap) if !self.module_spv_dialect.capabilities.contains(&cap) => Err(format!(
                     "`{type_name}` type used without `OpCapability {cap_name}`"
@@ -330,9 +328,7 @@ impl Validator<'_> {
                             let (enum_name, enum_def) = kind.name_and_def();
                             let enumerant_name = match enum_def {
                                 spv::spec::OperandKindDef::ValueEnum { variants } => {
-                                    u16::try_from(imm)
-                                        .ok()
-                                        .and_then(|imm| Some(variants.get_named(imm)?.0))
+                                    variants.get_named(imm).map(|(name, _)| name)
                                 }
                                 _ => None,
                             };
