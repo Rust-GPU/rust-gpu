@@ -2,7 +2,7 @@ use super::id;
 use rspirv::dr::{Function, Instruction, Module, ModuleHeader, Operand};
 use rspirv::spirv::{Op, Word};
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
-use rustc_middle::bug;
+use rustc_span::bug;
 
 pub fn collect_types(module: &Module) -> FxHashMap<Word, Instruction> {
     module

@@ -14,14 +14,15 @@ use rspirv::spirv::{
 use rustc_abi::FieldsShape;
 use rustc_codegen_ssa::mir::operand::{OperandRef, OperandValue};
 use rustc_codegen_ssa::mir::place::PlaceRef;
-use rustc_codegen_ssa::traits::{BaseTypeCodegenMethods, BuilderMethods, MiscCodegenMethods as _};
+use rustc_codegen_ssa::traits::{
+    BaseTypeCodegenMethods, BuilderMethods, MiscCodegenMethods as _, ReturnSlot,
+};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::MultiSpan;
 use rustc_hir as hir;
-use rustc_middle::span_bug;
 use rustc_middle::ty::layout::{LayoutOf, TyAndLayout};
 use rustc_middle::ty::{self, Instance, Ty};
-use rustc_span::{DUMMY_SP, Span};
+use rustc_span::{DUMMY_SP, Span, span_bug};
 use rustc_target::callconv::{ArgAbi, FnAbi, PassMode};
 use std::assert_matches;
 
@@ -179,6 +180,7 @@ impl<'tcx> CodegenCx<'tcx> {
             None,
             Some(entry_fn_abi),
             self.get_fn_addr(entry_instance, None),
+            ReturnSlot::Direct,
             &call_args,
             None,
             None,

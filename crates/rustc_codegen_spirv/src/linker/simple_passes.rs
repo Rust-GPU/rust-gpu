@@ -288,7 +288,7 @@ pub fn check_fragment_insts(sess: &Session, module: &Module) -> super::Result<()
                             inst.class.opname
                         ))
                         .with_note(note)
-                        .emit(),
+                        .emit_err(),
                 );
             }
         }

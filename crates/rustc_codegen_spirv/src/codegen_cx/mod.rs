@@ -973,6 +973,7 @@ impl<'tcx> AsmCodegenMethods<'tcx> for CodegenCx<'tcx> {
         _operands: &[GlobalAsmOperandRef<'tcx>],
         _options: InlineAsmOptions,
         line_spans: &[Span],
+        _extra_rust_target_features: &[String],
     ) {
         self.tcx.dcx().span_fatal(
             line_spans.first().copied().unwrap_or_default(),

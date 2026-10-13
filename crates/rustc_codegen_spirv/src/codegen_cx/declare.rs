@@ -9,15 +9,15 @@ use crate::custom_decorations::{CustomDecoration, SrcLocDecoration};
 use crate::spirv_type::SpirvType;
 use itertools::Itertools;
 use rspirv::spirv::{FunctionControl, LinkageType, StorageClass, Word};
+use rustc_attr_ir::{InlineAttr, Linkage};
 use rustc_codegen_ssa::traits::{PreDefineCodegenMethods, StaticCodegenMethods};
-use rustc_hir::attrs::{InlineAttr, Linkage};
-use rustc_middle::bug;
 use rustc_middle::middle::codegen_fn_attrs::{CodegenFnAttrFlags, CodegenFnAttrs};
 use rustc_middle::mir::interpret::ConstAllocation;
 use rustc_middle::mono::{MonoItem, Visibility};
 use rustc_middle::ty::layout::{FnAbiOf, LayoutOf};
 use rustc_middle::ty::{self, Instance, TypeVisitableExt, TypingEnv};
 use rustc_span::Span;
+use rustc_span::bug;
 use rustc_span::def_id::DefId;
 
 fn attrs_to_spirv(attrs: &CodegenFnAttrs) -> FunctionControl {

@@ -23,13 +23,13 @@ use rustc_codegen_ssa::mir::operand::{OperandRef, OperandValue};
 use rustc_codegen_ssa::mir::place::PlaceRef;
 use rustc_codegen_ssa::traits::{
     BackendTypes, BaseTypeCodegenMethods, BuilderMethods, ConstCodegenMethods,
-    LayoutTypeCodegenMethods, OverflowOp,
+    LayoutTypeCodegenMethods, OverflowOp, ReturnSlot,
 };
-use rustc_middle::bug;
 use rustc_middle::middle::codegen_fn_attrs::CodegenFnAttrs;
 use rustc_middle::ty::layout::TyAndLayout;
 use rustc_middle::ty::{self, AtomicOrdering, Ty};
 use rustc_span::Span;
+use rustc_span::bug;
 use rustc_target::callconv::FnAbi;
 use smallvec::SmallVec;
 use std::iter::{self, empty};
@@ -1560,10 +1560,11 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
 
     fn invoke(
         &mut self,
-        llty: Self::Type,
+        llty: Self::FunctionSignature,
         fn_attrs: Option<&CodegenFnAttrs>,
         fn_abi: Option<&FnAbi<'tcx, Ty<'tcx>>>,
         llfn: Self::Value,
+        return_slot: ReturnSlot<Self::Value>,
         args: &[Self::Value],
         then: Self::BasicBlock,
         _catch: Self::BasicBlock,
@@ -1571,7 +1572,16 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         instance: Option<ty::Instance<'tcx>>,
     ) -> Self::Value {
         // Exceptions don't exist, jump directly to then block
-        let result = self.call(llty, fn_attrs, fn_abi, llfn, args, funclet, instance);
+        let result = self.call(
+            llty,
+            fn_attrs,
+            fn_abi,
+            llfn,
+            return_slot,
+            args,
+            funclet,
+            instance,
+        );
         self.emit().branch(then.id).unwrap();
         result
     }
@@ -1886,6 +1896,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         ty: Self::Type,
         ptr: Self::Value,
         order: AtomicOrdering,
+        _volatile: bool,
         _size: Size,
     ) -> Self::Value {
         let (ptr, access_ty) = self.adjust_pointer_for_typed_access(ptr, ty);
@@ -2025,6 +2036,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         val: Self::Value,
         ptr: Self::Value,
         order: AtomicOrdering,
+        _volatile: bool,
         _size: Size,
     ) {
         let (ptr, access_ty) = self.adjust_pointer_for_typed_access(ptr, val.ty);
@@ -2069,7 +2081,6 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
 
         self.maybe_inbounds_gep(ty, ptr, indices, true)
     }
-
     // intcast has the logic for dealing with bools, so use that
     fn trunc(&mut self, val: Self::Value, dest_ty: Self::Type) -> Self::Value {
         self.intcast(val, dest_ty, false)
@@ -2077,6 +2088,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
     fn sext(&mut self, val: Self::Value, dest_ty: Self::Type) -> Self::Value {
         self.intcast(val, dest_ty, true)
     }
+
     fn fptoui_sat(&mut self, val: Self::Value, dest_ty: Self::Type) -> Self::Value {
         self.fptoint_sat(false, val, dest_ty)
     }
@@ -3297,14 +3309,15 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
 
     #[tracing::instrument(
         level = "debug",
-        skip(self, callee_ty, _fn_attrs, fn_abi, callee, args, funclet)
+        skip(self, callee_ty, _fn_attrs, fn_abi, fn_val, args, funclet)
     )]
     fn call(
         &mut self,
         callee_ty: Self::Type,
         _fn_attrs: Option<&CodegenFnAttrs>,
         fn_abi: Option<&FnAbi<'tcx, Ty<'tcx>>>,
-        callee: Self::Value,
+        fn_val: Self::Value,
+        _return_slot: ReturnSlot<Self::Value>,
         args: &[Self::Value],
         funclet: Option<&Self::Funclet>,
         instance: Option<ty::Instance<'tcx>>,
@@ -3316,7 +3329,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         // NOTE(eddyb) see the comment on `SpirvValueKind::FnAddr`, this should
         // be fixed upstream, so we never see any "function pointer" values being
         // created just to perform direct calls.
-        let (callee_val, result_type, argument_types) = match self.lookup_type(callee.ty) {
+        let (callee_val, result_type, argument_types) = match self.lookup_type(fn_val.ty) {
             SpirvType::Pointer { pointee } => {
                 let (pointee_is_function, result_type, argument_types) = match self
                     .lookup_type(pointee)
@@ -3353,7 +3366,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                     }
                 };
 
-                let callee_val = if let SpirvValueKind::FnAddr { function } = callee.kind {
+                let callee_val = if let SpirvValueKind::FnAddr { function } = fn_val.kind {
                     if pointee_is_function {
                         assert_ty_eq!(self, callee_ty, pointee);
                     }
@@ -3361,7 +3374,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 }
                 // Truly indirect call.
                 else {
-                    let fn_ptr_val = callee.def(self);
+                    let fn_ptr_val = fn_val.def(self);
                     self.zombie(fn_ptr_val, "indirect calls are not supported in SPIR-V");
                     fn_ptr_val
                 };
@@ -3371,7 +3384,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
 
             _ => bug!(
                 "call expected `fn` pointer type, got `{}`",
-                self.debug_type(callee.ty)
+                self.debug_type(fn_val.ty)
             ),
         };
 
@@ -3485,6 +3498,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         _fn_attrs: Option<&CodegenFnAttrs>,
         _fn_abi: &FnAbi<'tcx, Ty<'tcx>>,
         _llfn: Self::Value,
+        _return_slot: ReturnSlot<Self::Value>,
         _args: &[Self::Value],
         _funclet: Option<&Self::Funclet>,
         _instance: Option<ty::Instance<'tcx>>,

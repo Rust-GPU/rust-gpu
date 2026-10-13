@@ -1278,7 +1278,7 @@ impl<'a, 'tcx> CodegenPanic<'a, 'tcx> for FormatArgsResult<'tcx> {
                     && !builder.tcx.sess.opts.unstable_opts.ui_testing
                 {
                     // HACK(eddyb) Cargo silences warnings in dependencies.
-                    let force_warn = |span, msg| -> rustc_errors::Diag<'_, ()> {
+                    let force_warn = |span, msg| -> rustc_errors::Diag<'_> {
                         rustc_errors::Diag::new(
                             builder.tcx.dcx(),
                             rustc_errors::Level::ForceWarning,

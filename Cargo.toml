@@ -55,6 +55,14 @@ keywords = ["gpu", "compiler", "rust-gpu"]
 [workspace.lints.rust]
 unexpected_cfgs = { level = "allow", check-cfg = ['cfg(target_arch, values("spirv"))'] }
 
+[workspace.lints.cargo]
+# some crates need to depend on `rustc_codegen_spirv` to build the dylib, but can't use them due to
+# that crate requiring `#[feature(rustc_private)]` to be used
+unused_dependencies = { level = "allow" }
+# due to cargo bugs on windows, we need to repeat some workspace dependencies from the difftest
+# workspace in the root workspace
+unused_workspace_dependencies = { level = "allow" }
+
 [workspace.dependencies]
 spirv-builder = { path = "./crates/spirv-builder", version = "0.10.0", default-features = false }
 spirv-std = { path = "./crates/spirv-std", version = "0.10.0" }
@@ -80,10 +88,8 @@ toml = "0.9.2"
 tempfile = "3.22"
 test-log = "0.2.18"
 cargo_metadata = "0.21.0"
-cargo-util-schemas = "0.8.2"
 semver = "1.0.26"
 dunce = "1.0.5"
-expect-test = "1.5.1"
 regex-lite = "0.1.9"
 spirv = { version = "0.4.0", features = ["serialize", "deserialize"] }
 rspirv = "0.13.0"

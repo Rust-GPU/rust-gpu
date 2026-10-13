@@ -3,7 +3,7 @@ use rspirv::binary::Assemble;
 use rspirv::dr::{Instruction, Module, Operand};
 use rspirv::spirv::{Op, Word};
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
-use rustc_middle::bug;
+use rustc_span::bug;
 use smallvec::SmallVec;
 use std::collections::hash_map;
 use std::mem;

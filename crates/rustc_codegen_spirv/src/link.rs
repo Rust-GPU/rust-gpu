@@ -13,16 +13,14 @@ use rustc_codegen_spirv_types::{CompileResult, ModuleResult};
 use rustc_codegen_ssa::{CompiledModules, CrateInfo, NativeLib};
 use rustc_data_structures::fx::FxHashSet;
 use rustc_errors::Diag;
-use rustc_hir::attrs::NativeLibKind;
 use rustc_metadata::{EncodedMetadata, fs::METADATA_FILENAME};
-use rustc_middle::bug;
 use rustc_middle::middle::dependency_format::Linkage;
 use rustc_session::Session;
-use rustc_session::config::{
-    CrateType, DebugInfo, OptLevel, OutFileName, OutputFilenames, OutputType,
-};
+use rustc_session::config::{DebugInfo, OptLevel, OutFileName, OutputFilenames, OutputType};
 use rustc_session::output::{check_file_is_writeable, invalid_output_for_target, out_filename};
 use rustc_span::Symbol;
+use rustc_span::bug;
+use rustc_structures::{CrateType, NativeLibKind};
 use std::collections::BTreeMap;
 use std::ffi::OsStr;
 use std::fs::File;
@@ -367,7 +365,7 @@ fn do_spirv_opt(
                 // We have to manually construct this after `forget_guarantee` was removed in
                 // <https://github.com/rust-lang/rust/commit/2cd14bc9394ca6675e08d02c02c5f9abfa813616>
                 Level::Error | Level::Fatal | Level::InternalError => {
-                    Diag::<()>::new(sess.dcx(), rustc_errors::Level::Error, msg.message)
+                    Diag::new(sess.dcx(), rustc_errors::Level::Error, msg.message)
                 }
                 Level::Warning => sess.dcx().struct_warn(msg.message),
                 Level::Info | Level::Debug => sess.dcx().struct_note(msg.message),

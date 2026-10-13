@@ -502,8 +502,7 @@ impl<'a> SelectiveEraser<'a> {
             .filter(|&types| {
                 !equal(types) && equal(types.map(|ty| self.erase_explicit_layout_in_type(ty)))
             })
-            .map(|types| types.map(|ty| self.aggregate_component_types(ty)))
-            .unwrap_or_default();
+            .map_or_default(|types| types.map(|ty| self.aggregate_component_types(ty)));
 
         // NOTE(eddyb) such sanity checks should always succeed, because of the
         // "in/out types are equal after erasure" check, earlier above.
@@ -714,8 +713,7 @@ impl<'a> SelectiveEraser<'a> {
                 let mut min_expected_inputs = 0;
                 let mut constrained_vars = sig
                     .output_type
-                    .map(ConstrainedVars::collect_from)
-                    .unwrap_or_default();
+                    .map_or_default(ConstrainedVars::collect_from);
 
                 let mut inputs = sig.input_types;
                 while let TyListPat::Cons { first, suffix } = inputs {
