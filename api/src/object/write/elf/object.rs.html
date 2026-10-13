@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/object-0.37.3/src/write/elf/object.rs`."><title>object.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-0c87338a.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="object" data-themes="" data-resource-suffix="" data-rustdoc-version="1.99.0-nightly (d453bdd8f 2026-08-14)" data-channel="nightly" data-search-js="search-cf4fc35e.js" data-stringdex-js="stringdex-b5109af9.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../../static.files/src-script-813739b1.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-9f56287d.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">object/write/elf/</div>object.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>alloc::vec::Vec;
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/object-0.38.1/src/write/elf/object.rs`."><title>object.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-0c87338a.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="object" data-themes="" data-resource-suffix="" data-rustdoc-version="1.99.0-nightly (d453bdd8f 2026-08-14)" data-channel="nightly" data-search-js="search-cf4fc35e.js" data-stringdex-js="stringdex-b5109af9.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../../static.files/src-script-813739b1.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-9f56287d.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">object/write/elf/</div>object.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>alloc::vec::Vec;
 <a href=#2 id=2 data-nosnippet>2</a>
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span><span class="kw">crate</span>::write::elf::writer::<span class="kw-2">*</span>;
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span><span class="kw">crate</span>::write::string::StringId;
@@ -256,615 +256,640 @@
 <a href=#256 id=256 data-nosnippet>256</a>        <span class="kw">let </span>unsupported_reloc = || <span class="prelude-val">Err</span>(Error(<span class="macro">format!</span>(<span class="string">"unimplemented ELF relocation {:?}"</span>, reloc)));
 <a href=#257 id=257 data-nosnippet>257</a>        <span class="kw">let </span>r_type = <span class="kw">match </span><span class="self">self</span>.architecture {
 <a href=#258 id=258 data-nosnippet>258</a>            Architecture::Aarch64 =&gt; <span class="kw">match </span>(kind, encoding, size) {
-<a href=#259 id=259 data-nosnippet>259</a>                (K::Absolute, E::Generic, <span class="number">64</span>) =&gt; elf::R_AARCH64_ABS64,
-<a href=#260 id=260 data-nosnippet>260</a>                (K::Absolute, E::Generic, <span class="number">32</span>) =&gt; elf::R_AARCH64_ABS32,
-<a href=#261 id=261 data-nosnippet>261</a>                (K::Absolute, E::Generic, <span class="number">16</span>) =&gt; elf::R_AARCH64_ABS16,
-<a href=#262 id=262 data-nosnippet>262</a>                (K::Relative, E::Generic, <span class="number">64</span>) =&gt; elf::R_AARCH64_PREL64,
-<a href=#263 id=263 data-nosnippet>263</a>                (K::Relative, E::Generic, <span class="number">32</span>) =&gt; elf::R_AARCH64_PREL32,
-<a href=#264 id=264 data-nosnippet>264</a>                (K::Relative, E::Generic, <span class="number">16</span>) =&gt; elf::R_AARCH64_PREL16,
-<a href=#265 id=265 data-nosnippet>265</a>                (K::Relative, E::AArch64Call, <span class="number">26</span>) =&gt; elf::R_AARCH64_CALL26,
-<a href=#266 id=266 data-nosnippet>266</a>                (K::PltRelative, E::AArch64Call, <span class="number">26</span>) =&gt; elf::R_AARCH64_CALL26,
-<a href=#267 id=267 data-nosnippet>267</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
-<a href=#268 id=268 data-nosnippet>268</a>            },
-<a href=#269 id=269 data-nosnippet>269</a>            Architecture::Aarch64_Ilp32 =&gt; <span class="kw">match </span>(kind, encoding, size) {
-<a href=#270 id=270 data-nosnippet>270</a>                (K::Absolute, E::Generic, <span class="number">32</span>) =&gt; elf::R_AARCH64_P32_ABS32,
-<a href=#271 id=271 data-nosnippet>271</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
-<a href=#272 id=272 data-nosnippet>272</a>            },
-<a href=#273 id=273 data-nosnippet>273</a>            Architecture::Alpha =&gt; <span class="kw">match </span>(kind, encoding, size) {
-<a href=#274 id=274 data-nosnippet>274</a>                <span class="comment">// Absolute
-<a href=#275 id=275 data-nosnippet>275</a>                </span>(K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_ALPHA_REFLONG,
-<a href=#276 id=276 data-nosnippet>276</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">64</span>) =&gt; elf::R_ALPHA_REFQUAD,
-<a href=#277 id=277 data-nosnippet>277</a>                <span class="comment">// Relative to the PC
-<a href=#278 id=278 data-nosnippet>278</a>                </span>(K::Relative, <span class="kw">_</span>, <span class="number">16</span>) =&gt; elf::R_ALPHA_SREL16,
-<a href=#279 id=279 data-nosnippet>279</a>                (K::Relative, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_ALPHA_SREL32,
-<a href=#280 id=280 data-nosnippet>280</a>                (K::Relative, <span class="kw">_</span>, <span class="number">64</span>) =&gt; elf::R_ALPHA_SREL64,
-<a href=#281 id=281 data-nosnippet>281</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
-<a href=#282 id=282 data-nosnippet>282</a>            },
-<a href=#283 id=283 data-nosnippet>283</a>            Architecture::Arm =&gt; <span class="kw">match </span>(kind, encoding, size) {
-<a href=#284 id=284 data-nosnippet>284</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_ARM_ABS32,
-<a href=#285 id=285 data-nosnippet>285</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
-<a href=#286 id=286 data-nosnippet>286</a>            },
-<a href=#287 id=287 data-nosnippet>287</a>            Architecture::Avr =&gt; <span class="kw">match </span>(kind, encoding, size) {
-<a href=#288 id=288 data-nosnippet>288</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_AVR_32,
-<a href=#289 id=289 data-nosnippet>289</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">16</span>) =&gt; elf::R_AVR_16,
-<a href=#290 id=290 data-nosnippet>290</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
-<a href=#291 id=291 data-nosnippet>291</a>            },
-<a href=#292 id=292 data-nosnippet>292</a>            Architecture::Bpf =&gt; <span class="kw">match </span>(kind, encoding, size) {
-<a href=#293 id=293 data-nosnippet>293</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">64</span>) =&gt; elf::R_BPF_64_64,
-<a href=#294 id=294 data-nosnippet>294</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_BPF_64_32,
+<a href=#259 id=259 data-nosnippet>259</a>                (K::None, E::Generic, <span class="number">0</span>) =&gt; elf::R_AARCH64_NONE,
+<a href=#260 id=260 data-nosnippet>260</a>                (K::Absolute, E::Generic, <span class="number">64</span>) =&gt; elf::R_AARCH64_ABS64,
+<a href=#261 id=261 data-nosnippet>261</a>                (K::Absolute, E::Generic, <span class="number">32</span>) =&gt; elf::R_AARCH64_ABS32,
+<a href=#262 id=262 data-nosnippet>262</a>                (K::Absolute, E::Generic, <span class="number">16</span>) =&gt; elf::R_AARCH64_ABS16,
+<a href=#263 id=263 data-nosnippet>263</a>                (K::Relative, E::Generic, <span class="number">64</span>) =&gt; elf::R_AARCH64_PREL64,
+<a href=#264 id=264 data-nosnippet>264</a>                (K::Relative, E::Generic, <span class="number">32</span>) =&gt; elf::R_AARCH64_PREL32,
+<a href=#265 id=265 data-nosnippet>265</a>                (K::Relative, E::Generic, <span class="number">16</span>) =&gt; elf::R_AARCH64_PREL16,
+<a href=#266 id=266 data-nosnippet>266</a>                (K::Relative, E::AArch64Call, <span class="number">26</span>) =&gt; elf::R_AARCH64_CALL26,
+<a href=#267 id=267 data-nosnippet>267</a>                (K::PltRelative, E::AArch64Call, <span class="number">26</span>) =&gt; elf::R_AARCH64_CALL26,
+<a href=#268 id=268 data-nosnippet>268</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
+<a href=#269 id=269 data-nosnippet>269</a>            },
+<a href=#270 id=270 data-nosnippet>270</a>            Architecture::Aarch64_Ilp32 =&gt; <span class="kw">match </span>(kind, encoding, size) {
+<a href=#271 id=271 data-nosnippet>271</a>                (K::None, E::Generic, <span class="number">0</span>) =&gt; elf::R_AARCH64_NONE,
+<a href=#272 id=272 data-nosnippet>272</a>                (K::Absolute, E::Generic, <span class="number">32</span>) =&gt; elf::R_AARCH64_P32_ABS32,
+<a href=#273 id=273 data-nosnippet>273</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
+<a href=#274 id=274 data-nosnippet>274</a>            },
+<a href=#275 id=275 data-nosnippet>275</a>            Architecture::Alpha =&gt; <span class="kw">match </span>(kind, encoding, size) {
+<a href=#276 id=276 data-nosnippet>276</a>                (K::None, <span class="kw">_</span>, <span class="number">0</span>) =&gt; elf::R_ALPHA_NONE,
+<a href=#277 id=277 data-nosnippet>277</a>                <span class="comment">// Absolute
+<a href=#278 id=278 data-nosnippet>278</a>                </span>(K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_ALPHA_REFLONG,
+<a href=#279 id=279 data-nosnippet>279</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">64</span>) =&gt; elf::R_ALPHA_REFQUAD,
+<a href=#280 id=280 data-nosnippet>280</a>                <span class="comment">// Relative to the PC
+<a href=#281 id=281 data-nosnippet>281</a>                </span>(K::Relative, <span class="kw">_</span>, <span class="number">16</span>) =&gt; elf::R_ALPHA_SREL16,
+<a href=#282 id=282 data-nosnippet>282</a>                (K::Relative, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_ALPHA_SREL32,
+<a href=#283 id=283 data-nosnippet>283</a>                (K::Relative, <span class="kw">_</span>, <span class="number">64</span>) =&gt; elf::R_ALPHA_SREL64,
+<a href=#284 id=284 data-nosnippet>284</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
+<a href=#285 id=285 data-nosnippet>285</a>            },
+<a href=#286 id=286 data-nosnippet>286</a>            Architecture::Arm =&gt; <span class="kw">match </span>(kind, encoding, size) {
+<a href=#287 id=287 data-nosnippet>287</a>                (K::None, <span class="kw">_</span>, <span class="number">0</span>) =&gt; elf::R_ARM_NONE,
+<a href=#288 id=288 data-nosnippet>288</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_ARM_ABS32,
+<a href=#289 id=289 data-nosnippet>289</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
+<a href=#290 id=290 data-nosnippet>290</a>            },
+<a href=#291 id=291 data-nosnippet>291</a>            Architecture::Avr =&gt; <span class="kw">match </span>(kind, encoding, size) {
+<a href=#292 id=292 data-nosnippet>292</a>                (K::None, <span class="kw">_</span>, <span class="number">0</span>) =&gt; elf::R_AVR_NONE,
+<a href=#293 id=293 data-nosnippet>293</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_AVR_32,
+<a href=#294 id=294 data-nosnippet>294</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">16</span>) =&gt; elf::R_AVR_16,
 <a href=#295 id=295 data-nosnippet>295</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
 <a href=#296 id=296 data-nosnippet>296</a>            },
-<a href=#297 id=297 data-nosnippet>297</a>            Architecture::Csky =&gt; <span class="kw">match </span>(kind, encoding, size) {
-<a href=#298 id=298 data-nosnippet>298</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_CKCORE_ADDR32,
-<a href=#299 id=299 data-nosnippet>299</a>                (K::Relative, E::Generic, <span class="number">32</span>) =&gt; elf::R_CKCORE_PCREL32,
-<a href=#300 id=300 data-nosnippet>300</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
-<a href=#301 id=301 data-nosnippet>301</a>            },
-<a href=#302 id=302 data-nosnippet>302</a>            Architecture::I386 =&gt; <span class="kw">match </span>(kind, size) {
-<a href=#303 id=303 data-nosnippet>303</a>                (K::Absolute, <span class="number">32</span>) =&gt; elf::R_386_32,
-<a href=#304 id=304 data-nosnippet>304</a>                (K::Relative, <span class="number">32</span>) =&gt; elf::R_386_PC32,
-<a href=#305 id=305 data-nosnippet>305</a>                (K::Got, <span class="number">32</span>) =&gt; elf::R_386_GOT32,
-<a href=#306 id=306 data-nosnippet>306</a>                (K::PltRelative, <span class="number">32</span>) =&gt; elf::R_386_PLT32,
-<a href=#307 id=307 data-nosnippet>307</a>                (K::GotBaseOffset, <span class="number">32</span>) =&gt; elf::R_386_GOTOFF,
-<a href=#308 id=308 data-nosnippet>308</a>                (K::GotBaseRelative, <span class="number">32</span>) =&gt; elf::R_386_GOTPC,
-<a href=#309 id=309 data-nosnippet>309</a>                (K::Absolute, <span class="number">16</span>) =&gt; elf::R_386_16,
-<a href=#310 id=310 data-nosnippet>310</a>                (K::Relative, <span class="number">16</span>) =&gt; elf::R_386_PC16,
-<a href=#311 id=311 data-nosnippet>311</a>                (K::Absolute, <span class="number">8</span>) =&gt; elf::R_386_8,
-<a href=#312 id=312 data-nosnippet>312</a>                (K::Relative, <span class="number">8</span>) =&gt; elf::R_386_PC8,
-<a href=#313 id=313 data-nosnippet>313</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
-<a href=#314 id=314 data-nosnippet>314</a>            },
-<a href=#315 id=315 data-nosnippet>315</a>            Architecture::E2K32 | Architecture::E2K64 =&gt; <span class="kw">match </span>(kind, encoding, size) {
-<a href=#316 id=316 data-nosnippet>316</a>                (K::Absolute, E::Generic, <span class="number">32</span>) =&gt; elf::R_E2K_32_ABS,
-<a href=#317 id=317 data-nosnippet>317</a>                (K::Absolute, E::E2KLit, <span class="number">64</span>) =&gt; elf::R_E2K_64_ABS_LIT,
-<a href=#318 id=318 data-nosnippet>318</a>                (K::Absolute, E::Generic, <span class="number">64</span>) =&gt; elf::R_E2K_64_ABS,
-<a href=#319 id=319 data-nosnippet>319</a>                (K::Relative, E::E2KDisp, <span class="number">28</span>) =&gt; elf::R_E2K_DISP,
-<a href=#320 id=320 data-nosnippet>320</a>                (K::Got, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_E2K_GOT,
+<a href=#297 id=297 data-nosnippet>297</a>            Architecture::Bpf =&gt; <span class="kw">match </span>(kind, encoding, size) {
+<a href=#298 id=298 data-nosnippet>298</a>                (K::None, <span class="kw">_</span>, <span class="number">0</span>) =&gt; elf::R_BPF_NONE,
+<a href=#299 id=299 data-nosnippet>299</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">64</span>) =&gt; elf::R_BPF_64_64,
+<a href=#300 id=300 data-nosnippet>300</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_BPF_64_32,
+<a href=#301 id=301 data-nosnippet>301</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
+<a href=#302 id=302 data-nosnippet>302</a>            },
+<a href=#303 id=303 data-nosnippet>303</a>            Architecture::Csky =&gt; <span class="kw">match </span>(kind, encoding, size) {
+<a href=#304 id=304 data-nosnippet>304</a>                (K::None, <span class="kw">_</span>, <span class="number">0</span>) =&gt; elf::R_CKCORE_NONE,
+<a href=#305 id=305 data-nosnippet>305</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_CKCORE_ADDR32,
+<a href=#306 id=306 data-nosnippet>306</a>                (K::Relative, E::Generic, <span class="number">32</span>) =&gt; elf::R_CKCORE_PCREL32,
+<a href=#307 id=307 data-nosnippet>307</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
+<a href=#308 id=308 data-nosnippet>308</a>            },
+<a href=#309 id=309 data-nosnippet>309</a>            Architecture::I386 =&gt; <span class="kw">match </span>(kind, size) {
+<a href=#310 id=310 data-nosnippet>310</a>                (K::None, <span class="number">0</span>) =&gt; elf::R_386_NONE,
+<a href=#311 id=311 data-nosnippet>311</a>                (K::Absolute, <span class="number">32</span>) =&gt; elf::R_386_32,
+<a href=#312 id=312 data-nosnippet>312</a>                (K::Relative, <span class="number">32</span>) =&gt; elf::R_386_PC32,
+<a href=#313 id=313 data-nosnippet>313</a>                (K::Got, <span class="number">32</span>) =&gt; elf::R_386_GOT32,
+<a href=#314 id=314 data-nosnippet>314</a>                (K::PltRelative, <span class="number">32</span>) =&gt; elf::R_386_PLT32,
+<a href=#315 id=315 data-nosnippet>315</a>                (K::GotBaseOffset, <span class="number">32</span>) =&gt; elf::R_386_GOTOFF,
+<a href=#316 id=316 data-nosnippet>316</a>                (K::GotBaseRelative, <span class="number">32</span>) =&gt; elf::R_386_GOTPC,
+<a href=#317 id=317 data-nosnippet>317</a>                (K::Absolute, <span class="number">16</span>) =&gt; elf::R_386_16,
+<a href=#318 id=318 data-nosnippet>318</a>                (K::Relative, <span class="number">16</span>) =&gt; elf::R_386_PC16,
+<a href=#319 id=319 data-nosnippet>319</a>                (K::Absolute, <span class="number">8</span>) =&gt; elf::R_386_8,
+<a href=#320 id=320 data-nosnippet>320</a>                (K::Relative, <span class="number">8</span>) =&gt; elf::R_386_PC8,
 <a href=#321 id=321 data-nosnippet>321</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
 <a href=#322 id=322 data-nosnippet>322</a>            },
-<a href=#323 id=323 data-nosnippet>323</a>            Architecture::X86_64 | Architecture::X86_64_X32 =&gt; <span class="kw">match </span>(kind, encoding, size) {
-<a href=#324 id=324 data-nosnippet>324</a>                (K::Absolute, E::Generic, <span class="number">64</span>) =&gt; elf::R_X86_64_64,
-<a href=#325 id=325 data-nosnippet>325</a>                (K::Relative, E::X86Branch, <span class="number">32</span>) =&gt; elf::R_X86_64_PLT32,
-<a href=#326 id=326 data-nosnippet>326</a>                (K::Relative, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_X86_64_PC32,
-<a href=#327 id=327 data-nosnippet>327</a>                (K::Got, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_X86_64_GOT32,
-<a href=#328 id=328 data-nosnippet>328</a>                (K::PltRelative, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_X86_64_PLT32,
-<a href=#329 id=329 data-nosnippet>329</a>                (K::GotRelative, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_X86_64_GOTPCREL,
-<a href=#330 id=330 data-nosnippet>330</a>                (K::Absolute, E::Generic, <span class="number">32</span>) =&gt; elf::R_X86_64_32,
-<a href=#331 id=331 data-nosnippet>331</a>                (K::Absolute, E::X86Signed, <span class="number">32</span>) =&gt; elf::R_X86_64_32S,
-<a href=#332 id=332 data-nosnippet>332</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">16</span>) =&gt; elf::R_X86_64_16,
-<a href=#333 id=333 data-nosnippet>333</a>                (K::Relative, <span class="kw">_</span>, <span class="number">16</span>) =&gt; elf::R_X86_64_PC16,
-<a href=#334 id=334 data-nosnippet>334</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">8</span>) =&gt; elf::R_X86_64_8,
-<a href=#335 id=335 data-nosnippet>335</a>                (K::Relative, <span class="kw">_</span>, <span class="number">8</span>) =&gt; elf::R_X86_64_PC8,
-<a href=#336 id=336 data-nosnippet>336</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
-<a href=#337 id=337 data-nosnippet>337</a>            },
-<a href=#338 id=338 data-nosnippet>338</a>            Architecture::Hppa =&gt; <span class="kw">match </span>(kind, encoding, size) {
-<a href=#339 id=339 data-nosnippet>339</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_PARISC_DIR32,
-<a href=#340 id=340 data-nosnippet>340</a>                (K::Relative, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_PARISC_PCREL32,
-<a href=#341 id=341 data-nosnippet>341</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
-<a href=#342 id=342 data-nosnippet>342</a>            },
-<a href=#343 id=343 data-nosnippet>343</a>            Architecture::Hexagon =&gt; <span class="kw">match </span>(kind, encoding, size) {
-<a href=#344 id=344 data-nosnippet>344</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_HEX_32,
-<a href=#345 id=345 data-nosnippet>345</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
-<a href=#346 id=346 data-nosnippet>346</a>            },
-<a href=#347 id=347 data-nosnippet>347</a>            Architecture::LoongArch32 | Architecture::LoongArch64 =&gt; <span class="kw">match </span>(kind, encoding, size) {
-<a href=#348 id=348 data-nosnippet>348</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_LARCH_32,
-<a href=#349 id=349 data-nosnippet>349</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">64</span>) =&gt; elf::R_LARCH_64,
-<a href=#350 id=350 data-nosnippet>350</a>                (K::Relative, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_LARCH_32_PCREL,
-<a href=#351 id=351 data-nosnippet>351</a>                (K::Relative, <span class="kw">_</span>, <span class="number">64</span>) =&gt; elf::R_LARCH_64_PCREL,
-<a href=#352 id=352 data-nosnippet>352</a>                (K::Relative, E::LoongArchBranch, <span class="number">16</span>) =&gt; elf::R_LARCH_B16,
-<a href=#353 id=353 data-nosnippet>353</a>                (K::PltRelative, E::LoongArchBranch, <span class="number">16</span>) =&gt; elf::R_LARCH_B16,
-<a href=#354 id=354 data-nosnippet>354</a>                (K::Relative, E::LoongArchBranch, <span class="number">21</span>) =&gt; elf::R_LARCH_B21,
-<a href=#355 id=355 data-nosnippet>355</a>                (K::PltRelative, E::LoongArchBranch, <span class="number">21</span>) =&gt; elf::R_LARCH_B21,
-<a href=#356 id=356 data-nosnippet>356</a>                (K::Relative, E::LoongArchBranch, <span class="number">26</span>) =&gt; elf::R_LARCH_B26,
-<a href=#357 id=357 data-nosnippet>357</a>                (K::PltRelative, E::LoongArchBranch, <span class="number">26</span>) =&gt; elf::R_LARCH_B26,
-<a href=#358 id=358 data-nosnippet>358</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
-<a href=#359 id=359 data-nosnippet>359</a>            },
-<a href=#360 id=360 data-nosnippet>360</a>            Architecture::M68k =&gt; <span class="kw">match </span>(kind, encoding, size) {
-<a href=#361 id=361 data-nosnippet>361</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">8</span>) =&gt; elf::R_68K_8,
-<a href=#362 id=362 data-nosnippet>362</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">16</span>) =&gt; elf::R_68K_16,
-<a href=#363 id=363 data-nosnippet>363</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_68K_32,
-<a href=#364 id=364 data-nosnippet>364</a>                (K::Relative, <span class="kw">_</span>, <span class="number">8</span>) =&gt; elf::R_68K_PC8,
-<a href=#365 id=365 data-nosnippet>365</a>                (K::Relative, <span class="kw">_</span>, <span class="number">16</span>) =&gt; elf::R_68K_PC16,
-<a href=#366 id=366 data-nosnippet>366</a>                (K::Relative, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_68K_PC32,
-<a href=#367 id=367 data-nosnippet>367</a>                (K::GotRelative, <span class="kw">_</span>, <span class="number">8</span>) =&gt; elf::R_68K_GOT8,
-<a href=#368 id=368 data-nosnippet>368</a>                (K::GotRelative, <span class="kw">_</span>, <span class="number">16</span>) =&gt; elf::R_68K_GOT16,
-<a href=#369 id=369 data-nosnippet>369</a>                (K::GotRelative, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_68K_GOT32,
-<a href=#370 id=370 data-nosnippet>370</a>                (K::Got, <span class="kw">_</span>, <span class="number">8</span>) =&gt; elf::R_68K_GOT8O,
-<a href=#371 id=371 data-nosnippet>371</a>                (K::Got, <span class="kw">_</span>, <span class="number">16</span>) =&gt; elf::R_68K_GOT16O,
-<a href=#372 id=372 data-nosnippet>372</a>                (K::Got, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_68K_GOT32O,
-<a href=#373 id=373 data-nosnippet>373</a>                (K::PltRelative, <span class="kw">_</span>, <span class="number">8</span>) =&gt; elf::R_68K_PLT8,
-<a href=#374 id=374 data-nosnippet>374</a>                (K::PltRelative, <span class="kw">_</span>, <span class="number">16</span>) =&gt; elf::R_68K_PLT16,
-<a href=#375 id=375 data-nosnippet>375</a>                (K::PltRelative, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_68K_PLT32,
-<a href=#376 id=376 data-nosnippet>376</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
-<a href=#377 id=377 data-nosnippet>377</a>            },
-<a href=#378 id=378 data-nosnippet>378</a>            Architecture::Mips | Architecture::Mips64 | Architecture::Mips64_N32 =&gt; {
-<a href=#379 id=379 data-nosnippet>379</a>                <span class="kw">match </span>(kind, encoding, size) {
-<a href=#380 id=380 data-nosnippet>380</a>                    (K::Absolute, <span class="kw">_</span>, <span class="number">16</span>) =&gt; elf::R_MIPS_16,
-<a href=#381 id=381 data-nosnippet>381</a>                    (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_MIPS_32,
-<a href=#382 id=382 data-nosnippet>382</a>                    (K::Absolute, <span class="kw">_</span>, <span class="number">64</span>) =&gt; elf::R_MIPS_64,
-<a href=#383 id=383 data-nosnippet>383</a>                    <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
-<a href=#384 id=384 data-nosnippet>384</a>                }
-<a href=#385 id=385 data-nosnippet>385</a>            }
-<a href=#386 id=386 data-nosnippet>386</a>            Architecture::Msp430 =&gt; <span class="kw">match </span>(kind, encoding, size) {
-<a href=#387 id=387 data-nosnippet>387</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_MSP430_32,
-<a href=#388 id=388 data-nosnippet>388</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">16</span>) =&gt; elf::R_MSP430_16_BYTE,
-<a href=#389 id=389 data-nosnippet>389</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
-<a href=#390 id=390 data-nosnippet>390</a>            },
-<a href=#391 id=391 data-nosnippet>391</a>            Architecture::PowerPc =&gt; <span class="kw">match </span>(kind, encoding, size) {
-<a href=#392 id=392 data-nosnippet>392</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_PPC_ADDR32,
-<a href=#393 id=393 data-nosnippet>393</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
-<a href=#394 id=394 data-nosnippet>394</a>            },
-<a href=#395 id=395 data-nosnippet>395</a>            Architecture::PowerPc64 =&gt; <span class="kw">match </span>(kind, encoding, size) {
-<a href=#396 id=396 data-nosnippet>396</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_PPC64_ADDR32,
-<a href=#397 id=397 data-nosnippet>397</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">64</span>) =&gt; elf::R_PPC64_ADDR64,
-<a href=#398 id=398 data-nosnippet>398</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
-<a href=#399 id=399 data-nosnippet>399</a>            },
-<a href=#400 id=400 data-nosnippet>400</a>            Architecture::Riscv32 | Architecture::Riscv64 =&gt; <span class="kw">match </span>(kind, encoding, size) {
-<a href=#401 id=401 data-nosnippet>401</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_RISCV_32,
-<a href=#402 id=402 data-nosnippet>402</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">64</span>) =&gt; elf::R_RISCV_64,
-<a href=#403 id=403 data-nosnippet>403</a>                (K::Relative, E::Generic, <span class="number">32</span>) =&gt; elf::R_RISCV_32_PCREL,
-<a href=#404 id=404 data-nosnippet>404</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
-<a href=#405 id=405 data-nosnippet>405</a>            },
-<a href=#406 id=406 data-nosnippet>406</a>            Architecture::S390x =&gt; <span class="kw">match </span>(kind, encoding, size) {
-<a href=#407 id=407 data-nosnippet>407</a>                (K::Absolute, E::Generic, <span class="number">8</span>) =&gt; elf::R_390_8,
-<a href=#408 id=408 data-nosnippet>408</a>                (K::Absolute, E::Generic, <span class="number">16</span>) =&gt; elf::R_390_16,
-<a href=#409 id=409 data-nosnippet>409</a>                (K::Absolute, E::Generic, <span class="number">32</span>) =&gt; elf::R_390_32,
-<a href=#410 id=410 data-nosnippet>410</a>                (K::Absolute, E::Generic, <span class="number">64</span>) =&gt; elf::R_390_64,
-<a href=#411 id=411 data-nosnippet>411</a>                (K::Relative, E::Generic, <span class="number">16</span>) =&gt; elf::R_390_PC16,
-<a href=#412 id=412 data-nosnippet>412</a>                (K::Relative, E::Generic, <span class="number">32</span>) =&gt; elf::R_390_PC32,
-<a href=#413 id=413 data-nosnippet>413</a>                (K::Relative, E::Generic, <span class="number">64</span>) =&gt; elf::R_390_PC64,
-<a href=#414 id=414 data-nosnippet>414</a>                (K::Relative, E::S390xDbl, <span class="number">16</span>) =&gt; elf::R_390_PC16DBL,
-<a href=#415 id=415 data-nosnippet>415</a>                (K::Relative, E::S390xDbl, <span class="number">32</span>) =&gt; elf::R_390_PC32DBL,
-<a href=#416 id=416 data-nosnippet>416</a>                (K::PltRelative, E::S390xDbl, <span class="number">16</span>) =&gt; elf::R_390_PLT16DBL,
-<a href=#417 id=417 data-nosnippet>417</a>                (K::PltRelative, E::S390xDbl, <span class="number">32</span>) =&gt; elf::R_390_PLT32DBL,
-<a href=#418 id=418 data-nosnippet>418</a>                (K::Got, E::Generic, <span class="number">16</span>) =&gt; elf::R_390_GOT16,
-<a href=#419 id=419 data-nosnippet>419</a>                (K::Got, E::Generic, <span class="number">32</span>) =&gt; elf::R_390_GOT32,
-<a href=#420 id=420 data-nosnippet>420</a>                (K::Got, E::Generic, <span class="number">64</span>) =&gt; elf::R_390_GOT64,
-<a href=#421 id=421 data-nosnippet>421</a>                (K::GotRelative, E::S390xDbl, <span class="number">32</span>) =&gt; elf::R_390_GOTENT,
-<a href=#422 id=422 data-nosnippet>422</a>                (K::GotBaseOffset, E::Generic, <span class="number">16</span>) =&gt; elf::R_390_GOTOFF16,
-<a href=#423 id=423 data-nosnippet>423</a>                (K::GotBaseOffset, E::Generic, <span class="number">32</span>) =&gt; elf::R_390_GOTOFF32,
-<a href=#424 id=424 data-nosnippet>424</a>                (K::GotBaseOffset, E::Generic, <span class="number">64</span>) =&gt; elf::R_390_GOTOFF64,
-<a href=#425 id=425 data-nosnippet>425</a>                (K::GotBaseRelative, E::Generic, <span class="number">64</span>) =&gt; elf::R_390_GOTPC,
-<a href=#426 id=426 data-nosnippet>426</a>                (K::GotBaseRelative, E::S390xDbl, <span class="number">32</span>) =&gt; elf::R_390_GOTPCDBL,
-<a href=#427 id=427 data-nosnippet>427</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
-<a href=#428 id=428 data-nosnippet>428</a>            },
-<a href=#429 id=429 data-nosnippet>429</a>            Architecture::Sbf =&gt; <span class="kw">match </span>(kind, encoding, size) {
-<a href=#430 id=430 data-nosnippet>430</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">64</span>) =&gt; elf::R_SBF_64_64,
-<a href=#431 id=431 data-nosnippet>431</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_SBF_64_32,
-<a href=#432 id=432 data-nosnippet>432</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
-<a href=#433 id=433 data-nosnippet>433</a>            },
-<a href=#434 id=434 data-nosnippet>434</a>            Architecture::Sharc =&gt; <span class="kw">match </span>(kind, encoding, size) {
-<a href=#435 id=435 data-nosnippet>435</a>                (K::Absolute, E::SharcTypeA, <span class="number">32</span>) =&gt; elf::R_SHARC_ADDR32_V3,
-<a href=#436 id=436 data-nosnippet>436</a>                (K::Absolute, E::Generic, <span class="number">32</span>) =&gt; elf::R_SHARC_ADDR_VAR_V3,
-<a href=#437 id=437 data-nosnippet>437</a>                (K::Relative, E::SharcTypeA, <span class="number">24</span>) =&gt; elf::R_SHARC_PCRLONG_V3,
-<a href=#438 id=438 data-nosnippet>438</a>                (K::Relative, E::SharcTypeA, <span class="number">6</span>) =&gt; elf::R_SHARC_PCRSHORT_V3,
-<a href=#439 id=439 data-nosnippet>439</a>                (K::Relative, E::SharcTypeB, <span class="number">6</span>) =&gt; elf::R_SHARC_PCRSHORT_V3,
-<a href=#440 id=440 data-nosnippet>440</a>                (K::Absolute, E::Generic, <span class="number">16</span>) =&gt; elf::R_SHARC_ADDR_VAR16_V3,
-<a href=#441 id=441 data-nosnippet>441</a>                (K::Absolute, E::SharcTypeA, <span class="number">16</span>) =&gt; elf::R_SHARC_DATA16_V3,
-<a href=#442 id=442 data-nosnippet>442</a>                (K::Absolute, E::SharcTypeB, <span class="number">16</span>) =&gt; elf::R_SHARC_DATA16_VISA_V3,
-<a href=#443 id=443 data-nosnippet>443</a>                (K::Absolute, E::SharcTypeA, <span class="number">24</span>) =&gt; elf::R_SHARC_ADDR24_V3,
-<a href=#444 id=444 data-nosnippet>444</a>                (K::Absolute, E::SharcTypeA, <span class="number">6</span>) =&gt; elf::R_SHARC_DATA6_V3,
-<a href=#445 id=445 data-nosnippet>445</a>                (K::Absolute, E::SharcTypeB, <span class="number">6</span>) =&gt; elf::R_SHARC_DATA6_VISA_V3,
-<a href=#446 id=446 data-nosnippet>446</a>                (K::Absolute, E::SharcTypeB, <span class="number">7</span>) =&gt; elf::R_SHARC_DATA7_VISA_V3,
+<a href=#323 id=323 data-nosnippet>323</a>            Architecture::E2K32 | Architecture::E2K64 =&gt; <span class="kw">match </span>(kind, encoding, size) {
+<a href=#324 id=324 data-nosnippet>324</a>                (K::None, <span class="kw">_</span>, <span class="number">0</span>) =&gt; elf::R_E2K_NONE,
+<a href=#325 id=325 data-nosnippet>325</a>                (K::Absolute, E::Generic, <span class="number">32</span>) =&gt; elf::R_E2K_32_ABS,
+<a href=#326 id=326 data-nosnippet>326</a>                (K::Absolute, E::E2KLit, <span class="number">64</span>) =&gt; elf::R_E2K_64_ABS_LIT,
+<a href=#327 id=327 data-nosnippet>327</a>                (K::Absolute, E::Generic, <span class="number">64</span>) =&gt; elf::R_E2K_64_ABS,
+<a href=#328 id=328 data-nosnippet>328</a>                (K::Relative, E::E2KDisp, <span class="number">28</span>) =&gt; elf::R_E2K_DISP,
+<a href=#329 id=329 data-nosnippet>329</a>                (K::Got, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_E2K_GOT,
+<a href=#330 id=330 data-nosnippet>330</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
+<a href=#331 id=331 data-nosnippet>331</a>            },
+<a href=#332 id=332 data-nosnippet>332</a>            Architecture::X86_64 | Architecture::X86_64_X32 =&gt; <span class="kw">match </span>(kind, encoding, size) {
+<a href=#333 id=333 data-nosnippet>333</a>                (K::None, <span class="kw">_</span>, <span class="number">0</span>) =&gt; elf::R_X86_64_NONE,
+<a href=#334 id=334 data-nosnippet>334</a>                (K::Absolute, E::Generic, <span class="number">64</span>) =&gt; elf::R_X86_64_64,
+<a href=#335 id=335 data-nosnippet>335</a>                (K::Relative, E::X86Branch, <span class="number">32</span>) =&gt; elf::R_X86_64_PLT32,
+<a href=#336 id=336 data-nosnippet>336</a>                (K::Relative, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_X86_64_PC32,
+<a href=#337 id=337 data-nosnippet>337</a>                (K::Got, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_X86_64_GOT32,
+<a href=#338 id=338 data-nosnippet>338</a>                (K::PltRelative, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_X86_64_PLT32,
+<a href=#339 id=339 data-nosnippet>339</a>                (K::GotRelative, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_X86_64_GOTPCREL,
+<a href=#340 id=340 data-nosnippet>340</a>                (K::Absolute, E::Generic, <span class="number">32</span>) =&gt; elf::R_X86_64_32,
+<a href=#341 id=341 data-nosnippet>341</a>                (K::Absolute, E::X86Signed, <span class="number">32</span>) =&gt; elf::R_X86_64_32S,
+<a href=#342 id=342 data-nosnippet>342</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">16</span>) =&gt; elf::R_X86_64_16,
+<a href=#343 id=343 data-nosnippet>343</a>                (K::Relative, <span class="kw">_</span>, <span class="number">16</span>) =&gt; elf::R_X86_64_PC16,
+<a href=#344 id=344 data-nosnippet>344</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">8</span>) =&gt; elf::R_X86_64_8,
+<a href=#345 id=345 data-nosnippet>345</a>                (K::Relative, <span class="kw">_</span>, <span class="number">8</span>) =&gt; elf::R_X86_64_PC8,
+<a href=#346 id=346 data-nosnippet>346</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
+<a href=#347 id=347 data-nosnippet>347</a>            },
+<a href=#348 id=348 data-nosnippet>348</a>            Architecture::Hppa =&gt; <span class="kw">match </span>(kind, encoding, size) {
+<a href=#349 id=349 data-nosnippet>349</a>                (K::None, <span class="kw">_</span>, <span class="number">0</span>) =&gt; elf::R_PARISC_NONE,
+<a href=#350 id=350 data-nosnippet>350</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_PARISC_DIR32,
+<a href=#351 id=351 data-nosnippet>351</a>                (K::Relative, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_PARISC_PCREL32,
+<a href=#352 id=352 data-nosnippet>352</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
+<a href=#353 id=353 data-nosnippet>353</a>            },
+<a href=#354 id=354 data-nosnippet>354</a>            Architecture::Hexagon =&gt; <span class="kw">match </span>(kind, encoding, size) {
+<a href=#355 id=355 data-nosnippet>355</a>                (K::None, <span class="kw">_</span>, <span class="number">0</span>) =&gt; elf::R_HEX_NONE,
+<a href=#356 id=356 data-nosnippet>356</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_HEX_32,
+<a href=#357 id=357 data-nosnippet>357</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
+<a href=#358 id=358 data-nosnippet>358</a>            },
+<a href=#359 id=359 data-nosnippet>359</a>            Architecture::LoongArch32 | Architecture::LoongArch64 =&gt; <span class="kw">match </span>(kind, encoding, size) {
+<a href=#360 id=360 data-nosnippet>360</a>                (K::None, <span class="kw">_</span>, <span class="number">0</span>) =&gt; elf::R_LARCH_NONE,
+<a href=#361 id=361 data-nosnippet>361</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_LARCH_32,
+<a href=#362 id=362 data-nosnippet>362</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">64</span>) =&gt; elf::R_LARCH_64,
+<a href=#363 id=363 data-nosnippet>363</a>                (K::Relative, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_LARCH_32_PCREL,
+<a href=#364 id=364 data-nosnippet>364</a>                (K::Relative, <span class="kw">_</span>, <span class="number">64</span>) =&gt; elf::R_LARCH_64_PCREL,
+<a href=#365 id=365 data-nosnippet>365</a>                (K::Relative, E::LoongArchBranch, <span class="number">16</span>) =&gt; elf::R_LARCH_B16,
+<a href=#366 id=366 data-nosnippet>366</a>                (K::PltRelative, E::LoongArchBranch, <span class="number">16</span>) =&gt; elf::R_LARCH_B16,
+<a href=#367 id=367 data-nosnippet>367</a>                (K::Relative, E::LoongArchBranch, <span class="number">21</span>) =&gt; elf::R_LARCH_B21,
+<a href=#368 id=368 data-nosnippet>368</a>                (K::PltRelative, E::LoongArchBranch, <span class="number">21</span>) =&gt; elf::R_LARCH_B21,
+<a href=#369 id=369 data-nosnippet>369</a>                (K::Relative, E::LoongArchBranch, <span class="number">26</span>) =&gt; elf::R_LARCH_B26,
+<a href=#370 id=370 data-nosnippet>370</a>                (K::PltRelative, E::LoongArchBranch, <span class="number">26</span>) =&gt; elf::R_LARCH_B26,
+<a href=#371 id=371 data-nosnippet>371</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
+<a href=#372 id=372 data-nosnippet>372</a>            },
+<a href=#373 id=373 data-nosnippet>373</a>            Architecture::M68k =&gt; <span class="kw">match </span>(kind, encoding, size) {
+<a href=#374 id=374 data-nosnippet>374</a>                (K::None, <span class="kw">_</span>, <span class="number">0</span>) =&gt; elf::R_68K_NONE,
+<a href=#375 id=375 data-nosnippet>375</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">8</span>) =&gt; elf::R_68K_8,
+<a href=#376 id=376 data-nosnippet>376</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">16</span>) =&gt; elf::R_68K_16,
+<a href=#377 id=377 data-nosnippet>377</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_68K_32,
+<a href=#378 id=378 data-nosnippet>378</a>                (K::Relative, <span class="kw">_</span>, <span class="number">8</span>) =&gt; elf::R_68K_PC8,
+<a href=#379 id=379 data-nosnippet>379</a>                (K::Relative, <span class="kw">_</span>, <span class="number">16</span>) =&gt; elf::R_68K_PC16,
+<a href=#380 id=380 data-nosnippet>380</a>                (K::Relative, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_68K_PC32,
+<a href=#381 id=381 data-nosnippet>381</a>                (K::GotRelative, <span class="kw">_</span>, <span class="number">8</span>) =&gt; elf::R_68K_GOT8,
+<a href=#382 id=382 data-nosnippet>382</a>                (K::GotRelative, <span class="kw">_</span>, <span class="number">16</span>) =&gt; elf::R_68K_GOT16,
+<a href=#383 id=383 data-nosnippet>383</a>                (K::GotRelative, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_68K_GOT32,
+<a href=#384 id=384 data-nosnippet>384</a>                (K::Got, <span class="kw">_</span>, <span class="number">8</span>) =&gt; elf::R_68K_GOT8O,
+<a href=#385 id=385 data-nosnippet>385</a>                (K::Got, <span class="kw">_</span>, <span class="number">16</span>) =&gt; elf::R_68K_GOT16O,
+<a href=#386 id=386 data-nosnippet>386</a>                (K::Got, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_68K_GOT32O,
+<a href=#387 id=387 data-nosnippet>387</a>                (K::PltRelative, <span class="kw">_</span>, <span class="number">8</span>) =&gt; elf::R_68K_PLT8,
+<a href=#388 id=388 data-nosnippet>388</a>                (K::PltRelative, <span class="kw">_</span>, <span class="number">16</span>) =&gt; elf::R_68K_PLT16,
+<a href=#389 id=389 data-nosnippet>389</a>                (K::PltRelative, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_68K_PLT32,
+<a href=#390 id=390 data-nosnippet>390</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
+<a href=#391 id=391 data-nosnippet>391</a>            },
+<a href=#392 id=392 data-nosnippet>392</a>            Architecture::Mips | Architecture::Mips64 | Architecture::Mips64_N32 =&gt; {
+<a href=#393 id=393 data-nosnippet>393</a>                <span class="kw">match </span>(kind, encoding, size) {
+<a href=#394 id=394 data-nosnippet>394</a>                    (K::None, <span class="kw">_</span>, <span class="number">0</span>) =&gt; elf::R_MIPS_NONE,
+<a href=#395 id=395 data-nosnippet>395</a>                    (K::Absolute, <span class="kw">_</span>, <span class="number">16</span>) =&gt; elf::R_MIPS_16,
+<a href=#396 id=396 data-nosnippet>396</a>                    (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_MIPS_32,
+<a href=#397 id=397 data-nosnippet>397</a>                    (K::Absolute, <span class="kw">_</span>, <span class="number">64</span>) =&gt; elf::R_MIPS_64,
+<a href=#398 id=398 data-nosnippet>398</a>                    <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
+<a href=#399 id=399 data-nosnippet>399</a>                }
+<a href=#400 id=400 data-nosnippet>400</a>            }
+<a href=#401 id=401 data-nosnippet>401</a>            Architecture::Msp430 =&gt; <span class="kw">match </span>(kind, encoding, size) {
+<a href=#402 id=402 data-nosnippet>402</a>                (K::None, <span class="kw">_</span>, <span class="number">0</span>) =&gt; elf::R_MSP430_NONE,
+<a href=#403 id=403 data-nosnippet>403</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_MSP430_32,
+<a href=#404 id=404 data-nosnippet>404</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">16</span>) =&gt; elf::R_MSP430_16_BYTE,
+<a href=#405 id=405 data-nosnippet>405</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
+<a href=#406 id=406 data-nosnippet>406</a>            },
+<a href=#407 id=407 data-nosnippet>407</a>            Architecture::PowerPc =&gt; <span class="kw">match </span>(kind, encoding, size) {
+<a href=#408 id=408 data-nosnippet>408</a>                (K::None, <span class="kw">_</span>, <span class="number">0</span>) =&gt; elf::R_PPC_NONE,
+<a href=#409 id=409 data-nosnippet>409</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_PPC_ADDR32,
+<a href=#410 id=410 data-nosnippet>410</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
+<a href=#411 id=411 data-nosnippet>411</a>            },
+<a href=#412 id=412 data-nosnippet>412</a>            Architecture::PowerPc64 =&gt; <span class="kw">match </span>(kind, encoding, size) {
+<a href=#413 id=413 data-nosnippet>413</a>                (K::None, <span class="kw">_</span>, <span class="number">0</span>) =&gt; elf::R_PPC64_NONE,
+<a href=#414 id=414 data-nosnippet>414</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_PPC64_ADDR32,
+<a href=#415 id=415 data-nosnippet>415</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">64</span>) =&gt; elf::R_PPC64_ADDR64,
+<a href=#416 id=416 data-nosnippet>416</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
+<a href=#417 id=417 data-nosnippet>417</a>            },
+<a href=#418 id=418 data-nosnippet>418</a>            Architecture::Riscv32 | Architecture::Riscv64 =&gt; <span class="kw">match </span>(kind, encoding, size) {
+<a href=#419 id=419 data-nosnippet>419</a>                (K::None, <span class="kw">_</span>, <span class="number">0</span>) =&gt; elf::R_RISCV_NONE,
+<a href=#420 id=420 data-nosnippet>420</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_RISCV_32,
+<a href=#421 id=421 data-nosnippet>421</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">64</span>) =&gt; elf::R_RISCV_64,
+<a href=#422 id=422 data-nosnippet>422</a>                (K::Relative, E::Generic, <span class="number">32</span>) =&gt; elf::R_RISCV_32_PCREL,
+<a href=#423 id=423 data-nosnippet>423</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
+<a href=#424 id=424 data-nosnippet>424</a>            },
+<a href=#425 id=425 data-nosnippet>425</a>            Architecture::S390x =&gt; <span class="kw">match </span>(kind, encoding, size) {
+<a href=#426 id=426 data-nosnippet>426</a>                (K::None, E::Generic, <span class="number">0</span>) =&gt; elf::R_390_NONE,
+<a href=#427 id=427 data-nosnippet>427</a>                (K::Absolute, E::Generic, <span class="number">8</span>) =&gt; elf::R_390_8,
+<a href=#428 id=428 data-nosnippet>428</a>                (K::Absolute, E::Generic, <span class="number">16</span>) =&gt; elf::R_390_16,
+<a href=#429 id=429 data-nosnippet>429</a>                (K::Absolute, E::Generic, <span class="number">32</span>) =&gt; elf::R_390_32,
+<a href=#430 id=430 data-nosnippet>430</a>                (K::Absolute, E::Generic, <span class="number">64</span>) =&gt; elf::R_390_64,
+<a href=#431 id=431 data-nosnippet>431</a>                (K::Relative, E::Generic, <span class="number">16</span>) =&gt; elf::R_390_PC16,
+<a href=#432 id=432 data-nosnippet>432</a>                (K::Relative, E::Generic, <span class="number">32</span>) =&gt; elf::R_390_PC32,
+<a href=#433 id=433 data-nosnippet>433</a>                (K::Relative, E::Generic, <span class="number">64</span>) =&gt; elf::R_390_PC64,
+<a href=#434 id=434 data-nosnippet>434</a>                (K::Relative, E::S390xDbl, <span class="number">16</span>) =&gt; elf::R_390_PC16DBL,
+<a href=#435 id=435 data-nosnippet>435</a>                (K::Relative, E::S390xDbl, <span class="number">32</span>) =&gt; elf::R_390_PC32DBL,
+<a href=#436 id=436 data-nosnippet>436</a>                (K::PltRelative, E::S390xDbl, <span class="number">16</span>) =&gt; elf::R_390_PLT16DBL,
+<a href=#437 id=437 data-nosnippet>437</a>                (K::PltRelative, E::S390xDbl, <span class="number">32</span>) =&gt; elf::R_390_PLT32DBL,
+<a href=#438 id=438 data-nosnippet>438</a>                (K::Got, E::Generic, <span class="number">16</span>) =&gt; elf::R_390_GOT16,
+<a href=#439 id=439 data-nosnippet>439</a>                (K::Got, E::Generic, <span class="number">32</span>) =&gt; elf::R_390_GOT32,
+<a href=#440 id=440 data-nosnippet>440</a>                (K::Got, E::Generic, <span class="number">64</span>) =&gt; elf::R_390_GOT64,
+<a href=#441 id=441 data-nosnippet>441</a>                (K::GotRelative, E::S390xDbl, <span class="number">32</span>) =&gt; elf::R_390_GOTENT,
+<a href=#442 id=442 data-nosnippet>442</a>                (K::GotBaseOffset, E::Generic, <span class="number">16</span>) =&gt; elf::R_390_GOTOFF16,
+<a href=#443 id=443 data-nosnippet>443</a>                (K::GotBaseOffset, E::Generic, <span class="number">32</span>) =&gt; elf::R_390_GOTOFF32,
+<a href=#444 id=444 data-nosnippet>444</a>                (K::GotBaseOffset, E::Generic, <span class="number">64</span>) =&gt; elf::R_390_GOTOFF64,
+<a href=#445 id=445 data-nosnippet>445</a>                (K::GotBaseRelative, E::Generic, <span class="number">64</span>) =&gt; elf::R_390_GOTPC,
+<a href=#446 id=446 data-nosnippet>446</a>                (K::GotBaseRelative, E::S390xDbl, <span class="number">32</span>) =&gt; elf::R_390_GOTPCDBL,
 <a href=#447 id=447 data-nosnippet>447</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
 <a href=#448 id=448 data-nosnippet>448</a>            },
-<a href=#449 id=449 data-nosnippet>449</a>            Architecture::Sparc | Architecture::Sparc32Plus =&gt; <span class="kw">match </span>(kind, encoding, size) {
-<a href=#450 id=450 data-nosnippet>450</a>                <span class="comment">// TODO: use R_SPARC_32 if aligned.
-<a href=#451 id=451 data-nosnippet>451</a>                </span>(K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_SPARC_UA32,
-<a href=#452 id=452 data-nosnippet>452</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
-<a href=#453 id=453 data-nosnippet>453</a>            },
-<a href=#454 id=454 data-nosnippet>454</a>            Architecture::Sparc64 =&gt; <span class="kw">match </span>(kind, encoding, size) {
-<a href=#455 id=455 data-nosnippet>455</a>                <span class="comment">// TODO: use R_SPARC_32/R_SPARC_64 if aligned.
-<a href=#456 id=456 data-nosnippet>456</a>                </span>(K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_SPARC_UA32,
-<a href=#457 id=457 data-nosnippet>457</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">64</span>) =&gt; elf::R_SPARC_UA64,
-<a href=#458 id=458 data-nosnippet>458</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
-<a href=#459 id=459 data-nosnippet>459</a>            },
-<a href=#460 id=460 data-nosnippet>460</a>            Architecture::SuperH =&gt; <span class="kw">match </span>(kind, encoding, size) {
-<a href=#461 id=461 data-nosnippet>461</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_SH_DIR32,
-<a href=#462 id=462 data-nosnippet>462</a>                (K::Relative, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_SH_REL32,
-<a href=#463 id=463 data-nosnippet>463</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
-<a href=#464 id=464 data-nosnippet>464</a>            },
-<a href=#465 id=465 data-nosnippet>465</a>            Architecture::Xtensa =&gt; <span class="kw">match </span>(kind, encoding, size) {
-<a href=#466 id=466 data-nosnippet>466</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_XTENSA_32,
-<a href=#467 id=467 data-nosnippet>467</a>                (K::Relative, E::Generic, <span class="number">32</span>) =&gt; elf::R_XTENSA_32_PCREL,
+<a href=#449 id=449 data-nosnippet>449</a>            Architecture::Sbf =&gt; <span class="kw">match </span>(kind, encoding, size) {
+<a href=#450 id=450 data-nosnippet>450</a>                (K::None, <span class="kw">_</span>, <span class="number">0</span>) =&gt; elf::R_SBF_NONE,
+<a href=#451 id=451 data-nosnippet>451</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">64</span>) =&gt; elf::R_SBF_64_64,
+<a href=#452 id=452 data-nosnippet>452</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_SBF_64_32,
+<a href=#453 id=453 data-nosnippet>453</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
+<a href=#454 id=454 data-nosnippet>454</a>            },
+<a href=#455 id=455 data-nosnippet>455</a>            Architecture::Sharc =&gt; <span class="kw">match </span>(kind, encoding, size) {
+<a href=#456 id=456 data-nosnippet>456</a>                (K::Absolute, E::SharcTypeA, <span class="number">32</span>) =&gt; elf::R_SHARC_ADDR32_V3,
+<a href=#457 id=457 data-nosnippet>457</a>                (K::Absolute, E::Generic, <span class="number">32</span>) =&gt; elf::R_SHARC_ADDR_VAR_V3,
+<a href=#458 id=458 data-nosnippet>458</a>                (K::Relative, E::SharcTypeA, <span class="number">24</span>) =&gt; elf::R_SHARC_PCRLONG_V3,
+<a href=#459 id=459 data-nosnippet>459</a>                (K::Relative, E::SharcTypeA, <span class="number">6</span>) =&gt; elf::R_SHARC_PCRSHORT_V3,
+<a href=#460 id=460 data-nosnippet>460</a>                (K::Relative, E::SharcTypeB, <span class="number">6</span>) =&gt; elf::R_SHARC_PCRSHORT_V3,
+<a href=#461 id=461 data-nosnippet>461</a>                (K::Absolute, E::Generic, <span class="number">16</span>) =&gt; elf::R_SHARC_ADDR_VAR16_V3,
+<a href=#462 id=462 data-nosnippet>462</a>                (K::Absolute, E::SharcTypeA, <span class="number">16</span>) =&gt; elf::R_SHARC_DATA16_V3,
+<a href=#463 id=463 data-nosnippet>463</a>                (K::Absolute, E::SharcTypeB, <span class="number">16</span>) =&gt; elf::R_SHARC_DATA16_VISA_V3,
+<a href=#464 id=464 data-nosnippet>464</a>                (K::Absolute, E::SharcTypeA, <span class="number">24</span>) =&gt; elf::R_SHARC_ADDR24_V3,
+<a href=#465 id=465 data-nosnippet>465</a>                (K::Absolute, E::SharcTypeA, <span class="number">6</span>) =&gt; elf::R_SHARC_DATA6_V3,
+<a href=#466 id=466 data-nosnippet>466</a>                (K::Absolute, E::SharcTypeB, <span class="number">6</span>) =&gt; elf::R_SHARC_DATA6_VISA_V3,
+<a href=#467 id=467 data-nosnippet>467</a>                (K::Absolute, E::SharcTypeB, <span class="number">7</span>) =&gt; elf::R_SHARC_DATA7_VISA_V3,
 <a href=#468 id=468 data-nosnippet>468</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
 <a href=#469 id=469 data-nosnippet>469</a>            },
-<a href=#470 id=470 data-nosnippet>470</a>            <span class="kw">_ </span>=&gt; {
-<a href=#471 id=471 data-nosnippet>471</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(Error(<span class="macro">format!</span>(
-<a href=#472 id=472 data-nosnippet>472</a>                    <span class="string">"unimplemented architecture {:?}"</span>,
-<a href=#473 id=473 data-nosnippet>473</a>                    <span class="self">self</span>.architecture
-<a href=#474 id=474 data-nosnippet>474</a>                )));
-<a href=#475 id=475 data-nosnippet>475</a>            }
-<a href=#476 id=476 data-nosnippet>476</a>        };
-<a href=#477 id=477 data-nosnippet>477</a>        reloc.flags = RelocationFlags::Elf { r_type };
-<a href=#478 id=478 data-nosnippet>478</a>        <span class="prelude-val">Ok</span>(())
-<a href=#479 id=479 data-nosnippet>479</a>    }
-<a href=#480 id=480 data-nosnippet>480</a>
-<a href=#481 id=481 data-nosnippet>481</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>elf_adjust_addend(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _relocation: <span class="kw-2">&amp;mut </span>Relocation) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
-<a href=#482 id=482 data-nosnippet>482</a>        <span class="comment">// Determine whether the addend is stored in the relocation or the data.
-<a href=#483 id=483 data-nosnippet>483</a>        </span><span class="kw">let </span>implicit = !<span class="self">self</span>.elf_has_relocation_addend()<span class="question-mark">?</span>;
-<a href=#484 id=484 data-nosnippet>484</a>        <span class="prelude-val">Ok</span>(implicit)
-<a href=#485 id=485 data-nosnippet>485</a>    }
-<a href=#486 id=486 data-nosnippet>486</a>
-<a href=#487 id=487 data-nosnippet>487</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>elf_relocation_size(<span class="kw-2">&amp;</span><span class="self">self</span>, reloc: <span class="kw-2">&amp;</span>Relocation) -&gt; <span class="prelude-ty">Result</span>&lt;u8&gt; {
-<a href=#488 id=488 data-nosnippet>488</a>        <span class="kw">let </span>r_type = <span class="kw">if let </span>RelocationFlags::Elf { r_type } = reloc.flags {
-<a href=#489 id=489 data-nosnippet>489</a>            r_type
-<a href=#490 id=490 data-nosnippet>490</a>        } <span class="kw">else </span>{
-<a href=#491 id=491 data-nosnippet>491</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(Error(<span class="string">"invalid relocation flags"</span>.into()));
-<a href=#492 id=492 data-nosnippet>492</a>        };
-<a href=#493 id=493 data-nosnippet>493</a>        <span class="comment">// This only needs to support architectures that use implicit addends.
-<a href=#494 id=494 data-nosnippet>494</a>        </span><span class="kw">let </span>size = <span class="kw">match </span><span class="self">self</span>.architecture {
-<a href=#495 id=495 data-nosnippet>495</a>            Architecture::Arm =&gt; <span class="kw">match </span>r_type {
-<a href=#496 id=496 data-nosnippet>496</a>                elf::R_ARM_ABS16 =&gt; <span class="prelude-val">Some</span>(<span class="number">16</span>),
-<a href=#497 id=497 data-nosnippet>497</a>                elf::R_ARM_ABS32 | elf::R_ARM_REL32 =&gt; <span class="prelude-val">Some</span>(<span class="number">32</span>),
-<a href=#498 id=498 data-nosnippet>498</a>                <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
-<a href=#499 id=499 data-nosnippet>499</a>            },
-<a href=#500 id=500 data-nosnippet>500</a>            Architecture::Bpf =&gt; <span class="kw">match </span>r_type {
-<a href=#501 id=501 data-nosnippet>501</a>                elf::R_BPF_64_32 =&gt; <span class="prelude-val">Some</span>(<span class="number">32</span>),
-<a href=#502 id=502 data-nosnippet>502</a>                elf::R_BPF_64_64 =&gt; <span class="prelude-val">Some</span>(<span class="number">64</span>),
-<a href=#503 id=503 data-nosnippet>503</a>                <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
-<a href=#504 id=504 data-nosnippet>504</a>            },
-<a href=#505 id=505 data-nosnippet>505</a>            Architecture::I386 =&gt; <span class="kw">match </span>r_type {
-<a href=#506 id=506 data-nosnippet>506</a>                elf::R_386_8 | elf::R_386_PC8 =&gt; <span class="prelude-val">Some</span>(<span class="number">8</span>),
-<a href=#507 id=507 data-nosnippet>507</a>                elf::R_386_16 | elf::R_386_PC16 =&gt; <span class="prelude-val">Some</span>(<span class="number">16</span>),
-<a href=#508 id=508 data-nosnippet>508</a>                elf::R_386_32
-<a href=#509 id=509 data-nosnippet>509</a>                | elf::R_386_PC32
-<a href=#510 id=510 data-nosnippet>510</a>                | elf::R_386_GOT32
-<a href=#511 id=511 data-nosnippet>511</a>                | elf::R_386_PLT32
-<a href=#512 id=512 data-nosnippet>512</a>                | elf::R_386_GOTOFF
-<a href=#513 id=513 data-nosnippet>513</a>                | elf::R_386_GOTPC =&gt; <span class="prelude-val">Some</span>(<span class="number">32</span>),
-<a href=#514 id=514 data-nosnippet>514</a>                <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
-<a href=#515 id=515 data-nosnippet>515</a>            },
-<a href=#516 id=516 data-nosnippet>516</a>            Architecture::Mips =&gt; <span class="kw">match </span>r_type {
-<a href=#517 id=517 data-nosnippet>517</a>                elf::R_MIPS_16 =&gt; <span class="prelude-val">Some</span>(<span class="number">16</span>),
-<a href=#518 id=518 data-nosnippet>518</a>                elf::R_MIPS_32 =&gt; <span class="prelude-val">Some</span>(<span class="number">32</span>),
-<a href=#519 id=519 data-nosnippet>519</a>                elf::R_MIPS_64 =&gt; <span class="prelude-val">Some</span>(<span class="number">64</span>),
-<a href=#520 id=520 data-nosnippet>520</a>                <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
-<a href=#521 id=521 data-nosnippet>521</a>            },
-<a href=#522 id=522 data-nosnippet>522</a>            Architecture::Sbf =&gt; <span class="kw">match </span>r_type {
-<a href=#523 id=523 data-nosnippet>523</a>                elf::R_SBF_64_32 =&gt; <span class="prelude-val">Some</span>(<span class="number">32</span>),
-<a href=#524 id=524 data-nosnippet>524</a>                elf::R_SBF_64_64 =&gt; <span class="prelude-val">Some</span>(<span class="number">64</span>),
-<a href=#525 id=525 data-nosnippet>525</a>                <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
-<a href=#526 id=526 data-nosnippet>526</a>            },
-<a href=#527 id=527 data-nosnippet>527</a>            <span class="kw">_ </span>=&gt; {
-<a href=#528 id=528 data-nosnippet>528</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(Error(<span class="macro">format!</span>(
-<a href=#529 id=529 data-nosnippet>529</a>                    <span class="string">"unimplemented architecture {:?}"</span>,
-<a href=#530 id=530 data-nosnippet>530</a>                    <span class="self">self</span>.architecture
-<a href=#531 id=531 data-nosnippet>531</a>                )));
-<a href=#532 id=532 data-nosnippet>532</a>            }
-<a href=#533 id=533 data-nosnippet>533</a>        };
-<a href=#534 id=534 data-nosnippet>534</a>        size.ok_or_else(|| Error(<span class="macro">format!</span>(<span class="string">"unsupported relocation for size {:?}"</span>, reloc)))
-<a href=#535 id=535 data-nosnippet>535</a>    }
-<a href=#536 id=536 data-nosnippet>536</a>
-<a href=#537 id=537 data-nosnippet>537</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>elf_is_64(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-<a href=#538 id=538 data-nosnippet>538</a>        <span class="kw">match </span><span class="self">self</span>.architecture.address_size().unwrap() {
-<a href=#539 id=539 data-nosnippet>539</a>            AddressSize::U8 | AddressSize::U16 | AddressSize::U32 =&gt; <span class="bool-val">false</span>,
-<a href=#540 id=540 data-nosnippet>540</a>            AddressSize::U64 =&gt; <span class="bool-val">true</span>,
-<a href=#541 id=541 data-nosnippet>541</a>        }
-<a href=#542 id=542 data-nosnippet>542</a>    }
-<a href=#543 id=543 data-nosnippet>543</a>
-<a href=#544 id=544 data-nosnippet>544</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>elf_write(<span class="kw-2">&amp;</span><span class="self">self</span>, buffer: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>WritableBuffer) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-<a href=#545 id=545 data-nosnippet>545</a>        <span class="comment">// Create reloc section header names so we can reference them.
-<a href=#546 id=546 data-nosnippet>546</a>        </span><span class="kw">let </span>is_rela = <span class="self">self</span>.elf_has_relocation_addend()<span class="question-mark">?</span>;
-<a href=#547 id=547 data-nosnippet>547</a>        <span class="kw">let </span>reloc_names: Vec&lt;<span class="kw">_</span>&gt; = <span class="self">self
-<a href=#548 id=548 data-nosnippet>548</a>            </span>.sections
-<a href=#549 id=549 data-nosnippet>549</a>            .iter()
-<a href=#550 id=550 data-nosnippet>550</a>            .map(|section| {
-<a href=#551 id=551 data-nosnippet>551</a>                <span class="kw">let </span><span class="kw-2">mut </span>reloc_name = Vec::with_capacity(
-<a href=#552 id=552 data-nosnippet>552</a>                    <span class="kw">if </span>is_rela { <span class="string">".rela"</span>.len() } <span class="kw">else </span>{ <span class="string">".rel"</span>.len() } + section.name.len(),
-<a href=#553 id=553 data-nosnippet>553</a>                );
-<a href=#554 id=554 data-nosnippet>554</a>                <span class="kw">if </span>!section.relocations.is_empty() {
-<a href=#555 id=555 data-nosnippet>555</a>                    reloc_name.extend_from_slice(<span class="kw">if </span>is_rela {
-<a href=#556 id=556 data-nosnippet>556</a>                        <span class="kw-2">&amp;</span><span class="string">b".rela"</span>[..]
-<a href=#557 id=557 data-nosnippet>557</a>                    } <span class="kw">else </span>{
-<a href=#558 id=558 data-nosnippet>558</a>                        <span class="kw-2">&amp;</span><span class="string">b".rel"</span>[..]
-<a href=#559 id=559 data-nosnippet>559</a>                    });
-<a href=#560 id=560 data-nosnippet>560</a>                    reloc_name.extend_from_slice(<span class="kw-2">&amp;</span>section.name);
-<a href=#561 id=561 data-nosnippet>561</a>                }
-<a href=#562 id=562 data-nosnippet>562</a>                reloc_name
-<a href=#563 id=563 data-nosnippet>563</a>            })
-<a href=#564 id=564 data-nosnippet>564</a>            .collect();
-<a href=#565 id=565 data-nosnippet>565</a>
-<a href=#566 id=566 data-nosnippet>566</a>        <span class="comment">// Start calculating offsets of everything.
-<a href=#567 id=567 data-nosnippet>567</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>writer = Writer::new(<span class="self">self</span>.endian, <span class="self">self</span>.elf_is_64(), buffer);
-<a href=#568 id=568 data-nosnippet>568</a>        writer.reserve_file_header();
-<a href=#569 id=569 data-nosnippet>569</a>
-<a href=#570 id=570 data-nosnippet>570</a>        <span class="comment">// Calculate size of section data.
-<a href=#571 id=571 data-nosnippet>571</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>comdat_offsets = Vec::with_capacity(<span class="self">self</span>.comdats.len());
-<a href=#572 id=572 data-nosnippet>572</a>        <span class="kw">for </span>comdat <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.comdats {
-<a href=#573 id=573 data-nosnippet>573</a>            <span class="kw">if </span>comdat.kind != ComdatKind::Any {
-<a href=#574 id=574 data-nosnippet>574</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(Error(<span class="macro">format!</span>(
-<a href=#575 id=575 data-nosnippet>575</a>                    <span class="string">"unsupported COMDAT symbol `{}` kind {:?}"</span>,
-<a href=#576 id=576 data-nosnippet>576</a>                    <span class="self">self</span>.symbols[comdat.symbol.<span class="number">0</span>].name().unwrap_or(<span class="string">""</span>),
-<a href=#577 id=577 data-nosnippet>577</a>                    comdat.kind
-<a href=#578 id=578 data-nosnippet>578</a>                )));
-<a href=#579 id=579 data-nosnippet>579</a>            }
-<a href=#580 id=580 data-nosnippet>580</a>
-<a href=#581 id=581 data-nosnippet>581</a>            writer.reserve_section_index();
-<a href=#582 id=582 data-nosnippet>582</a>            <span class="kw">let </span>offset = writer.reserve_comdat(comdat.sections.len());
-<a href=#583 id=583 data-nosnippet>583</a>            <span class="kw">let </span>str_id = writer.add_section_name(<span class="string">b".group"</span>);
-<a href=#584 id=584 data-nosnippet>584</a>            comdat_offsets.push(ComdatOffsets { offset, str_id });
-<a href=#585 id=585 data-nosnippet>585</a>        }
-<a href=#586 id=586 data-nosnippet>586</a>        <span class="kw">let </span><span class="kw-2">mut </span>section_offsets = Vec::with_capacity(<span class="self">self</span>.sections.len());
-<a href=#587 id=587 data-nosnippet>587</a>        <span class="kw">for </span>(section, reloc_name) <span class="kw">in </span><span class="self">self</span>.sections.iter().zip(reloc_names.iter()) {
-<a href=#588 id=588 data-nosnippet>588</a>            <span class="kw">let </span>index = writer.reserve_section_index();
-<a href=#589 id=589 data-nosnippet>589</a>            <span class="kw">let </span>offset = writer.reserve(section.data.len(), section.align <span class="kw">as </span>usize);
-<a href=#590 id=590 data-nosnippet>590</a>            <span class="kw">let </span>str_id = writer.add_section_name(<span class="kw-2">&amp;</span>section.name);
-<a href=#591 id=591 data-nosnippet>591</a>            <span class="kw">let </span><span class="kw-2">mut </span>reloc_str_id = <span class="prelude-val">None</span>;
-<a href=#592 id=592 data-nosnippet>592</a>            <span class="kw">if </span>!section.relocations.is_empty() {
-<a href=#593 id=593 data-nosnippet>593</a>                writer.reserve_section_index();
-<a href=#594 id=594 data-nosnippet>594</a>                reloc_str_id = <span class="prelude-val">Some</span>(writer.add_section_name(reloc_name));
-<a href=#595 id=595 data-nosnippet>595</a>            }
-<a href=#596 id=596 data-nosnippet>596</a>            section_offsets.push(SectionOffsets {
-<a href=#597 id=597 data-nosnippet>597</a>                index,
-<a href=#598 id=598 data-nosnippet>598</a>                offset,
-<a href=#599 id=599 data-nosnippet>599</a>                str_id,
-<a href=#600 id=600 data-nosnippet>600</a>                <span class="comment">// Relocation data is reserved later.
-<a href=#601 id=601 data-nosnippet>601</a>                </span>reloc_offset: <span class="number">0</span>,
-<a href=#602 id=602 data-nosnippet>602</a>                reloc_str_id,
-<a href=#603 id=603 data-nosnippet>603</a>            });
-<a href=#604 id=604 data-nosnippet>604</a>        }
+<a href=#470 id=470 data-nosnippet>470</a>            Architecture::Sparc | Architecture::Sparc32Plus =&gt; <span class="kw">match </span>(kind, encoding, size) {
+<a href=#471 id=471 data-nosnippet>471</a>                (K::None, <span class="kw">_</span>, <span class="number">0</span>) =&gt; elf::R_SPARC_NONE,
+<a href=#472 id=472 data-nosnippet>472</a>                <span class="comment">// TODO: use R_SPARC_32 if aligned.
+<a href=#473 id=473 data-nosnippet>473</a>                </span>(K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_SPARC_UA32,
+<a href=#474 id=474 data-nosnippet>474</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
+<a href=#475 id=475 data-nosnippet>475</a>            },
+<a href=#476 id=476 data-nosnippet>476</a>            Architecture::Sparc64 =&gt; <span class="kw">match </span>(kind, encoding, size) {
+<a href=#477 id=477 data-nosnippet>477</a>                (K::None, <span class="kw">_</span>, <span class="number">0</span>) =&gt; elf::R_SPARC_NONE,
+<a href=#478 id=478 data-nosnippet>478</a>                <span class="comment">// TODO: use R_SPARC_32/R_SPARC_64 if aligned.
+<a href=#479 id=479 data-nosnippet>479</a>                </span>(K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_SPARC_UA32,
+<a href=#480 id=480 data-nosnippet>480</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">64</span>) =&gt; elf::R_SPARC_UA64,
+<a href=#481 id=481 data-nosnippet>481</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
+<a href=#482 id=482 data-nosnippet>482</a>            },
+<a href=#483 id=483 data-nosnippet>483</a>            Architecture::SuperH =&gt; <span class="kw">match </span>(kind, encoding, size) {
+<a href=#484 id=484 data-nosnippet>484</a>                (K::None, <span class="kw">_</span>, <span class="number">0</span>) =&gt; elf::R_SH_NONE,
+<a href=#485 id=485 data-nosnippet>485</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_SH_DIR32,
+<a href=#486 id=486 data-nosnippet>486</a>                (K::Relative, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_SH_REL32,
+<a href=#487 id=487 data-nosnippet>487</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
+<a href=#488 id=488 data-nosnippet>488</a>            },
+<a href=#489 id=489 data-nosnippet>489</a>            Architecture::Xtensa =&gt; <span class="kw">match </span>(kind, encoding, size) {
+<a href=#490 id=490 data-nosnippet>490</a>                (K::None, <span class="kw">_</span>, <span class="number">0</span>) =&gt; elf::R_XTENSA_NONE,
+<a href=#491 id=491 data-nosnippet>491</a>                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_XTENSA_32,
+<a href=#492 id=492 data-nosnippet>492</a>                (K::Relative, E::Generic, <span class="number">32</span>) =&gt; elf::R_XTENSA_32_PCREL,
+<a href=#493 id=493 data-nosnippet>493</a>                <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
+<a href=#494 id=494 data-nosnippet>494</a>            },
+<a href=#495 id=495 data-nosnippet>495</a>            <span class="kw">_ </span>=&gt; {
+<a href=#496 id=496 data-nosnippet>496</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(Error(<span class="macro">format!</span>(
+<a href=#497 id=497 data-nosnippet>497</a>                    <span class="string">"unimplemented architecture {:?}"</span>,
+<a href=#498 id=498 data-nosnippet>498</a>                    <span class="self">self</span>.architecture
+<a href=#499 id=499 data-nosnippet>499</a>                )));
+<a href=#500 id=500 data-nosnippet>500</a>            }
+<a href=#501 id=501 data-nosnippet>501</a>        };
+<a href=#502 id=502 data-nosnippet>502</a>        reloc.flags = RelocationFlags::Elf { r_type };
+<a href=#503 id=503 data-nosnippet>503</a>        <span class="prelude-val">Ok</span>(())
+<a href=#504 id=504 data-nosnippet>504</a>    }
+<a href=#505 id=505 data-nosnippet>505</a>
+<a href=#506 id=506 data-nosnippet>506</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>elf_adjust_addend(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _relocation: <span class="kw-2">&amp;mut </span>Relocation) -&gt; <span class="prelude-ty">Result</span>&lt;bool&gt; {
+<a href=#507 id=507 data-nosnippet>507</a>        <span class="comment">// Determine whether the addend is stored in the relocation or the data.
+<a href=#508 id=508 data-nosnippet>508</a>        </span><span class="kw">let </span>implicit = !<span class="self">self</span>.elf_has_relocation_addend()<span class="question-mark">?</span>;
+<a href=#509 id=509 data-nosnippet>509</a>        <span class="prelude-val">Ok</span>(implicit)
+<a href=#510 id=510 data-nosnippet>510</a>    }
+<a href=#511 id=511 data-nosnippet>511</a>
+<a href=#512 id=512 data-nosnippet>512</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>elf_relocation_size(<span class="kw-2">&amp;</span><span class="self">self</span>, reloc: <span class="kw-2">&amp;</span>Relocation) -&gt; <span class="prelude-ty">Result</span>&lt;u8&gt; {
+<a href=#513 id=513 data-nosnippet>513</a>        <span class="kw">let </span>r_type = <span class="kw">if let </span>RelocationFlags::Elf { r_type } = reloc.flags {
+<a href=#514 id=514 data-nosnippet>514</a>            r_type
+<a href=#515 id=515 data-nosnippet>515</a>        } <span class="kw">else </span>{
+<a href=#516 id=516 data-nosnippet>516</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(Error(<span class="string">"invalid relocation flags"</span>.into()));
+<a href=#517 id=517 data-nosnippet>517</a>        };
+<a href=#518 id=518 data-nosnippet>518</a>        <span class="comment">// This only needs to support architectures that use implicit addends.
+<a href=#519 id=519 data-nosnippet>519</a>        </span><span class="kw">let </span>size = <span class="kw">match </span><span class="self">self</span>.architecture {
+<a href=#520 id=520 data-nosnippet>520</a>            Architecture::Arm =&gt; <span class="kw">match </span>r_type {
+<a href=#521 id=521 data-nosnippet>521</a>                elf::R_ARM_ABS16 =&gt; <span class="prelude-val">Some</span>(<span class="number">16</span>),
+<a href=#522 id=522 data-nosnippet>522</a>                elf::R_ARM_ABS32 | elf::R_ARM_REL32 =&gt; <span class="prelude-val">Some</span>(<span class="number">32</span>),
+<a href=#523 id=523 data-nosnippet>523</a>                <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+<a href=#524 id=524 data-nosnippet>524</a>            },
+<a href=#525 id=525 data-nosnippet>525</a>            Architecture::Bpf =&gt; <span class="kw">match </span>r_type {
+<a href=#526 id=526 data-nosnippet>526</a>                elf::R_BPF_64_32 =&gt; <span class="prelude-val">Some</span>(<span class="number">32</span>),
+<a href=#527 id=527 data-nosnippet>527</a>                elf::R_BPF_64_64 =&gt; <span class="prelude-val">Some</span>(<span class="number">64</span>),
+<a href=#528 id=528 data-nosnippet>528</a>                <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+<a href=#529 id=529 data-nosnippet>529</a>            },
+<a href=#530 id=530 data-nosnippet>530</a>            Architecture::I386 =&gt; <span class="kw">match </span>r_type {
+<a href=#531 id=531 data-nosnippet>531</a>                elf::R_386_8 | elf::R_386_PC8 =&gt; <span class="prelude-val">Some</span>(<span class="number">8</span>),
+<a href=#532 id=532 data-nosnippet>532</a>                elf::R_386_16 | elf::R_386_PC16 =&gt; <span class="prelude-val">Some</span>(<span class="number">16</span>),
+<a href=#533 id=533 data-nosnippet>533</a>                elf::R_386_32
+<a href=#534 id=534 data-nosnippet>534</a>                | elf::R_386_PC32
+<a href=#535 id=535 data-nosnippet>535</a>                | elf::R_386_GOT32
+<a href=#536 id=536 data-nosnippet>536</a>                | elf::R_386_PLT32
+<a href=#537 id=537 data-nosnippet>537</a>                | elf::R_386_GOTOFF
+<a href=#538 id=538 data-nosnippet>538</a>                | elf::R_386_GOTPC =&gt; <span class="prelude-val">Some</span>(<span class="number">32</span>),
+<a href=#539 id=539 data-nosnippet>539</a>                <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+<a href=#540 id=540 data-nosnippet>540</a>            },
+<a href=#541 id=541 data-nosnippet>541</a>            Architecture::Mips =&gt; <span class="kw">match </span>r_type {
+<a href=#542 id=542 data-nosnippet>542</a>                elf::R_MIPS_16 =&gt; <span class="prelude-val">Some</span>(<span class="number">16</span>),
+<a href=#543 id=543 data-nosnippet>543</a>                elf::R_MIPS_32 =&gt; <span class="prelude-val">Some</span>(<span class="number">32</span>),
+<a href=#544 id=544 data-nosnippet>544</a>                elf::R_MIPS_64 =&gt; <span class="prelude-val">Some</span>(<span class="number">64</span>),
+<a href=#545 id=545 data-nosnippet>545</a>                <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+<a href=#546 id=546 data-nosnippet>546</a>            },
+<a href=#547 id=547 data-nosnippet>547</a>            Architecture::Sbf =&gt; <span class="kw">match </span>r_type {
+<a href=#548 id=548 data-nosnippet>548</a>                elf::R_SBF_64_32 =&gt; <span class="prelude-val">Some</span>(<span class="number">32</span>),
+<a href=#549 id=549 data-nosnippet>549</a>                elf::R_SBF_64_64 =&gt; <span class="prelude-val">Some</span>(<span class="number">64</span>),
+<a href=#550 id=550 data-nosnippet>550</a>                <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+<a href=#551 id=551 data-nosnippet>551</a>            },
+<a href=#552 id=552 data-nosnippet>552</a>            <span class="kw">_ </span>=&gt; {
+<a href=#553 id=553 data-nosnippet>553</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(Error(<span class="macro">format!</span>(
+<a href=#554 id=554 data-nosnippet>554</a>                    <span class="string">"unimplemented architecture {:?}"</span>,
+<a href=#555 id=555 data-nosnippet>555</a>                    <span class="self">self</span>.architecture
+<a href=#556 id=556 data-nosnippet>556</a>                )));
+<a href=#557 id=557 data-nosnippet>557</a>            }
+<a href=#558 id=558 data-nosnippet>558</a>        };
+<a href=#559 id=559 data-nosnippet>559</a>        size.ok_or_else(|| Error(<span class="macro">format!</span>(<span class="string">"unsupported relocation for size {:?}"</span>, reloc)))
+<a href=#560 id=560 data-nosnippet>560</a>    }
+<a href=#561 id=561 data-nosnippet>561</a>
+<a href=#562 id=562 data-nosnippet>562</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>elf_is_64(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+<a href=#563 id=563 data-nosnippet>563</a>        <span class="kw">match </span><span class="self">self</span>.architecture.address_size().unwrap() {
+<a href=#564 id=564 data-nosnippet>564</a>            AddressSize::U8 | AddressSize::U16 | AddressSize::U32 =&gt; <span class="bool-val">false</span>,
+<a href=#565 id=565 data-nosnippet>565</a>            AddressSize::U64 =&gt; <span class="bool-val">true</span>,
+<a href=#566 id=566 data-nosnippet>566</a>        }
+<a href=#567 id=567 data-nosnippet>567</a>    }
+<a href=#568 id=568 data-nosnippet>568</a>
+<a href=#569 id=569 data-nosnippet>569</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>elf_write(<span class="kw-2">&amp;</span><span class="self">self</span>, buffer: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>WritableBuffer) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+<a href=#570 id=570 data-nosnippet>570</a>        <span class="comment">// Create reloc section header names so we can reference them.
+<a href=#571 id=571 data-nosnippet>571</a>        </span><span class="kw">let </span>is_rela = <span class="self">self</span>.elf_has_relocation_addend()<span class="question-mark">?</span>;
+<a href=#572 id=572 data-nosnippet>572</a>        <span class="kw">let </span>reloc_names: Vec&lt;<span class="kw">_</span>&gt; = <span class="self">self
+<a href=#573 id=573 data-nosnippet>573</a>            </span>.sections
+<a href=#574 id=574 data-nosnippet>574</a>            .iter()
+<a href=#575 id=575 data-nosnippet>575</a>            .map(|section| {
+<a href=#576 id=576 data-nosnippet>576</a>                <span class="kw">let </span><span class="kw-2">mut </span>reloc_name = Vec::with_capacity(
+<a href=#577 id=577 data-nosnippet>577</a>                    <span class="kw">if </span>is_rela { <span class="string">".rela"</span>.len() } <span class="kw">else </span>{ <span class="string">".rel"</span>.len() } + section.name.len(),
+<a href=#578 id=578 data-nosnippet>578</a>                );
+<a href=#579 id=579 data-nosnippet>579</a>                <span class="kw">if </span>!section.relocations.is_empty() {
+<a href=#580 id=580 data-nosnippet>580</a>                    reloc_name.extend_from_slice(<span class="kw">if </span>is_rela {
+<a href=#581 id=581 data-nosnippet>581</a>                        <span class="kw-2">&amp;</span><span class="string">b".rela"</span>[..]
+<a href=#582 id=582 data-nosnippet>582</a>                    } <span class="kw">else </span>{
+<a href=#583 id=583 data-nosnippet>583</a>                        <span class="kw-2">&amp;</span><span class="string">b".rel"</span>[..]
+<a href=#584 id=584 data-nosnippet>584</a>                    });
+<a href=#585 id=585 data-nosnippet>585</a>                    reloc_name.extend_from_slice(<span class="kw-2">&amp;</span>section.name);
+<a href=#586 id=586 data-nosnippet>586</a>                }
+<a href=#587 id=587 data-nosnippet>587</a>                reloc_name
+<a href=#588 id=588 data-nosnippet>588</a>            })
+<a href=#589 id=589 data-nosnippet>589</a>            .collect();
+<a href=#590 id=590 data-nosnippet>590</a>
+<a href=#591 id=591 data-nosnippet>591</a>        <span class="comment">// Start calculating offsets of everything.
+<a href=#592 id=592 data-nosnippet>592</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>writer = Writer::new(<span class="self">self</span>.endian, <span class="self">self</span>.elf_is_64(), buffer);
+<a href=#593 id=593 data-nosnippet>593</a>        writer.reserve_file_header();
+<a href=#594 id=594 data-nosnippet>594</a>
+<a href=#595 id=595 data-nosnippet>595</a>        <span class="comment">// Calculate size of section data.
+<a href=#596 id=596 data-nosnippet>596</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>comdat_offsets = Vec::with_capacity(<span class="self">self</span>.comdats.len());
+<a href=#597 id=597 data-nosnippet>597</a>        <span class="kw">for </span>comdat <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.comdats {
+<a href=#598 id=598 data-nosnippet>598</a>            <span class="kw">if </span>comdat.kind != ComdatKind::Any {
+<a href=#599 id=599 data-nosnippet>599</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(Error(<span class="macro">format!</span>(
+<a href=#600 id=600 data-nosnippet>600</a>                    <span class="string">"unsupported COMDAT symbol `{}` kind {:?}"</span>,
+<a href=#601 id=601 data-nosnippet>601</a>                    <span class="self">self</span>.symbols[comdat.symbol.<span class="number">0</span>].name().unwrap_or(<span class="string">""</span>),
+<a href=#602 id=602 data-nosnippet>602</a>                    comdat.kind
+<a href=#603 id=603 data-nosnippet>603</a>                )));
+<a href=#604 id=604 data-nosnippet>604</a>            }
 <a href=#605 id=605 data-nosnippet>605</a>
-<a href=#606 id=606 data-nosnippet>606</a>        <span class="comment">// Calculate index of symbols and add symbol strings to strtab.
-<a href=#607 id=607 data-nosnippet>607</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>symbol_offsets = <span class="macro">vec!</span>[SymbolOffsets::default(); <span class="self">self</span>.symbols.len()];
-<a href=#608 id=608 data-nosnippet>608</a>        writer.reserve_null_symbol_index();
-<a href=#609 id=609 data-nosnippet>609</a>        <span class="comment">// Local symbols must come before global.
-<a href=#610 id=610 data-nosnippet>610</a>        </span><span class="kw">for </span>(index, symbol) <span class="kw">in </span><span class="self">self</span>.symbols.iter().enumerate() {
-<a href=#611 id=611 data-nosnippet>611</a>            <span class="kw">if </span>symbol.is_local() {
-<a href=#612 id=612 data-nosnippet>612</a>                <span class="kw">let </span>section_index = symbol.section.id().map(|s| section_offsets[s.<span class="number">0</span>].index);
-<a href=#613 id=613 data-nosnippet>613</a>                symbol_offsets[index].index = writer.reserve_symbol_index(section_index);
-<a href=#614 id=614 data-nosnippet>614</a>            }
-<a href=#615 id=615 data-nosnippet>615</a>        }
-<a href=#616 id=616 data-nosnippet>616</a>        <span class="kw">let </span>symtab_num_local = writer.symbol_count();
-<a href=#617 id=617 data-nosnippet>617</a>        <span class="kw">for </span>(index, symbol) <span class="kw">in </span><span class="self">self</span>.symbols.iter().enumerate() {
-<a href=#618 id=618 data-nosnippet>618</a>            <span class="kw">if </span>!symbol.is_local() {
-<a href=#619 id=619 data-nosnippet>619</a>                <span class="kw">let </span>section_index = symbol.section.id().map(|s| section_offsets[s.<span class="number">0</span>].index);
-<a href=#620 id=620 data-nosnippet>620</a>                symbol_offsets[index].index = writer.reserve_symbol_index(section_index);
-<a href=#621 id=621 data-nosnippet>621</a>            }
-<a href=#622 id=622 data-nosnippet>622</a>        }
-<a href=#623 id=623 data-nosnippet>623</a>        <span class="kw">for </span>(index, symbol) <span class="kw">in </span><span class="self">self</span>.symbols.iter().enumerate() {
-<a href=#624 id=624 data-nosnippet>624</a>            <span class="kw">if </span>symbol.kind != SymbolKind::Section &amp;&amp; !symbol.name.is_empty() {
-<a href=#625 id=625 data-nosnippet>625</a>                symbol_offsets[index].str_id = <span class="prelude-val">Some</span>(writer.add_string(<span class="kw-2">&amp;</span>symbol.name));
-<a href=#626 id=626 data-nosnippet>626</a>            }
-<a href=#627 id=627 data-nosnippet>627</a>        }
-<a href=#628 id=628 data-nosnippet>628</a>
-<a href=#629 id=629 data-nosnippet>629</a>        <span class="comment">// Calculate size of symbols.
-<a href=#630 id=630 data-nosnippet>630</a>        </span>writer.reserve_symtab_section_index();
-<a href=#631 id=631 data-nosnippet>631</a>        writer.reserve_symtab();
-<a href=#632 id=632 data-nosnippet>632</a>        <span class="kw">if </span>writer.symtab_shndx_needed() {
-<a href=#633 id=633 data-nosnippet>633</a>            writer.reserve_symtab_shndx_section_index();
-<a href=#634 id=634 data-nosnippet>634</a>        }
-<a href=#635 id=635 data-nosnippet>635</a>        writer.reserve_symtab_shndx();
-<a href=#636 id=636 data-nosnippet>636</a>        writer.reserve_strtab_section_index();
-<a href=#637 id=637 data-nosnippet>637</a>        writer.reserve_strtab();
-<a href=#638 id=638 data-nosnippet>638</a>
-<a href=#639 id=639 data-nosnippet>639</a>        <span class="comment">// Calculate size of relocations.
-<a href=#640 id=640 data-nosnippet>640</a>        </span><span class="kw">for </span>(index, section) <span class="kw">in </span><span class="self">self</span>.sections.iter().enumerate() {
-<a href=#641 id=641 data-nosnippet>641</a>            <span class="kw">let </span>count = section.relocations.len();
-<a href=#642 id=642 data-nosnippet>642</a>            <span class="kw">if </span>count != <span class="number">0 </span>{
-<a href=#643 id=643 data-nosnippet>643</a>                section_offsets[index].reloc_offset = writer.reserve_relocations(count, is_rela);
-<a href=#644 id=644 data-nosnippet>644</a>            }
-<a href=#645 id=645 data-nosnippet>645</a>        }
-<a href=#646 id=646 data-nosnippet>646</a>
-<a href=#647 id=647 data-nosnippet>647</a>        <span class="comment">// Calculate size of section headers.
-<a href=#648 id=648 data-nosnippet>648</a>        </span>writer.reserve_shstrtab_section_index();
-<a href=#649 id=649 data-nosnippet>649</a>        writer.reserve_shstrtab();
-<a href=#650 id=650 data-nosnippet>650</a>        writer.reserve_section_headers();
-<a href=#651 id=651 data-nosnippet>651</a>
-<a href=#652 id=652 data-nosnippet>652</a>        <span class="comment">// Start writing.
-<a href=#653 id=653 data-nosnippet>653</a>        </span><span class="kw">let </span>e_type = elf::ET_REL;
-<a href=#654 id=654 data-nosnippet>654</a>        <span class="kw">let </span>e_machine = <span class="kw">match </span>(<span class="self">self</span>.architecture, <span class="self">self</span>.sub_architecture) {
-<a href=#655 id=655 data-nosnippet>655</a>            (Architecture::Aarch64, <span class="prelude-val">None</span>) =&gt; elf::EM_AARCH64,
-<a href=#656 id=656 data-nosnippet>656</a>            (Architecture::Aarch64_Ilp32, <span class="prelude-val">None</span>) =&gt; elf::EM_AARCH64,
-<a href=#657 id=657 data-nosnippet>657</a>            (Architecture::Alpha, <span class="prelude-val">None</span>) =&gt; elf::EM_ALPHA,
-<a href=#658 id=658 data-nosnippet>658</a>            (Architecture::Arm, <span class="prelude-val">None</span>) =&gt; elf::EM_ARM,
-<a href=#659 id=659 data-nosnippet>659</a>            (Architecture::Avr, <span class="prelude-val">None</span>) =&gt; elf::EM_AVR,
-<a href=#660 id=660 data-nosnippet>660</a>            (Architecture::Bpf, <span class="prelude-val">None</span>) =&gt; elf::EM_BPF,
-<a href=#661 id=661 data-nosnippet>661</a>            (Architecture::Csky, <span class="prelude-val">None</span>) =&gt; elf::EM_CSKY,
-<a href=#662 id=662 data-nosnippet>662</a>            (Architecture::E2K32, <span class="prelude-val">None</span>) =&gt; elf::EM_MCST_ELBRUS,
-<a href=#663 id=663 data-nosnippet>663</a>            (Architecture::E2K64, <span class="prelude-val">None</span>) =&gt; elf::EM_MCST_ELBRUS,
-<a href=#664 id=664 data-nosnippet>664</a>            (Architecture::I386, <span class="prelude-val">None</span>) =&gt; elf::EM_386,
-<a href=#665 id=665 data-nosnippet>665</a>            (Architecture::X86_64, <span class="prelude-val">None</span>) =&gt; elf::EM_X86_64,
-<a href=#666 id=666 data-nosnippet>666</a>            (Architecture::X86_64_X32, <span class="prelude-val">None</span>) =&gt; elf::EM_X86_64,
-<a href=#667 id=667 data-nosnippet>667</a>            (Architecture::Hppa, <span class="prelude-val">None</span>) =&gt; elf::EM_PARISC,
-<a href=#668 id=668 data-nosnippet>668</a>            (Architecture::Hexagon, <span class="prelude-val">None</span>) =&gt; elf::EM_HEXAGON,
-<a href=#669 id=669 data-nosnippet>669</a>            (Architecture::LoongArch32, <span class="prelude-val">None</span>) =&gt; elf::EM_LOONGARCH,
-<a href=#670 id=670 data-nosnippet>670</a>            (Architecture::LoongArch64, <span class="prelude-val">None</span>) =&gt; elf::EM_LOONGARCH,
-<a href=#671 id=671 data-nosnippet>671</a>            (Architecture::M68k, <span class="prelude-val">None</span>) =&gt; elf::EM_68K,
-<a href=#672 id=672 data-nosnippet>672</a>            (Architecture::Mips, <span class="prelude-val">None</span>) =&gt; elf::EM_MIPS,
-<a href=#673 id=673 data-nosnippet>673</a>            (Architecture::Mips64, <span class="prelude-val">None</span>) =&gt; elf::EM_MIPS,
-<a href=#674 id=674 data-nosnippet>674</a>            (Architecture::Mips64_N32, <span class="prelude-val">None</span>) =&gt; elf::EM_MIPS,
-<a href=#675 id=675 data-nosnippet>675</a>            (Architecture::Msp430, <span class="prelude-val">None</span>) =&gt; elf::EM_MSP430,
-<a href=#676 id=676 data-nosnippet>676</a>            (Architecture::PowerPc, <span class="prelude-val">None</span>) =&gt; elf::EM_PPC,
-<a href=#677 id=677 data-nosnippet>677</a>            (Architecture::PowerPc64, <span class="prelude-val">None</span>) =&gt; elf::EM_PPC64,
-<a href=#678 id=678 data-nosnippet>678</a>            (Architecture::Riscv32, <span class="prelude-val">None</span>) =&gt; elf::EM_RISCV,
-<a href=#679 id=679 data-nosnippet>679</a>            (Architecture::Riscv64, <span class="prelude-val">None</span>) =&gt; elf::EM_RISCV,
-<a href=#680 id=680 data-nosnippet>680</a>            (Architecture::S390x, <span class="prelude-val">None</span>) =&gt; elf::EM_S390,
-<a href=#681 id=681 data-nosnippet>681</a>            (Architecture::Sbf, <span class="prelude-val">None</span>) =&gt; elf::EM_SBF,
-<a href=#682 id=682 data-nosnippet>682</a>            (Architecture::Sharc, <span class="prelude-val">None</span>) =&gt; elf::EM_SHARC,
-<a href=#683 id=683 data-nosnippet>683</a>            (Architecture::Sparc, <span class="prelude-val">None</span>) =&gt; elf::EM_SPARC,
-<a href=#684 id=684 data-nosnippet>684</a>            (Architecture::Sparc32Plus, <span class="prelude-val">None</span>) =&gt; elf::EM_SPARC32PLUS,
-<a href=#685 id=685 data-nosnippet>685</a>            (Architecture::Sparc64, <span class="prelude-val">None</span>) =&gt; elf::EM_SPARCV9,
-<a href=#686 id=686 data-nosnippet>686</a>            (Architecture::SuperH, <span class="prelude-val">None</span>) =&gt; elf::EM_SH,
-<a href=#687 id=687 data-nosnippet>687</a>            (Architecture::Xtensa, <span class="prelude-val">None</span>) =&gt; elf::EM_XTENSA,
-<a href=#688 id=688 data-nosnippet>688</a>            <span class="kw">_ </span>=&gt; {
-<a href=#689 id=689 data-nosnippet>689</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(Error(<span class="macro">format!</span>(
-<a href=#690 id=690 data-nosnippet>690</a>                    <span class="string">"unimplemented architecture {:?} with sub-architecture {:?}"</span>,
-<a href=#691 id=691 data-nosnippet>691</a>                    <span class="self">self</span>.architecture, <span class="self">self</span>.sub_architecture
-<a href=#692 id=692 data-nosnippet>692</a>                )));
-<a href=#693 id=693 data-nosnippet>693</a>            }
-<a href=#694 id=694 data-nosnippet>694</a>        };
-<a href=#695 id=695 data-nosnippet>695</a>        <span class="kw">let </span>(os_abi, abi_version, <span class="kw-2">mut </span>e_flags) = <span class="kw">if let </span>FileFlags::Elf {
-<a href=#696 id=696 data-nosnippet>696</a>            os_abi,
-<a href=#697 id=697 data-nosnippet>697</a>            abi_version,
-<a href=#698 id=698 data-nosnippet>698</a>            e_flags,
-<a href=#699 id=699 data-nosnippet>699</a>        } = <span class="self">self</span>.flags
-<a href=#700 id=700 data-nosnippet>700</a>        {
-<a href=#701 id=701 data-nosnippet>701</a>            (os_abi, abi_version, e_flags)
-<a href=#702 id=702 data-nosnippet>702</a>        } <span class="kw">else </span>{
-<a href=#703 id=703 data-nosnippet>703</a>            (elf::ELFOSABI_NONE, <span class="number">0</span>, <span class="number">0</span>)
-<a href=#704 id=704 data-nosnippet>704</a>        };
-<a href=#705 id=705 data-nosnippet>705</a>
-<a href=#706 id=706 data-nosnippet>706</a>        <span class="kw">if </span><span class="self">self</span>.architecture == Architecture::Mips64_N32 {
-<a href=#707 id=707 data-nosnippet>707</a>            e_flags |= elf::EF_MIPS_ABI2;
-<a href=#708 id=708 data-nosnippet>708</a>        }
-<a href=#709 id=709 data-nosnippet>709</a>
-<a href=#710 id=710 data-nosnippet>710</a>        writer.write_file_header(<span class="kw-2">&amp;</span>FileHeader {
-<a href=#711 id=711 data-nosnippet>711</a>            os_abi,
-<a href=#712 id=712 data-nosnippet>712</a>            abi_version,
-<a href=#713 id=713 data-nosnippet>713</a>            e_type,
-<a href=#714 id=714 data-nosnippet>714</a>            e_machine,
-<a href=#715 id=715 data-nosnippet>715</a>            e_entry: <span class="number">0</span>,
-<a href=#716 id=716 data-nosnippet>716</a>            e_flags,
-<a href=#717 id=717 data-nosnippet>717</a>        })<span class="question-mark">?</span>;
-<a href=#718 id=718 data-nosnippet>718</a>
-<a href=#719 id=719 data-nosnippet>719</a>        <span class="comment">// Write section data.
-<a href=#720 id=720 data-nosnippet>720</a>        </span><span class="kw">for </span>comdat <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.comdats {
-<a href=#721 id=721 data-nosnippet>721</a>            writer.write_comdat_header();
-<a href=#722 id=722 data-nosnippet>722</a>            <span class="kw">for </span>section <span class="kw">in </span><span class="kw-2">&amp;</span>comdat.sections {
-<a href=#723 id=723 data-nosnippet>723</a>                writer.write_comdat_entry(section_offsets[section.<span class="number">0</span>].index);
-<a href=#724 id=724 data-nosnippet>724</a>            }
-<a href=#725 id=725 data-nosnippet>725</a>        }
-<a href=#726 id=726 data-nosnippet>726</a>        <span class="kw">for </span>(index, section) <span class="kw">in </span><span class="self">self</span>.sections.iter().enumerate() {
-<a href=#727 id=727 data-nosnippet>727</a>            writer.write_align(section.align <span class="kw">as </span>usize);
-<a href=#728 id=728 data-nosnippet>728</a>            <span class="macro">debug_assert_eq!</span>(section_offsets[index].offset, writer.len());
-<a href=#729 id=729 data-nosnippet>729</a>            writer.write(<span class="kw-2">&amp;</span>section.data);
-<a href=#730 id=730 data-nosnippet>730</a>        }
-<a href=#731 id=731 data-nosnippet>731</a>
-<a href=#732 id=732 data-nosnippet>732</a>        <span class="comment">// Write symbols.
-<a href=#733 id=733 data-nosnippet>733</a>        </span>writer.write_null_symbol();
-<a href=#734 id=734 data-nosnippet>734</a>        <span class="kw">let </span><span class="kw-2">mut </span>write_symbol = |index: usize, symbol: <span class="kw-2">&amp;</span>Symbol| -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-<a href=#735 id=735 data-nosnippet>735</a>            <span class="kw">let </span>SymbolFlags::Elf { st_info, st_other } = <span class="self">self</span>.symbol_flags(symbol) <span class="kw">else </span>{
-<a href=#736 id=736 data-nosnippet>736</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(Error(<span class="macro">format!</span>(
-<a href=#737 id=737 data-nosnippet>737</a>                    <span class="string">"unimplemented symbol `{}` kind {:?}"</span>,
-<a href=#738 id=738 data-nosnippet>738</a>                    symbol.name().unwrap_or(<span class="string">""</span>),
-<a href=#739 id=739 data-nosnippet>739</a>                    symbol.kind
-<a href=#740 id=740 data-nosnippet>740</a>                )));
-<a href=#741 id=741 data-nosnippet>741</a>            };
-<a href=#742 id=742 data-nosnippet>742</a>            <span class="kw">let </span>(st_shndx, section) = <span class="kw">match </span>symbol.section {
-<a href=#743 id=743 data-nosnippet>743</a>                SymbolSection::None =&gt; {
-<a href=#744 id=744 data-nosnippet>744</a>                    <span class="macro">debug_assert_eq!</span>(symbol.kind, SymbolKind::File);
-<a href=#745 id=745 data-nosnippet>745</a>                    (elf::SHN_ABS, <span class="prelude-val">None</span>)
-<a href=#746 id=746 data-nosnippet>746</a>                }
-<a href=#747 id=747 data-nosnippet>747</a>                SymbolSection::Undefined =&gt; (elf::SHN_UNDEF, <span class="prelude-val">None</span>),
-<a href=#748 id=748 data-nosnippet>748</a>                SymbolSection::Absolute =&gt; (elf::SHN_ABS, <span class="prelude-val">None</span>),
-<a href=#749 id=749 data-nosnippet>749</a>                SymbolSection::Common =&gt; (elf::SHN_COMMON, <span class="prelude-val">None</span>),
-<a href=#750 id=750 data-nosnippet>750</a>                SymbolSection::Section(id) =&gt; (<span class="number">0</span>, <span class="prelude-val">Some</span>(section_offsets[id.<span class="number">0</span>].index)),
-<a href=#751 id=751 data-nosnippet>751</a>            };
-<a href=#752 id=752 data-nosnippet>752</a>            writer.write_symbol(<span class="kw-2">&amp;</span>Sym {
-<a href=#753 id=753 data-nosnippet>753</a>                name: symbol_offsets[index].str_id,
-<a href=#754 id=754 data-nosnippet>754</a>                section,
-<a href=#755 id=755 data-nosnippet>755</a>                st_info,
-<a href=#756 id=756 data-nosnippet>756</a>                st_other,
-<a href=#757 id=757 data-nosnippet>757</a>                st_shndx,
-<a href=#758 id=758 data-nosnippet>758</a>                st_value: symbol.value,
-<a href=#759 id=759 data-nosnippet>759</a>                st_size: symbol.size,
-<a href=#760 id=760 data-nosnippet>760</a>            });
-<a href=#761 id=761 data-nosnippet>761</a>            <span class="prelude-val">Ok</span>(())
-<a href=#762 id=762 data-nosnippet>762</a>        };
-<a href=#763 id=763 data-nosnippet>763</a>        <span class="kw">for </span>(index, symbol) <span class="kw">in </span><span class="self">self</span>.symbols.iter().enumerate() {
-<a href=#764 id=764 data-nosnippet>764</a>            <span class="kw">if </span>symbol.is_local() {
-<a href=#765 id=765 data-nosnippet>765</a>                write_symbol(index, symbol)<span class="question-mark">?</span>;
-<a href=#766 id=766 data-nosnippet>766</a>            }
-<a href=#767 id=767 data-nosnippet>767</a>        }
-<a href=#768 id=768 data-nosnippet>768</a>        <span class="kw">for </span>(index, symbol) <span class="kw">in </span><span class="self">self</span>.symbols.iter().enumerate() {
-<a href=#769 id=769 data-nosnippet>769</a>            <span class="kw">if </span>!symbol.is_local() {
-<a href=#770 id=770 data-nosnippet>770</a>                write_symbol(index, symbol)<span class="question-mark">?</span>;
-<a href=#771 id=771 data-nosnippet>771</a>            }
-<a href=#772 id=772 data-nosnippet>772</a>        }
-<a href=#773 id=773 data-nosnippet>773</a>        writer.write_symtab_shndx();
-<a href=#774 id=774 data-nosnippet>774</a>        writer.write_strtab();
-<a href=#775 id=775 data-nosnippet>775</a>
-<a href=#776 id=776 data-nosnippet>776</a>        <span class="comment">// Write relocations.
-<a href=#777 id=777 data-nosnippet>777</a>        </span><span class="kw">for </span>(index, section) <span class="kw">in </span><span class="self">self</span>.sections.iter().enumerate() {
-<a href=#778 id=778 data-nosnippet>778</a>            <span class="kw">if </span>!section.relocations.is_empty() {
-<a href=#779 id=779 data-nosnippet>779</a>                writer.write_align_relocation();
-<a href=#780 id=780 data-nosnippet>780</a>                <span class="macro">debug_assert_eq!</span>(section_offsets[index].reloc_offset, writer.len());
-<a href=#781 id=781 data-nosnippet>781</a>                <span class="kw">for </span>reloc <span class="kw">in </span><span class="kw-2">&amp;</span>section.relocations {
-<a href=#782 id=782 data-nosnippet>782</a>                    <span class="kw">let </span>r_type = <span class="kw">if let </span>RelocationFlags::Elf { r_type } = reloc.flags {
-<a href=#783 id=783 data-nosnippet>783</a>                        r_type
-<a href=#784 id=784 data-nosnippet>784</a>                    } <span class="kw">else </span>{
-<a href=#785 id=785 data-nosnippet>785</a>                        <span class="kw">return </span><span class="prelude-val">Err</span>(Error(<span class="string">"invalid relocation flags"</span>.into()));
-<a href=#786 id=786 data-nosnippet>786</a>                    };
-<a href=#787 id=787 data-nosnippet>787</a>                    <span class="kw">let </span>r_sym = symbol_offsets[reloc.symbol.<span class="number">0</span>].index.<span class="number">0</span>;
-<a href=#788 id=788 data-nosnippet>788</a>                    writer.write_relocation(
-<a href=#789 id=789 data-nosnippet>789</a>                        is_rela,
-<a href=#790 id=790 data-nosnippet>790</a>                        <span class="kw-2">&amp;</span>Rel {
-<a href=#791 id=791 data-nosnippet>791</a>                            r_offset: reloc.offset,
-<a href=#792 id=792 data-nosnippet>792</a>                            r_sym,
-<a href=#793 id=793 data-nosnippet>793</a>                            r_type,
-<a href=#794 id=794 data-nosnippet>794</a>                            r_addend: reloc.addend,
-<a href=#795 id=795 data-nosnippet>795</a>                        },
-<a href=#796 id=796 data-nosnippet>796</a>                    );
-<a href=#797 id=797 data-nosnippet>797</a>                }
-<a href=#798 id=798 data-nosnippet>798</a>            }
-<a href=#799 id=799 data-nosnippet>799</a>        }
+<a href=#606 id=606 data-nosnippet>606</a>            writer.reserve_section_index();
+<a href=#607 id=607 data-nosnippet>607</a>            <span class="kw">let </span>offset = writer.reserve_comdat(comdat.sections.len());
+<a href=#608 id=608 data-nosnippet>608</a>            <span class="kw">let </span>str_id = writer.add_section_name(<span class="string">b".group"</span>);
+<a href=#609 id=609 data-nosnippet>609</a>            comdat_offsets.push(ComdatOffsets { offset, str_id });
+<a href=#610 id=610 data-nosnippet>610</a>        }
+<a href=#611 id=611 data-nosnippet>611</a>        <span class="kw">let </span><span class="kw-2">mut </span>section_offsets = Vec::with_capacity(<span class="self">self</span>.sections.len());
+<a href=#612 id=612 data-nosnippet>612</a>        <span class="kw">for </span>(section, reloc_name) <span class="kw">in </span><span class="self">self</span>.sections.iter().zip(reloc_names.iter()) {
+<a href=#613 id=613 data-nosnippet>613</a>            <span class="kw">let </span>index = writer.reserve_section_index();
+<a href=#614 id=614 data-nosnippet>614</a>            <span class="kw">let </span>offset = writer.reserve(section.data.len(), section.align <span class="kw">as </span>usize);
+<a href=#615 id=615 data-nosnippet>615</a>            <span class="kw">let </span>str_id = writer.add_section_name(<span class="kw-2">&amp;</span>section.name);
+<a href=#616 id=616 data-nosnippet>616</a>            <span class="kw">let </span><span class="kw-2">mut </span>reloc_str_id = <span class="prelude-val">None</span>;
+<a href=#617 id=617 data-nosnippet>617</a>            <span class="kw">if </span>!section.relocations.is_empty() {
+<a href=#618 id=618 data-nosnippet>618</a>                writer.reserve_section_index();
+<a href=#619 id=619 data-nosnippet>619</a>                reloc_str_id = <span class="prelude-val">Some</span>(writer.add_section_name(reloc_name));
+<a href=#620 id=620 data-nosnippet>620</a>            }
+<a href=#621 id=621 data-nosnippet>621</a>            section_offsets.push(SectionOffsets {
+<a href=#622 id=622 data-nosnippet>622</a>                index,
+<a href=#623 id=623 data-nosnippet>623</a>                offset,
+<a href=#624 id=624 data-nosnippet>624</a>                str_id,
+<a href=#625 id=625 data-nosnippet>625</a>                <span class="comment">// Relocation data is reserved later.
+<a href=#626 id=626 data-nosnippet>626</a>                </span>reloc_offset: <span class="number">0</span>,
+<a href=#627 id=627 data-nosnippet>627</a>                reloc_str_id,
+<a href=#628 id=628 data-nosnippet>628</a>            });
+<a href=#629 id=629 data-nosnippet>629</a>        }
+<a href=#630 id=630 data-nosnippet>630</a>
+<a href=#631 id=631 data-nosnippet>631</a>        <span class="comment">// Calculate index of symbols and add symbol strings to strtab.
+<a href=#632 id=632 data-nosnippet>632</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>symbol_offsets = <span class="macro">vec!</span>[SymbolOffsets::default(); <span class="self">self</span>.symbols.len()];
+<a href=#633 id=633 data-nosnippet>633</a>        writer.reserve_null_symbol_index();
+<a href=#634 id=634 data-nosnippet>634</a>        <span class="comment">// Local symbols must come before global.
+<a href=#635 id=635 data-nosnippet>635</a>        </span><span class="kw">for </span>(index, symbol) <span class="kw">in </span><span class="self">self</span>.symbols.iter().enumerate() {
+<a href=#636 id=636 data-nosnippet>636</a>            <span class="kw">if </span>symbol.is_local() {
+<a href=#637 id=637 data-nosnippet>637</a>                <span class="kw">let </span>section_index = symbol.section.id().map(|s| section_offsets[s.<span class="number">0</span>].index);
+<a href=#638 id=638 data-nosnippet>638</a>                symbol_offsets[index].index = writer.reserve_symbol_index(section_index);
+<a href=#639 id=639 data-nosnippet>639</a>            }
+<a href=#640 id=640 data-nosnippet>640</a>        }
+<a href=#641 id=641 data-nosnippet>641</a>        <span class="kw">let </span>symtab_num_local = writer.symbol_count();
+<a href=#642 id=642 data-nosnippet>642</a>        <span class="kw">for </span>(index, symbol) <span class="kw">in </span><span class="self">self</span>.symbols.iter().enumerate() {
+<a href=#643 id=643 data-nosnippet>643</a>            <span class="kw">if </span>!symbol.is_local() {
+<a href=#644 id=644 data-nosnippet>644</a>                <span class="kw">let </span>section_index = symbol.section.id().map(|s| section_offsets[s.<span class="number">0</span>].index);
+<a href=#645 id=645 data-nosnippet>645</a>                symbol_offsets[index].index = writer.reserve_symbol_index(section_index);
+<a href=#646 id=646 data-nosnippet>646</a>            }
+<a href=#647 id=647 data-nosnippet>647</a>        }
+<a href=#648 id=648 data-nosnippet>648</a>        <span class="kw">for </span>(index, symbol) <span class="kw">in </span><span class="self">self</span>.symbols.iter().enumerate() {
+<a href=#649 id=649 data-nosnippet>649</a>            <span class="kw">if </span>symbol.kind != SymbolKind::Section &amp;&amp; !symbol.name.is_empty() {
+<a href=#650 id=650 data-nosnippet>650</a>                symbol_offsets[index].str_id = <span class="prelude-val">Some</span>(writer.add_string(<span class="kw-2">&amp;</span>symbol.name));
+<a href=#651 id=651 data-nosnippet>651</a>            }
+<a href=#652 id=652 data-nosnippet>652</a>        }
+<a href=#653 id=653 data-nosnippet>653</a>
+<a href=#654 id=654 data-nosnippet>654</a>        <span class="comment">// Calculate size of symbols.
+<a href=#655 id=655 data-nosnippet>655</a>        </span>writer.reserve_symtab_section_index();
+<a href=#656 id=656 data-nosnippet>656</a>        writer.reserve_symtab();
+<a href=#657 id=657 data-nosnippet>657</a>        <span class="kw">if </span>writer.symtab_shndx_needed() {
+<a href=#658 id=658 data-nosnippet>658</a>            writer.reserve_symtab_shndx_section_index();
+<a href=#659 id=659 data-nosnippet>659</a>        }
+<a href=#660 id=660 data-nosnippet>660</a>        writer.reserve_symtab_shndx();
+<a href=#661 id=661 data-nosnippet>661</a>        writer.reserve_strtab_section_index();
+<a href=#662 id=662 data-nosnippet>662</a>        writer.reserve_strtab();
+<a href=#663 id=663 data-nosnippet>663</a>
+<a href=#664 id=664 data-nosnippet>664</a>        <span class="comment">// Calculate size of relocations.
+<a href=#665 id=665 data-nosnippet>665</a>        </span><span class="kw">for </span>(index, section) <span class="kw">in </span><span class="self">self</span>.sections.iter().enumerate() {
+<a href=#666 id=666 data-nosnippet>666</a>            <span class="kw">let </span>count = section.relocations.len();
+<a href=#667 id=667 data-nosnippet>667</a>            <span class="kw">if </span>count != <span class="number">0 </span>{
+<a href=#668 id=668 data-nosnippet>668</a>                section_offsets[index].reloc_offset = writer.reserve_relocations(count, is_rela);
+<a href=#669 id=669 data-nosnippet>669</a>            }
+<a href=#670 id=670 data-nosnippet>670</a>        }
+<a href=#671 id=671 data-nosnippet>671</a>
+<a href=#672 id=672 data-nosnippet>672</a>        <span class="comment">// Calculate size of section headers.
+<a href=#673 id=673 data-nosnippet>673</a>        </span>writer.reserve_shstrtab_section_index();
+<a href=#674 id=674 data-nosnippet>674</a>        writer.reserve_shstrtab();
+<a href=#675 id=675 data-nosnippet>675</a>        writer.reserve_section_headers();
+<a href=#676 id=676 data-nosnippet>676</a>
+<a href=#677 id=677 data-nosnippet>677</a>        <span class="comment">// Start writing.
+<a href=#678 id=678 data-nosnippet>678</a>        </span><span class="kw">let </span>e_type = elf::ET_REL;
+<a href=#679 id=679 data-nosnippet>679</a>        <span class="kw">let </span>e_machine = <span class="kw">match </span>(<span class="self">self</span>.architecture, <span class="self">self</span>.sub_architecture) {
+<a href=#680 id=680 data-nosnippet>680</a>            (Architecture::Aarch64, <span class="prelude-val">None</span>) =&gt; elf::EM_AARCH64,
+<a href=#681 id=681 data-nosnippet>681</a>            (Architecture::Aarch64_Ilp32, <span class="prelude-val">None</span>) =&gt; elf::EM_AARCH64,
+<a href=#682 id=682 data-nosnippet>682</a>            (Architecture::Alpha, <span class="prelude-val">None</span>) =&gt; elf::EM_ALPHA,
+<a href=#683 id=683 data-nosnippet>683</a>            (Architecture::Arm, <span class="prelude-val">None</span>) =&gt; elf::EM_ARM,
+<a href=#684 id=684 data-nosnippet>684</a>            (Architecture::Avr, <span class="prelude-val">None</span>) =&gt; elf::EM_AVR,
+<a href=#685 id=685 data-nosnippet>685</a>            (Architecture::Bpf, <span class="prelude-val">None</span>) =&gt; elf::EM_BPF,
+<a href=#686 id=686 data-nosnippet>686</a>            (Architecture::Csky, <span class="prelude-val">None</span>) =&gt; elf::EM_CSKY,
+<a href=#687 id=687 data-nosnippet>687</a>            (Architecture::E2K32, <span class="prelude-val">None</span>) =&gt; elf::EM_MCST_ELBRUS,
+<a href=#688 id=688 data-nosnippet>688</a>            (Architecture::E2K64, <span class="prelude-val">None</span>) =&gt; elf::EM_MCST_ELBRUS,
+<a href=#689 id=689 data-nosnippet>689</a>            (Architecture::I386, <span class="prelude-val">None</span>) =&gt; elf::EM_386,
+<a href=#690 id=690 data-nosnippet>690</a>            (Architecture::X86_64, <span class="prelude-val">None</span>) =&gt; elf::EM_X86_64,
+<a href=#691 id=691 data-nosnippet>691</a>            (Architecture::X86_64_X32, <span class="prelude-val">None</span>) =&gt; elf::EM_X86_64,
+<a href=#692 id=692 data-nosnippet>692</a>            (Architecture::Hppa, <span class="prelude-val">None</span>) =&gt; elf::EM_PARISC,
+<a href=#693 id=693 data-nosnippet>693</a>            (Architecture::Hexagon, <span class="prelude-val">None</span>) =&gt; elf::EM_HEXAGON,
+<a href=#694 id=694 data-nosnippet>694</a>            (Architecture::LoongArch32, <span class="prelude-val">None</span>) =&gt; elf::EM_LOONGARCH,
+<a href=#695 id=695 data-nosnippet>695</a>            (Architecture::LoongArch64, <span class="prelude-val">None</span>) =&gt; elf::EM_LOONGARCH,
+<a href=#696 id=696 data-nosnippet>696</a>            (Architecture::M68k, <span class="prelude-val">None</span>) =&gt; elf::EM_68K,
+<a href=#697 id=697 data-nosnippet>697</a>            (Architecture::Mips, <span class="prelude-val">None</span>) =&gt; elf::EM_MIPS,
+<a href=#698 id=698 data-nosnippet>698</a>            (Architecture::Mips64, <span class="prelude-val">None</span>) =&gt; elf::EM_MIPS,
+<a href=#699 id=699 data-nosnippet>699</a>            (Architecture::Mips64_N32, <span class="prelude-val">None</span>) =&gt; elf::EM_MIPS,
+<a href=#700 id=700 data-nosnippet>700</a>            (Architecture::Msp430, <span class="prelude-val">None</span>) =&gt; elf::EM_MSP430,
+<a href=#701 id=701 data-nosnippet>701</a>            (Architecture::PowerPc, <span class="prelude-val">None</span>) =&gt; elf::EM_PPC,
+<a href=#702 id=702 data-nosnippet>702</a>            (Architecture::PowerPc64, <span class="prelude-val">None</span>) =&gt; elf::EM_PPC64,
+<a href=#703 id=703 data-nosnippet>703</a>            (Architecture::Riscv32, <span class="prelude-val">None</span>) =&gt; elf::EM_RISCV,
+<a href=#704 id=704 data-nosnippet>704</a>            (Architecture::Riscv64, <span class="prelude-val">None</span>) =&gt; elf::EM_RISCV,
+<a href=#705 id=705 data-nosnippet>705</a>            (Architecture::S390x, <span class="prelude-val">None</span>) =&gt; elf::EM_S390,
+<a href=#706 id=706 data-nosnippet>706</a>            (Architecture::Sbf, <span class="prelude-val">None</span>) =&gt; elf::EM_SBF,
+<a href=#707 id=707 data-nosnippet>707</a>            (Architecture::Sharc, <span class="prelude-val">None</span>) =&gt; elf::EM_SHARC,
+<a href=#708 id=708 data-nosnippet>708</a>            (Architecture::Sparc, <span class="prelude-val">None</span>) =&gt; elf::EM_SPARC,
+<a href=#709 id=709 data-nosnippet>709</a>            (Architecture::Sparc32Plus, <span class="prelude-val">None</span>) =&gt; elf::EM_SPARC32PLUS,
+<a href=#710 id=710 data-nosnippet>710</a>            (Architecture::Sparc64, <span class="prelude-val">None</span>) =&gt; elf::EM_SPARCV9,
+<a href=#711 id=711 data-nosnippet>711</a>            (Architecture::SuperH, <span class="prelude-val">None</span>) =&gt; elf::EM_SH,
+<a href=#712 id=712 data-nosnippet>712</a>            (Architecture::Xtensa, <span class="prelude-val">None</span>) =&gt; elf::EM_XTENSA,
+<a href=#713 id=713 data-nosnippet>713</a>            <span class="kw">_ </span>=&gt; {
+<a href=#714 id=714 data-nosnippet>714</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(Error(<span class="macro">format!</span>(
+<a href=#715 id=715 data-nosnippet>715</a>                    <span class="string">"unimplemented architecture {:?} with sub-architecture {:?}"</span>,
+<a href=#716 id=716 data-nosnippet>716</a>                    <span class="self">self</span>.architecture, <span class="self">self</span>.sub_architecture
+<a href=#717 id=717 data-nosnippet>717</a>                )));
+<a href=#718 id=718 data-nosnippet>718</a>            }
+<a href=#719 id=719 data-nosnippet>719</a>        };
+<a href=#720 id=720 data-nosnippet>720</a>        <span class="kw">let </span>(os_abi, abi_version, <span class="kw-2">mut </span>e_flags) = <span class="kw">if let </span>FileFlags::Elf {
+<a href=#721 id=721 data-nosnippet>721</a>            os_abi,
+<a href=#722 id=722 data-nosnippet>722</a>            abi_version,
+<a href=#723 id=723 data-nosnippet>723</a>            e_flags,
+<a href=#724 id=724 data-nosnippet>724</a>        } = <span class="self">self</span>.flags
+<a href=#725 id=725 data-nosnippet>725</a>        {
+<a href=#726 id=726 data-nosnippet>726</a>            (os_abi, abi_version, e_flags)
+<a href=#727 id=727 data-nosnippet>727</a>        } <span class="kw">else </span>{
+<a href=#728 id=728 data-nosnippet>728</a>            (elf::ELFOSABI_NONE, <span class="number">0</span>, <span class="number">0</span>)
+<a href=#729 id=729 data-nosnippet>729</a>        };
+<a href=#730 id=730 data-nosnippet>730</a>
+<a href=#731 id=731 data-nosnippet>731</a>        <span class="kw">if </span><span class="self">self</span>.architecture == Architecture::Mips64_N32 {
+<a href=#732 id=732 data-nosnippet>732</a>            e_flags |= elf::EF_MIPS_ABI2;
+<a href=#733 id=733 data-nosnippet>733</a>        }
+<a href=#734 id=734 data-nosnippet>734</a>
+<a href=#735 id=735 data-nosnippet>735</a>        writer.write_file_header(<span class="kw-2">&amp;</span>FileHeader {
+<a href=#736 id=736 data-nosnippet>736</a>            os_abi,
+<a href=#737 id=737 data-nosnippet>737</a>            abi_version,
+<a href=#738 id=738 data-nosnippet>738</a>            e_type,
+<a href=#739 id=739 data-nosnippet>739</a>            e_machine,
+<a href=#740 id=740 data-nosnippet>740</a>            e_entry: <span class="number">0</span>,
+<a href=#741 id=741 data-nosnippet>741</a>            e_flags,
+<a href=#742 id=742 data-nosnippet>742</a>        })<span class="question-mark">?</span>;
+<a href=#743 id=743 data-nosnippet>743</a>
+<a href=#744 id=744 data-nosnippet>744</a>        <span class="comment">// Write section data.
+<a href=#745 id=745 data-nosnippet>745</a>        </span><span class="kw">for </span>comdat <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.comdats {
+<a href=#746 id=746 data-nosnippet>746</a>            writer.write_comdat_header();
+<a href=#747 id=747 data-nosnippet>747</a>            <span class="kw">for </span>section <span class="kw">in </span><span class="kw-2">&amp;</span>comdat.sections {
+<a href=#748 id=748 data-nosnippet>748</a>                writer.write_comdat_entry(section_offsets[section.<span class="number">0</span>].index);
+<a href=#749 id=749 data-nosnippet>749</a>            }
+<a href=#750 id=750 data-nosnippet>750</a>        }
+<a href=#751 id=751 data-nosnippet>751</a>        <span class="kw">for </span>(index, section) <span class="kw">in </span><span class="self">self</span>.sections.iter().enumerate() {
+<a href=#752 id=752 data-nosnippet>752</a>            writer.write_align(section.align <span class="kw">as </span>usize);
+<a href=#753 id=753 data-nosnippet>753</a>            <span class="macro">debug_assert_eq!</span>(section_offsets[index].offset, writer.len());
+<a href=#754 id=754 data-nosnippet>754</a>            writer.write(<span class="kw-2">&amp;</span>section.data);
+<a href=#755 id=755 data-nosnippet>755</a>        }
+<a href=#756 id=756 data-nosnippet>756</a>
+<a href=#757 id=757 data-nosnippet>757</a>        <span class="comment">// Write symbols.
+<a href=#758 id=758 data-nosnippet>758</a>        </span>writer.write_null_symbol();
+<a href=#759 id=759 data-nosnippet>759</a>        <span class="kw">let </span><span class="kw-2">mut </span>write_symbol = |index: usize, symbol: <span class="kw-2">&amp;</span>Symbol| -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+<a href=#760 id=760 data-nosnippet>760</a>            <span class="kw">let </span>SymbolFlags::Elf { st_info, st_other } = <span class="self">self</span>.symbol_flags(symbol) <span class="kw">else </span>{
+<a href=#761 id=761 data-nosnippet>761</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(Error(<span class="macro">format!</span>(
+<a href=#762 id=762 data-nosnippet>762</a>                    <span class="string">"unimplemented symbol `{}` kind {:?}"</span>,
+<a href=#763 id=763 data-nosnippet>763</a>                    symbol.name().unwrap_or(<span class="string">""</span>),
+<a href=#764 id=764 data-nosnippet>764</a>                    symbol.kind
+<a href=#765 id=765 data-nosnippet>765</a>                )));
+<a href=#766 id=766 data-nosnippet>766</a>            };
+<a href=#767 id=767 data-nosnippet>767</a>            <span class="kw">let </span>(st_shndx, section) = <span class="kw">match </span>symbol.section {
+<a href=#768 id=768 data-nosnippet>768</a>                SymbolSection::None =&gt; {
+<a href=#769 id=769 data-nosnippet>769</a>                    <span class="macro">debug_assert_eq!</span>(symbol.kind, SymbolKind::File);
+<a href=#770 id=770 data-nosnippet>770</a>                    (elf::SHN_ABS, <span class="prelude-val">None</span>)
+<a href=#771 id=771 data-nosnippet>771</a>                }
+<a href=#772 id=772 data-nosnippet>772</a>                SymbolSection::Undefined =&gt; (elf::SHN_UNDEF, <span class="prelude-val">None</span>),
+<a href=#773 id=773 data-nosnippet>773</a>                SymbolSection::Absolute =&gt; (elf::SHN_ABS, <span class="prelude-val">None</span>),
+<a href=#774 id=774 data-nosnippet>774</a>                SymbolSection::Common =&gt; (elf::SHN_COMMON, <span class="prelude-val">None</span>),
+<a href=#775 id=775 data-nosnippet>775</a>                SymbolSection::Section(id) =&gt; (<span class="number">0</span>, <span class="prelude-val">Some</span>(section_offsets[id.<span class="number">0</span>].index)),
+<a href=#776 id=776 data-nosnippet>776</a>            };
+<a href=#777 id=777 data-nosnippet>777</a>            writer.write_symbol(<span class="kw-2">&amp;</span>Sym {
+<a href=#778 id=778 data-nosnippet>778</a>                name: symbol_offsets[index].str_id,
+<a href=#779 id=779 data-nosnippet>779</a>                section,
+<a href=#780 id=780 data-nosnippet>780</a>                st_info,
+<a href=#781 id=781 data-nosnippet>781</a>                st_other,
+<a href=#782 id=782 data-nosnippet>782</a>                st_shndx,
+<a href=#783 id=783 data-nosnippet>783</a>                st_value: symbol.value,
+<a href=#784 id=784 data-nosnippet>784</a>                st_size: symbol.size,
+<a href=#785 id=785 data-nosnippet>785</a>            });
+<a href=#786 id=786 data-nosnippet>786</a>            <span class="prelude-val">Ok</span>(())
+<a href=#787 id=787 data-nosnippet>787</a>        };
+<a href=#788 id=788 data-nosnippet>788</a>        <span class="kw">for </span>(index, symbol) <span class="kw">in </span><span class="self">self</span>.symbols.iter().enumerate() {
+<a href=#789 id=789 data-nosnippet>789</a>            <span class="kw">if </span>symbol.is_local() {
+<a href=#790 id=790 data-nosnippet>790</a>                write_symbol(index, symbol)<span class="question-mark">?</span>;
+<a href=#791 id=791 data-nosnippet>791</a>            }
+<a href=#792 id=792 data-nosnippet>792</a>        }
+<a href=#793 id=793 data-nosnippet>793</a>        <span class="kw">for </span>(index, symbol) <span class="kw">in </span><span class="self">self</span>.symbols.iter().enumerate() {
+<a href=#794 id=794 data-nosnippet>794</a>            <span class="kw">if </span>!symbol.is_local() {
+<a href=#795 id=795 data-nosnippet>795</a>                write_symbol(index, symbol)<span class="question-mark">?</span>;
+<a href=#796 id=796 data-nosnippet>796</a>            }
+<a href=#797 id=797 data-nosnippet>797</a>        }
+<a href=#798 id=798 data-nosnippet>798</a>        writer.write_symtab_shndx();
+<a href=#799 id=799 data-nosnippet>799</a>        writer.write_strtab();
 <a href=#800 id=800 data-nosnippet>800</a>
-<a href=#801 id=801 data-nosnippet>801</a>        writer.write_shstrtab();
-<a href=#802 id=802 data-nosnippet>802</a>
-<a href=#803 id=803 data-nosnippet>803</a>        <span class="comment">// Write section headers.
-<a href=#804 id=804 data-nosnippet>804</a>        </span>writer.write_null_section_header();
-<a href=#805 id=805 data-nosnippet>805</a>
-<a href=#806 id=806 data-nosnippet>806</a>        <span class="kw">let </span>symtab_index = writer.symtab_index();
-<a href=#807 id=807 data-nosnippet>807</a>        <span class="kw">for </span>(comdat, comdat_offset) <span class="kw">in </span><span class="self">self</span>.comdats.iter().zip(comdat_offsets.iter()) {
-<a href=#808 id=808 data-nosnippet>808</a>            writer.write_comdat_section_header(
-<a href=#809 id=809 data-nosnippet>809</a>                comdat_offset.str_id,
-<a href=#810 id=810 data-nosnippet>810</a>                symtab_index,
-<a href=#811 id=811 data-nosnippet>811</a>                symbol_offsets[comdat.symbol.<span class="number">0</span>].index,
-<a href=#812 id=812 data-nosnippet>812</a>                comdat_offset.offset,
-<a href=#813 id=813 data-nosnippet>813</a>                comdat.sections.len(),
-<a href=#814 id=814 data-nosnippet>814</a>            );
-<a href=#815 id=815 data-nosnippet>815</a>        }
-<a href=#816 id=816 data-nosnippet>816</a>        <span class="kw">for </span>(index, section) <span class="kw">in </span><span class="self">self</span>.sections.iter().enumerate() {
-<a href=#817 id=817 data-nosnippet>817</a>            <span class="kw">let </span>sh_type = <span class="kw">match </span>section.kind {
-<a href=#818 id=818 data-nosnippet>818</a>                SectionKind::UninitializedData | SectionKind::UninitializedTls =&gt; elf::SHT_NOBITS,
-<a href=#819 id=819 data-nosnippet>819</a>                SectionKind::Note =&gt; elf::SHT_NOTE,
-<a href=#820 id=820 data-nosnippet>820</a>                SectionKind::Elf(sh_type) =&gt; sh_type,
-<a href=#821 id=821 data-nosnippet>821</a>                <span class="kw">_ </span>=&gt; elf::SHT_PROGBITS,
-<a href=#822 id=822 data-nosnippet>822</a>            };
-<a href=#823 id=823 data-nosnippet>823</a>            <span class="kw">let </span>SectionFlags::Elf { sh_flags } = <span class="self">self</span>.section_flags(section) <span class="kw">else </span>{
-<a href=#824 id=824 data-nosnippet>824</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(Error(<span class="macro">format!</span>(
-<a href=#825 id=825 data-nosnippet>825</a>                    <span class="string">"unimplemented section `{}` kind {:?}"</span>,
-<a href=#826 id=826 data-nosnippet>826</a>                    section.name().unwrap_or(<span class="string">""</span>),
-<a href=#827 id=827 data-nosnippet>827</a>                    section.kind
-<a href=#828 id=828 data-nosnippet>828</a>                )));
-<a href=#829 id=829 data-nosnippet>829</a>            };
-<a href=#830 id=830 data-nosnippet>830</a>            <span class="comment">// TODO: not sure if this is correct, maybe user should determine this
-<a href=#831 id=831 data-nosnippet>831</a>            </span><span class="kw">let </span>sh_entsize = <span class="kw">match </span>section.kind {
-<a href=#832 id=832 data-nosnippet>832</a>                SectionKind::ReadOnlyString | SectionKind::OtherString =&gt; <span class="number">1</span>,
-<a href=#833 id=833 data-nosnippet>833</a>                <span class="kw">_ </span>=&gt; <span class="number">0</span>,
-<a href=#834 id=834 data-nosnippet>834</a>            };
-<a href=#835 id=835 data-nosnippet>835</a>            writer.write_section_header(<span class="kw-2">&amp;</span>SectionHeader {
-<a href=#836 id=836 data-nosnippet>836</a>                name: <span class="prelude-val">Some</span>(section_offsets[index].str_id),
-<a href=#837 id=837 data-nosnippet>837</a>                sh_type,
-<a href=#838 id=838 data-nosnippet>838</a>                sh_flags,
-<a href=#839 id=839 data-nosnippet>839</a>                sh_addr: <span class="number">0</span>,
-<a href=#840 id=840 data-nosnippet>840</a>                sh_offset: section_offsets[index].offset <span class="kw">as </span>u64,
-<a href=#841 id=841 data-nosnippet>841</a>                sh_size: section.size,
-<a href=#842 id=842 data-nosnippet>842</a>                sh_link: <span class="number">0</span>,
-<a href=#843 id=843 data-nosnippet>843</a>                sh_info: <span class="number">0</span>,
-<a href=#844 id=844 data-nosnippet>844</a>                sh_addralign: section.align,
-<a href=#845 id=845 data-nosnippet>845</a>                sh_entsize,
-<a href=#846 id=846 data-nosnippet>846</a>            });
-<a href=#847 id=847 data-nosnippet>847</a>
-<a href=#848 id=848 data-nosnippet>848</a>            <span class="kw">if </span>!section.relocations.is_empty() {
-<a href=#849 id=849 data-nosnippet>849</a>                writer.write_relocation_section_header(
-<a href=#850 id=850 data-nosnippet>850</a>                    section_offsets[index].reloc_str_id.unwrap(),
-<a href=#851 id=851 data-nosnippet>851</a>                    section_offsets[index].index,
-<a href=#852 id=852 data-nosnippet>852</a>                    symtab_index,
-<a href=#853 id=853 data-nosnippet>853</a>                    section_offsets[index].reloc_offset,
-<a href=#854 id=854 data-nosnippet>854</a>                    section.relocations.len(),
-<a href=#855 id=855 data-nosnippet>855</a>                    is_rela,
-<a href=#856 id=856 data-nosnippet>856</a>                );
-<a href=#857 id=857 data-nosnippet>857</a>            }
-<a href=#858 id=858 data-nosnippet>858</a>        }
-<a href=#859 id=859 data-nosnippet>859</a>
-<a href=#860 id=860 data-nosnippet>860</a>        writer.write_symtab_section_header(symtab_num_local);
-<a href=#861 id=861 data-nosnippet>861</a>        writer.write_symtab_shndx_section_header();
-<a href=#862 id=862 data-nosnippet>862</a>        writer.write_strtab_section_header();
-<a href=#863 id=863 data-nosnippet>863</a>        writer.write_shstrtab_section_header();
-<a href=#864 id=864 data-nosnippet>864</a>
-<a href=#865 id=865 data-nosnippet>865</a>        <span class="macro">debug_assert_eq!</span>(writer.reserved_len(), writer.len());
-<a href=#866 id=866 data-nosnippet>866</a>
-<a href=#867 id=867 data-nosnippet>867</a>        <span class="prelude-val">Ok</span>(())
-<a href=#868 id=868 data-nosnippet>868</a>    }
-<a href=#869 id=869 data-nosnippet>869</a>}
+<a href=#801 id=801 data-nosnippet>801</a>        <span class="comment">// Write relocations.
+<a href=#802 id=802 data-nosnippet>802</a>        </span><span class="kw">for </span>(index, section) <span class="kw">in </span><span class="self">self</span>.sections.iter().enumerate() {
+<a href=#803 id=803 data-nosnippet>803</a>            <span class="kw">if </span>!section.relocations.is_empty() {
+<a href=#804 id=804 data-nosnippet>804</a>                writer.write_align_relocation();
+<a href=#805 id=805 data-nosnippet>805</a>                <span class="macro">debug_assert_eq!</span>(section_offsets[index].reloc_offset, writer.len());
+<a href=#806 id=806 data-nosnippet>806</a>                <span class="kw">for </span>reloc <span class="kw">in </span><span class="kw-2">&amp;</span>section.relocations {
+<a href=#807 id=807 data-nosnippet>807</a>                    <span class="kw">let </span>r_type = <span class="kw">if let </span>RelocationFlags::Elf { r_type } = reloc.flags {
+<a href=#808 id=808 data-nosnippet>808</a>                        r_type
+<a href=#809 id=809 data-nosnippet>809</a>                    } <span class="kw">else </span>{
+<a href=#810 id=810 data-nosnippet>810</a>                        <span class="kw">return </span><span class="prelude-val">Err</span>(Error(<span class="string">"invalid relocation flags"</span>.into()));
+<a href=#811 id=811 data-nosnippet>811</a>                    };
+<a href=#812 id=812 data-nosnippet>812</a>                    <span class="kw">let </span>r_sym = symbol_offsets[reloc.symbol.<span class="number">0</span>].index.<span class="number">0</span>;
+<a href=#813 id=813 data-nosnippet>813</a>                    writer.write_relocation(
+<a href=#814 id=814 data-nosnippet>814</a>                        is_rela,
+<a href=#815 id=815 data-nosnippet>815</a>                        <span class="kw-2">&amp;</span>Rel {
+<a href=#816 id=816 data-nosnippet>816</a>                            r_offset: reloc.offset,
+<a href=#817 id=817 data-nosnippet>817</a>                            r_sym,
+<a href=#818 id=818 data-nosnippet>818</a>                            r_type,
+<a href=#819 id=819 data-nosnippet>819</a>                            r_addend: reloc.addend,
+<a href=#820 id=820 data-nosnippet>820</a>                        },
+<a href=#821 id=821 data-nosnippet>821</a>                    );
+<a href=#822 id=822 data-nosnippet>822</a>                }
+<a href=#823 id=823 data-nosnippet>823</a>            }
+<a href=#824 id=824 data-nosnippet>824</a>        }
+<a href=#825 id=825 data-nosnippet>825</a>
+<a href=#826 id=826 data-nosnippet>826</a>        writer.write_shstrtab();
+<a href=#827 id=827 data-nosnippet>827</a>
+<a href=#828 id=828 data-nosnippet>828</a>        <span class="comment">// Write section headers.
+<a href=#829 id=829 data-nosnippet>829</a>        </span>writer.write_null_section_header();
+<a href=#830 id=830 data-nosnippet>830</a>
+<a href=#831 id=831 data-nosnippet>831</a>        <span class="kw">let </span>symtab_index = writer.symtab_index();
+<a href=#832 id=832 data-nosnippet>832</a>        <span class="kw">for </span>(comdat, comdat_offset) <span class="kw">in </span><span class="self">self</span>.comdats.iter().zip(comdat_offsets.iter()) {
+<a href=#833 id=833 data-nosnippet>833</a>            writer.write_comdat_section_header(
+<a href=#834 id=834 data-nosnippet>834</a>                comdat_offset.str_id,
+<a href=#835 id=835 data-nosnippet>835</a>                symtab_index,
+<a href=#836 id=836 data-nosnippet>836</a>                symbol_offsets[comdat.symbol.<span class="number">0</span>].index,
+<a href=#837 id=837 data-nosnippet>837</a>                comdat_offset.offset,
+<a href=#838 id=838 data-nosnippet>838</a>                comdat.sections.len(),
+<a href=#839 id=839 data-nosnippet>839</a>            );
+<a href=#840 id=840 data-nosnippet>840</a>        }
+<a href=#841 id=841 data-nosnippet>841</a>        <span class="kw">for </span>(index, section) <span class="kw">in </span><span class="self">self</span>.sections.iter().enumerate() {
+<a href=#842 id=842 data-nosnippet>842</a>            <span class="kw">let </span>sh_type = <span class="kw">match </span>section.kind {
+<a href=#843 id=843 data-nosnippet>843</a>                SectionKind::UninitializedData | SectionKind::UninitializedTls =&gt; elf::SHT_NOBITS,
+<a href=#844 id=844 data-nosnippet>844</a>                SectionKind::Note =&gt; elf::SHT_NOTE,
+<a href=#845 id=845 data-nosnippet>845</a>                SectionKind::Elf(sh_type) =&gt; sh_type,
+<a href=#846 id=846 data-nosnippet>846</a>                <span class="kw">_ </span>=&gt; elf::SHT_PROGBITS,
+<a href=#847 id=847 data-nosnippet>847</a>            };
+<a href=#848 id=848 data-nosnippet>848</a>            <span class="kw">let </span>SectionFlags::Elf { sh_flags } = <span class="self">self</span>.section_flags(section) <span class="kw">else </span>{
+<a href=#849 id=849 data-nosnippet>849</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(Error(<span class="macro">format!</span>(
+<a href=#850 id=850 data-nosnippet>850</a>                    <span class="string">"unimplemented section `{}` kind {:?}"</span>,
+<a href=#851 id=851 data-nosnippet>851</a>                    section.name().unwrap_or(<span class="string">""</span>),
+<a href=#852 id=852 data-nosnippet>852</a>                    section.kind
+<a href=#853 id=853 data-nosnippet>853</a>                )));
+<a href=#854 id=854 data-nosnippet>854</a>            };
+<a href=#855 id=855 data-nosnippet>855</a>            <span class="comment">// TODO: not sure if this is correct, maybe user should determine this
+<a href=#856 id=856 data-nosnippet>856</a>            </span><span class="kw">let </span>sh_entsize = <span class="kw">match </span>section.kind {
+<a href=#857 id=857 data-nosnippet>857</a>                SectionKind::ReadOnlyString | SectionKind::OtherString =&gt; <span class="number">1</span>,
+<a href=#858 id=858 data-nosnippet>858</a>                <span class="kw">_ </span>=&gt; <span class="number">0</span>,
+<a href=#859 id=859 data-nosnippet>859</a>            };
+<a href=#860 id=860 data-nosnippet>860</a>            writer.write_section_header(<span class="kw-2">&amp;</span>SectionHeader {
+<a href=#861 id=861 data-nosnippet>861</a>                name: <span class="prelude-val">Some</span>(section_offsets[index].str_id),
+<a href=#862 id=862 data-nosnippet>862</a>                sh_type,
+<a href=#863 id=863 data-nosnippet>863</a>                sh_flags,
+<a href=#864 id=864 data-nosnippet>864</a>                sh_addr: <span class="number">0</span>,
+<a href=#865 id=865 data-nosnippet>865</a>                sh_offset: section_offsets[index].offset <span class="kw">as </span>u64,
+<a href=#866 id=866 data-nosnippet>866</a>                sh_size: section.size,
+<a href=#867 id=867 data-nosnippet>867</a>                sh_link: <span class="number">0</span>,
+<a href=#868 id=868 data-nosnippet>868</a>                sh_info: <span class="number">0</span>,
+<a href=#869 id=869 data-nosnippet>869</a>                sh_addralign: section.align,
+<a href=#870 id=870 data-nosnippet>870</a>                sh_entsize,
+<a href=#871 id=871 data-nosnippet>871</a>            });
+<a href=#872 id=872 data-nosnippet>872</a>
+<a href=#873 id=873 data-nosnippet>873</a>            <span class="kw">if </span>!section.relocations.is_empty() {
+<a href=#874 id=874 data-nosnippet>874</a>                writer.write_relocation_section_header(
+<a href=#875 id=875 data-nosnippet>875</a>                    section_offsets[index].reloc_str_id.unwrap(),
+<a href=#876 id=876 data-nosnippet>876</a>                    section_offsets[index].index,
+<a href=#877 id=877 data-nosnippet>877</a>                    symtab_index,
+<a href=#878 id=878 data-nosnippet>878</a>                    section_offsets[index].reloc_offset,
+<a href=#879 id=879 data-nosnippet>879</a>                    section.relocations.len(),
+<a href=#880 id=880 data-nosnippet>880</a>                    is_rela,
+<a href=#881 id=881 data-nosnippet>881</a>                );
+<a href=#882 id=882 data-nosnippet>882</a>            }
+<a href=#883 id=883 data-nosnippet>883</a>        }
+<a href=#884 id=884 data-nosnippet>884</a>
+<a href=#885 id=885 data-nosnippet>885</a>        writer.write_symtab_section_header(symtab_num_local);
+<a href=#886 id=886 data-nosnippet>886</a>        writer.write_symtab_shndx_section_header();
+<a href=#887 id=887 data-nosnippet>887</a>        writer.write_strtab_section_header();
+<a href=#888 id=888 data-nosnippet>888</a>        writer.write_shstrtab_section_header();
+<a href=#889 id=889 data-nosnippet>889</a>
+<a href=#890 id=890 data-nosnippet>890</a>        <span class="macro">debug_assert_eq!</span>(writer.reserved_len(), writer.len());
+<a href=#891 id=891 data-nosnippet>891</a>
+<a href=#892 id=892 data-nosnippet>892</a>        <span class="prelude-val">Ok</span>(())
+<a href=#893 id=893 data-nosnippet>893</a>    }
+<a href=#894 id=894 data-nosnippet>894</a>}
 </code></pre></div></section></main></body></html>

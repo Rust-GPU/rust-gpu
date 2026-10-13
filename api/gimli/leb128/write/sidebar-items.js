@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["signed","sleb128_size","uleb128_size","unsigned"]};
+window.SIDEBAR_ITEMS = {"fn":["signed","sleb128_size","uleb128_size","unsigned"],"struct":["Leb128"]};
