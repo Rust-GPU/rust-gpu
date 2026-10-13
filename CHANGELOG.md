@@ -7,13 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Toolchain: `nightly-2026-08-15` (rustc 1.99.0)
+
 ### 🚨BREAKING🚨️
 
+- [PR#661](https://github.com/Rust-GPU/rust-gpu/pull/661) adds support for glam v0.34 and makes it the default glam version
 - [PR#660](https://github.com/Rust-GPU/rust-gpu/pull/660) disallows `Vec3A` for SPIR-V intrinsics and asm. Migration: use Vec3 instead and convert back and forward with `Vec3::to_vec3a()` and `Vec3A::to_vec3()`.
 
-### Added ⭐
+### Changed 🛠
 
-- [PR#661](https://github.com/Rust-GPU/rust-gpu/pull/661) support glam v0.34
+- [PR#655](https://github.com/Rust-GPU/rust-gpu/pull/655) update to naga v0.30 
+- [PR#671](https://github.com/Rust-GPU/rust-gpu/pull/671) make `naga-wgsl` target return correct path to output artifact
+- [PR#672](https://github.com/Rust-GPU/rust-gpu/pull/672) set u128/i128 alignment to 16
+- [PR#666](https://github.com/Rust-GPU/rust-gpu/pull/666) use `core::intrinsics::powi` instead of overwriting `num-traits` impl
 
 ## [0.10.0](https://github.com/Rust-GPU/rust-gpu/compare/v0.10.0-alpha.1...v0.10.0) - 2026-10-01
 
