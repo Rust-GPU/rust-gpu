@@ -116,7 +116,7 @@ fn link_with_linker_opts(
                     unreachable!("failed to parse test rustc args")
                 }
             };
-        let sopts = rustc_session::config::build_session_options(&mut early_dcx, &matches);
+        let sopts = rustc_session::config::build_session_options(&mut early_dcx, &matches, false);
 
         let target = SpirvTarget::UNIVERSAL_1_0.rustc_target();
         let sm_inputs = rustc_span::source_map::SourceMapInputs {

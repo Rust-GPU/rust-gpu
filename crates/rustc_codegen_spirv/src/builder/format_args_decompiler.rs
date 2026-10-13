@@ -1281,7 +1281,7 @@ impl<'a, 'tcx> CodegenPanic<'a, 'tcx> for FormatArgsResult<'tcx> {
                     let force_warn = |span, msg| -> rustc_errors::Diag<'_> {
                         rustc_errors::Diag::new(
                             builder.tcx.dcx(),
-                            rustc_errors::Level::ForceWarning,
+                            rustc_errors::Level::Warning(None),
                             msg,
                         )
                         .with_span(span)

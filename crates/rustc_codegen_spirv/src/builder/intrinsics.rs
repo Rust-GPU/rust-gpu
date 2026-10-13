@@ -100,7 +100,7 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
             }
 
             sym::breakpoint => {
-                self.abort();
+                self.abort_immediate();
                 assert!(result.layout.ty.is_unit());
                 return IntrinsicResult::WroteIntoPlace;
             }
@@ -376,7 +376,7 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
         bug!("LLVM intrinsic call not supported in SPIR-V backend: {instance:?}")
     }
 
-    fn abort(&mut self) {
+    fn abort_immediate(&mut self) {
         self.abort_with_kind_and_message_debug_printf("abort", "intrinsics::abort() called", []);
     }
 
