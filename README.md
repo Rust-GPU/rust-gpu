@@ -59,16 +59,13 @@ See [the examples](examples/) for full details.
 
 ## Getting started
 
-Check out [The `rust-gpu` Dev Guide][gpu-guide] for information on how to get started with using it in your projects.
-
-Experiment with rust-gpu shaders in-browser at [SHADERed][shadered].
+Check out [our docs][gpu-guide] on how to get started using it in your projects.
 
 [gpu-guide]: https://rust-gpu.github.io/rust-gpu/book/
-[shadered]: https://shadered.org/shaders?language=rust&sort=hot
 
 ## Getting help
 
-For questions and comments, we use [GitHub discussions](https://github.com/Rust-GPU/rust-gpu/discussions) to keep conversations organized and searchable. This also makes it easy to escalate relevant topics to GitHub issues if needed. We do not have an official chat room.
+For questions and comments, we use [GitHub discussions](https://github.com/Rust-GPU/rust-gpu/discussions) to keep conversations organized and searchable. This also makes it easy to escalate relevant topics to GitHub issues if needed. There's also a semi-official [discord](https://discord.gg/mDUDgsbBq6).
 
 ## Background
 
@@ -106,15 +103,6 @@ We use this repo as a monorepo for everything related to the project: crates, to
 ## Backwards compatibility, breaking changes and deprecation
 
 Right now because the project is in an early state of development, we might introduce temporary changes as stop-gap measures, or implement features or APIs that might not work exactly in a way we end up liking. Therefore it is expected that some (if not most) of the user facing code will change and evolve over time. At the moment this means that we make no guarantees about backwards compatibility and have no formal deprecation model in place. Effectively meaning that currently we only support building from source with the latest `main` branch in our repository. We appreciate our early adopters and would ask them to evolve their code along with ours.
-
-## Structure
-
-There are a few different components to this repo:
-
-- [rfcs](docs/src/rfcs) for in-depth discussion and specs.
-- [rustc_codegen_spirv](crates/rustc_codegen_spirv) for the compiler itself.
-- [spirv-std](crates/spirv-std) for GPU intrinsics, types, and other library items used by GPU crates.
-- [spirv-builder](crates/spirv-builder) for a convenient way of building a GPU crate in a CPU build.rs file.
 
 ## Related Projects
 
