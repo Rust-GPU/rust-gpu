@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Types that can be converted to an immutable slice of initialized bytes."><title>IntoBytes in zerocopy - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-0c87338a.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="zerocopy" data-themes="" data-resource-suffix="" data-rustdoc-version="1.99.0-nightly (d453bdd8f 2026-08-14)" data-channel="nightly" data-search-js="search-cf4fc35e.js" data-stringdex-js="stringdex-b5109af9.js" data-settings-js="settings-170eb4bf.js" ><script src="../static.files/storage-41dd4d93.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-9f56287d.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc trait"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">IntoBytes</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../zerocopy/index.html">zerocopy</a><span class="version">0.8.59</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Into<wbr>Bytes</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#implementation" title="Implementation">Implementation</a></li><li><a href="#safety" title="Safety">Safety</a></li></ul><h3><a href="#provided-methods">Provided Methods</a></h3><ul class="block"><li><a href="#method.as_bytes" title="as_bytes">as_bytes</a></li><li><a href="#method.as_mut_bytes" title="as_mut_bytes">as_mut_bytes</a></li><li><a href="#method.write_to" title="write_to">write_to</a></li><li><a href="#method.write_to_prefix" title="write_to_prefix">write_to_prefix</a></li><li><a href="#method.write_to_suffix" title="write_to_suffix">write_to_suffix</a></li></ul><h3><a href="#dyn-compatibility">Dyn Compatibility</a></h3><h3><a href="#foreign-impls">Implementations on Foreign Types</a></h3><ul class="block"><li><a href="#impl-IntoBytes-for-()" title="()">()</a></li><li><a href="#impl-IntoBytes-for-Atomic%3Cbool%3E" title="AtomicBool">AtomicBool</a></li><li><a href="#impl-IntoBytes-for-Atomic%3Ci8%3E" title="AtomicI8">AtomicI8</a></li><li><a href="#impl-IntoBytes-for-Atomic%3Ci16%3E" title="AtomicI16">AtomicI16</a></li><li><a href="#impl-IntoBytes-for-Atomic%3Ci32%3E" title="AtomicI32">AtomicI32</a></li><li><a href="#impl-IntoBytes-for-Atomic%3Ci64%3E" title="AtomicI64">AtomicI64</a></li><li><a href="#impl-IntoBytes-for-Atomic%3Cisize%3E" title="AtomicIsize">AtomicIsize</a></li><li><a href="#impl-IntoBytes-for-Atomic%3Cu8%3E" title="AtomicU8">AtomicU8</a></li><li><a href="#impl-IntoBytes-for-Atomic%3Cu16%3E" title="AtomicU16">AtomicU16</a></li><li><a href="#impl-IntoBytes-for-Atomic%3Cu32%3E" title="AtomicU32">AtomicU32</a></li><li><a href="#impl-IntoBytes-for-Atomic%3Cu64%3E" title="AtomicU64">AtomicU64</a></li><li><a href="#impl-IntoBytes-for-Atomic%3Cusize%3E" title="AtomicUsize">AtomicUsize</a></li><li><a href="#impl-IntoBytes-for-Cell%3CT%3E" title="Cell&#60;T&#62;">Cell&#60;T&#62;</a></li><li><a href="#impl-IntoBytes-for-ManuallyDrop%3CT%3E" title="ManuallyDrop&#60;T&#62;">ManuallyDrop&#60;T&#62;</a></li><li><a href="#impl-IntoBytes-for-NonZero%3Ci8%3E" title="NonZeroI8">NonZeroI8</a></li><li><a href="#impl-IntoBytes-for-NonZero%3Ci16%3E" title="NonZeroI16">NonZeroI16</a></li><li><a href="#impl-IntoBytes-for-NonZero%3Ci32%3E" title="NonZeroI32">NonZeroI32</a></li><li><a href="#impl-IntoBytes-for-NonZero%3Ci64%3E" title="NonZeroI64">NonZeroI64</a></li><li><a href="#impl-IntoBytes-for-NonZero%3Ci128%3E" title="NonZeroI128">NonZeroI128</a></li><li><a href="#impl-IntoBytes-for-NonZero%3Cisize%3E" title="NonZeroIsize">NonZeroIsize</a></li><li><a href="#impl-IntoBytes-for-NonZero%3Cu8%3E" title="NonZeroU8">NonZeroU8</a></li><li><a href="#impl-IntoBytes-for-NonZero%3Cu16%3E" title="NonZeroU16">NonZeroU16</a></li><li><a href="#impl-IntoBytes-for-NonZero%3Cu32%3E" title="NonZeroU32">NonZeroU32</a></li><li><a href="#impl-IntoBytes-for-NonZero%3Cu64%3E" title="NonZeroU64">NonZeroU64</a></li><li><a href="#impl-IntoBytes-for-NonZero%3Cu128%3E" title="NonZeroU128">NonZeroU128</a></li><li><a href="#impl-IntoBytes-for-NonZero%3Cusize%3E" title="NonZeroUsize">NonZeroUsize</a></li><li><a href="#impl-IntoBytes-for-Option%3CNonZero%3Ci8%3E%3E" title="Option&#60;NonZeroI8&#62;">Option&#60;NonZeroI8&#62;</a></li><li><a href="#impl-IntoBytes-for-Option%3CNonZero%3Ci16%3E%3E" title="Option&#60;NonZeroI16&#62;">Option&#60;NonZeroI16&#62;</a></li><li><a href="#impl-IntoBytes-for-Option%3CNonZero%3Ci32%3E%3E" title="Option&#60;NonZeroI32&#62;">Option&#60;NonZeroI32&#62;</a></li><li><a href="#impl-IntoBytes-for-Option%3CNonZero%3Ci64%3E%3E" title="Option&#60;NonZeroI64&#62;">Option&#60;NonZeroI64&#62;</a></li><li><a href="#impl-IntoBytes-for-Option%3CNonZero%3Ci128%3E%3E" title="Option&#60;NonZeroI128&#62;">Option&#60;NonZeroI128&#62;</a></li><li><a href="#impl-IntoBytes-for-Option%3CNonZero%3Cisize%3E%3E" title="Option&#60;NonZeroIsize&#62;">Option&#60;NonZeroIsize&#62;</a></li><li><a href="#impl-IntoBytes-for-Option%3CNonZero%3Cu8%3E%3E" title="Option&#60;NonZeroU8&#62;">Option&#60;NonZeroU8&#62;</a></li><li><a href="#impl-IntoBytes-for-Option%3CNonZero%3Cu16%3E%3E" title="Option&#60;NonZeroU16&#62;">Option&#60;NonZeroU16&#62;</a></li><li><a href="#impl-IntoBytes-for-Option%3CNonZero%3Cu32%3E%3E" title="Option&#60;NonZeroU32&#62;">Option&#60;NonZeroU32&#62;</a></li><li><a href="#impl-IntoBytes-for-Option%3CNonZero%3Cu64%3E%3E" title="Option&#60;NonZeroU64&#62;">Option&#60;NonZeroU64&#62;</a></li><li><a href="#impl-IntoBytes-for-Option%3CNonZero%3Cu128%3E%3E" title="Option&#60;NonZeroU128&#62;">Option&#60;NonZeroU128&#62;</a></li><li><a href="#impl-IntoBytes-for-Option%3CNonZero%3Cusize%3E%3E" title="Option&#60;NonZeroUsize&#62;">Option&#60;NonZeroUsize&#62;</a></li><li><a href="#impl-IntoBytes-for-PhantomData%3CT%3E" title="PhantomData&#60;T&#62;">PhantomData&#60;T&#62;</a></li><li><a href="#impl-IntoBytes-for-UnsafeCell%3CT%3E" title="UnsafeCell&#60;T&#62;">UnsafeCell&#60;T&#62;</a></li><li><a href="#impl-IntoBytes-for-Wrapping%3CT%3E" title="Wrapping&#60;T&#62;">Wrapping&#60;T&#62;</a></li><li><a href="#impl-IntoBytes-for-%5BT;+N%5D" title="[T; N]">[T; N]</a></li><li><a href="#impl-IntoBytes-for-%5BT%5D" title="[T]">[T]</a></li><li><a href="#impl-IntoBytes-for-bool" title="bool">bool</a></li><li><a href="#impl-IntoBytes-for-char" title="char">char</a></li><li><a href="#impl-IntoBytes-for-f32" title="f32">f32</a></li><li><a href="#impl-IntoBytes-for-f64" title="f64">f64</a></li><li><a href="#impl-IntoBytes-for-float32x2_t" title="float32x2_t">float32x2_t</a></li><li><a href="#impl-IntoBytes-for-float32x4_t" title="float32x4_t">float32x4_t</a></li><li><a href="#impl-IntoBytes-for-float64x1_t" title="float64x1_t">float64x1_t</a></li><li><a href="#impl-IntoBytes-for-float64x2_t" title="float64x2_t">float64x2_t</a></li><li><a href="#impl-IntoBytes-for-i8" title="i8">i8</a></li><li><a href="#impl-IntoBytes-for-i16" title="i16">i16</a></li><li><a href="#impl-IntoBytes-for-i32" title="i32">i32</a></li><li><a href="#impl-IntoBytes-for-i64" title="i64">i64</a></li><li><a href="#impl-IntoBytes-for-i128" title="i128">i128</a></li><li><a href="#impl-IntoBytes-for-int8x8_t" title="int8x8_t">int8x8_t</a></li><li><a href="#impl-IntoBytes-for-int8x8x2_t" title="int8x8x2_t">int8x8x2_t</a></li><li><a href="#impl-IntoBytes-for-int8x8x3_t" title="int8x8x3_t">int8x8x3_t</a></li><li><a href="#impl-IntoBytes-for-int8x8x4_t" title="int8x8x4_t">int8x8x4_t</a></li><li><a href="#impl-IntoBytes-for-int8x16_t" title="int8x16_t">int8x16_t</a></li><li><a href="#impl-IntoBytes-for-int8x16x2_t" title="int8x16x2_t">int8x16x2_t</a></li><li><a href="#impl-IntoBytes-for-int8x16x3_t" title="int8x16x3_t">int8x16x3_t</a></li><li><a href="#impl-IntoBytes-for-int8x16x4_t" title="int8x16x4_t">int8x16x4_t</a></li><li><a href="#impl-IntoBytes-for-int16x4_t" title="int16x4_t">int16x4_t</a></li><li><a href="#impl-IntoBytes-for-int16x8_t" title="int16x8_t">int16x8_t</a></li><li><a href="#impl-IntoBytes-for-int32x2_t" title="int32x2_t">int32x2_t</a></li><li><a href="#impl-IntoBytes-for-int32x4_t" title="int32x4_t">int32x4_t</a></li><li><a href="#impl-IntoBytes-for-int64x1_t" title="int64x1_t">int64x1_t</a></li><li><a href="#impl-IntoBytes-for-int64x2_t" title="int64x2_t">int64x2_t</a></li><li><a href="#impl-IntoBytes-for-isize" title="isize">isize</a></li><li><a href="#impl-IntoBytes-for-poly8x8_t" title="poly8x8_t">poly8x8_t</a></li><li><a href="#impl-IntoBytes-for-poly8x8x2_t" title="poly8x8x2_t">poly8x8x2_t</a></li><li><a href="#impl-IntoBytes-for-poly8x8x3_t" title="poly8x8x3_t">poly8x8x3_t</a></li><li><a href="#impl-IntoBytes-for-poly8x8x4_t" title="poly8x8x4_t">poly8x8x4_t</a></li><li><a href="#impl-IntoBytes-for-poly8x16_t" title="poly8x16_t">poly8x16_t</a></li><li><a href="#impl-IntoBytes-for-poly8x16x2_t" title="poly8x16x2_t">poly8x16x2_t</a></li><li><a href="#impl-IntoBytes-for-poly8x16x3_t" title="poly8x16x3_t">poly8x16x3_t</a></li><li><a href="#impl-IntoBytes-for-poly8x16x4_t" title="poly8x16x4_t">poly8x16x4_t</a></li><li><a href="#impl-IntoBytes-for-poly16x4_t" title="poly16x4_t">poly16x4_t</a></li><li><a href="#impl-IntoBytes-for-poly16x8_t" title="poly16x8_t">poly16x8_t</a></li><li><a href="#impl-IntoBytes-for-poly64x1_t" title="poly64x1_t">poly64x1_t</a></li><li><a href="#impl-IntoBytes-for-poly64x2_t" title="poly64x2_t">poly64x2_t</a></li><li><a href="#impl-IntoBytes-for-str" title="str">str</a></li><li><a href="#impl-IntoBytes-for-u8" title="u8">u8</a></li><li><a href="#impl-IntoBytes-for-u16" title="u16">u16</a></li><li><a href="#impl-IntoBytes-for-u32" title="u32">u32</a></li><li><a href="#impl-IntoBytes-for-u64" title="u64">u64</a></li><li><a href="#impl-IntoBytes-for-u128" title="u128">u128</a></li><li><a href="#impl-IntoBytes-for-uint8x8_t" title="uint8x8_t">uint8x8_t</a></li><li><a href="#impl-IntoBytes-for-uint8x8x2_t" title="uint8x8x2_t">uint8x8x2_t</a></li><li><a href="#impl-IntoBytes-for-uint8x8x3_t" title="uint8x8x3_t">uint8x8x3_t</a></li><li><a href="#impl-IntoBytes-for-uint8x8x4_t" title="uint8x8x4_t">uint8x8x4_t</a></li><li><a href="#impl-IntoBytes-for-uint8x16_t" title="uint8x16_t">uint8x16_t</a></li><li><a href="#impl-IntoBytes-for-uint8x16x2_t" title="uint8x16x2_t">uint8x16x2_t</a></li><li><a href="#impl-IntoBytes-for-uint8x16x3_t" title="uint8x16x3_t">uint8x16x3_t</a></li><li><a href="#impl-IntoBytes-for-uint8x16x4_t" title="uint8x16x4_t">uint8x16x4_t</a></li><li><a href="#impl-IntoBytes-for-uint16x4_t" title="uint16x4_t">uint16x4_t</a></li><li><a href="#impl-IntoBytes-for-uint16x4x2_t" title="uint16x4x2_t">uint16x4x2_t</a></li><li><a href="#impl-IntoBytes-for-uint16x4x3_t" title="uint16x4x3_t">uint16x4x3_t</a></li><li><a href="#impl-IntoBytes-for-uint16x4x4_t" title="uint16x4x4_t">uint16x4x4_t</a></li><li><a href="#impl-IntoBytes-for-uint16x8_t" title="uint16x8_t">uint16x8_t</a></li><li><a href="#impl-IntoBytes-for-uint32x2_t" title="uint32x2_t">uint32x2_t</a></li><li><a href="#impl-IntoBytes-for-uint32x4_t" title="uint32x4_t">uint32x4_t</a></li><li><a href="#impl-IntoBytes-for-uint64x1_t" title="uint64x1_t">uint64x1_t</a></li><li><a href="#impl-IntoBytes-for-uint64x2_t" title="uint64x2_t">uint64x2_t</a></li><li><a href="#impl-IntoBytes-for-usize" title="usize">usize</a></li></ul><h3><a href="#implementors">Implementors</a></h3></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate zerocopy</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">zerocopy</a></div><h1>Trait <span class="trait">Into<wbr>Bytes</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/zerocopy/lib.rs.html#5941-6446">Source</a> </span></div><pre class="rust item-decl"><code>pub unsafe trait IntoBytes {
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Types that can be converted to an immutable slice of initialized bytes."><title>IntoBytes in zerocopy - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-0c87338a.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="zerocopy" data-themes="" data-resource-suffix="" data-rustdoc-version="1.99.0-nightly (d453bdd8f 2026-08-14)" data-channel="nightly" data-search-js="search-cf4fc35e.js" data-stringdex-js="stringdex-b5109af9.js" data-settings-js="settings-170eb4bf.js" ><script src="../static.files/storage-41dd4d93.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-9f56287d.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc trait"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">IntoBytes</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../zerocopy/index.html">zerocopy</a><span class="version">0.8.63</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Into<wbr>Bytes</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#implementation" title="Implementation">Implementation</a></li><li><a href="#safety" title="Safety">Safety</a></li></ul><h3><a href="#provided-methods">Provided Methods</a></h3><ul class="block"><li><a href="#method.as_bytes" title="as_bytes">as_bytes</a></li><li><a href="#method.as_mut_bytes" title="as_mut_bytes">as_mut_bytes</a></li><li><a href="#method.write_to" title="write_to">write_to</a></li><li><a href="#method.write_to_prefix" title="write_to_prefix">write_to_prefix</a></li><li><a href="#method.write_to_suffix" title="write_to_suffix">write_to_suffix</a></li></ul><h3><a href="#dyn-compatibility">Dyn Compatibility</a></h3><h3><a href="#foreign-impls">Implementations on Foreign Types</a></h3><ul class="block"><li><a href="#impl-IntoBytes-for-()" title="()">()</a></li><li><a href="#impl-IntoBytes-for-Atomic%3Cbool%3E" title="AtomicBool">AtomicBool</a></li><li><a href="#impl-IntoBytes-for-Atomic%3Ci8%3E" title="AtomicI8">AtomicI8</a></li><li><a href="#impl-IntoBytes-for-Atomic%3Ci16%3E" title="AtomicI16">AtomicI16</a></li><li><a href="#impl-IntoBytes-for-Atomic%3Ci32%3E" title="AtomicI32">AtomicI32</a></li><li><a href="#impl-IntoBytes-for-Atomic%3Ci64%3E" title="AtomicI64">AtomicI64</a></li><li><a href="#impl-IntoBytes-for-Atomic%3Cisize%3E" title="AtomicIsize">AtomicIsize</a></li><li><a href="#impl-IntoBytes-for-Atomic%3Cu8%3E" title="AtomicU8">AtomicU8</a></li><li><a href="#impl-IntoBytes-for-Atomic%3Cu16%3E" title="AtomicU16">AtomicU16</a></li><li><a href="#impl-IntoBytes-for-Atomic%3Cu32%3E" title="AtomicU32">AtomicU32</a></li><li><a href="#impl-IntoBytes-for-Atomic%3Cu64%3E" title="AtomicU64">AtomicU64</a></li><li><a href="#impl-IntoBytes-for-Atomic%3Cusize%3E" title="AtomicUsize">AtomicUsize</a></li><li><a href="#impl-IntoBytes-for-Cell%3CT%3E" title="Cell&#60;T&#62;">Cell&#60;T&#62;</a></li><li><a href="#impl-IntoBytes-for-ManuallyDrop%3CT%3E" title="ManuallyDrop&#60;T&#62;">ManuallyDrop&#60;T&#62;</a></li><li><a href="#impl-IntoBytes-for-NonZero%3Ci8%3E" title="NonZeroI8">NonZeroI8</a></li><li><a href="#impl-IntoBytes-for-NonZero%3Ci16%3E" title="NonZeroI16">NonZeroI16</a></li><li><a href="#impl-IntoBytes-for-NonZero%3Ci32%3E" title="NonZeroI32">NonZeroI32</a></li><li><a href="#impl-IntoBytes-for-NonZero%3Ci64%3E" title="NonZeroI64">NonZeroI64</a></li><li><a href="#impl-IntoBytes-for-NonZero%3Ci128%3E" title="NonZeroI128">NonZeroI128</a></li><li><a href="#impl-IntoBytes-for-NonZero%3Cisize%3E" title="NonZeroIsize">NonZeroIsize</a></li><li><a href="#impl-IntoBytes-for-NonZero%3Cu8%3E" title="NonZeroU8">NonZeroU8</a></li><li><a href="#impl-IntoBytes-for-NonZero%3Cu16%3E" title="NonZeroU16">NonZeroU16</a></li><li><a href="#impl-IntoBytes-for-NonZero%3Cu32%3E" title="NonZeroU32">NonZeroU32</a></li><li><a href="#impl-IntoBytes-for-NonZero%3Cu64%3E" title="NonZeroU64">NonZeroU64</a></li><li><a href="#impl-IntoBytes-for-NonZero%3Cu128%3E" title="NonZeroU128">NonZeroU128</a></li><li><a href="#impl-IntoBytes-for-NonZero%3Cusize%3E" title="NonZeroUsize">NonZeroUsize</a></li><li><a href="#impl-IntoBytes-for-Option%3CNonZero%3Ci8%3E%3E" title="Option&#60;NonZeroI8&#62;">Option&#60;NonZeroI8&#62;</a></li><li><a href="#impl-IntoBytes-for-Option%3CNonZero%3Ci16%3E%3E" title="Option&#60;NonZeroI16&#62;">Option&#60;NonZeroI16&#62;</a></li><li><a href="#impl-IntoBytes-for-Option%3CNonZero%3Ci32%3E%3E" title="Option&#60;NonZeroI32&#62;">Option&#60;NonZeroI32&#62;</a></li><li><a href="#impl-IntoBytes-for-Option%3CNonZero%3Ci64%3E%3E" title="Option&#60;NonZeroI64&#62;">Option&#60;NonZeroI64&#62;</a></li><li><a href="#impl-IntoBytes-for-Option%3CNonZero%3Ci128%3E%3E" title="Option&#60;NonZeroI128&#62;">Option&#60;NonZeroI128&#62;</a></li><li><a href="#impl-IntoBytes-for-Option%3CNonZero%3Cisize%3E%3E" title="Option&#60;NonZeroIsize&#62;">Option&#60;NonZeroIsize&#62;</a></li><li><a href="#impl-IntoBytes-for-Option%3CNonZero%3Cu8%3E%3E" title="Option&#60;NonZeroU8&#62;">Option&#60;NonZeroU8&#62;</a></li><li><a href="#impl-IntoBytes-for-Option%3CNonZero%3Cu16%3E%3E" title="Option&#60;NonZeroU16&#62;">Option&#60;NonZeroU16&#62;</a></li><li><a href="#impl-IntoBytes-for-Option%3CNonZero%3Cu32%3E%3E" title="Option&#60;NonZeroU32&#62;">Option&#60;NonZeroU32&#62;</a></li><li><a href="#impl-IntoBytes-for-Option%3CNonZero%3Cu64%3E%3E" title="Option&#60;NonZeroU64&#62;">Option&#60;NonZeroU64&#62;</a></li><li><a href="#impl-IntoBytes-for-Option%3CNonZero%3Cu128%3E%3E" title="Option&#60;NonZeroU128&#62;">Option&#60;NonZeroU128&#62;</a></li><li><a href="#impl-IntoBytes-for-Option%3CNonZero%3Cusize%3E%3E" title="Option&#60;NonZeroUsize&#62;">Option&#60;NonZeroUsize&#62;</a></li><li><a href="#impl-IntoBytes-for-PhantomData%3CT%3E" title="PhantomData&#60;T&#62;">PhantomData&#60;T&#62;</a></li><li><a href="#impl-IntoBytes-for-UnsafeCell%3CT%3E" title="UnsafeCell&#60;T&#62;">UnsafeCell&#60;T&#62;</a></li><li><a href="#impl-IntoBytes-for-Wrapping%3CT%3E" title="Wrapping&#60;T&#62;">Wrapping&#60;T&#62;</a></li><li><a href="#impl-IntoBytes-for-%5BT;+N%5D" title="[T; N]">[T; N]</a></li><li><a href="#impl-IntoBytes-for-%5BT%5D" title="[T]">[T]</a></li><li><a href="#impl-IntoBytes-for-bool" title="bool">bool</a></li><li><a href="#impl-IntoBytes-for-char" title="char">char</a></li><li><a href="#impl-IntoBytes-for-f32" title="f32">f32</a></li><li><a href="#impl-IntoBytes-for-f64" title="f64">f64</a></li><li><a href="#impl-IntoBytes-for-float32x2_t" title="float32x2_t">float32x2_t</a></li><li><a href="#impl-IntoBytes-for-float32x4_t" title="float32x4_t">float32x4_t</a></li><li><a href="#impl-IntoBytes-for-float64x1_t" title="float64x1_t">float64x1_t</a></li><li><a href="#impl-IntoBytes-for-float64x2_t" title="float64x2_t">float64x2_t</a></li><li><a href="#impl-IntoBytes-for-i8" title="i8">i8</a></li><li><a href="#impl-IntoBytes-for-i16" title="i16">i16</a></li><li><a href="#impl-IntoBytes-for-i32" title="i32">i32</a></li><li><a href="#impl-IntoBytes-for-i64" title="i64">i64</a></li><li><a href="#impl-IntoBytes-for-i128" title="i128">i128</a></li><li><a href="#impl-IntoBytes-for-int8x8_t" title="int8x8_t">int8x8_t</a></li><li><a href="#impl-IntoBytes-for-int8x8x2_t" title="int8x8x2_t">int8x8x2_t</a></li><li><a href="#impl-IntoBytes-for-int8x8x3_t" title="int8x8x3_t">int8x8x3_t</a></li><li><a href="#impl-IntoBytes-for-int8x8x4_t" title="int8x8x4_t">int8x8x4_t</a></li><li><a href="#impl-IntoBytes-for-int8x16_t" title="int8x16_t">int8x16_t</a></li><li><a href="#impl-IntoBytes-for-int8x16x2_t" title="int8x16x2_t">int8x16x2_t</a></li><li><a href="#impl-IntoBytes-for-int8x16x3_t" title="int8x16x3_t">int8x16x3_t</a></li><li><a href="#impl-IntoBytes-for-int8x16x4_t" title="int8x16x4_t">int8x16x4_t</a></li><li><a href="#impl-IntoBytes-for-int16x4_t" title="int16x4_t">int16x4_t</a></li><li><a href="#impl-IntoBytes-for-int16x8_t" title="int16x8_t">int16x8_t</a></li><li><a href="#impl-IntoBytes-for-int32x2_t" title="int32x2_t">int32x2_t</a></li><li><a href="#impl-IntoBytes-for-int32x4_t" title="int32x4_t">int32x4_t</a></li><li><a href="#impl-IntoBytes-for-int64x1_t" title="int64x1_t">int64x1_t</a></li><li><a href="#impl-IntoBytes-for-int64x2_t" title="int64x2_t">int64x2_t</a></li><li><a href="#impl-IntoBytes-for-isize" title="isize">isize</a></li><li><a href="#impl-IntoBytes-for-poly8x8_t" title="poly8x8_t">poly8x8_t</a></li><li><a href="#impl-IntoBytes-for-poly8x8x2_t" title="poly8x8x2_t">poly8x8x2_t</a></li><li><a href="#impl-IntoBytes-for-poly8x8x3_t" title="poly8x8x3_t">poly8x8x3_t</a></li><li><a href="#impl-IntoBytes-for-poly8x8x4_t" title="poly8x8x4_t">poly8x8x4_t</a></li><li><a href="#impl-IntoBytes-for-poly8x16_t" title="poly8x16_t">poly8x16_t</a></li><li><a href="#impl-IntoBytes-for-poly8x16x2_t" title="poly8x16x2_t">poly8x16x2_t</a></li><li><a href="#impl-IntoBytes-for-poly8x16x3_t" title="poly8x16x3_t">poly8x16x3_t</a></li><li><a href="#impl-IntoBytes-for-poly8x16x4_t" title="poly8x16x4_t">poly8x16x4_t</a></li><li><a href="#impl-IntoBytes-for-poly16x4_t" title="poly16x4_t">poly16x4_t</a></li><li><a href="#impl-IntoBytes-for-poly16x8_t" title="poly16x8_t">poly16x8_t</a></li><li><a href="#impl-IntoBytes-for-poly64x1_t" title="poly64x1_t">poly64x1_t</a></li><li><a href="#impl-IntoBytes-for-poly64x2_t" title="poly64x2_t">poly64x2_t</a></li><li><a href="#impl-IntoBytes-for-str" title="str">str</a></li><li><a href="#impl-IntoBytes-for-u8" title="u8">u8</a></li><li><a href="#impl-IntoBytes-for-u16" title="u16">u16</a></li><li><a href="#impl-IntoBytes-for-u32" title="u32">u32</a></li><li><a href="#impl-IntoBytes-for-u64" title="u64">u64</a></li><li><a href="#impl-IntoBytes-for-u128" title="u128">u128</a></li><li><a href="#impl-IntoBytes-for-uint8x8_t" title="uint8x8_t">uint8x8_t</a></li><li><a href="#impl-IntoBytes-for-uint8x8x2_t" title="uint8x8x2_t">uint8x8x2_t</a></li><li><a href="#impl-IntoBytes-for-uint8x8x3_t" title="uint8x8x3_t">uint8x8x3_t</a></li><li><a href="#impl-IntoBytes-for-uint8x8x4_t" title="uint8x8x4_t">uint8x8x4_t</a></li><li><a href="#impl-IntoBytes-for-uint8x16_t" title="uint8x16_t">uint8x16_t</a></li><li><a href="#impl-IntoBytes-for-uint8x16x2_t" title="uint8x16x2_t">uint8x16x2_t</a></li><li><a href="#impl-IntoBytes-for-uint8x16x3_t" title="uint8x16x3_t">uint8x16x3_t</a></li><li><a href="#impl-IntoBytes-for-uint8x16x4_t" title="uint8x16x4_t">uint8x16x4_t</a></li><li><a href="#impl-IntoBytes-for-uint16x4_t" title="uint16x4_t">uint16x4_t</a></li><li><a href="#impl-IntoBytes-for-uint16x4x2_t" title="uint16x4x2_t">uint16x4x2_t</a></li><li><a href="#impl-IntoBytes-for-uint16x4x3_t" title="uint16x4x3_t">uint16x4x3_t</a></li><li><a href="#impl-IntoBytes-for-uint16x4x4_t" title="uint16x4x4_t">uint16x4x4_t</a></li><li><a href="#impl-IntoBytes-for-uint16x8_t" title="uint16x8_t">uint16x8_t</a></li><li><a href="#impl-IntoBytes-for-uint32x2_t" title="uint32x2_t">uint32x2_t</a></li><li><a href="#impl-IntoBytes-for-uint32x4_t" title="uint32x4_t">uint32x4_t</a></li><li><a href="#impl-IntoBytes-for-uint64x1_t" title="uint64x1_t">uint64x1_t</a></li><li><a href="#impl-IntoBytes-for-uint64x2_t" title="uint64x2_t">uint64x2_t</a></li><li><a href="#impl-IntoBytes-for-usize" title="usize">usize</a></li></ul><h3><a href="#implementors">Implementors</a></h3></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate zerocopy</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">zerocopy</a></div><h1>Trait <span class="trait">Into<wbr>Bytes</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/zerocopy/lib.rs.html#5935-6440">Source</a> </span></div><pre class="rust item-decl"><code>pub unsafe trait IntoBytes {
     // Provided methods
     fn <a href="#method.as_bytes" class="fn">as_bytes</a>(&amp;self) -&gt; &amp;[<a class="primitive" href="https://doc.rust-lang.org/nightly/core/primitive.u8.html">u8</a>]
        <span class="where">where Self: <a class="trait" href="trait.Immutable.html" title="trait zerocopy::Immutable">Immutable</a></span> { ... }
@@ -53,7 +53,7 @@ marked as <code>IntoBytes</code> which violates this contract, it may cause unde
 behavior.</p>
 <p><code>#[derive(IntoBytes)]</code> only permits <a href="derive.IntoBytes.html#analysis" title="derive zerocopy::IntoBytes">types which satisfy these
 requirements</a>.</p>
-</div></details><h2 id="provided-methods" class="section-header">Provided Methods<a href="#provided-methods" class="anchor">§</a></h2><div class="methods"><details class="toggle method-toggle" open><summary><section id="method.as_bytes" class="method"><a class="src rightside" href="../src/zerocopy/lib.rs.html#6001-6031">Source</a><h4 class="code-header">fn <a href="#method.as_bytes" class="fn">as_bytes</a>(&amp;self) -&gt; &amp;[<a class="primitive" href="https://doc.rust-lang.org/nightly/core/primitive.u8.html">u8</a>]<div class="where">where
+</div></details><h2 id="provided-methods" class="section-header">Provided Methods<a href="#provided-methods" class="anchor">§</a></h2><div class="methods"><details class="toggle method-toggle" open><summary><section id="method.as_bytes" class="method"><a class="src rightside" href="../src/zerocopy/lib.rs.html#5995-6025">Source</a><h4 class="code-header">fn <a href="#method.as_bytes" class="fn">as_bytes</a>(&amp;self) -&gt; &amp;[<a class="primitive" href="https://doc.rust-lang.org/nightly/core/primitive.u8.html">u8</a>]<div class="where">where
     Self: <a class="trait" href="trait.Immutable.html" title="trait zerocopy::Immutable">Immutable</a>,</div></h4></section></summary><div class="docblock"><p>Gets the bytes of this value.</p>
 <h5 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h5>
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>zerocopy::IntoBytes;
@@ -257,8 +257,7 @@ Resource pressure by instruction:
         <div>
 <div class="example-wrap"><pre class="language-plain"><code>bench_as_bytes_dynamic_size:
    mov rax, rdi
-   lea rdx, [2*rsi + 5]
-   and rdx, -2
+   lea rdx, [2*rsi + 4]
    ret
 </code></pre></div></div>
     </details>
@@ -266,13 +265,13 @@ Resource pressure by instruction:
         <summary><h6>Machine Code Analysis</h6></summary>
         <div>
 <div class="example-wrap"><pre class="language-plain"><code>Iterations:        100
-Instructions:      400
-Total Cycles:      137
-Total uOps:        400
+Instructions:      300
+Total Cycles:      104
+Total uOps:        300
 
 Dispatch Width:    4
-uOps Per Cycle:    2.92
-IPC:               2.92
+uOps Per Cycle:    2.88
+IPC:               2.88
 Block RThroughput: 1.0
 
 
@@ -286,8 +285,7 @@ Instruction Info:
 
 [1]    [2]    [3]    [4]    [5]    [6]    Instructions:
 1      1     0.33                        mov	rax, rdi
-1      1     0.50                        lea	rdx, [2*rsi + 5]
-1      1     0.33                        and	rdx, -2
+1      1     0.50                        lea	rdx, [2*rsi + 4]
 1      1     1.00                  U     ret
 
 
@@ -304,18 +302,17 @@ Resources:
 
 Resource pressure per iteration:
 [0]    [1]    [2]    [3]    [4]    [5]    [6.0]  [6.1]  
--      -     1.33   1.33    -     1.34    -      -     
+-      -     0.99   1.00    -     1.01    -      -     
 
 Resource pressure by instruction:
 [0]    [1]    [2]    [3]    [4]    [5]    [6.0]  [6.1]  Instructions:
--      -      -     0.66    -     0.34    -      -     mov	rax, rdi
--      -     0.33   0.67    -      -      -      -     lea	rdx, [2*rsi + 5]
--      -     1.00    -      -      -      -      -     and	rdx, -2
+-      -     0.99    -      -     0.01    -      -     mov	rax, rdi
+-      -      -     1.00    -      -      -      -     lea	rdx, [2*rsi + 4]
 -      -      -      -      -     1.00    -      -     ret
 </code></pre></div></div>
     </details></div>
 </div>
-    </details></div></div></details><details class="toggle method-toggle" open><summary><section id="method.as_mut_bytes" class="method"><a class="src rightside" href="../src/zerocopy/lib.rs.html#6077-6107">Source</a><h4 class="code-header">fn <a href="#method.as_mut_bytes" class="fn">as_mut_bytes</a>(&amp;mut self) -&gt; &amp;mut [<a class="primitive" href="https://doc.rust-lang.org/nightly/core/primitive.u8.html">u8</a>] <a href="#" class="tooltip" data-notable-ty="&amp;mut [u8]">ⓘ</a><div class="where">where
+    </details></div></div></details><details class="toggle method-toggle" open><summary><section id="method.as_mut_bytes" class="method"><a class="src rightside" href="../src/zerocopy/lib.rs.html#6071-6101">Source</a><h4 class="code-header">fn <a href="#method.as_mut_bytes" class="fn">as_mut_bytes</a>(&amp;mut self) -&gt; &amp;mut [<a class="primitive" href="https://doc.rust-lang.org/nightly/core/primitive.u8.html">u8</a>] <a href="#" class="tooltip" data-notable-ty="&amp;mut [u8]">ⓘ</a><div class="where">where
     Self: <a class="trait" href="trait.FromBytes.html" title="trait zerocopy::FromBytes">FromBytes</a>,</div></h4></section></summary><div class="docblock"><p>Gets the bytes of this value mutably.</p>
 <h5 id="examples-1"><a class="doc-anchor" href="#examples-1">§</a>Examples</h5>
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>zerocopy::IntoBytes;
@@ -352,7 +349,7 @@ bytes.reverse();
     Code Generation
 </h5>
 <p>See <a href="#method.as_bytes.codegen"><code>IntoBytes::as_bytes</code></a>.</p>
-</div></details><details class="toggle method-toggle" open><summary><section id="method.write_to" class="method"><a class="src rightside" href="../src/zerocopy/lib.rs.html#6177-6192">Source</a><h4 class="code-header">fn <a href="#method.write_to" class="fn">write_to</a>(&amp;self, dst: &amp;mut [<a class="primitive" href="https://doc.rust-lang.org/nightly/core/primitive.u8.html">u8</a>]) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/core/primitive.unit.html">()</a>, <a class="struct" href="error/struct.SizeError.html" title="struct zerocopy::error::SizeError">SizeError</a>&lt;&amp;Self, &amp;mut [<a class="primitive" href="https://doc.rust-lang.org/nightly/core/primitive.u8.html">u8</a>]&gt;&gt;<div class="where">where
+</div></details><details class="toggle method-toggle" open><summary><section id="method.write_to" class="method"><a class="src rightside" href="../src/zerocopy/lib.rs.html#6171-6186">Source</a><h4 class="code-header">fn <a href="#method.write_to" class="fn">write_to</a>(&amp;self, dst: &amp;mut [<a class="primitive" href="https://doc.rust-lang.org/nightly/core/primitive.u8.html">u8</a>]) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/core/primitive.unit.html">()</a>, <a class="struct" href="error/struct.SizeError.html" title="struct zerocopy::error::SizeError">SizeError</a>&lt;&amp;Self, &amp;mut [<a class="primitive" href="https://doc.rust-lang.org/nightly/core/primitive.u8.html">u8</a>]&gt;&gt;<div class="where">where
     Self: <a class="trait" href="trait.Immutable.html" title="trait zerocopy::Immutable">Immutable</a>,</div></h4></section></summary><div class="docblock"><p>Writes a copy of <code>self</code> to <code>dst</code>.</p>
 <p>If <code>dst.len() != size_of_val(self)</code>, <code>write_to</code> returns <code>Err</code>.</p>
 <h5 id="examples-2"><a class="doc-anchor" href="#examples-2">§</a>Examples</h5>
@@ -590,8 +587,7 @@ Resource pressure by instruction:
    push rbx
    push rax
    mov rbx, rcx
-   lea r14, [2*rsi + 5]
-   and r14, -2
+   lea r14, [2*rsi + 4]
    cmp rcx, r14
    jne .LBB5_2
    mov rax, rdi
@@ -612,14 +608,14 @@ Resource pressure by instruction:
         <summary><h6>Machine Code Analysis</h6></summary>
         <div>
 <div class="example-wrap"><pre class="language-plain"><code>Iterations:        100
-Instructions:      1900
+Instructions:      1800
 Total Cycles:      2890
-Total uOps:        2500
+Total uOps:        2400
 
 Dispatch Width:    4
-uOps Per Cycle:    0.87
-IPC:               0.66
-Block RThroughput: 6.3
+uOps Per Cycle:    0.83
+IPC:               0.62
+Block RThroughput: 6.0
 
 
 Instruction Info:
@@ -635,8 +631,7 @@ Instruction Info:
 2      5     1.00           *            push	rbx
 2      5     1.00           *            push	rax
 1      1     0.33                        mov	rbx, rcx
-1      1     0.50                        lea	r14, [2*rsi + 5]
-1      1     0.33                        and	r14, -2
+1      1     0.50                        lea	r14, [2*rsi + 4]
 1      1     0.33                        cmp	rcx, r14
 1      1     1.00                        jne	.LBB5_2
 1      1     0.33                        mov	rax, rdi
@@ -665,25 +660,24 @@ Resources:
 
 Resource pressure per iteration:
 [0]    [1]    [2]    [3]    [4]    [5]    [6.0]  [6.1]  
--      -     4.66   4.64   4.00   4.70   4.00   3.00   
+-      -     4.47   4.01   4.00   4.52   4.00   3.00   
 
 Resource pressure by instruction:
 [0]    [1]    [2]    [3]    [4]    [5]    [6.0]  [6.1]  Instructions:
 -      -      -      -     1.00    -      -     1.00   push	r14
 -      -      -      -     1.00    -     1.00    -     push	rbx
 -      -      -      -     1.00    -      -     1.00   push	rax
--      -     0.02   0.97    -     0.01    -      -     mov	rbx, rcx
--      -     0.97   0.03    -      -      -      -     lea	r14, [2*rsi + 5]
--      -     0.63   0.35    -     0.02    -      -     and	r14, -2
--      -     0.31   0.34    -     0.35    -      -     cmp	rcx, r14
+-      -      -     0.99    -     0.01    -      -     mov	rbx, rcx
+-      -     0.99   0.01    -      -      -      -     lea	r14, [2*rsi + 4]
+-      -     0.02   0.95    -     0.03    -      -     cmp	rcx, r14
 -      -      -      -      -     1.00    -      -     jne	.LBB5_2
--      -     0.33   0.33    -     0.34    -      -     mov	rax, rdi
--      -     0.36   0.31    -     0.33    -      -     mov	rdi, rdx
--      -     0.33   0.35    -     0.32    -      -     mov	rsi, rax
--      -     0.35   0.63    -     0.02    -      -     mov	rdx, rbx
+-      -     0.48   0.04    -     0.48    -      -     mov	rax, rdi
+-      -     0.51   0.01    -     0.48    -      -     mov	rdi, rdx
+-      -     0.01   0.98    -     0.01    -      -     mov	rsi, rax
+-      -     0.98   0.02    -      -      -      -     mov	rdx, rbx
 -      -      -      -     1.00   1.00   2.00    -     call	qword ptr [rip + memcpy@GOTPCREL]
--      -     0.65   0.35    -      -      -      -     cmp	rbx, r14
--      -     0.69    -      -     0.31    -      -     sete	al
+-      -     0.94   0.03    -     0.03    -      -     cmp	rbx, r14
+-      -     0.52    -      -     0.48    -      -     sete	al
 -      -     0.02   0.98    -      -      -      -     add	rsp, 8
 -      -      -      -      -      -      -     1.00   pop	rbx
 -      -      -      -      -      -     1.00    -     pop	r14
@@ -691,7 +685,7 @@ Resource pressure by instruction:
 </code></pre></div></div>
     </details></div>
 </div>
-    </details></div></div></details><details class="toggle method-toggle" open><summary><section id="method.write_to_prefix" class="method"><a class="src rightside" href="../src/zerocopy/lib.rs.html#6263-6280">Source</a><h4 class="code-header">fn <a href="#method.write_to_prefix" class="fn">write_to_prefix</a>(
+    </details></div></div></details><details class="toggle method-toggle" open><summary><section id="method.write_to_prefix" class="method"><a class="src rightside" href="../src/zerocopy/lib.rs.html#6257-6274">Source</a><h4 class="code-header">fn <a href="#method.write_to_prefix" class="fn">write_to_prefix</a>(
     &amp;self,
     dst: &amp;mut [<a class="primitive" href="https://doc.rust-lang.org/nightly/core/primitive.u8.html">u8</a>],
 ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/core/primitive.unit.html">()</a>, <a class="struct" href="error/struct.SizeError.html" title="struct zerocopy::error::SizeError">SizeError</a>&lt;&amp;Self, &amp;mut [<a class="primitive" href="https://doc.rust-lang.org/nightly/core/primitive.u8.html">u8</a>]&gt;&gt;<div class="where">where
@@ -939,8 +933,7 @@ Resource pressure by instruction:
    push rbx
    push rax
    mov rbx, rcx
-   lea r14, [2*rsi + 5]
-   and r14, -2
+   lea r14, [2*rsi + 4]
    cmp r14, rcx
    ja .LBB5_2
    mov rax, rdi
@@ -961,14 +954,14 @@ Resource pressure by instruction:
         <summary><h6>Machine Code Analysis</h6></summary>
         <div>
 <div class="example-wrap"><pre class="language-plain"><code>Iterations:        100
-Instructions:      1900
+Instructions:      1800
 Total Cycles:      2890
-Total uOps:        2600
+Total uOps:        2500
 
 Dispatch Width:    4
-uOps Per Cycle:    0.90
-IPC:               0.66
-Block RThroughput: 6.5
+uOps Per Cycle:    0.87
+IPC:               0.62
+Block RThroughput: 6.3
 
 
 Instruction Info:
@@ -984,8 +977,7 @@ Instruction Info:
 2      5     1.00           *            push	rbx
 2      5     1.00           *            push	rax
 1      1     0.33                        mov	rbx, rcx
-1      1     0.50                        lea	r14, [2*rsi + 5]
-1      1     0.33                        and	r14, -2
+1      1     0.50                        lea	r14, [2*rsi + 4]
 1      1     0.33                        cmp	r14, rcx
 1      1     1.00                        ja	.LBB5_2
 1      1     0.33                        mov	rax, rdi
@@ -1014,33 +1006,32 @@ Resources:
 
 Resource pressure per iteration:
 [0]    [1]    [2]    [3]    [4]    [5]    [6.0]  [6.1]  
--      -     5.47   4.49   4.00   5.04   4.00   3.00   
+-      -     4.09   4.00   4.00   5.91   4.00   3.00   
 
 Resource pressure by instruction:
 [0]    [1]    [2]    [3]    [4]    [5]    [6.0]  [6.1]  Instructions:
 -      -      -      -     1.00    -      -     1.00   push	r14
 -      -      -      -     1.00    -     1.00    -     push	rbx
 -      -      -      -     1.00    -      -     1.00   push	rax
--      -     0.48   0.51    -     0.01    -      -     mov	rbx, rcx
--      -     0.51   0.49    -      -      -      -     lea	r14, [2*rsi + 5]
--      -     0.48   0.05    -     0.47    -      -     and	r14, -2
--      -     0.48   0.49    -     0.03    -      -     cmp	r14, rcx
+-      -     0.02   0.97    -     0.01    -      -     mov	rbx, rcx
+-      -     0.04   0.96    -      -      -      -     lea	r14, [2*rsi + 4]
+-      -     0.02   0.04    -     0.94    -      -     cmp	r14, rcx
 -      -      -      -      -     1.00    -      -     ja	.LBB5_2
--      -     0.04   0.47    -     0.49    -      -     mov	rax, rdi
--      -     0.49   0.03    -     0.48    -      -     mov	rdi, rdx
--      -     0.03   0.48    -     0.49    -      -     mov	rsi, rax
--      -     0.48   0.51    -     0.01    -      -     mov	rdx, r14
+-      -     0.96   0.01    -     0.03    -      -     mov	rax, rdi
+-      -     0.03   0.93    -     0.04    -      -     mov	rdi, rdx
+-      -     0.94   0.06    -      -      -      -     mov	rsi, rax
+-      -     0.06   0.93    -     0.01    -      -     mov	rdx, r14
 -      -      -      -     1.00   1.00   2.00    -     call	qword ptr [rip + memcpy@GOTPCREL]
--      -     0.51   0.49    -      -      -      -     cmp	r14, rbx
--      -     1.94    -      -     0.06    -      -     setbe	al
--      -     0.03   0.97    -      -      -      -     add	rsp, 8
+-      -     0.93   0.05    -     0.02    -      -     cmp	r14, rbx
+-      -     0.14    -      -     1.86    -      -     setbe	al
+-      -     0.95   0.05    -      -      -      -     add	rsp, 8
 -      -      -      -      -      -      -     1.00   pop	rbx
 -      -      -      -      -      -     1.00    -     pop	r14
 -      -      -      -      -     1.00    -      -     ret
 </code></pre></div></div>
     </details></div>
 </div>
-    </details></div></div></details><details class="toggle method-toggle" open><summary><section id="method.write_to_suffix" class="method"><a class="src rightside" href="../src/zerocopy/lib.rs.html#6358-6385">Source</a><h4 class="code-header">fn <a href="#method.write_to_suffix" class="fn">write_to_suffix</a>(
+    </details></div></div></details><details class="toggle method-toggle" open><summary><section id="method.write_to_suffix" class="method"><a class="src rightside" href="../src/zerocopy/lib.rs.html#6352-6379">Source</a><h4 class="code-header">fn <a href="#method.write_to_suffix" class="fn">write_to_suffix</a>(
     &amp;self,
     dst: &amp;mut [<a class="primitive" href="https://doc.rust-lang.org/nightly/core/primitive.u8.html">u8</a>],
 ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/core/primitive.unit.html">()</a>, <a class="struct" href="error/struct.SizeError.html" title="struct zerocopy::error::SizeError">SizeError</a>&lt;&amp;Self, &amp;mut [<a class="primitive" href="https://doc.rust-lang.org/nightly/core/primitive.u8.html">u8</a>]&gt;&gt;<div class="where">where
@@ -1295,8 +1286,7 @@ Resource pressure by instruction:
    push rbx
    push rax
    mov rbx, rcx
-   lea r14, [2*rsi + 5]
-   and r14, -2
+   lea r14, [2*rsi + 4]
    sub rcx, r14
    jb .LBB5_2
    mov rax, rdi
@@ -1318,14 +1308,14 @@ Resource pressure by instruction:
         <summary><h6>Machine Code Analysis</h6></summary>
         <div>
 <div class="example-wrap"><pre class="language-plain"><code>Iterations:        100
-Instructions:      2000
+Instructions:      1900
 Total Cycles:      2890
-Total uOps:        2600
+Total uOps:        2500
 
 Dispatch Width:    4
-uOps Per Cycle:    0.90
-IPC:               0.69
-Block RThroughput: 6.5
+uOps Per Cycle:    0.87
+IPC:               0.66
+Block RThroughput: 6.3
 
 
 Instruction Info:
@@ -1341,8 +1331,7 @@ Instruction Info:
 2      5     1.00           *            push	rbx
 2      5     1.00           *            push	rax
 1      1     0.33                        mov	rbx, rcx
-1      1     0.50                        lea	r14, [2*rsi + 5]
-1      1     0.33                        and	r14, -2
+1      1     0.50                        lea	r14, [2*rsi + 4]
 1      1     0.33                        sub	rcx, r14
 1      1     1.00                        jb	.LBB5_2
 1      1     0.33                        mov	rax, rdi
@@ -1372,27 +1361,26 @@ Resources:
 
 Resource pressure per iteration:
 [0]    [1]    [2]    [3]    [4]    [5]    [6.0]  [6.1]  
--      -     4.98   4.98   4.00   5.04   4.00   3.00   
+-      -     4.65   4.64   4.00   4.71   4.00   3.00   
 
 Resource pressure by instruction:
 [0]    [1]    [2]    [3]    [4]    [5]    [6.0]  [6.1]  Instructions:
 -      -      -      -     1.00    -      -     1.00   push	r14
 -      -      -      -     1.00    -     1.00    -     push	rbx
 -      -      -      -     1.00    -      -     1.00   push	rax
--      -     0.94   0.05    -     0.01    -      -     mov	rbx, rcx
--      -     0.06   0.94    -      -      -      -     lea	r14, [2*rsi + 5]
--      -     0.93   0.02    -     0.05    -      -     and	r14, -2
--      -     0.05   0.94    -     0.01    -      -     sub	rcx, r14
+-      -     0.02   0.97    -     0.01    -      -     mov	rbx, rcx
+-      -     0.97   0.03    -      -      -      -     lea	r14, [2*rsi + 4]
+-      -     0.64   0.35    -     0.01    -      -     sub	rcx, r14
 -      -      -      -      -     1.00    -      -     jb	.LBB5_2
--      -     0.02   0.04    -     0.94    -      -     mov	rax, rdi
--      -     0.03   0.97    -      -      -      -     add	rdx, rcx
--      -     0.95   0.05    -      -      -      -     mov	rdi, rdx
--      -     0.94   0.03    -     0.03    -      -     mov	rsi, rax
--      -     0.01   0.03    -     0.96    -      -     mov	rdx, r14
+-      -     0.35   0.31    -     0.34    -      -     mov	rax, rdi
+-      -     0.32   0.68    -      -      -      -     add	rdx, rcx
+-      -     0.32   0.34    -     0.34    -      -     mov	rdi, rdx
+-      -     0.67   0.32    -     0.01    -      -     mov	rsi, rax
+-      -     0.34   0.35    -     0.31    -      -     mov	rdx, r14
 -      -      -      -     1.00   1.00   2.00    -     call	qword ptr [rip + memcpy@GOTPCREL]
--      -     0.05   0.94    -     0.01    -      -     cmp	rbx, r14
--      -     0.97    -      -     0.03    -      -     setae	al
--      -     0.03   0.97    -      -      -      -     add	rsp, 8
+-      -     0.35   0.31    -     0.34    -      -     cmp	rbx, r14
+-      -     0.65    -      -     0.35    -      -     setae	al
+-      -     0.02   0.98    -      -      -      -     add	rsp, 8
 -      -      -      -      -      -      -     1.00   pop	rbx
 -      -      -      -      -      -     1.00    -     pop	r14
 -      -      -      -      -     1.00    -      -     ret

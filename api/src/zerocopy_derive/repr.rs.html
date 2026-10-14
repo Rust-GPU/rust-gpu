@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerocopy-derive-0.8.59/src/repr.rs`."><title>repr.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-0c87338a.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="zerocopy_derive" data-themes="" data-resource-suffix="" data-rustdoc-version="1.99.0-nightly (d453bdd8f 2026-08-14)" data-channel="nightly" data-search-js="search-cf4fc35e.js" data-stringdex-js="stringdex-b5109af9.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-9f56287d.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">zerocopy_derive/</div>repr.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0 OR MIT
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerocopy-derive-0.8.63/src/repr.rs`."><title>repr.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-0c87338a.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="zerocopy_derive" data-themes="" data-resource-suffix="" data-rustdoc-version="1.99.0-nightly (d453bdd8f 2026-08-14)" data-channel="nightly" data-search-js="search-cf4fc35e.js" data-stringdex-js="stringdex-b5109af9.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-9f56287d.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">zerocopy_derive/</div>repr.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0 OR MIT
 <a href=#2 id=2 data-nosnippet>2</a>//
 <a href=#3 id=3 data-nosnippet>3</a>// Copyright 2019 The Fuchsia Authors
 <a href=#4 id=4 data-nosnippet>4</a>//
@@ -566,325 +566,327 @@
 <a href=#566 id=566 data-nosnippet>566</a>        <span class="kw">let </span>ident = path.get_ident().ok_or(UnrecognizedReprError)<span class="question-mark">?</span>;
 <a href=#567 id=567 data-nosnippet>567</a>
 <a href=#568 id=568 data-nosnippet>568</a>        <span class="comment">// Only returns `Ok` for non-zero power-of-two values.
-<a href=#569 id=569 data-nosnippet>569</a>        </span><span class="kw">let </span>parse_nzu64 = |list: <span class="kw-2">&amp;</span>MetaList| {
-<a href=#570 id=570 data-nosnippet>570</a>            list.parse_args::&lt;LitInt&gt;()
-<a href=#571 id=571 data-nosnippet>571</a>                .and_then(|int| int.base10_parse::&lt;NonZeroU32&gt;())
-<a href=#572 id=572 data-nosnippet>572</a>                .map_err(|<span class="kw">_</span>| UnrecognizedReprError)
-<a href=#573 id=573 data-nosnippet>573</a>                .and_then(|nz| {
-<a href=#574 id=574 data-nosnippet>574</a>                    <span class="kw">if </span>nz.get().is_power_of_two() {
-<a href=#575 id=575 data-nosnippet>575</a>                        <span class="prelude-val">Ok</span>(nz)
-<a href=#576 id=576 data-nosnippet>576</a>                    } <span class="kw">else </span>{
-<a href=#577 id=577 data-nosnippet>577</a>                        <span class="prelude-val">Err</span>(UnrecognizedReprError)
-<a href=#578 id=578 data-nosnippet>578</a>                    }
-<a href=#579 id=579 data-nosnippet>579</a>                })
-<a href=#580 id=580 data-nosnippet>580</a>        };
-<a href=#581 id=581 data-nosnippet>581</a>
-<a href=#582 id=582 data-nosnippet>582</a>        <span class="kw">use </span>RawRepr::<span class="kw-2">*</span>;
-<a href=#583 id=583 data-nosnippet>583</a>        <span class="kw">let </span>ident = to_ident_str(ident);
-<a href=#584 id=584 data-nosnippet>584</a>        <span class="prelude-val">Ok</span>(<span class="kw">match </span>(ident.as_str(), list) {
-<a href=#585 id=585 data-nosnippet>585</a>            (<span class="string">"u8"</span>, <span class="prelude-val">None</span>) =&gt; U8,
-<a href=#586 id=586 data-nosnippet>586</a>            (<span class="string">"u16"</span>, <span class="prelude-val">None</span>) =&gt; U16,
-<a href=#587 id=587 data-nosnippet>587</a>            (<span class="string">"u32"</span>, <span class="prelude-val">None</span>) =&gt; U32,
-<a href=#588 id=588 data-nosnippet>588</a>            (<span class="string">"u64"</span>, <span class="prelude-val">None</span>) =&gt; U64,
-<a href=#589 id=589 data-nosnippet>589</a>            (<span class="string">"u128"</span>, <span class="prelude-val">None</span>) =&gt; U128,
-<a href=#590 id=590 data-nosnippet>590</a>            (<span class="string">"usize"</span>, <span class="prelude-val">None</span>) =&gt; Usize,
-<a href=#591 id=591 data-nosnippet>591</a>            (<span class="string">"i8"</span>, <span class="prelude-val">None</span>) =&gt; I8,
-<a href=#592 id=592 data-nosnippet>592</a>            (<span class="string">"i16"</span>, <span class="prelude-val">None</span>) =&gt; I16,
-<a href=#593 id=593 data-nosnippet>593</a>            (<span class="string">"i32"</span>, <span class="prelude-val">None</span>) =&gt; I32,
-<a href=#594 id=594 data-nosnippet>594</a>            (<span class="string">"i64"</span>, <span class="prelude-val">None</span>) =&gt; I64,
-<a href=#595 id=595 data-nosnippet>595</a>            (<span class="string">"i128"</span>, <span class="prelude-val">None</span>) =&gt; I128,
-<a href=#596 id=596 data-nosnippet>596</a>            (<span class="string">"isize"</span>, <span class="prelude-val">None</span>) =&gt; Isize,
-<a href=#597 id=597 data-nosnippet>597</a>            (<span class="string">"C"</span>, <span class="prelude-val">None</span>) =&gt; C,
-<a href=#598 id=598 data-nosnippet>598</a>            (<span class="string">"transparent"</span>, <span class="prelude-val">None</span>) =&gt; Transparent,
-<a href=#599 id=599 data-nosnippet>599</a>            (<span class="string">"Rust"</span>, <span class="prelude-val">None</span>) =&gt; Rust,
-<a href=#600 id=600 data-nosnippet>600</a>            (<span class="string">"packed"</span>, <span class="prelude-val">None</span>) =&gt; Packed,
-<a href=#601 id=601 data-nosnippet>601</a>            (<span class="string">"packed"</span>, <span class="prelude-val">Some</span>(list)) =&gt; PackedN(parse_nzu64(list)<span class="question-mark">?</span>),
-<a href=#602 id=602 data-nosnippet>602</a>            (<span class="string">"align"</span>, <span class="prelude-val">Some</span>(list)) =&gt; Align(parse_nzu64(list)<span class="question-mark">?</span>),
-<a href=#603 id=603 data-nosnippet>603</a>            <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(UnrecognizedReprError),
-<a href=#604 id=604 data-nosnippet>604</a>        })
-<a href=#605 id=605 data-nosnippet>605</a>    }
-<a href=#606 id=606 data-nosnippet>606</a>}
-<a href=#607 id=607 data-nosnippet>607</a>
-<a href=#608 id=608 data-nosnippet>608</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">use </span>util::<span class="kw-2">*</span>;
-<a href=#609 id=609 data-nosnippet>609</a><span class="kw">mod </span>util {
-<a href=#610 id=610 data-nosnippet>610</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#611 id=611 data-nosnippet>611</a>    <span class="doccomment">/// A value with an associated span.
-<a href=#612 id=612 data-nosnippet>612</a>    </span><span class="attr">#[derive(Copy, Clone)]
-<a href=#613 id=613 data-nosnippet>613</a>    #[cfg_attr(test, derive(Debug))]
-<a href=#614 id=614 data-nosnippet>614</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Spanned&lt;T&gt; {
-<a href=#615 id=615 data-nosnippet>615</a>        <span class="kw">pub</span>(<span class="kw">crate</span>) t: T,
-<a href=#616 id=616 data-nosnippet>616</a>        <span class="kw">pub</span>(<span class="kw">crate</span>) span: Span,
-<a href=#617 id=617 data-nosnippet>617</a>    }
-<a href=#618 id=618 data-nosnippet>618</a>
-<a href=#619 id=619 data-nosnippet>619</a>    <span class="kw">impl</span>&lt;T&gt; Spanned&lt;T&gt; {
-<a href=#620 id=620 data-nosnippet>620</a>        <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new(t: T, span: Span) -&gt; Spanned&lt;T&gt; {
-<a href=#621 id=621 data-nosnippet>621</a>            Spanned { t, span }
-<a href=#622 id=622 data-nosnippet>622</a>        }
-<a href=#623 id=623 data-nosnippet>623</a>
-<a href=#624 id=624 data-nosnippet>624</a>        <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>from&lt;U&gt;(s: Spanned&lt;U&gt;) -&gt; Spanned&lt;T&gt;
-<a href=#625 id=625 data-nosnippet>625</a>        <span class="kw">where
-<a href=#626 id=626 data-nosnippet>626</a>            </span>T: From&lt;U&gt;,
-<a href=#627 id=627 data-nosnippet>627</a>        {
-<a href=#628 id=628 data-nosnippet>628</a>            <span class="kw">let </span>Spanned { t: u, span } = s;
-<a href=#629 id=629 data-nosnippet>629</a>            Spanned::new(u.into(), span)
-<a href=#630 id=630 data-nosnippet>630</a>        }
-<a href=#631 id=631 data-nosnippet>631</a>
-<a href=#632 id=632 data-nosnippet>632</a>        <span class="doccomment">/// Delegates to `T: TryFrom`, preserving span information in both the
-<a href=#633 id=633 data-nosnippet>633</a>        /// success and error cases.
-<a href=#634 id=634 data-nosnippet>634</a>        </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>try_from&lt;E, U&gt;(
-<a href=#635 id=635 data-nosnippet>635</a>            u: Spanned&lt;U&gt;,
-<a href=#636 id=636 data-nosnippet>636</a>        ) -&gt; <span class="prelude-ty">Result</span>&lt;Spanned&lt;T&gt;, FromRawReprError&lt;Spanned&lt;E&gt;&gt;&gt;
-<a href=#637 id=637 data-nosnippet>637</a>        <span class="kw">where
-<a href=#638 id=638 data-nosnippet>638</a>            </span>T: TryFrom&lt;U, Error = FromRawReprError&lt;E&gt;&gt;,
-<a href=#639 id=639 data-nosnippet>639</a>        {
-<a href=#640 id=640 data-nosnippet>640</a>            <span class="kw">let </span>Spanned { t: u, span } = u;
-<a href=#641 id=641 data-nosnippet>641</a>            T::try_from(u).map(|t| Spanned { t, span }).map_err(|err| <span class="kw">match </span>err {
-<a href=#642 id=642 data-nosnippet>642</a>                FromRawReprError::None =&gt; FromRawReprError::None,
-<a href=#643 id=643 data-nosnippet>643</a>                FromRawReprError::Err(e) =&gt; FromRawReprError::Err(Spanned::new(e, span)),
-<a href=#644 id=644 data-nosnippet>644</a>            })
-<a href=#645 id=645 data-nosnippet>645</a>        }
-<a href=#646 id=646 data-nosnippet>646</a>    }
-<a href=#647 id=647 data-nosnippet>647</a>
-<a href=#648 id=648 data-nosnippet>648</a>    <span class="comment">// Used to permit implementing `With&lt;T&gt; for T: Inhabited` and for
-<a href=#649 id=649 data-nosnippet>649</a>    // `Infallible` without a blanket impl conflict.
-<a href=#650 id=650 data-nosnippet>650</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait </span>Inhabited {}
-<a href=#651 id=651 data-nosnippet>651</a>    <span class="kw">impl </span>Inhabited <span class="kw">for </span>PrimitiveRepr {}
-<a href=#652 id=652 data-nosnippet>652</a>    <span class="kw">impl </span>Inhabited <span class="kw">for </span>NonZeroU32 {}
-<a href=#653 id=653 data-nosnippet>653</a>
-<a href=#654 id=654 data-nosnippet>654</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait </span>With&lt;T&gt; {
-<a href=#655 id=655 data-nosnippet>655</a>        <span class="kw">fn </span>with&lt;O, F: FnOnce(T) -&gt; O&gt;(<span class="self">self</span>, f: F) -&gt; O;
-<a href=#656 id=656 data-nosnippet>656</a>        <span class="kw">fn </span>try_with_or&lt;E, F: FnOnce() -&gt; <span class="prelude-ty">Result</span>&lt;T, E&gt;&gt;(f: F, err: E) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, E&gt;
-<a href=#657 id=657 data-nosnippet>657</a>        <span class="kw">where
-<a href=#658 id=658 data-nosnippet>658</a>            </span><span class="self">Self</span>: Sized;
-<a href=#659 id=659 data-nosnippet>659</a>    }
-<a href=#660 id=660 data-nosnippet>660</a>
-<a href=#661 id=661 data-nosnippet>661</a>    <span class="kw">impl</span>&lt;T: Inhabited&gt; With&lt;T&gt; <span class="kw">for </span>T {
-<a href=#662 id=662 data-nosnippet>662</a>        <span class="kw">fn </span>with&lt;O, F: FnOnce(T) -&gt; O&gt;(<span class="self">self</span>, f: F) -&gt; O {
-<a href=#663 id=663 data-nosnippet>663</a>            f(<span class="self">self</span>)
-<a href=#664 id=664 data-nosnippet>664</a>        }
-<a href=#665 id=665 data-nosnippet>665</a>
-<a href=#666 id=666 data-nosnippet>666</a>        <span class="kw">fn </span>try_with_or&lt;E, F: FnOnce() -&gt; <span class="prelude-ty">Result</span>&lt;T, E&gt;&gt;(f: F, _err: E) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, E&gt; {
-<a href=#667 id=667 data-nosnippet>667</a>            f()
-<a href=#668 id=668 data-nosnippet>668</a>        }
-<a href=#669 id=669 data-nosnippet>669</a>    }
-<a href=#670 id=670 data-nosnippet>670</a>
-<a href=#671 id=671 data-nosnippet>671</a>    <span class="kw">impl</span>&lt;T&gt; With&lt;T&gt; <span class="kw">for </span>Infallible {
-<a href=#672 id=672 data-nosnippet>672</a>        <span class="kw">fn </span>with&lt;O, F: FnOnce(T) -&gt; O&gt;(<span class="self">self</span>, _f: F) -&gt; O {
-<a href=#673 id=673 data-nosnippet>673</a>            <span class="kw">match </span><span class="self">self </span>{}
-<a href=#674 id=674 data-nosnippet>674</a>        }
-<a href=#675 id=675 data-nosnippet>675</a>
-<a href=#676 id=676 data-nosnippet>676</a>        <span class="kw">fn </span>try_with_or&lt;E, F: FnOnce() -&gt; <span class="prelude-ty">Result</span>&lt;T, E&gt;&gt;(_f: F, err: E) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, E&gt; {
-<a href=#677 id=677 data-nosnippet>677</a>            <span class="prelude-val">Err</span>(err)
-<a href=#678 id=678 data-nosnippet>678</a>        }
-<a href=#679 id=679 data-nosnippet>679</a>    }
-<a href=#680 id=680 data-nosnippet>680</a>}
-<a href=#681 id=681 data-nosnippet>681</a>
-<a href=#682 id=682 data-nosnippet>682</a><span class="attr">#[cfg(test)]
-<a href=#683 id=683 data-nosnippet>683</a></span><span class="kw">mod </span>tests {
-<a href=#684 id=684 data-nosnippet>684</a>    <span class="kw">use </span>syn::parse_quote;
-<a href=#685 id=685 data-nosnippet>685</a>
-<a href=#686 id=686 data-nosnippet>686</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#569 id=569 data-nosnippet>569</a>        // `NonZeroU32::is_power_of_two` is unsupported on our MSRV.
+<a href=#570 id=570 data-nosnippet>570</a>        </span><span class="attr">#[allow(clippy::needless_nonzero_get)]
+<a href=#571 id=571 data-nosnippet>571</a>        </span><span class="kw">let </span>parse_nzu64 = |list: <span class="kw-2">&amp;</span>MetaList| {
+<a href=#572 id=572 data-nosnippet>572</a>            list.parse_args::&lt;LitInt&gt;()
+<a href=#573 id=573 data-nosnippet>573</a>                .and_then(|int| int.base10_parse::&lt;NonZeroU32&gt;())
+<a href=#574 id=574 data-nosnippet>574</a>                .map_err(|<span class="kw">_</span>| UnrecognizedReprError)
+<a href=#575 id=575 data-nosnippet>575</a>                .and_then(|nz| {
+<a href=#576 id=576 data-nosnippet>576</a>                    <span class="kw">if </span>nz.get().is_power_of_two() {
+<a href=#577 id=577 data-nosnippet>577</a>                        <span class="prelude-val">Ok</span>(nz)
+<a href=#578 id=578 data-nosnippet>578</a>                    } <span class="kw">else </span>{
+<a href=#579 id=579 data-nosnippet>579</a>                        <span class="prelude-val">Err</span>(UnrecognizedReprError)
+<a href=#580 id=580 data-nosnippet>580</a>                    }
+<a href=#581 id=581 data-nosnippet>581</a>                })
+<a href=#582 id=582 data-nosnippet>582</a>        };
+<a href=#583 id=583 data-nosnippet>583</a>
+<a href=#584 id=584 data-nosnippet>584</a>        <span class="kw">use </span>RawRepr::<span class="kw-2">*</span>;
+<a href=#585 id=585 data-nosnippet>585</a>        <span class="kw">let </span>ident = to_ident_str(ident);
+<a href=#586 id=586 data-nosnippet>586</a>        <span class="prelude-val">Ok</span>(<span class="kw">match </span>(ident.as_str(), list) {
+<a href=#587 id=587 data-nosnippet>587</a>            (<span class="string">"u8"</span>, <span class="prelude-val">None</span>) =&gt; U8,
+<a href=#588 id=588 data-nosnippet>588</a>            (<span class="string">"u16"</span>, <span class="prelude-val">None</span>) =&gt; U16,
+<a href=#589 id=589 data-nosnippet>589</a>            (<span class="string">"u32"</span>, <span class="prelude-val">None</span>) =&gt; U32,
+<a href=#590 id=590 data-nosnippet>590</a>            (<span class="string">"u64"</span>, <span class="prelude-val">None</span>) =&gt; U64,
+<a href=#591 id=591 data-nosnippet>591</a>            (<span class="string">"u128"</span>, <span class="prelude-val">None</span>) =&gt; U128,
+<a href=#592 id=592 data-nosnippet>592</a>            (<span class="string">"usize"</span>, <span class="prelude-val">None</span>) =&gt; Usize,
+<a href=#593 id=593 data-nosnippet>593</a>            (<span class="string">"i8"</span>, <span class="prelude-val">None</span>) =&gt; I8,
+<a href=#594 id=594 data-nosnippet>594</a>            (<span class="string">"i16"</span>, <span class="prelude-val">None</span>) =&gt; I16,
+<a href=#595 id=595 data-nosnippet>595</a>            (<span class="string">"i32"</span>, <span class="prelude-val">None</span>) =&gt; I32,
+<a href=#596 id=596 data-nosnippet>596</a>            (<span class="string">"i64"</span>, <span class="prelude-val">None</span>) =&gt; I64,
+<a href=#597 id=597 data-nosnippet>597</a>            (<span class="string">"i128"</span>, <span class="prelude-val">None</span>) =&gt; I128,
+<a href=#598 id=598 data-nosnippet>598</a>            (<span class="string">"isize"</span>, <span class="prelude-val">None</span>) =&gt; Isize,
+<a href=#599 id=599 data-nosnippet>599</a>            (<span class="string">"C"</span>, <span class="prelude-val">None</span>) =&gt; C,
+<a href=#600 id=600 data-nosnippet>600</a>            (<span class="string">"transparent"</span>, <span class="prelude-val">None</span>) =&gt; Transparent,
+<a href=#601 id=601 data-nosnippet>601</a>            (<span class="string">"Rust"</span>, <span class="prelude-val">None</span>) =&gt; Rust,
+<a href=#602 id=602 data-nosnippet>602</a>            (<span class="string">"packed"</span>, <span class="prelude-val">None</span>) =&gt; Packed,
+<a href=#603 id=603 data-nosnippet>603</a>            (<span class="string">"packed"</span>, <span class="prelude-val">Some</span>(list)) =&gt; PackedN(parse_nzu64(list)<span class="question-mark">?</span>),
+<a href=#604 id=604 data-nosnippet>604</a>            (<span class="string">"align"</span>, <span class="prelude-val">Some</span>(list)) =&gt; Align(parse_nzu64(list)<span class="question-mark">?</span>),
+<a href=#605 id=605 data-nosnippet>605</a>            <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(UnrecognizedReprError),
+<a href=#606 id=606 data-nosnippet>606</a>        })
+<a href=#607 id=607 data-nosnippet>607</a>    }
+<a href=#608 id=608 data-nosnippet>608</a>}
+<a href=#609 id=609 data-nosnippet>609</a>
+<a href=#610 id=610 data-nosnippet>610</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">use </span>util::<span class="kw-2">*</span>;
+<a href=#611 id=611 data-nosnippet>611</a><span class="kw">mod </span>util {
+<a href=#612 id=612 data-nosnippet>612</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#613 id=613 data-nosnippet>613</a>    <span class="doccomment">/// A value with an associated span.
+<a href=#614 id=614 data-nosnippet>614</a>    </span><span class="attr">#[derive(Copy, Clone)]
+<a href=#615 id=615 data-nosnippet>615</a>    #[cfg_attr(test, derive(Debug))]
+<a href=#616 id=616 data-nosnippet>616</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Spanned&lt;T&gt; {
+<a href=#617 id=617 data-nosnippet>617</a>        <span class="kw">pub</span>(<span class="kw">crate</span>) t: T,
+<a href=#618 id=618 data-nosnippet>618</a>        <span class="kw">pub</span>(<span class="kw">crate</span>) span: Span,
+<a href=#619 id=619 data-nosnippet>619</a>    }
+<a href=#620 id=620 data-nosnippet>620</a>
+<a href=#621 id=621 data-nosnippet>621</a>    <span class="kw">impl</span>&lt;T&gt; Spanned&lt;T&gt; {
+<a href=#622 id=622 data-nosnippet>622</a>        <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new(t: T, span: Span) -&gt; Spanned&lt;T&gt; {
+<a href=#623 id=623 data-nosnippet>623</a>            Spanned { t, span }
+<a href=#624 id=624 data-nosnippet>624</a>        }
+<a href=#625 id=625 data-nosnippet>625</a>
+<a href=#626 id=626 data-nosnippet>626</a>        <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>from&lt;U&gt;(s: Spanned&lt;U&gt;) -&gt; Spanned&lt;T&gt;
+<a href=#627 id=627 data-nosnippet>627</a>        <span class="kw">where
+<a href=#628 id=628 data-nosnippet>628</a>            </span>T: From&lt;U&gt;,
+<a href=#629 id=629 data-nosnippet>629</a>        {
+<a href=#630 id=630 data-nosnippet>630</a>            <span class="kw">let </span>Spanned { t: u, span } = s;
+<a href=#631 id=631 data-nosnippet>631</a>            Spanned::new(u.into(), span)
+<a href=#632 id=632 data-nosnippet>632</a>        }
+<a href=#633 id=633 data-nosnippet>633</a>
+<a href=#634 id=634 data-nosnippet>634</a>        <span class="doccomment">/// Delegates to `T: TryFrom`, preserving span information in both the
+<a href=#635 id=635 data-nosnippet>635</a>        /// success and error cases.
+<a href=#636 id=636 data-nosnippet>636</a>        </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>try_from&lt;E, U&gt;(
+<a href=#637 id=637 data-nosnippet>637</a>            u: Spanned&lt;U&gt;,
+<a href=#638 id=638 data-nosnippet>638</a>        ) -&gt; <span class="prelude-ty">Result</span>&lt;Spanned&lt;T&gt;, FromRawReprError&lt;Spanned&lt;E&gt;&gt;&gt;
+<a href=#639 id=639 data-nosnippet>639</a>        <span class="kw">where
+<a href=#640 id=640 data-nosnippet>640</a>            </span>T: TryFrom&lt;U, Error = FromRawReprError&lt;E&gt;&gt;,
+<a href=#641 id=641 data-nosnippet>641</a>        {
+<a href=#642 id=642 data-nosnippet>642</a>            <span class="kw">let </span>Spanned { t: u, span } = u;
+<a href=#643 id=643 data-nosnippet>643</a>            T::try_from(u).map(|t| Spanned { t, span }).map_err(|err| <span class="kw">match </span>err {
+<a href=#644 id=644 data-nosnippet>644</a>                FromRawReprError::None =&gt; FromRawReprError::None,
+<a href=#645 id=645 data-nosnippet>645</a>                FromRawReprError::Err(e) =&gt; FromRawReprError::Err(Spanned::new(e, span)),
+<a href=#646 id=646 data-nosnippet>646</a>            })
+<a href=#647 id=647 data-nosnippet>647</a>        }
+<a href=#648 id=648 data-nosnippet>648</a>    }
+<a href=#649 id=649 data-nosnippet>649</a>
+<a href=#650 id=650 data-nosnippet>650</a>    <span class="comment">// Used to permit implementing `With&lt;T&gt; for T: Inhabited` and for
+<a href=#651 id=651 data-nosnippet>651</a>    // `Infallible` without a blanket impl conflict.
+<a href=#652 id=652 data-nosnippet>652</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait </span>Inhabited {}
+<a href=#653 id=653 data-nosnippet>653</a>    <span class="kw">impl </span>Inhabited <span class="kw">for </span>PrimitiveRepr {}
+<a href=#654 id=654 data-nosnippet>654</a>    <span class="kw">impl </span>Inhabited <span class="kw">for </span>NonZeroU32 {}
+<a href=#655 id=655 data-nosnippet>655</a>
+<a href=#656 id=656 data-nosnippet>656</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait </span>With&lt;T&gt; {
+<a href=#657 id=657 data-nosnippet>657</a>        <span class="kw">fn </span>with&lt;O, F: FnOnce(T) -&gt; O&gt;(<span class="self">self</span>, f: F) -&gt; O;
+<a href=#658 id=658 data-nosnippet>658</a>        <span class="kw">fn </span>try_with_or&lt;E, F: FnOnce() -&gt; <span class="prelude-ty">Result</span>&lt;T, E&gt;&gt;(f: F, err: E) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, E&gt;
+<a href=#659 id=659 data-nosnippet>659</a>        <span class="kw">where
+<a href=#660 id=660 data-nosnippet>660</a>            </span><span class="self">Self</span>: Sized;
+<a href=#661 id=661 data-nosnippet>661</a>    }
+<a href=#662 id=662 data-nosnippet>662</a>
+<a href=#663 id=663 data-nosnippet>663</a>    <span class="kw">impl</span>&lt;T: Inhabited&gt; With&lt;T&gt; <span class="kw">for </span>T {
+<a href=#664 id=664 data-nosnippet>664</a>        <span class="kw">fn </span>with&lt;O, F: FnOnce(T) -&gt; O&gt;(<span class="self">self</span>, f: F) -&gt; O {
+<a href=#665 id=665 data-nosnippet>665</a>            f(<span class="self">self</span>)
+<a href=#666 id=666 data-nosnippet>666</a>        }
+<a href=#667 id=667 data-nosnippet>667</a>
+<a href=#668 id=668 data-nosnippet>668</a>        <span class="kw">fn </span>try_with_or&lt;E, F: FnOnce() -&gt; <span class="prelude-ty">Result</span>&lt;T, E&gt;&gt;(f: F, _err: E) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, E&gt; {
+<a href=#669 id=669 data-nosnippet>669</a>            f()
+<a href=#670 id=670 data-nosnippet>670</a>        }
+<a href=#671 id=671 data-nosnippet>671</a>    }
+<a href=#672 id=672 data-nosnippet>672</a>
+<a href=#673 id=673 data-nosnippet>673</a>    <span class="kw">impl</span>&lt;T&gt; With&lt;T&gt; <span class="kw">for </span>Infallible {
+<a href=#674 id=674 data-nosnippet>674</a>        <span class="kw">fn </span>with&lt;O, F: FnOnce(T) -&gt; O&gt;(<span class="self">self</span>, _f: F) -&gt; O {
+<a href=#675 id=675 data-nosnippet>675</a>            <span class="kw">match </span><span class="self">self </span>{}
+<a href=#676 id=676 data-nosnippet>676</a>        }
+<a href=#677 id=677 data-nosnippet>677</a>
+<a href=#678 id=678 data-nosnippet>678</a>        <span class="kw">fn </span>try_with_or&lt;E, F: FnOnce() -&gt; <span class="prelude-ty">Result</span>&lt;T, E&gt;&gt;(_f: F, err: E) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, E&gt; {
+<a href=#679 id=679 data-nosnippet>679</a>            <span class="prelude-val">Err</span>(err)
+<a href=#680 id=680 data-nosnippet>680</a>        }
+<a href=#681 id=681 data-nosnippet>681</a>    }
+<a href=#682 id=682 data-nosnippet>682</a>}
+<a href=#683 id=683 data-nosnippet>683</a>
+<a href=#684 id=684 data-nosnippet>684</a><span class="attr">#[cfg(test)]
+<a href=#685 id=685 data-nosnippet>685</a></span><span class="kw">mod </span>tests {
+<a href=#686 id=686 data-nosnippet>686</a>    <span class="kw">use </span>syn::parse_quote;
 <a href=#687 id=687 data-nosnippet>687</a>
-<a href=#688 id=688 data-nosnippet>688</a>    <span class="kw">impl</span>&lt;T&gt; From&lt;T&gt; <span class="kw">for </span>Spanned&lt;T&gt; {
-<a href=#689 id=689 data-nosnippet>689</a>        <span class="kw">fn </span>from(t: T) -&gt; Spanned&lt;T&gt; {
-<a href=#690 id=690 data-nosnippet>690</a>            Spanned::new(t, Span::call_site())
-<a href=#691 id=691 data-nosnippet>691</a>        }
-<a href=#692 id=692 data-nosnippet>692</a>    }
-<a href=#693 id=693 data-nosnippet>693</a>
-<a href=#694 id=694 data-nosnippet>694</a>    <span class="comment">// We ignore spans for equality in testing since real spans are hard to
-<a href=#695 id=695 data-nosnippet>695</a>    // synthesize and don't implement `PartialEq`.
-<a href=#696 id=696 data-nosnippet>696</a>    </span><span class="kw">impl</span>&lt;T: PartialEq&gt; PartialEq <span class="kw">for </span>Spanned&lt;T&gt; {
-<a href=#697 id=697 data-nosnippet>697</a>        <span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>Spanned&lt;T&gt;) -&gt; bool {
-<a href=#698 id=698 data-nosnippet>698</a>            <span class="self">self</span>.t.eq(<span class="kw-2">&amp;</span>other.t)
-<a href=#699 id=699 data-nosnippet>699</a>        }
-<a href=#700 id=700 data-nosnippet>700</a>    }
-<a href=#701 id=701 data-nosnippet>701</a>
-<a href=#702 id=702 data-nosnippet>702</a>    <span class="kw">impl</span>&lt;T: Eq&gt; Eq <span class="kw">for </span>Spanned&lt;T&gt; {}
+<a href=#688 id=688 data-nosnippet>688</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#689 id=689 data-nosnippet>689</a>
+<a href=#690 id=690 data-nosnippet>690</a>    <span class="kw">impl</span>&lt;T&gt; From&lt;T&gt; <span class="kw">for </span>Spanned&lt;T&gt; {
+<a href=#691 id=691 data-nosnippet>691</a>        <span class="kw">fn </span>from(t: T) -&gt; Spanned&lt;T&gt; {
+<a href=#692 id=692 data-nosnippet>692</a>            Spanned::new(t, Span::call_site())
+<a href=#693 id=693 data-nosnippet>693</a>        }
+<a href=#694 id=694 data-nosnippet>694</a>    }
+<a href=#695 id=695 data-nosnippet>695</a>
+<a href=#696 id=696 data-nosnippet>696</a>    <span class="comment">// We ignore spans for equality in testing since real spans are hard to
+<a href=#697 id=697 data-nosnippet>697</a>    // synthesize and don't implement `PartialEq`.
+<a href=#698 id=698 data-nosnippet>698</a>    </span><span class="kw">impl</span>&lt;T: PartialEq&gt; PartialEq <span class="kw">for </span>Spanned&lt;T&gt; {
+<a href=#699 id=699 data-nosnippet>699</a>        <span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>Spanned&lt;T&gt;) -&gt; bool {
+<a href=#700 id=700 data-nosnippet>700</a>            <span class="self">self</span>.t.eq(<span class="kw-2">&amp;</span>other.t)
+<a href=#701 id=701 data-nosnippet>701</a>        }
+<a href=#702 id=702 data-nosnippet>702</a>    }
 <a href=#703 id=703 data-nosnippet>703</a>
-<a href=#704 id=704 data-nosnippet>704</a>    <span class="kw">impl</span>&lt;Prim: PartialEq, Packed: PartialEq&gt; PartialEq <span class="kw">for </span>Repr&lt;Prim, Packed&gt; {
-<a href=#705 id=705 data-nosnippet>705</a>        <span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>Repr&lt;Prim, Packed&gt;) -&gt; bool {
-<a href=#706 id=706 data-nosnippet>706</a>            <span class="kw">match </span>(<span class="self">self</span>, other) {
-<a href=#707 id=707 data-nosnippet>707</a>                (Repr::Transparent(<span class="kw">_</span>), Repr::Transparent(<span class="kw">_</span>)) =&gt; <span class="bool-val">true</span>,
-<a href=#708 id=708 data-nosnippet>708</a>                (Repr::Compound(sc, sa), Repr::Compound(oc, oa)) =&gt; (sc, sa) == (oc, oa),
-<a href=#709 id=709 data-nosnippet>709</a>                <span class="kw">_ </span>=&gt; <span class="bool-val">false</span>,
-<a href=#710 id=710 data-nosnippet>710</a>            }
-<a href=#711 id=711 data-nosnippet>711</a>        }
-<a href=#712 id=712 data-nosnippet>712</a>    }
-<a href=#713 id=713 data-nosnippet>713</a>
-<a href=#714 id=714 data-nosnippet>714</a>    <span class="kw">fn </span>s() -&gt; Span {
-<a href=#715 id=715 data-nosnippet>715</a>        Span::call_site()
-<a href=#716 id=716 data-nosnippet>716</a>    }
-<a href=#717 id=717 data-nosnippet>717</a>
-<a href=#718 id=718 data-nosnippet>718</a>    <span class="attr">#[test]
-<a href=#719 id=719 data-nosnippet>719</a>    </span><span class="kw">fn </span>test() {
-<a href=#720 id=720 data-nosnippet>720</a>        <span class="comment">// Test that a given `#[repr(...)]` attribute parses and returns the
-<a href=#721 id=721 data-nosnippet>721</a>        // given `Repr` or error.
-<a href=#722 id=722 data-nosnippet>722</a>        </span><span class="macro">macro_rules!</span> test {
-<a href=#723 id=723 data-nosnippet>723</a>            ($(<span class="attr">#[<span class="macro-nonterminal">$attr</span>:meta]</span>)* =&gt; <span class="macro-nonterminal">$repr</span>:expr) =&gt; {
-<a href=#724 id=724 data-nosnippet>724</a>                <span class="macro">test!</span>(@inner $(<span class="attr">#[<span class="macro-nonterminal">$attr</span>]</span>)* =&gt; Repr =&gt; <span class="prelude-val">Ok</span>(<span class="macro-nonterminal">$repr</span>));
-<a href=#725 id=725 data-nosnippet>725</a>            };
-<a href=#726 id=726 data-nosnippet>726</a>            <span class="comment">// In the error case, the caller must explicitly provide the name of
-<a href=#727 id=727 data-nosnippet>727</a>            // the `Repr` type to assist in type inference.
-<a href=#728 id=728 data-nosnippet>728</a>            </span>(@error $(<span class="attr">#[<span class="macro-nonterminal">$attr</span>:meta]</span>)* =&gt; <span class="macro-nonterminal">$typ</span>:ident =&gt; <span class="macro-nonterminal">$repr</span>:expr) =&gt; {
-<a href=#729 id=729 data-nosnippet>729</a>                <span class="macro">test!</span>(@inner $(<span class="attr">#[<span class="macro-nonterminal">$attr</span>]</span>)* =&gt; <span class="macro-nonterminal">$typ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro-nonterminal">$repr</span>));
-<a href=#730 id=730 data-nosnippet>730</a>            };
-<a href=#731 id=731 data-nosnippet>731</a>            (@inner $(<span class="attr">#[<span class="macro-nonterminal">$attr</span>:meta]</span>)* =&gt; <span class="macro-nonterminal">$typ</span>:ident =&gt; <span class="macro-nonterminal">$repr</span>:expr) =&gt; {
-<a href=#732 id=732 data-nosnippet>732</a>                <span class="kw">let </span>attr: Attribute = <span class="macro">parse_quote!</span>($(<span class="attr">#[<span class="macro-nonterminal">$attr</span>]</span>)<span class="kw-2">*</span>);
-<a href=#733 id=733 data-nosnippet>733</a>                <span class="kw">let </span><span class="kw-2">mut </span>got = <span class="macro-nonterminal">$typ::from_attrs_inner</span>(<span class="kw-2">&amp;</span>[attr]);
-<a href=#734 id=734 data-nosnippet>734</a>                <span class="kw">let </span>expect: <span class="prelude-ty">Result</span>&lt;Repr&lt;<span class="kw">_</span>, <span class="kw">_</span>&gt;, <span class="kw">_</span>&gt; = <span class="macro-nonterminal">$repr</span>;
-<a href=#735 id=735 data-nosnippet>735</a>                <span class="kw">if </span><span class="bool-val">false </span>{
-<a href=#736 id=736 data-nosnippet>736</a>                    <span class="comment">// Force Rust to infer `got` as having the same type as
-<a href=#737 id=737 data-nosnippet>737</a>                    // `expect`.
-<a href=#738 id=738 data-nosnippet>738</a>                    </span>got = expect;
-<a href=#739 id=739 data-nosnippet>739</a>                }
-<a href=#740 id=740 data-nosnippet>740</a>                <span class="macro">assert_eq!</span>(got, expect, <span class="macro">stringify!</span>($(<span class="attr">#[<span class="macro-nonterminal">$attr</span>]</span>)<span class="kw-2">*</span>));
-<a href=#741 id=741 data-nosnippet>741</a>            };
-<a href=#742 id=742 data-nosnippet>742</a>        }
-<a href=#743 id=743 data-nosnippet>743</a>
-<a href=#744 id=744 data-nosnippet>744</a>        <span class="kw">use </span>AlignRepr::<span class="kw-2">*</span>;
-<a href=#745 id=745 data-nosnippet>745</a>        <span class="kw">use </span>CompoundRepr::<span class="kw-2">*</span>;
-<a href=#746 id=746 data-nosnippet>746</a>        <span class="kw">use </span>PrimitiveRepr::<span class="kw-2">*</span>;
-<a href=#747 id=747 data-nosnippet>747</a>        <span class="kw">let </span>nz = |n: u32| NonZeroU32::new(n).unwrap();
-<a href=#748 id=748 data-nosnippet>748</a>
-<a href=#749 id=749 data-nosnippet>749</a>        <span class="comment">// Rust treats raw identifiers and their ordinary spellings as the
-<a href=#750 id=750 data-nosnippet>750</a>        // same representation hints. Exercise every spelling recognized by
-<a href=#751 id=751 data-nosnippet>751</a>        // `RawRepr::from_meta` so that adding a hint cannot accidentally
-<a href=#752 id=752 data-nosnippet>752</a>        // reintroduce raw-identifier-sensitive parsing.
-<a href=#753 id=753 data-nosnippet>753</a>        </span><span class="macro">macro_rules!</span> test_raw_repr {
-<a href=#754 id=754 data-nosnippet>754</a>            (<span class="macro-nonterminal">$ordinary</span>:meta, <span class="macro-nonterminal">$raw</span>:meta =&gt; <span class="macro-nonterminal">$expected</span>:expr) =&gt; {{
-<a href=#755 id=755 data-nosnippet>755</a>                <span class="kw">let </span>ordinary: Meta = <span class="macro">parse_quote!</span>(<span class="macro-nonterminal">$ordinary</span>);
-<a href=#756 id=756 data-nosnippet>756</a>                <span class="kw">let </span>raw: Meta = <span class="macro">parse_quote!</span>(<span class="macro-nonterminal">$raw</span>);
-<a href=#757 id=757 data-nosnippet>757</a>                <span class="macro">assert_eq!</span>(RawRepr::from_meta(<span class="kw-2">&amp;</span>ordinary).ok().unwrap(), <span class="macro-nonterminal">$expected</span>);
-<a href=#758 id=758 data-nosnippet>758</a>                <span class="macro">assert_eq!</span>(RawRepr::from_meta(<span class="kw-2">&amp;</span>raw).ok().unwrap(), <span class="macro-nonterminal">$expected</span>);
-<a href=#759 id=759 data-nosnippet>759</a>            }};
-<a href=#760 id=760 data-nosnippet>760</a>        }
-<a href=#761 id=761 data-nosnippet>761</a>
-<a href=#762 id=762 data-nosnippet>762</a>        <span class="macro">test_raw_repr!</span>(transparent, r#transparent =&gt; RawRepr::Transparent);
-<a href=#763 id=763 data-nosnippet>763</a>        <span class="macro">test_raw_repr!</span>(C, r#C =&gt; RawRepr::C);
-<a href=#764 id=764 data-nosnippet>764</a>        <span class="macro">test_raw_repr!</span>(Rust, r#Rust =&gt; RawRepr::Rust);
-<a href=#765 id=765 data-nosnippet>765</a>        <span class="macro">test_raw_repr!</span>(u8, r#u8 =&gt; RawRepr::U8);
-<a href=#766 id=766 data-nosnippet>766</a>        <span class="macro">test_raw_repr!</span>(u16, r#u16 =&gt; RawRepr::U16);
-<a href=#767 id=767 data-nosnippet>767</a>        <span class="macro">test_raw_repr!</span>(u32, r#u32 =&gt; RawRepr::U32);
-<a href=#768 id=768 data-nosnippet>768</a>        <span class="macro">test_raw_repr!</span>(u64, r#u64 =&gt; RawRepr::U64);
-<a href=#769 id=769 data-nosnippet>769</a>        <span class="macro">test_raw_repr!</span>(u128, r#u128 =&gt; RawRepr::U128);
-<a href=#770 id=770 data-nosnippet>770</a>        <span class="macro">test_raw_repr!</span>(usize, r#usize =&gt; RawRepr::Usize);
-<a href=#771 id=771 data-nosnippet>771</a>        <span class="macro">test_raw_repr!</span>(i8, r#i8 =&gt; RawRepr::I8);
-<a href=#772 id=772 data-nosnippet>772</a>        <span class="macro">test_raw_repr!</span>(i16, r#i16 =&gt; RawRepr::I16);
-<a href=#773 id=773 data-nosnippet>773</a>        <span class="macro">test_raw_repr!</span>(i32, r#i32 =&gt; RawRepr::I32);
-<a href=#774 id=774 data-nosnippet>774</a>        <span class="macro">test_raw_repr!</span>(i64, r#i64 =&gt; RawRepr::I64);
-<a href=#775 id=775 data-nosnippet>775</a>        <span class="macro">test_raw_repr!</span>(i128, r#i128 =&gt; RawRepr::I128);
-<a href=#776 id=776 data-nosnippet>776</a>        <span class="macro">test_raw_repr!</span>(isize, r#isize =&gt; RawRepr::Isize);
-<a href=#777 id=777 data-nosnippet>777</a>        <span class="macro">test_raw_repr!</span>(align(<span class="number">2</span>), r#align(<span class="number">2</span>) =&gt; RawRepr::Align(nz(<span class="number">2</span>)));
-<a href=#778 id=778 data-nosnippet>778</a>        <span class="macro">test_raw_repr!</span>(packed, r#packed =&gt; RawRepr::Packed);
-<a href=#779 id=779 data-nosnippet>779</a>        <span class="macro">test_raw_repr!</span>(packed(<span class="number">2</span>), r#packed(<span class="number">2</span>) =&gt; RawRepr::PackedN(nz(<span class="number">2</span>)));
-<a href=#780 id=780 data-nosnippet>780</a>
-<a href=#781 id=781 data-nosnippet>781</a>        <span class="macro">test!</span>(<span class="attr">#[repr(transparent)] </span>=&gt; StructUnionRepr::Transparent(s()));
-<a href=#782 id=782 data-nosnippet>782</a>        <span class="macro">test!</span>(<span class="attr">#[r#repr(r#transparent)] </span>=&gt; StructUnionRepr::Transparent(s()));
-<a href=#783 id=783 data-nosnippet>783</a>        <span class="macro">test!</span>(<span class="attr">#[repr()] </span>=&gt; StructUnionRepr::Compound(Rust.into(), <span class="prelude-val">None</span>));
-<a href=#784 id=784 data-nosnippet>784</a>        <span class="macro">test!</span>(<span class="attr">#[repr(packed)] </span>=&gt; StructUnionRepr::Compound(Rust.into(), <span class="prelude-val">Some</span>(Packed(nz(<span class="number">1</span>)).into())));
-<a href=#785 id=785 data-nosnippet>785</a>        <span class="macro">test!</span>(<span class="attr">#[repr(packed(<span class="number">2</span>))] </span>=&gt; StructUnionRepr::Compound(Rust.into(), <span class="prelude-val">Some</span>(Packed(nz(<span class="number">2</span>)).into())));
-<a href=#786 id=786 data-nosnippet>786</a>        <span class="macro">test!</span>(<span class="attr">#[repr(align(<span class="number">1</span>))] </span>=&gt; StructUnionRepr::Compound(Rust.into(), <span class="prelude-val">Some</span>(Align(nz(<span class="number">1</span>)).into())));
-<a href=#787 id=787 data-nosnippet>787</a>        <span class="macro">test!</span>(<span class="attr">#[repr(align(<span class="number">2</span>))] </span>=&gt; StructUnionRepr::Compound(Rust.into(), <span class="prelude-val">Some</span>(Align(nz(<span class="number">2</span>)).into())));
-<a href=#788 id=788 data-nosnippet>788</a>        <span class="macro">test!</span>(<span class="attr">#[repr(C)] </span>=&gt; StructUnionRepr::Compound(C.into(), <span class="prelude-val">None</span>));
-<a href=#789 id=789 data-nosnippet>789</a>        <span class="macro">test!</span>(<span class="attr">#[repr(C, packed)] </span>=&gt; StructUnionRepr::Compound(C.into(), <span class="prelude-val">Some</span>(Packed(nz(<span class="number">1</span>)).into())));
-<a href=#790 id=790 data-nosnippet>790</a>        <span class="macro">test!</span>(<span class="attr">#[repr(C, packed(<span class="number">2</span>))] </span>=&gt; StructUnionRepr::Compound(C.into(), <span class="prelude-val">Some</span>(Packed(nz(<span class="number">2</span>)).into())));
-<a href=#791 id=791 data-nosnippet>791</a>        <span class="macro">test!</span>(<span class="attr">#[repr(C, align(<span class="number">1</span>))] </span>=&gt; StructUnionRepr::Compound(C.into(), <span class="prelude-val">Some</span>(Align(nz(<span class="number">1</span>)).into())));
-<a href=#792 id=792 data-nosnippet>792</a>        <span class="macro">test!</span>(<span class="attr">#[repr(C, align(<span class="number">2</span>))] </span>=&gt; StructUnionRepr::Compound(C.into(), <span class="prelude-val">Some</span>(Align(nz(<span class="number">2</span>)).into())));
-<a href=#793 id=793 data-nosnippet>793</a>        <span class="macro">test!</span>(<span class="attr">#[r#repr(r#C, r#align(<span class="number">2</span>))] </span>=&gt; StructUnionRepr::Compound(C.into(), <span class="prelude-val">Some</span>(Align(nz(<span class="number">2</span>)).into())));
-<a href=#794 id=794 data-nosnippet>794</a>        <span class="macro">test!</span>(<span class="attr">#[r#repr(r#C, r#packed(<span class="number">2</span>))] </span>=&gt; StructUnionRepr::Compound(C.into(), <span class="prelude-val">Some</span>(Packed(nz(<span class="number">2</span>)).into())));
-<a href=#795 id=795 data-nosnippet>795</a>
-<a href=#796 id=796 data-nosnippet>796</a>        <span class="macro">test!</span>(<span class="attr">#[repr(transparent)] </span>=&gt; EnumRepr::Transparent(s()));
-<a href=#797 id=797 data-nosnippet>797</a>        <span class="macro">test!</span>(<span class="attr">#[repr()] </span>=&gt; EnumRepr::Compound(Rust.into(), <span class="prelude-val">None</span>));
-<a href=#798 id=798 data-nosnippet>798</a>        <span class="macro">test!</span>(<span class="attr">#[repr(align(<span class="number">1</span>))] </span>=&gt; EnumRepr::Compound(Rust.into(), <span class="prelude-val">Some</span>(Align(nz(<span class="number">1</span>)).into())));
-<a href=#799 id=799 data-nosnippet>799</a>        <span class="macro">test!</span>(<span class="attr">#[repr(align(<span class="number">2</span>))] </span>=&gt; EnumRepr::Compound(Rust.into(), <span class="prelude-val">Some</span>(Align(nz(<span class="number">2</span>)).into())));
-<a href=#800 id=800 data-nosnippet>800</a>
-<a href=#801 id=801 data-nosnippet>801</a>        <span class="macro">macro_rules!</span> for_each_compound_repr {
-<a href=#802 id=802 data-nosnippet>802</a>            ($(<span class="macro-nonterminal">$r</span>:tt =&gt; <span class="macro-nonterminal">$var</span>:expr),<span class="kw-2">*</span>) =&gt; {
-<a href=#803 id=803 data-nosnippet>803</a>                $(
-<a href=#804 id=804 data-nosnippet>804</a>                    <span class="macro">test!</span>(<span class="attr">#[repr(<span class="macro-nonterminal">$r</span>)] </span>=&gt; EnumRepr::Compound(<span class="macro-nonterminal">$var</span>.into(), <span class="prelude-val">None</span>));
-<a href=#805 id=805 data-nosnippet>805</a>                    <span class="macro">test!</span>(<span class="attr">#[repr(<span class="macro-nonterminal">$r</span>, align(<span class="number">1</span>))] </span>=&gt; EnumRepr::Compound(<span class="macro-nonterminal">$var</span>.into(), <span class="prelude-val">Some</span>(Align(nz(<span class="number">1</span>)).into())));
-<a href=#806 id=806 data-nosnippet>806</a>                    <span class="macro">test!</span>(<span class="attr">#[repr(<span class="macro-nonterminal">$r</span>, align(<span class="number">2</span>))] </span>=&gt; EnumRepr::Compound(<span class="macro-nonterminal">$var</span>.into(), <span class="prelude-val">Some</span>(Align(nz(<span class="number">2</span>)).into())));
-<a href=#807 id=807 data-nosnippet>807</a>                )*
-<a href=#808 id=808 data-nosnippet>808</a>            }
-<a href=#809 id=809 data-nosnippet>809</a>        }
-<a href=#810 id=810 data-nosnippet>810</a>
-<a href=#811 id=811 data-nosnippet>811</a>        <span class="macro">for_each_compound_repr!</span>(
-<a href=#812 id=812 data-nosnippet>812</a>            C =&gt; C,
-<a href=#813 id=813 data-nosnippet>813</a>            u8 =&gt; Primitive(U8),
-<a href=#814 id=814 data-nosnippet>814</a>            u16 =&gt; Primitive(U16),
-<a href=#815 id=815 data-nosnippet>815</a>            u32 =&gt; Primitive(U32),
-<a href=#816 id=816 data-nosnippet>816</a>            u64 =&gt; Primitive(U64),
-<a href=#817 id=817 data-nosnippet>817</a>            usize =&gt; Primitive(Usize),
-<a href=#818 id=818 data-nosnippet>818</a>            i8 =&gt; Primitive(I8),
-<a href=#819 id=819 data-nosnippet>819</a>            i16 =&gt; Primitive(I16),
-<a href=#820 id=820 data-nosnippet>820</a>            i32 =&gt; Primitive(I32),
-<a href=#821 id=821 data-nosnippet>821</a>            i64 =&gt; Primitive(I64),
-<a href=#822 id=822 data-nosnippet>822</a>            isize =&gt; Primitive(Isize)
-<a href=#823 id=823 data-nosnippet>823</a>        );
-<a href=#824 id=824 data-nosnippet>824</a>
-<a href=#825 id=825 data-nosnippet>825</a>        <span class="kw">use </span>FromAttrsError::<span class="kw-2">*</span>;
-<a href=#826 id=826 data-nosnippet>826</a>        <span class="kw">use </span>FromRawReprsError::<span class="kw-2">*</span>;
-<a href=#827 id=827 data-nosnippet>827</a>
-<a href=#828 id=828 data-nosnippet>828</a>        <span class="comment">// Run failure tests which are valid for both `StructUnionRepr` and
-<a href=#829 id=829 data-nosnippet>829</a>        // `EnumRepr`.
-<a href=#830 id=830 data-nosnippet>830</a>        </span><span class="macro">macro_rules!</span> for_each_repr_type {
-<a href=#831 id=831 data-nosnippet>831</a>            ($(<span class="macro-nonterminal">$repr</span>:ident),<span class="kw-2">*</span>) =&gt; {
-<a href=#832 id=832 data-nosnippet>832</a>                $(
-<a href=#833 id=833 data-nosnippet>833</a>                    <span class="comment">// Invalid packed or align attributes
-<a href=#834 id=834 data-nosnippet>834</a>                    </span><span class="macro">test!</span>(@error <span class="attr">#[repr(packed(<span class="number">0</span>))] </span>=&gt; <span class="macro-nonterminal">$repr </span>=&gt; Unrecognized.into());
-<a href=#835 id=835 data-nosnippet>835</a>                    <span class="macro">test!</span>(@error <span class="attr">#[repr(packed(<span class="number">3</span>))] </span>=&gt; <span class="macro-nonterminal">$repr </span>=&gt; Unrecognized.into());
-<a href=#836 id=836 data-nosnippet>836</a>                    <span class="macro">test!</span>(@error <span class="attr">#[repr(align(<span class="number">0</span>))] </span>=&gt; <span class="macro-nonterminal">$repr </span>=&gt; Unrecognized.into());
-<a href=#837 id=837 data-nosnippet>837</a>                    <span class="macro">test!</span>(@error <span class="attr">#[repr(align(<span class="number">3</span>))] </span>=&gt; <span class="macro-nonterminal">$repr </span>=&gt; Unrecognized.into());
-<a href=#838 id=838 data-nosnippet>838</a>
-<a href=#839 id=839 data-nosnippet>839</a>                    <span class="comment">// Conflicts
-<a href=#840 id=840 data-nosnippet>840</a>                    </span><span class="macro">test!</span>(@error <span class="attr">#[repr(transparent, transparent)] </span>=&gt; <span class="macro-nonterminal">$repr </span>=&gt; FromRawReprs(Conflict).into());
-<a href=#841 id=841 data-nosnippet>841</a>                    <span class="macro">test!</span>(@error <span class="attr">#[repr(transparent, C)] </span>=&gt; <span class="macro-nonterminal">$repr </span>=&gt; FromRawReprs(Conflict).into());
-<a href=#842 id=842 data-nosnippet>842</a>                    <span class="macro">test!</span>(@error <span class="attr">#[repr(transparent, Rust)] </span>=&gt; <span class="macro-nonterminal">$repr </span>=&gt; FromRawReprs(Conflict).into());
-<a href=#843 id=843 data-nosnippet>843</a>
-<a href=#844 id=844 data-nosnippet>844</a>                    <span class="macro">test!</span>(@error <span class="attr">#[repr(C, transparent)] </span>=&gt; <span class="macro-nonterminal">$repr </span>=&gt; FromRawReprs(Conflict).into());
-<a href=#845 id=845 data-nosnippet>845</a>                    <span class="macro">test!</span>(@error <span class="attr">#[repr(C, C)] </span>=&gt; <span class="macro-nonterminal">$repr </span>=&gt; FromRawReprs(Conflict).into());
-<a href=#846 id=846 data-nosnippet>846</a>                    <span class="macro">test!</span>(@error <span class="attr">#[repr(C, Rust)] </span>=&gt; <span class="macro-nonterminal">$repr </span>=&gt; FromRawReprs(Conflict).into());
-<a href=#847 id=847 data-nosnippet>847</a>
-<a href=#848 id=848 data-nosnippet>848</a>                    <span class="macro">test!</span>(@error <span class="attr">#[repr(Rust, transparent)] </span>=&gt; <span class="macro-nonterminal">$repr </span>=&gt; FromRawReprs(Conflict).into());
-<a href=#849 id=849 data-nosnippet>849</a>                    <span class="macro">test!</span>(@error <span class="attr">#[repr(Rust, C)] </span>=&gt; <span class="macro-nonterminal">$repr </span>=&gt; FromRawReprs(Conflict).into());
-<a href=#850 id=850 data-nosnippet>850</a>                    <span class="macro">test!</span>(@error <span class="attr">#[repr(Rust, Rust)] </span>=&gt; <span class="macro-nonterminal">$repr </span>=&gt; FromRawReprs(Conflict).into());
-<a href=#851 id=851 data-nosnippet>851</a>                )*
-<a href=#852 id=852 data-nosnippet>852</a>            }
-<a href=#853 id=853 data-nosnippet>853</a>        }
-<a href=#854 id=854 data-nosnippet>854</a>
-<a href=#855 id=855 data-nosnippet>855</a>        <span class="macro">for_each_repr_type!</span>(StructUnionRepr, EnumRepr);
+<a href=#704 id=704 data-nosnippet>704</a>    <span class="kw">impl</span>&lt;T: Eq&gt; Eq <span class="kw">for </span>Spanned&lt;T&gt; {}
+<a href=#705 id=705 data-nosnippet>705</a>
+<a href=#706 id=706 data-nosnippet>706</a>    <span class="kw">impl</span>&lt;Prim: PartialEq, Packed: PartialEq&gt; PartialEq <span class="kw">for </span>Repr&lt;Prim, Packed&gt; {
+<a href=#707 id=707 data-nosnippet>707</a>        <span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>Repr&lt;Prim, Packed&gt;) -&gt; bool {
+<a href=#708 id=708 data-nosnippet>708</a>            <span class="kw">match </span>(<span class="self">self</span>, other) {
+<a href=#709 id=709 data-nosnippet>709</a>                (Repr::Transparent(<span class="kw">_</span>), Repr::Transparent(<span class="kw">_</span>)) =&gt; <span class="bool-val">true</span>,
+<a href=#710 id=710 data-nosnippet>710</a>                (Repr::Compound(sc, sa), Repr::Compound(oc, oa)) =&gt; (sc, sa) == (oc, oa),
+<a href=#711 id=711 data-nosnippet>711</a>                <span class="kw">_ </span>=&gt; <span class="bool-val">false</span>,
+<a href=#712 id=712 data-nosnippet>712</a>            }
+<a href=#713 id=713 data-nosnippet>713</a>        }
+<a href=#714 id=714 data-nosnippet>714</a>    }
+<a href=#715 id=715 data-nosnippet>715</a>
+<a href=#716 id=716 data-nosnippet>716</a>    <span class="kw">fn </span>s() -&gt; Span {
+<a href=#717 id=717 data-nosnippet>717</a>        Span::call_site()
+<a href=#718 id=718 data-nosnippet>718</a>    }
+<a href=#719 id=719 data-nosnippet>719</a>
+<a href=#720 id=720 data-nosnippet>720</a>    <span class="attr">#[test]
+<a href=#721 id=721 data-nosnippet>721</a>    </span><span class="kw">fn </span>test() {
+<a href=#722 id=722 data-nosnippet>722</a>        <span class="comment">// Test that a given `#[repr(...)]` attribute parses and returns the
+<a href=#723 id=723 data-nosnippet>723</a>        // given `Repr` or error.
+<a href=#724 id=724 data-nosnippet>724</a>        </span><span class="macro">macro_rules!</span> test {
+<a href=#725 id=725 data-nosnippet>725</a>            ($(<span class="attr">#[<span class="macro-nonterminal">$attr</span>:meta]</span>)* =&gt; <span class="macro-nonterminal">$repr</span>:expr) =&gt; {
+<a href=#726 id=726 data-nosnippet>726</a>                <span class="macro">test!</span>(@inner $(<span class="attr">#[<span class="macro-nonterminal">$attr</span>]</span>)* =&gt; Repr =&gt; <span class="prelude-val">Ok</span>(<span class="macro-nonterminal">$repr</span>));
+<a href=#727 id=727 data-nosnippet>727</a>            };
+<a href=#728 id=728 data-nosnippet>728</a>            <span class="comment">// In the error case, the caller must explicitly provide the name of
+<a href=#729 id=729 data-nosnippet>729</a>            // the `Repr` type to assist in type inference.
+<a href=#730 id=730 data-nosnippet>730</a>            </span>(@error $(<span class="attr">#[<span class="macro-nonterminal">$attr</span>:meta]</span>)* =&gt; <span class="macro-nonterminal">$typ</span>:ident =&gt; <span class="macro-nonterminal">$repr</span>:expr) =&gt; {
+<a href=#731 id=731 data-nosnippet>731</a>                <span class="macro">test!</span>(@inner $(<span class="attr">#[<span class="macro-nonterminal">$attr</span>]</span>)* =&gt; <span class="macro-nonterminal">$typ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro-nonterminal">$repr</span>));
+<a href=#732 id=732 data-nosnippet>732</a>            };
+<a href=#733 id=733 data-nosnippet>733</a>            (@inner $(<span class="attr">#[<span class="macro-nonterminal">$attr</span>:meta]</span>)* =&gt; <span class="macro-nonterminal">$typ</span>:ident =&gt; <span class="macro-nonterminal">$repr</span>:expr) =&gt; {
+<a href=#734 id=734 data-nosnippet>734</a>                <span class="kw">let </span>attr: Attribute = <span class="macro">parse_quote!</span>($(<span class="attr">#[<span class="macro-nonterminal">$attr</span>]</span>)<span class="kw-2">*</span>);
+<a href=#735 id=735 data-nosnippet>735</a>                <span class="kw">let </span><span class="kw-2">mut </span>got = <span class="macro-nonterminal">$typ::from_attrs_inner</span>(<span class="kw-2">&amp;</span>[attr]);
+<a href=#736 id=736 data-nosnippet>736</a>                <span class="kw">let </span>expect: <span class="prelude-ty">Result</span>&lt;Repr&lt;<span class="kw">_</span>, <span class="kw">_</span>&gt;, <span class="kw">_</span>&gt; = <span class="macro-nonterminal">$repr</span>;
+<a href=#737 id=737 data-nosnippet>737</a>                <span class="kw">if </span><span class="bool-val">false </span>{
+<a href=#738 id=738 data-nosnippet>738</a>                    <span class="comment">// Force Rust to infer `got` as having the same type as
+<a href=#739 id=739 data-nosnippet>739</a>                    // `expect`.
+<a href=#740 id=740 data-nosnippet>740</a>                    </span>got = expect;
+<a href=#741 id=741 data-nosnippet>741</a>                }
+<a href=#742 id=742 data-nosnippet>742</a>                <span class="macro">assert_eq!</span>(got, expect, <span class="macro">stringify!</span>($(<span class="attr">#[<span class="macro-nonterminal">$attr</span>]</span>)<span class="kw-2">*</span>));
+<a href=#743 id=743 data-nosnippet>743</a>            };
+<a href=#744 id=744 data-nosnippet>744</a>        }
+<a href=#745 id=745 data-nosnippet>745</a>
+<a href=#746 id=746 data-nosnippet>746</a>        <span class="kw">use </span>AlignRepr::<span class="kw-2">*</span>;
+<a href=#747 id=747 data-nosnippet>747</a>        <span class="kw">use </span>CompoundRepr::<span class="kw-2">*</span>;
+<a href=#748 id=748 data-nosnippet>748</a>        <span class="kw">use </span>PrimitiveRepr::<span class="kw-2">*</span>;
+<a href=#749 id=749 data-nosnippet>749</a>        <span class="kw">let </span>nz = |n: u32| NonZeroU32::new(n).unwrap();
+<a href=#750 id=750 data-nosnippet>750</a>
+<a href=#751 id=751 data-nosnippet>751</a>        <span class="comment">// Rust treats raw identifiers and their ordinary spellings as the
+<a href=#752 id=752 data-nosnippet>752</a>        // same representation hints. Exercise every spelling recognized by
+<a href=#753 id=753 data-nosnippet>753</a>        // `RawRepr::from_meta` so that adding a hint cannot accidentally
+<a href=#754 id=754 data-nosnippet>754</a>        // reintroduce raw-identifier-sensitive parsing.
+<a href=#755 id=755 data-nosnippet>755</a>        </span><span class="macro">macro_rules!</span> test_raw_repr {
+<a href=#756 id=756 data-nosnippet>756</a>            (<span class="macro-nonterminal">$ordinary</span>:meta, <span class="macro-nonterminal">$raw</span>:meta =&gt; <span class="macro-nonterminal">$expected</span>:expr) =&gt; {{
+<a href=#757 id=757 data-nosnippet>757</a>                <span class="kw">let </span>ordinary: Meta = <span class="macro">parse_quote!</span>(<span class="macro-nonterminal">$ordinary</span>);
+<a href=#758 id=758 data-nosnippet>758</a>                <span class="kw">let </span>raw: Meta = <span class="macro">parse_quote!</span>(<span class="macro-nonterminal">$raw</span>);
+<a href=#759 id=759 data-nosnippet>759</a>                <span class="macro">assert_eq!</span>(RawRepr::from_meta(<span class="kw-2">&amp;</span>ordinary).ok().unwrap(), <span class="macro-nonterminal">$expected</span>);
+<a href=#760 id=760 data-nosnippet>760</a>                <span class="macro">assert_eq!</span>(RawRepr::from_meta(<span class="kw-2">&amp;</span>raw).ok().unwrap(), <span class="macro-nonterminal">$expected</span>);
+<a href=#761 id=761 data-nosnippet>761</a>            }};
+<a href=#762 id=762 data-nosnippet>762</a>        }
+<a href=#763 id=763 data-nosnippet>763</a>
+<a href=#764 id=764 data-nosnippet>764</a>        <span class="macro">test_raw_repr!</span>(transparent, r#transparent =&gt; RawRepr::Transparent);
+<a href=#765 id=765 data-nosnippet>765</a>        <span class="macro">test_raw_repr!</span>(C, r#C =&gt; RawRepr::C);
+<a href=#766 id=766 data-nosnippet>766</a>        <span class="macro">test_raw_repr!</span>(Rust, r#Rust =&gt; RawRepr::Rust);
+<a href=#767 id=767 data-nosnippet>767</a>        <span class="macro">test_raw_repr!</span>(u8, r#u8 =&gt; RawRepr::U8);
+<a href=#768 id=768 data-nosnippet>768</a>        <span class="macro">test_raw_repr!</span>(u16, r#u16 =&gt; RawRepr::U16);
+<a href=#769 id=769 data-nosnippet>769</a>        <span class="macro">test_raw_repr!</span>(u32, r#u32 =&gt; RawRepr::U32);
+<a href=#770 id=770 data-nosnippet>770</a>        <span class="macro">test_raw_repr!</span>(u64, r#u64 =&gt; RawRepr::U64);
+<a href=#771 id=771 data-nosnippet>771</a>        <span class="macro">test_raw_repr!</span>(u128, r#u128 =&gt; RawRepr::U128);
+<a href=#772 id=772 data-nosnippet>772</a>        <span class="macro">test_raw_repr!</span>(usize, r#usize =&gt; RawRepr::Usize);
+<a href=#773 id=773 data-nosnippet>773</a>        <span class="macro">test_raw_repr!</span>(i8, r#i8 =&gt; RawRepr::I8);
+<a href=#774 id=774 data-nosnippet>774</a>        <span class="macro">test_raw_repr!</span>(i16, r#i16 =&gt; RawRepr::I16);
+<a href=#775 id=775 data-nosnippet>775</a>        <span class="macro">test_raw_repr!</span>(i32, r#i32 =&gt; RawRepr::I32);
+<a href=#776 id=776 data-nosnippet>776</a>        <span class="macro">test_raw_repr!</span>(i64, r#i64 =&gt; RawRepr::I64);
+<a href=#777 id=777 data-nosnippet>777</a>        <span class="macro">test_raw_repr!</span>(i128, r#i128 =&gt; RawRepr::I128);
+<a href=#778 id=778 data-nosnippet>778</a>        <span class="macro">test_raw_repr!</span>(isize, r#isize =&gt; RawRepr::Isize);
+<a href=#779 id=779 data-nosnippet>779</a>        <span class="macro">test_raw_repr!</span>(align(<span class="number">2</span>), r#align(<span class="number">2</span>) =&gt; RawRepr::Align(nz(<span class="number">2</span>)));
+<a href=#780 id=780 data-nosnippet>780</a>        <span class="macro">test_raw_repr!</span>(packed, r#packed =&gt; RawRepr::Packed);
+<a href=#781 id=781 data-nosnippet>781</a>        <span class="macro">test_raw_repr!</span>(packed(<span class="number">2</span>), r#packed(<span class="number">2</span>) =&gt; RawRepr::PackedN(nz(<span class="number">2</span>)));
+<a href=#782 id=782 data-nosnippet>782</a>
+<a href=#783 id=783 data-nosnippet>783</a>        <span class="macro">test!</span>(<span class="attr">#[repr(transparent)] </span>=&gt; StructUnionRepr::Transparent(s()));
+<a href=#784 id=784 data-nosnippet>784</a>        <span class="macro">test!</span>(<span class="attr">#[r#repr(r#transparent)] </span>=&gt; StructUnionRepr::Transparent(s()));
+<a href=#785 id=785 data-nosnippet>785</a>        <span class="macro">test!</span>(<span class="attr">#[repr()] </span>=&gt; StructUnionRepr::Compound(Rust.into(), <span class="prelude-val">None</span>));
+<a href=#786 id=786 data-nosnippet>786</a>        <span class="macro">test!</span>(<span class="attr">#[repr(packed)] </span>=&gt; StructUnionRepr::Compound(Rust.into(), <span class="prelude-val">Some</span>(Packed(nz(<span class="number">1</span>)).into())));
+<a href=#787 id=787 data-nosnippet>787</a>        <span class="macro">test!</span>(<span class="attr">#[repr(packed(<span class="number">2</span>))] </span>=&gt; StructUnionRepr::Compound(Rust.into(), <span class="prelude-val">Some</span>(Packed(nz(<span class="number">2</span>)).into())));
+<a href=#788 id=788 data-nosnippet>788</a>        <span class="macro">test!</span>(<span class="attr">#[repr(align(<span class="number">1</span>))] </span>=&gt; StructUnionRepr::Compound(Rust.into(), <span class="prelude-val">Some</span>(Align(nz(<span class="number">1</span>)).into())));
+<a href=#789 id=789 data-nosnippet>789</a>        <span class="macro">test!</span>(<span class="attr">#[repr(align(<span class="number">2</span>))] </span>=&gt; StructUnionRepr::Compound(Rust.into(), <span class="prelude-val">Some</span>(Align(nz(<span class="number">2</span>)).into())));
+<a href=#790 id=790 data-nosnippet>790</a>        <span class="macro">test!</span>(<span class="attr">#[repr(C)] </span>=&gt; StructUnionRepr::Compound(C.into(), <span class="prelude-val">None</span>));
+<a href=#791 id=791 data-nosnippet>791</a>        <span class="macro">test!</span>(<span class="attr">#[repr(C, packed)] </span>=&gt; StructUnionRepr::Compound(C.into(), <span class="prelude-val">Some</span>(Packed(nz(<span class="number">1</span>)).into())));
+<a href=#792 id=792 data-nosnippet>792</a>        <span class="macro">test!</span>(<span class="attr">#[repr(C, packed(<span class="number">2</span>))] </span>=&gt; StructUnionRepr::Compound(C.into(), <span class="prelude-val">Some</span>(Packed(nz(<span class="number">2</span>)).into())));
+<a href=#793 id=793 data-nosnippet>793</a>        <span class="macro">test!</span>(<span class="attr">#[repr(C, align(<span class="number">1</span>))] </span>=&gt; StructUnionRepr::Compound(C.into(), <span class="prelude-val">Some</span>(Align(nz(<span class="number">1</span>)).into())));
+<a href=#794 id=794 data-nosnippet>794</a>        <span class="macro">test!</span>(<span class="attr">#[repr(C, align(<span class="number">2</span>))] </span>=&gt; StructUnionRepr::Compound(C.into(), <span class="prelude-val">Some</span>(Align(nz(<span class="number">2</span>)).into())));
+<a href=#795 id=795 data-nosnippet>795</a>        <span class="macro">test!</span>(<span class="attr">#[r#repr(r#C, r#align(<span class="number">2</span>))] </span>=&gt; StructUnionRepr::Compound(C.into(), <span class="prelude-val">Some</span>(Align(nz(<span class="number">2</span>)).into())));
+<a href=#796 id=796 data-nosnippet>796</a>        <span class="macro">test!</span>(<span class="attr">#[r#repr(r#C, r#packed(<span class="number">2</span>))] </span>=&gt; StructUnionRepr::Compound(C.into(), <span class="prelude-val">Some</span>(Packed(nz(<span class="number">2</span>)).into())));
+<a href=#797 id=797 data-nosnippet>797</a>
+<a href=#798 id=798 data-nosnippet>798</a>        <span class="macro">test!</span>(<span class="attr">#[repr(transparent)] </span>=&gt; EnumRepr::Transparent(s()));
+<a href=#799 id=799 data-nosnippet>799</a>        <span class="macro">test!</span>(<span class="attr">#[repr()] </span>=&gt; EnumRepr::Compound(Rust.into(), <span class="prelude-val">None</span>));
+<a href=#800 id=800 data-nosnippet>800</a>        <span class="macro">test!</span>(<span class="attr">#[repr(align(<span class="number">1</span>))] </span>=&gt; EnumRepr::Compound(Rust.into(), <span class="prelude-val">Some</span>(Align(nz(<span class="number">1</span>)).into())));
+<a href=#801 id=801 data-nosnippet>801</a>        <span class="macro">test!</span>(<span class="attr">#[repr(align(<span class="number">2</span>))] </span>=&gt; EnumRepr::Compound(Rust.into(), <span class="prelude-val">Some</span>(Align(nz(<span class="number">2</span>)).into())));
+<a href=#802 id=802 data-nosnippet>802</a>
+<a href=#803 id=803 data-nosnippet>803</a>        <span class="macro">macro_rules!</span> for_each_compound_repr {
+<a href=#804 id=804 data-nosnippet>804</a>            ($(<span class="macro-nonterminal">$r</span>:tt =&gt; <span class="macro-nonterminal">$var</span>:expr),<span class="kw-2">*</span>) =&gt; {
+<a href=#805 id=805 data-nosnippet>805</a>                $(
+<a href=#806 id=806 data-nosnippet>806</a>                    <span class="macro">test!</span>(<span class="attr">#[repr(<span class="macro-nonterminal">$r</span>)] </span>=&gt; EnumRepr::Compound(<span class="macro-nonterminal">$var</span>.into(), <span class="prelude-val">None</span>));
+<a href=#807 id=807 data-nosnippet>807</a>                    <span class="macro">test!</span>(<span class="attr">#[repr(<span class="macro-nonterminal">$r</span>, align(<span class="number">1</span>))] </span>=&gt; EnumRepr::Compound(<span class="macro-nonterminal">$var</span>.into(), <span class="prelude-val">Some</span>(Align(nz(<span class="number">1</span>)).into())));
+<a href=#808 id=808 data-nosnippet>808</a>                    <span class="macro">test!</span>(<span class="attr">#[repr(<span class="macro-nonterminal">$r</span>, align(<span class="number">2</span>))] </span>=&gt; EnumRepr::Compound(<span class="macro-nonterminal">$var</span>.into(), <span class="prelude-val">Some</span>(Align(nz(<span class="number">2</span>)).into())));
+<a href=#809 id=809 data-nosnippet>809</a>                )*
+<a href=#810 id=810 data-nosnippet>810</a>            }
+<a href=#811 id=811 data-nosnippet>811</a>        }
+<a href=#812 id=812 data-nosnippet>812</a>
+<a href=#813 id=813 data-nosnippet>813</a>        <span class="macro">for_each_compound_repr!</span>(
+<a href=#814 id=814 data-nosnippet>814</a>            C =&gt; C,
+<a href=#815 id=815 data-nosnippet>815</a>            u8 =&gt; Primitive(U8),
+<a href=#816 id=816 data-nosnippet>816</a>            u16 =&gt; Primitive(U16),
+<a href=#817 id=817 data-nosnippet>817</a>            u32 =&gt; Primitive(U32),
+<a href=#818 id=818 data-nosnippet>818</a>            u64 =&gt; Primitive(U64),
+<a href=#819 id=819 data-nosnippet>819</a>            usize =&gt; Primitive(Usize),
+<a href=#820 id=820 data-nosnippet>820</a>            i8 =&gt; Primitive(I8),
+<a href=#821 id=821 data-nosnippet>821</a>            i16 =&gt; Primitive(I16),
+<a href=#822 id=822 data-nosnippet>822</a>            i32 =&gt; Primitive(I32),
+<a href=#823 id=823 data-nosnippet>823</a>            i64 =&gt; Primitive(I64),
+<a href=#824 id=824 data-nosnippet>824</a>            isize =&gt; Primitive(Isize)
+<a href=#825 id=825 data-nosnippet>825</a>        );
+<a href=#826 id=826 data-nosnippet>826</a>
+<a href=#827 id=827 data-nosnippet>827</a>        <span class="kw">use </span>FromAttrsError::<span class="kw-2">*</span>;
+<a href=#828 id=828 data-nosnippet>828</a>        <span class="kw">use </span>FromRawReprsError::<span class="kw-2">*</span>;
+<a href=#829 id=829 data-nosnippet>829</a>
+<a href=#830 id=830 data-nosnippet>830</a>        <span class="comment">// Run failure tests which are valid for both `StructUnionRepr` and
+<a href=#831 id=831 data-nosnippet>831</a>        // `EnumRepr`.
+<a href=#832 id=832 data-nosnippet>832</a>        </span><span class="macro">macro_rules!</span> for_each_repr_type {
+<a href=#833 id=833 data-nosnippet>833</a>            ($(<span class="macro-nonterminal">$repr</span>:ident),<span class="kw-2">*</span>) =&gt; {
+<a href=#834 id=834 data-nosnippet>834</a>                $(
+<a href=#835 id=835 data-nosnippet>835</a>                    <span class="comment">// Invalid packed or align attributes
+<a href=#836 id=836 data-nosnippet>836</a>                    </span><span class="macro">test!</span>(@error <span class="attr">#[repr(packed(<span class="number">0</span>))] </span>=&gt; <span class="macro-nonterminal">$repr </span>=&gt; Unrecognized.into());
+<a href=#837 id=837 data-nosnippet>837</a>                    <span class="macro">test!</span>(@error <span class="attr">#[repr(packed(<span class="number">3</span>))] </span>=&gt; <span class="macro-nonterminal">$repr </span>=&gt; Unrecognized.into());
+<a href=#838 id=838 data-nosnippet>838</a>                    <span class="macro">test!</span>(@error <span class="attr">#[repr(align(<span class="number">0</span>))] </span>=&gt; <span class="macro-nonterminal">$repr </span>=&gt; Unrecognized.into());
+<a href=#839 id=839 data-nosnippet>839</a>                    <span class="macro">test!</span>(@error <span class="attr">#[repr(align(<span class="number">3</span>))] </span>=&gt; <span class="macro-nonterminal">$repr </span>=&gt; Unrecognized.into());
+<a href=#840 id=840 data-nosnippet>840</a>
+<a href=#841 id=841 data-nosnippet>841</a>                    <span class="comment">// Conflicts
+<a href=#842 id=842 data-nosnippet>842</a>                    </span><span class="macro">test!</span>(@error <span class="attr">#[repr(transparent, transparent)] </span>=&gt; <span class="macro-nonterminal">$repr </span>=&gt; FromRawReprs(Conflict).into());
+<a href=#843 id=843 data-nosnippet>843</a>                    <span class="macro">test!</span>(@error <span class="attr">#[repr(transparent, C)] </span>=&gt; <span class="macro-nonterminal">$repr </span>=&gt; FromRawReprs(Conflict).into());
+<a href=#844 id=844 data-nosnippet>844</a>                    <span class="macro">test!</span>(@error <span class="attr">#[repr(transparent, Rust)] </span>=&gt; <span class="macro-nonterminal">$repr </span>=&gt; FromRawReprs(Conflict).into());
+<a href=#845 id=845 data-nosnippet>845</a>
+<a href=#846 id=846 data-nosnippet>846</a>                    <span class="macro">test!</span>(@error <span class="attr">#[repr(C, transparent)] </span>=&gt; <span class="macro-nonterminal">$repr </span>=&gt; FromRawReprs(Conflict).into());
+<a href=#847 id=847 data-nosnippet>847</a>                    <span class="macro">test!</span>(@error <span class="attr">#[repr(C, C)] </span>=&gt; <span class="macro-nonterminal">$repr </span>=&gt; FromRawReprs(Conflict).into());
+<a href=#848 id=848 data-nosnippet>848</a>                    <span class="macro">test!</span>(@error <span class="attr">#[repr(C, Rust)] </span>=&gt; <span class="macro-nonterminal">$repr </span>=&gt; FromRawReprs(Conflict).into());
+<a href=#849 id=849 data-nosnippet>849</a>
+<a href=#850 id=850 data-nosnippet>850</a>                    <span class="macro">test!</span>(@error <span class="attr">#[repr(Rust, transparent)] </span>=&gt; <span class="macro-nonterminal">$repr </span>=&gt; FromRawReprs(Conflict).into());
+<a href=#851 id=851 data-nosnippet>851</a>                    <span class="macro">test!</span>(@error <span class="attr">#[repr(Rust, C)] </span>=&gt; <span class="macro-nonterminal">$repr </span>=&gt; FromRawReprs(Conflict).into());
+<a href=#852 id=852 data-nosnippet>852</a>                    <span class="macro">test!</span>(@error <span class="attr">#[repr(Rust, Rust)] </span>=&gt; <span class="macro-nonterminal">$repr </span>=&gt; FromRawReprs(Conflict).into());
+<a href=#853 id=853 data-nosnippet>853</a>                )*
+<a href=#854 id=854 data-nosnippet>854</a>            }
+<a href=#855 id=855 data-nosnippet>855</a>        }
 <a href=#856 id=856 data-nosnippet>856</a>
-<a href=#857 id=857 data-nosnippet>857</a>        <span class="comment">// Enum-specific conflicts.
-<a href=#858 id=858 data-nosnippet>858</a>        //
-<a href=#859 id=859 data-nosnippet>859</a>        // We don't bother to test every combination since that would be a huge
-<a href=#860 id=860 data-nosnippet>860</a>        // number (enums can have primitive reprs u8, u16, u32, u64, usize, i8,
-<a href=#861 id=861 data-nosnippet>861</a>        // i16, i32, i64, and isize). Instead, since the conflict logic doesn't
-<a href=#862 id=862 data-nosnippet>862</a>        // care what specific value of `PrimitiveRepr` is present, we assume
-<a href=#863 id=863 data-nosnippet>863</a>        // that testing against u8 alone is fine.
-<a href=#864 id=864 data-nosnippet>864</a>        </span><span class="macro">test!</span>(@error <span class="attr">#[repr(transparent, u8)] </span>=&gt; EnumRepr =&gt; FromRawReprs(Conflict).into());
-<a href=#865 id=865 data-nosnippet>865</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(u8, transparent)] </span>=&gt; EnumRepr =&gt; FromRawReprs(Conflict).into());
-<a href=#866 id=866 data-nosnippet>866</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(C, u8)] </span>=&gt; EnumRepr =&gt; FromRawReprs(Conflict).into());
-<a href=#867 id=867 data-nosnippet>867</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(u8, C)] </span>=&gt; EnumRepr =&gt; FromRawReprs(Conflict).into());
-<a href=#868 id=868 data-nosnippet>868</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(Rust, u8)] </span>=&gt; EnumRepr =&gt; FromRawReprs(Conflict).into());
-<a href=#869 id=869 data-nosnippet>869</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(u8, Rust)] </span>=&gt; EnumRepr =&gt; FromRawReprs(Conflict).into());
-<a href=#870 id=870 data-nosnippet>870</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(u8, u8)] </span>=&gt; EnumRepr =&gt; FromRawReprs(Conflict).into());
-<a href=#871 id=871 data-nosnippet>871</a>
-<a href=#872 id=872 data-nosnippet>872</a>        <span class="comment">// Illegal struct/union reprs
-<a href=#873 id=873 data-nosnippet>873</a>        </span><span class="macro">test!</span>(@error <span class="attr">#[repr(u8)] </span>=&gt; StructUnionRepr =&gt; FromRawReprs(Single(UnsupportedReprError)).into());
-<a href=#874 id=874 data-nosnippet>874</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(u16)] </span>=&gt; StructUnionRepr =&gt; FromRawReprs(Single(UnsupportedReprError)).into());
-<a href=#875 id=875 data-nosnippet>875</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(u32)] </span>=&gt; StructUnionRepr =&gt; FromRawReprs(Single(UnsupportedReprError)).into());
-<a href=#876 id=876 data-nosnippet>876</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(u64)] </span>=&gt; StructUnionRepr =&gt; FromRawReprs(Single(UnsupportedReprError)).into());
-<a href=#877 id=877 data-nosnippet>877</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(usize)] </span>=&gt; StructUnionRepr =&gt; FromRawReprs(Single(UnsupportedReprError)).into());
-<a href=#878 id=878 data-nosnippet>878</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(i8)] </span>=&gt; StructUnionRepr =&gt; FromRawReprs(Single(UnsupportedReprError)).into());
-<a href=#879 id=879 data-nosnippet>879</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(i16)] </span>=&gt; StructUnionRepr =&gt; FromRawReprs(Single(UnsupportedReprError)).into());
-<a href=#880 id=880 data-nosnippet>880</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(i32)] </span>=&gt; StructUnionRepr =&gt; FromRawReprs(Single(UnsupportedReprError)).into());
-<a href=#881 id=881 data-nosnippet>881</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(i64)] </span>=&gt; StructUnionRepr =&gt; FromRawReprs(Single(UnsupportedReprError)).into());
-<a href=#882 id=882 data-nosnippet>882</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(isize)] </span>=&gt; StructUnionRepr =&gt; FromRawReprs(Single(UnsupportedReprError)).into());
-<a href=#883 id=883 data-nosnippet>883</a>
-<a href=#884 id=884 data-nosnippet>884</a>        <span class="comment">// Illegal enum reprs
-<a href=#885 id=885 data-nosnippet>885</a>        </span><span class="macro">test!</span>(@error <span class="attr">#[repr(packed)] </span>=&gt; EnumRepr =&gt; FromRawReprs(Single(UnsupportedReprError)).into());
-<a href=#886 id=886 data-nosnippet>886</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(packed(<span class="number">1</span>))] </span>=&gt; EnumRepr =&gt; FromRawReprs(Single(UnsupportedReprError)).into());
-<a href=#887 id=887 data-nosnippet>887</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(packed(<span class="number">2</span>))] </span>=&gt; EnumRepr =&gt; FromRawReprs(Single(UnsupportedReprError)).into());
-<a href=#888 id=888 data-nosnippet>888</a>    }
-<a href=#889 id=889 data-nosnippet>889</a>}
+<a href=#857 id=857 data-nosnippet>857</a>        <span class="macro">for_each_repr_type!</span>(StructUnionRepr, EnumRepr);
+<a href=#858 id=858 data-nosnippet>858</a>
+<a href=#859 id=859 data-nosnippet>859</a>        <span class="comment">// Enum-specific conflicts.
+<a href=#860 id=860 data-nosnippet>860</a>        //
+<a href=#861 id=861 data-nosnippet>861</a>        // We don't bother to test every combination since that would be a huge
+<a href=#862 id=862 data-nosnippet>862</a>        // number (enums can have primitive reprs u8, u16, u32, u64, usize, i8,
+<a href=#863 id=863 data-nosnippet>863</a>        // i16, i32, i64, and isize). Instead, since the conflict logic doesn't
+<a href=#864 id=864 data-nosnippet>864</a>        // care what specific value of `PrimitiveRepr` is present, we assume
+<a href=#865 id=865 data-nosnippet>865</a>        // that testing against u8 alone is fine.
+<a href=#866 id=866 data-nosnippet>866</a>        </span><span class="macro">test!</span>(@error <span class="attr">#[repr(transparent, u8)] </span>=&gt; EnumRepr =&gt; FromRawReprs(Conflict).into());
+<a href=#867 id=867 data-nosnippet>867</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(u8, transparent)] </span>=&gt; EnumRepr =&gt; FromRawReprs(Conflict).into());
+<a href=#868 id=868 data-nosnippet>868</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(C, u8)] </span>=&gt; EnumRepr =&gt; FromRawReprs(Conflict).into());
+<a href=#869 id=869 data-nosnippet>869</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(u8, C)] </span>=&gt; EnumRepr =&gt; FromRawReprs(Conflict).into());
+<a href=#870 id=870 data-nosnippet>870</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(Rust, u8)] </span>=&gt; EnumRepr =&gt; FromRawReprs(Conflict).into());
+<a href=#871 id=871 data-nosnippet>871</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(u8, Rust)] </span>=&gt; EnumRepr =&gt; FromRawReprs(Conflict).into());
+<a href=#872 id=872 data-nosnippet>872</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(u8, u8)] </span>=&gt; EnumRepr =&gt; FromRawReprs(Conflict).into());
+<a href=#873 id=873 data-nosnippet>873</a>
+<a href=#874 id=874 data-nosnippet>874</a>        <span class="comment">// Illegal struct/union reprs
+<a href=#875 id=875 data-nosnippet>875</a>        </span><span class="macro">test!</span>(@error <span class="attr">#[repr(u8)] </span>=&gt; StructUnionRepr =&gt; FromRawReprs(Single(UnsupportedReprError)).into());
+<a href=#876 id=876 data-nosnippet>876</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(u16)] </span>=&gt; StructUnionRepr =&gt; FromRawReprs(Single(UnsupportedReprError)).into());
+<a href=#877 id=877 data-nosnippet>877</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(u32)] </span>=&gt; StructUnionRepr =&gt; FromRawReprs(Single(UnsupportedReprError)).into());
+<a href=#878 id=878 data-nosnippet>878</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(u64)] </span>=&gt; StructUnionRepr =&gt; FromRawReprs(Single(UnsupportedReprError)).into());
+<a href=#879 id=879 data-nosnippet>879</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(usize)] </span>=&gt; StructUnionRepr =&gt; FromRawReprs(Single(UnsupportedReprError)).into());
+<a href=#880 id=880 data-nosnippet>880</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(i8)] </span>=&gt; StructUnionRepr =&gt; FromRawReprs(Single(UnsupportedReprError)).into());
+<a href=#881 id=881 data-nosnippet>881</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(i16)] </span>=&gt; StructUnionRepr =&gt; FromRawReprs(Single(UnsupportedReprError)).into());
+<a href=#882 id=882 data-nosnippet>882</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(i32)] </span>=&gt; StructUnionRepr =&gt; FromRawReprs(Single(UnsupportedReprError)).into());
+<a href=#883 id=883 data-nosnippet>883</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(i64)] </span>=&gt; StructUnionRepr =&gt; FromRawReprs(Single(UnsupportedReprError)).into());
+<a href=#884 id=884 data-nosnippet>884</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(isize)] </span>=&gt; StructUnionRepr =&gt; FromRawReprs(Single(UnsupportedReprError)).into());
+<a href=#885 id=885 data-nosnippet>885</a>
+<a href=#886 id=886 data-nosnippet>886</a>        <span class="comment">// Illegal enum reprs
+<a href=#887 id=887 data-nosnippet>887</a>        </span><span class="macro">test!</span>(@error <span class="attr">#[repr(packed)] </span>=&gt; EnumRepr =&gt; FromRawReprs(Single(UnsupportedReprError)).into());
+<a href=#888 id=888 data-nosnippet>888</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(packed(<span class="number">1</span>))] </span>=&gt; EnumRepr =&gt; FromRawReprs(Single(UnsupportedReprError)).into());
+<a href=#889 id=889 data-nosnippet>889</a>        <span class="macro">test!</span>(@error <span class="attr">#[repr(packed(<span class="number">2</span>))] </span>=&gt; EnumRepr =&gt; FromRawReprs(Single(UnsupportedReprError)).into());
+<a href=#890 id=890 data-nosnippet>890</a>    }
+<a href=#891 id=891 data-nosnippet>891</a>}
 </code></pre></div></section></main></body></html>
