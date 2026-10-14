@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Image type syntax - Rust GPU Dev Guide</title>
+        <title>Writing shaders - Rust GPU Dev Guide</title>
 
 
         <!-- Custom HTML head -->
@@ -12,33 +12,33 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff">
 
-        <link rel="icon" href="favicon-de23e50b.svg">
-        <link rel="shortcut icon" href="favicon-8114d1fc.png">
-        <link rel="stylesheet" href="css/variables-8adf115d.css">
-        <link rel="stylesheet" href="css/general-e96d0476.css">
-        <link rel="stylesheet" href="css/chrome-d279d366.css">
-        <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
+        <link rel="icon" href="../favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="../favicon-8114d1fc.png">
+        <link rel="stylesheet" href="../css/variables-8adf115d.css">
+        <link rel="stylesheet" href="../css/general-e96d0476.css">
+        <link rel="stylesheet" href="../css/chrome-d279d366.css">
+        <link rel="stylesheet" href="../css/print-9e4910d8.css" media="print">
 
         <!-- Fonts -->
-        <link rel="stylesheet" href="fonts/fonts-9644e21d.css">
+        <link rel="stylesheet" href="../fonts/fonts-9644e21d.css">
 
         <!-- Highlight.js Stylesheets -->
-        <link rel="stylesheet" id="mdbook-highlight-css" href="highlight-493f70e1.css">
-        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="tomorrow-night-4c0ae647.css">
-        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="ayu-highlight-3fdfc3ac.css">
+        <link rel="stylesheet" id="mdbook-highlight-css" href="../highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="../tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="../ayu-highlight-3fdfc3ac.css">
 
         <!-- Custom theme stylesheets -->
 
 
         <!-- Provide site root and default themes to javascript -->
         <script>
-            const path_to_root = "";
+            const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-c6de833e.js";
+            window.path_to_searchindex_js = "../searchindex-fbdf6fc4.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-260da5bd.js"></script>
+        <script src="../toc-4cb23e53.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -105,7 +105,7 @@
             <!-- populated by js -->
             <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
             <noscript>
-                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
             </noscript>
             <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -140,7 +140,7 @@
                     <h1 class="menu-title">Rust GPU Dev Guide</h1>
 
                     <div class="right-buttons">
-                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
                             <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
                         </a>
 
@@ -174,30 +174,111 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="image-type-syntax"><a class="header" href="#image-type-syntax">Image type syntax</a></h1>
-<p>There are a huge number of combinations of image types in SPIR-V. They are represented by a const
-generic type called <code>spirv_std::image::Image</code>, however, specifying the generic parameters of this
-type is incredibly tedious, so a wrapper macro, <code>spirv_std::Image!</code> can be used to write the type
-instead.</p>
-<p>The specific syntax and meaning of the arguments to the <code>Image!</code> macro can be found in
-<a href="https://rust-gpu.github.io/rust-gpu/api/spirv_std/macro.Image.html">rustdoc</a>.</p>
-<p>Some type aliases for common image formats can be found in the
-<a href="https://rust-gpu.github.io/rust-gpu/api/spirv_std/image/index.html"><code>spirv_std::image</code></a>
-module. For example, <code>Image2d</code> is a very commonly used type, corresponding to <code>texture2D</code> in GLSL,
-and is likely what you want if you want a regular old sampled texture.</p>
-<pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
+                        <h1 id="writing-shaders"><a class="header" href="#writing-shaders">Writing shaders</a></h1>
+<p>In this chapter we will have a look how to make your own shaders in rust-gpu.</p>
+<p>This introduction is written based on <a href="./template.html">our rust-gpu template project</a>, we recommend setting it up locally if you want to follow along.</p>
+<h3 id="your-first-fragment-shader"><a class="header" href="#your-first-fragment-shader">Your first fragment shader</a></h3>
+<p>If you open up <a href="https://github.com/Rust-GPU/rust-gpu-template/blob/main/generated/graphics/wgpu/cargo-gpu/mygraphics-shaders/src/lib.rs"><code>/mygraphics-shaders/src/lib.rs</code></a>, you’ll find a function called <code>main_fs</code> like this:</p>
+<pre class="playground"><code class="language-rust">#[spirv(fragment)]
+pub fn main_fs(vtx_color: Vec3, output: &amp;mut Vec4) {
+    *output = Vec4::from((vtx_color, 1.));
+}</code></pre>
+<p>This is an ordinary rust function with a special macro attached to it, marking it as a fragment shader (sometimes also called pixel shader). In this demo, it is evaluated once for each pixel of our triangle and computes the color that this particular pixel should be. So if we wanted our triangle to be all red, we could change the contents of the function to:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>type Image2d = Image!(2D, type=f32, sampled);
+</span>*output = Vec4::new(1., 0., 0., 1.);
 <span class="boring">}</span></code></pre>
+<p>Now <code>cargo run</code> the project and you should see a red triangle.</p>
+<p>Just setting the triangle to a single color is boring, so let’s have a look how to declare inputs and outputs.</p>
+<h3 id="inputs-and-outputs"><a class="header" href="#inputs-and-outputs">Inputs and Outputs</a></h3>
+<p>The fragment shader above is a great example for the two basic parameters:</p>
+<ul>
+<li><code>vtx_color: Vec3</code> parameters passed <strong>by-value</strong> declare an <strong>input</strong> to the shader. In GLSL: <code>in vec3 vtx_color;</code>.</li>
+<li><code>output: &amp;mut Vec4</code>: parameters passed <strong>by-mutable-reference</strong> declare an <strong>output</strong> to the shader. In GLSL: <code>out vec4 output;</code>.</li>
+</ul>
+<p>Unlike most other shader languages, inputs and outputs can’t just be declared anywhere within our code and includes. Instead, they are passed as parameters to your entry point function, centralizing where they can be declared.</p>
+<blockquote class="blockquote-tag blockquote-tag-note">
+<p class="blockquote-tag-title"><svg viewbox="0 0 16 16" width="18" height="18"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>Note</p>
+<p>While this design makes it a lot easier to figure out all the things your shader is declaring, we are aware that it makes it difficult to share these declarations across multiple shaders. We hope to rectify these problems in future rust-gpu versions.</p>
+</blockquote>
+<h3 id="built-ins-and-bindings"><a class="header" href="#built-ins-and-bindings">Built-ins and Bindings</a></h3>
+<p>Inputs and outputs are by far not the only declaration, so let’s have a look at the vertex shader:</p>
+<pre class="playground"><code class="language-rust">#[spirv(vertex)]
+pub fn main_vs(
+    #[spirv(descriptor_set = 0, binding = 0, storage_buffer)] constants: &amp;ShaderConstants,
+    #[spirv(vertex_index)] vert_id: i32,
+    #[spirv(position)] vtx_pos: &amp;mut Vec4,
+    vtx_color: &amp;mut Vec3,
+) {
+    let time = constants.time * constants.speed + vert_id as f32 * (2. * PI * 120. / 360.);
+    let position = vec2(f32::sin(time), f32::cos(time)) + constants.offset;
+    *vtx_pos = Vec4::from((position, 0.0, 1.0));
+
+    *vtx_color = [vec3(1., 0., 0.), vec3(0., 1., 0.), vec3(0., 0., 1.)][vert_id as usize % 3];
+}</code></pre>
+<p>The vertex shader makes the triangle rotate by computing the vertex positions on the GPU.</p>
+<p>It declares two built-ins that are only available vertex shader:</p>
+<ul>
+<li><code>#[spirv(descriptor_set = 0, binding = 0, storage_buffer)] constants: &amp;ShaderConstants</code> declares a storage buffer on the “slot” at descriptor set 0 and binding 0 in glsl terminology. This translates to bind group 0 and binding 0 in the wgpu API, we’ll have more detailed look at buffers in the next section. GLSL: <code>layout(set = 0, binding = 0) ShaderConstants constants;</code></li>
+<li><code>#[spirv(vertex_index)] vert_id: i32</code> is an input built-in that is the index of the vertex. GLSL: <code>gl_VertexID</code></li>
+<li><code>#[spirv(position)] vtx_pos: &amp;mut Vec4</code> is an output built-in to set the position of the vertex for the rasterizer. GLSL: <code>gl_Position</code></li>
+<li><code>vtx_color: &amp;mut Vec3</code> is a standard output that is forwarded to our fragment shader. GLSL: <code>out vec3 vtx_color</code></li>
+</ul>
+<blockquote class="blockquote-tag blockquote-tag-note">
+<p class="blockquote-tag-title"><svg viewbox="0 0 16 16" width="18" height="18"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>Note</p>
+<p>Unfortunately, the built-ins have magic names. You can look up most of them in <a href="https://github.com/Rust-GPU/rust-gpu/blob/main/tests/compiletests/ui/spirv-attr/all-builtins.rs">this compiletest</a> and <a href="https://github.com/Rust-GPU/rust-gpu/blob/main/crates/rustc_codegen_spirv/src/symbols.rs#L38">in the compiler source code here</a>.</p>
+</blockquote>
+<h3 id="sharing-data-structures-between-cpu-and-shaders"><a class="header" href="#sharing-data-structures-between-cpu-and-shaders">Sharing data structures between CPU and shaders</a></h3>
+<p>The vertex shader declares a storage buffer of type <code>ShaderConstants</code>, which is defined in the shader crate like this:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+#[repr(C)]
+pub struct ShaderConstants {
+    pub time: f32,
+    pub speed: f32,
+    pub offset: Vec2,
+}
+<span class="boring">}</span></code></pre>
+<p>It is just an ordinary rust struct that derives <a href="https://docs.rs/bytemuck/latest/bytemuck/trait.Pod.html"><code>bytemuck::Pod</code></a>. Deriving <code>Pod</code> allows us to use the bytemuck library to convert our struct into a slice of u8s, write those bytes into a buffer on the GPU, and convert them back to our <code>ShaderConstants</code> in our shader. But to implement <code>Pod</code> our struct needs to fulfill a complex set of unsafe invariants, which the <code>Pod</code> derive macro will check for:</p>
+<ul>
+<li>It must be marked with <code>#[repr(C)]</code> so our struct has a consistent layout between our CPU compile and shader compile.</li>
+<li>The type must not have any padding.</li>
+<li>It also needs to derive <a href="https://docs.rs/bytemuck/latest/bytemuck/trait.Zeroable.html"><code>Zeroable</code></a></li>
+<li>And all of the above must also hold for any members of the struct.</li>
+</ul>
+<blockquote class="blockquote-tag blockquote-tag-warning">
+<p class="blockquote-tag-title"><svg viewbox="0 0 16 16" width="18" height="18"><path d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"></path></svg>Warning</p>
+<p>rust-gpu does not verify that your declarations actually implement <code>Pod</code></p>
+</blockquote>
+<p>Since the CPU crate <code>mygraphics</code> depends on our GPU crate <code>mygraphics-shaders</code>, we can use our <code>ShaderConstants</code> type in our CPU code. Here is an example constructing our <code>ShaderConstants</code>, converting them to a <code>&amp;[u8]</code> and creating a new <code>wgpu</code> buffer with them:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let shader_constants = ShaderConstants {
+    time: get_time(),
+    speed: 0.2,
+    offset: Vec2::new(0., 0.),
+};
+let contents = bytemuck::bytes_of(&amp;shader_constants);
+let buffer = device.create_buffer_init(&amp;BufferInitDescriptor {
+    label: Some("ShaderConstants"),
+    usage: BufferUsages::STORAGE,
+    contents,
+});
+<span class="boring">}</span></code></pre>
+<p>You can then create a wgpu bind group / vulkan descriptor set with said buffer and submit some work to the GPU with our shader, not detailed here as we assume you to already be familiar with graphics APIs.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="inline-asm.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../getting-started/structure.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
+                            <a rel="next prefetch" href="../getting-started/images.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
 
                         <div style="clear: both"></div>
                     </nav>
@@ -205,10 +286,13 @@ and is likely what you want if you want a regular old sampled texture.</p>
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="inline-asm.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../getting-started/structure.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
+                    <a rel="next prefetch" href="../getting-started/images.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
             </nav>
 
         </div>
@@ -226,13 +310,13 @@ and is likely what you want if you want a regular old sampled texture.</p>
         </script>
 
 
-        <script src="elasticlunr-ef4e11c1.min.js"></script>
-        <script src="mark-09e88c2c.min.js"></script>
-        <script src="searcher-09f2665d.js"></script>
+        <script src="../elasticlunr-ef4e11c1.min.js"></script>
+        <script src="../mark-09e88c2c.min.js"></script>
+        <script src="../searcher-09f2665d.js"></script>
 
-        <script src="clipboard-1626706a.min.js"></script>
-        <script src="highlight-abc7f01d.js"></script>
-        <script src="book-609e4cb8.js"></script>
+        <script src="../clipboard-1626706a.min.js"></script>
+        <script src="../highlight-abc7f01d.js"></script>
+        <script src="../book-609e4cb8.js"></script>
 
         <!-- Custom JS scripts -->
 

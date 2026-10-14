@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Building - Rust GPU Dev Guide</title>
+        <title>Compute shaders - Rust GPU Dev Guide</title>
 
 
         <!-- Custom HTML head -->
@@ -12,33 +12,33 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff">
 
-        <link rel="icon" href="favicon-de23e50b.svg">
-        <link rel="shortcut icon" href="favicon-8114d1fc.png">
-        <link rel="stylesheet" href="css/variables-8adf115d.css">
-        <link rel="stylesheet" href="css/general-e96d0476.css">
-        <link rel="stylesheet" href="css/chrome-d279d366.css">
-        <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
+        <link rel="icon" href="../favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="../favicon-8114d1fc.png">
+        <link rel="stylesheet" href="../css/variables-8adf115d.css">
+        <link rel="stylesheet" href="../css/general-e96d0476.css">
+        <link rel="stylesheet" href="../css/chrome-d279d366.css">
+        <link rel="stylesheet" href="../css/print-9e4910d8.css" media="print">
 
         <!-- Fonts -->
-        <link rel="stylesheet" href="fonts/fonts-9644e21d.css">
+        <link rel="stylesheet" href="../fonts/fonts-9644e21d.css">
 
         <!-- Highlight.js Stylesheets -->
-        <link rel="stylesheet" id="mdbook-highlight-css" href="highlight-493f70e1.css">
-        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="tomorrow-night-4c0ae647.css">
-        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="ayu-highlight-3fdfc3ac.css">
+        <link rel="stylesheet" id="mdbook-highlight-css" href="../highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="../tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="../ayu-highlight-3fdfc3ac.css">
 
         <!-- Custom theme stylesheets -->
 
 
         <!-- Provide site root and default themes to javascript -->
         <script>
-            const path_to_root = "";
+            const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-c6de833e.js";
+            window.path_to_searchindex_js = "../searchindex-fbdf6fc4.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-260da5bd.js"></script>
+        <script src="../toc-4cb23e53.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -105,7 +105,7 @@
             <!-- populated by js -->
             <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
             <noscript>
-                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
             </noscript>
             <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -140,7 +140,7 @@
                     <h1 class="menu-title">Rust GPU Dev Guide</h1>
 
                     <div class="right-buttons">
-                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
                             <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
                         </a>
 
@@ -174,48 +174,74 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="building-rust-gpu"><a class="header" href="#building-rust-gpu">Building Rust-GPU</a></h1>
-<h2 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h2>
-<ol>
-<li>
-<p>Clone the repository.</p>
-<pre><code class="language-shell">git clone --recurse-submodules https://github.com/rust-gpu/rust-gpu
-</code></pre>
-</li>
-<li>
-<p><strong>optional</strong> Install <a href="https://github.com/KhronosGroup/SPIRV-Tools#downloads">SPIRV-Tools</a> and add it to your <code>PATH</code>. You can skip this step if you just want to run examples with the defaults. See <a href="#using-installed-spirv-tools">Using installed SPIRV-Tools</a> if you decide to go with this option.</p>
-</li>
-<li>
-<p>Next, look at the <a href="https://github.com/rust-gpu/rust-gpu/tree/main/examples">examples</a> folder. There are two kinds of targets here: [runners] and [shaders]. The projects inside <code>shaders</code> are “GPU crates”, i.e. ones that will be compiled to one or more SPIR-V modules. The <code>runner</code> projects are normal, CPU crates that use some graphics backend (currently, we have a <a href="https://github.com/rust-gpu/rust-gpu/tree/main/examples/runners/wgpu"><code>wgpu</code> runner</a>, a <a href="https://github.com/rust-gpu/rust-gpu/tree/main/examples/runners/ash">Vulkan runner</a> through <code>ash</code>, and a barebones pure software <a href="https://github.com/rust-gpu/rust-gpu/tree/main/examples/runners/cpu">CPU runner</a>) to actually run one of the “GPU crate” shaders.</p>
-<p>Run the example:</p>
-<pre><code class="language-shell">cargo run --bin example-runner-wgpu
-</code></pre>
-<p>This will build <code>rustc_codegen_spirv</code>, the compiler, then use that compiler to build <a href="examples/shaders/sky-shader"><code>sky-shader</code></a> into a SPIR-V module, then finally, build a <code>wgpu</code> sample app (modified from <a href="https://github.com/gfx-rs/wgpu-rs/tree/master/examples/hello-triangle"><code>wgpu</code>’s examples</a>) using the built SPIR-V module to display the shader in a window.</p>
-</li>
-</ol>
-<h2 id="prerequisite-linux-packages-recommended-to-install-before-building-rust-gpu"><a class="header" href="#prerequisite-linux-packages-recommended-to-install-before-building-rust-gpu">Prerequisite linux packages recommended to install before building Rust-GPU</a></h2>
-<p>You may need the development version (i.e. headers/etc. included) of some packages in some distributions to be able to
-build the examples - specifically, x11 and libxkbcommon, as well as gcc/clang with c++ support. These packages may be
-called (fedora) <code>libX11-devel</code>, <code>libxkbcommon-x11-devel</code>, and <code>gcc-c++</code>, or (ubuntu) <code>libxkbcommon-x11-dev</code>,
-<code>libx11-dev</code>, and <code>gcc</code>.</p>
-<h2 id="using-installed-spirv-tools"><a class="header" href="#using-installed-spirv-tools">Using installed SPIRV-Tools</a></h2>
-<p>By default, all of the crates and examples in this repo will compile the <a href="https://crates.io/crates/spirv-tools-sys"><code>spirv-tools-sys</code></a> crate, including a lot of C++ code from <a href="https://github.com/EmbarkStudios/SPIRV-Tools">SPIRV-Tools</a>. If you don’t want to build the C++ code because you already have <a href="https://github.com/KhronosGroup/SPIRV-Tools#downloads">SPIRV-Tools</a> installed, or just don’t want to spend more time compiling, you can build/run the crate with the <code>use-installed-tools</code> feature.</p>
-<pre><code class="language-shell">cargo run \
-    --manifest-path examples/example-runner/Cargo.toml \
-    --features use-installed-tools \
-    --no-default-features
-</code></pre>
-<p>You should see <code>warning: use-installed-tools feature on, skipping compilation of C++ code</code> during the compilation, but otherwise the build will function just the same as if you compiled the C++ code, with the exception that it will fail if you don’t have SPIRV-Tools installed correctly.</p>
+                        <h1 id="compute-shaders"><a class="header" href="#compute-shaders">Compute shaders</a></h1>
+<p>Unlike vertex or fragment shaders, compute shaders need to declare the size of their workgroup:</p>
+<pre class="playground"><code class="language-rust">#[spirv(compute(threads(8, 8)))]
+pub fn main() {}</code></pre>
+<p>This one declares a workgroup of the size <code>(8, 8, 1)</code>. Any dimensions not declared default to 1.</p>
+<p>Here’s a full example of a compute shader that computes <code>c = a + b</code>:</p>
+<pre class="playground"><code class="language-rust">#[spirv(compute(threads(32)))]
+pub fn main(
+    #[spirv(descriptor_set = 0, binding = 0, storage_buffer)] a: &amp;[u32],
+    #[spirv(descriptor_set = 0, binding = 1, storage_buffer)] b: &amp;[u32],
+    #[spirv(descriptor_set = 0, binding = 2, storage_buffer)] c: &amp;mut [u32],
+    #[spirv(global_invocation_id)] global_index: UVec3,
+) {
+    let i = global_index.x as usize;
+    c[i] = a[i] + b[i];
+}</code></pre>
+<blockquote class="blockquote-tag blockquote-tag-caution">
+<p class="blockquote-tag-title"><svg viewbox="0 0 16 16" width="18" height="18"><path d="M4.47.22A.749.749 0 0 1 5 0h6c.199 0 .389.079.53.22l4.25 4.25c.141.14.22.331.22.53v6a.749.749 0 0 1-.22.53l-4.25 4.25A.749.749 0 0 1 11 16H5a.749.749 0 0 1-.53-.22L.22 11.53A.749.749 0 0 1 0 11V5c0-.199.079-.389.22-.53Zm.84 1.28L1.5 5.31v5.38l3.81 3.81h5.38l3.81-3.81V5.31L10.69 1.5ZM8 4a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 8 4Zm0 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>Caution</p>
+<p>I want to direct your attention to the <code>c: &amp;mut [u32]</code> arg. In Rust, mutable references don’t just allow you to mutate the referenced memory, but also gives you <em>exclusive</em> access to it. Since this mutable references is <em>shared</em> between all the threads, it can’t be exclusive.</p>
+<p>This is a mistake on rust-gpu’s entry point API design, not sure when I’ll get around to fix it.</p>
+</blockquote>
+<p>Here’s the most interesting built-ins and intrinsics for compute shaders, put together into a rather silly shader that sum up 128 values. The shared memory is also a mutable reference that is not actually exclusive, like the mutable buffers.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// assumption: subgroup size == 32
+#[spirv(compute(threads(128)))]
+pub fn sum(
+    #[spirv(global_invocation_id)] global_invocation_id: UVec3,
+    #[spirv(local_invocation_id)] local_invocation_id: UVec3,
+    #[spirv(num_workgroups)] num_workgroups: UVec3,
+    #[spirv(workgroup_id)] workgroup_id: UVec3,
+    #[spirv(workgroup)] shared_memory: &amp;mut [f32; 4],
+    #[spirv(spec_constant(id = 0, default = 42))] spec_constant: u32,
+    #[spirv(descriptor_set = 0, binding = 0, storage_buffer)] values: &amp;[f32],
+    #[spirv(descriptor_set = 0, binding = 1, storage_buffer)] output: &amp;mut f32,
+) {
+    let value = values[global_invocation_id.x as usize];
+    let sum_per_subgroup = spirv_std::arch::subgroup_f_add(value);
+
+    let local_idx = local_invocation_id.x as usize;
+    if local_idx % 32 == 0 {
+        shared_memory[local_idx / 32] = sum_per_subgroup;
+    }
+
+    spirv_std::arch::workgroup_memory_barrier_with_group_sync();
+    if local_idx == 0 {
+        let mut accum = 0.;
+        for i in 0..4 {
+            shared_memory[i] += accum;
+        }
+        *output = accum;
+    }
+}
+<span class="boring">}</span></code></pre>
+<blockquote class="blockquote-tag blockquote-tag-note">
+<p class="blockquote-tag-title"><svg viewbox="0 0 16 16" width="18" height="18"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>Note</p>
+<p>You currently can’t declare the workgroup size as a specialization constant, open an issue if you need this.</p>
+</blockquote>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="introduction.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../getting-started/images.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
-                            <a rel="next prefetch" href="testing.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../testing.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                             </a>
 
@@ -225,11 +251,11 @@ called (fedora) <code>libX11-devel</code>, <code>libxkbcommon-x11-devel</code>, 
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="introduction.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../getting-started/images.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
-                    <a rel="next prefetch" href="testing.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../testing.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                     </a>
             </nav>
@@ -249,13 +275,13 @@ called (fedora) <code>libX11-devel</code>, <code>libxkbcommon-x11-devel</code>, 
         </script>
 
 
-        <script src="elasticlunr-ef4e11c1.min.js"></script>
-        <script src="mark-09e88c2c.min.js"></script>
-        <script src="searcher-09f2665d.js"></script>
+        <script src="../elasticlunr-ef4e11c1.min.js"></script>
+        <script src="../mark-09e88c2c.min.js"></script>
+        <script src="../searcher-09f2665d.js"></script>
 
-        <script src="clipboard-1626706a.min.js"></script>
-        <script src="highlight-abc7f01d.js"></script>
-        <script src="book-609e4cb8.js"></script>
+        <script src="../clipboard-1626706a.min.js"></script>
+        <script src="../highlight-abc7f01d.js"></script>
+        <script src="../book-609e4cb8.js"></script>
 
         <!-- Custom JS scripts -->
 
