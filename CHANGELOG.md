@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+Toolchain: `nightly-2026-08-15` (rustc 1.99.0)
+
+### Fixed 🩹
+
+- [PR#678](https://github.com/Rust-GPU/rust-gpu/pull/678) fix missing reexports in `spirv-std-nightly`
+
 ## [0.11.0](https://github.com/Rust-GPU/rust-gpu/compare/v0.10.0...v0.11.0) - 2026-10-13
 
 Toolchain: `nightly-2026-08-15` (rustc 1.99.0)
@@ -14,6 +21,10 @@ Toolchain: `nightly-2026-08-15` (rustc 1.99.0)
 
 - [PR#661](https://github.com/Rust-GPU/rust-gpu/pull/661) adds support for glam v0.34 and makes it the default glam version
 - [PR#660](https://github.com/Rust-GPU/rust-gpu/pull/660) disallows `Vec3A` for SPIR-V intrinsics and asm. Migration: use Vec3 instead and convert back and forward with `Vec3::to_vec3a()` and `Vec3A::to_vec3()`.
+
+### Added ⭐
+
+- [PR#636](https://github.com/Rust-GPU/rust-gpu/pull/636) add crate `spirv-std-nightly` that is `spirv-std` but using const generics from the `adt_const_params` rustc feature where appropriate
 
 ### Changed 🛠
 
