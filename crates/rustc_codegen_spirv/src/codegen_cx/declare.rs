@@ -217,9 +217,7 @@ impl<'tcx> CodegenCx<'tcx> {
 
         // HACK(eddyb) there is no good way to identify these definitions
         // (e.g. no `#[lang = "..."]` attribute), but this works well enough.
-        if let Some(name) = demangled_symbol_name.strip_prefix("core::panicking::")
-            && (name == "panic_explicit" || name.starts_with("panic_"))
-        {
+        if demangled_symbol_name == "core::panicking::panic_nounwind_fmt" {
             self.panic_entry_points.borrow_mut().insert(def_id);
         }
         if let Some(generics) = demangled_symbol_name
