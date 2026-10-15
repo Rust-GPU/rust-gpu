@@ -332,97 +332,90 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
             insts.reverse();
             Some(insts)
         };
-        let lookup_fmt_args_ctor = |callee_id| {
-            cx.fmt_args_new_fn_ids
-                .borrow()
-                .get(&callee_id)
-                .copied()
-                .ok_or_else(|| {
-                    FormatArgsNotRecognized("fmt::Arguments::new callee not registered".into())
-                })
-        };
-        let (ctor, call_args_storage) = {
-            if let (Some(template_len), Some(rt_args_count)) = (
-                const_ptr_to_composite_len(template_id),
-                const_ptr_to_composite_len(rt_args_ptr_id),
-            ) {
-                (
-                    FmtArgsCtor::NewTemplate {
-                        template_len,
-                        rt_args_count,
-                    },
-                    SmallVec::<[Word; 8]>::from_slice(&[template_id, rt_args_ptr_id]),
-                )
-            } else {
-                let fmt_args_new_call_insts = try_rev_take(3).ok_or_else(|| {
-                    FormatArgsNotRecognized(
-                        "fmt::Arguments::new call: ran out of instructions".into(),
-                    )
-                })?;
-                match fmt_args_new_call_insts[..] {
-                    [
-                        Inst::Call(call_ret_id, callee_id, ref call_args),
-                        Inst::CompositeExtract(extracted0, from0, 0),
-                        Inst::CompositeExtract(extracted1, from1, 1),
-                    ] if [from0, from1] == [call_ret_id; 2]
-                        && [extracted0, extracted1] == [template_id, rt_args_ptr_id] =>
-                    {
-                        (
-                            lookup_fmt_args_ctor(callee_id)?,
-                            call_args.iter().copied().collect(),
-                        )
-                    }
-                    _ => {
-                        // HACK(eddyb) this gathers more context before reporting.
-                        let mut insts = fmt_args_new_call_insts;
-                        insts.reverse();
-                        while let Some(extra_inst) = try_rev_take(1) {
-                            insts.extend(extra_inst);
-                            if insts.len() >= 32 {
-                                break;
-                            }
-                        }
-                        insts.reverse();
 
-                        return Err(FormatArgsNotRecognized(format!(
-                            "fmt::Arguments::new call sequence ({insts:?})",
-                        )));
-                    }
-                }
-            }
-        };
-        let call_args = call_args_storage.as_slice();
         enum PiecesSource {
             EncodedTemplate { ptr_id: Word, len: usize },
             DirectConstStr([Word; 2]),
         }
-        let mut template_placeholder_info = None;
-        let (pieces_source, (rt_args_slice_ptr_id, rt_args_count)) = match (ctor, call_args) {
-            // `<core::fmt::Arguments>::new`
+
+        let (pieces_source, (rt_args_slice_ptr_id, rt_args_count)) = if let (
+            Some(template_len),
+            Some(rt_args_count),
+        ) = (
+            const_ptr_to_composite_len(template_id),
+            const_ptr_to_composite_len(rt_args_ptr_id),
+        ) {
             (
-                FmtArgsCtor::NewTemplate {
-                    template_len,
-                    rt_args_count,
-                },
-                &[template_ptr_id, rt_args_slice_ptr_id],
-            ) => (
                 PiecesSource::EncodedTemplate {
-                    ptr_id: template_ptr_id,
+                    ptr_id: template_id,
                     len: template_len,
                 },
-                (Some(rt_args_slice_ptr_id), rt_args_count),
-            ),
+                (Some(rt_args_ptr_id), rt_args_count),
+            )
+        } else {
+            let fmt_args_new_call_insts = try_rev_take(3).ok_or_else(|| {
+                FormatArgsNotRecognized("fmt::Arguments::new call: ran out of instructions".into())
+            })?;
+            match fmt_args_new_call_insts[..] {
+                [
+                    Inst::Call(call_ret_id, callee_id, ref call_args),
+                    Inst::CompositeExtract(extracted0, from0, 0),
+                    Inst::CompositeExtract(extracted1, from1, 1),
+                ] if [from0, from1] == [call_ret_id; 2]
+                    && [extracted0, extracted1] == [template_id, rt_args_ptr_id] =>
+                {
+                    let Some(&fmt_args_ctor) = cx.fmt_args_new_fn_ids.borrow().get(&callee_id)
+                    else {
+                        return Err(FormatArgsNotRecognized(
+                            "fmt::Arguments::new callee not registered".into(),
+                        ));
+                    };
 
-            // `<core::fmt::Arguments>::from_str`
-            (FmtArgsCtor::FromStr, &[str_ptr_id, str_len_id]) => (
-                PiecesSource::DirectConstStr([str_ptr_id, str_len_id]),
-                (None, 0),
-            ),
+                    match (fmt_args_ctor, &call_args[..]) {
+                        // `<core::fmt::Arguments>::new`
+                        (
+                            FmtArgsCtor::NewTemplate {
+                                template_len,
+                                rt_args_count,
+                            },
+                            &[template_ptr_id, rt_args_slice_ptr_id],
+                        ) => (
+                            PiecesSource::EncodedTemplate {
+                                ptr_id: template_ptr_id,
+                                len: template_len,
+                            },
+                            (Some(rt_args_slice_ptr_id), rt_args_count),
+                        ),
 
-            _ => {
-                return Err(FormatArgsNotRecognized(
-                    "fmt::Arguments::new ctor/call-args mismatch".into(),
-                ));
+                        // `<core::fmt::Arguments>::from_str`
+                        (FmtArgsCtor::FromStr, &[str_ptr_id, str_len_id]) => (
+                            PiecesSource::DirectConstStr([str_ptr_id, str_len_id]),
+                            (None, 0),
+                        ),
+
+                        _ => {
+                            return Err(FormatArgsNotRecognized(
+                                "fmt::Arguments::new call args".into(),
+                            ));
+                        }
+                    }
+                }
+                _ => {
+                    // HACK(eddyb) this gathers more context before reporting.
+                    let mut insts = fmt_args_new_call_insts;
+                    insts.reverse();
+                    while let Some(extra_inst) = try_rev_take(1) {
+                        insts.extend(extra_inst);
+                        if insts.len() >= 32 {
+                            break;
+                        }
+                    }
+                    insts.reverse();
+
+                    return Err(FormatArgsNotRecognized(format!(
+                        "fmt::Arguments::new call sequence ({insts:?})",
+                    )));
+                }
             }
         };
 
@@ -620,19 +613,15 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                 len: template_len,
             } => parse_encoded_template(template_ptr_id, template_len).map(
                 |(pieces, placeholder_count, placeholders_map_1_to_1)| {
-                    template_placeholder_info = Some((placeholder_count, placeholders_map_1_to_1));
+                    let decoded_arg_count = decoded_format_args.ref_arg_ids_with_ty_and_spec.len();
+                    if !placeholders_map_1_to_1 || placeholder_count != decoded_arg_count {
+                        decoded_format_args.has_unknown_fmt_placeholder_to_args_mapping =
+                            Some(placeholder_count);
+                    }
                     pieces
                 },
             ),
         };
-
-        if let Some((placeholder_count, placeholders_map_1_to_1)) = template_placeholder_info {
-            let decoded_arg_count = decoded_format_args.ref_arg_ids_with_ty_and_spec.len();
-            if !placeholders_map_1_to_1 || placeholder_count != decoded_arg_count {
-                decoded_format_args.has_unknown_fmt_placeholder_to_args_mapping =
-                    Some(placeholder_count);
-            }
-        }
 
         // Keep all instructions up to (but not including) the last one
         // confirmed above to be the first instruction of `format_args!`.
