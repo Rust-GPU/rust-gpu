@@ -6,18 +6,15 @@ use crate::custom_insts::CustomOp;
 use crate::spirv_type::SpirvType;
 use either::Either;
 use itertools::Itertools;
-use rspirv::dr::{InsertPoint, Instruction, Operand};
-use rspirv::spirv::{Op, StorageClass, Word};
-use rustc_abi::{Align, BackendRepr};
+use rspirv::dr::Operand;
+use rspirv::spirv::{Op, Word};
+use rustc_abi::BackendRepr;
 use rustc_data_structures::fx::FxHashSet;
 use rustc_middle::ty::Ty;
 use rustc_middle::ty::layout::LayoutOf;
-use rustc_span::def_id::DefId;
 use smallvec::SmallVec;
 use std::borrow::Cow;
 use std::cell::Cell;
-
-use crate::maybe_pqp_cg_ssa::traits::BuilderMethods;
 
 // HACK(eddyb) even after `core::fmt::Arguments::from_str` became common
 // for const-string panics, `core`/`std` still lower many panic paths
@@ -58,7 +55,6 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
     pub fn try_decode_and_remove_format_args<'a>(
         builder: &mut Builder<'a, 'tcx>,
         args: &[SpirvValue],
-        panic_def_id: Option<DefId>,
     ) -> FormatArgsResult<'tcx> {
         let mut decoded_format_args = DecodedFormatArgs::default();
 
@@ -190,155 +186,20 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
             Some((pieces, placeholder_count, placeholders_map_1_to_1))
         };
 
-        let panic_const_message = || {
-            let def_id = panic_def_id?;
-            let def_path = cx.tcx.def_path_str(def_id);
-            let name = def_path.strip_prefix("core::panicking::panic_const::")?;
-            match name {
-                "panic_const_add_overflow" => Some("attempt to add with overflow"),
-                "panic_const_sub_overflow" => Some("attempt to subtract with overflow"),
-                "panic_const_mul_overflow" => Some("attempt to multiply with overflow"),
-                "panic_const_div_overflow" => Some("attempt to divide with overflow"),
-                "panic_const_rem_overflow" => {
-                    Some("attempt to calculate the remainder with overflow")
-                }
-                "panic_const_neg_overflow" => Some("attempt to negate with overflow"),
-                "panic_const_shr_overflow" => Some("attempt to shift right with overflow"),
-                "panic_const_shl_overflow" => Some("attempt to shift left with overflow"),
-                "panic_const_div_by_zero" => Some("attempt to divide by zero"),
-                "panic_const_rem_by_zero" => {
-                    Some("attempt to calculate the remainder with a divisor of zero")
-                }
-                "panic_const_coroutine_resumed" => Some("coroutine resumed after completion"),
-                "panic_const_async_fn_resumed" => Some("`async fn` resumed after completion"),
-                "panic_const_async_gen_fn_resumed" => {
-                    Some("`async gen fn` resumed after completion")
-                }
-                "panic_const_gen_fn_none" => {
-                    Some("`gen fn` should just keep returning `None` after completion")
-                }
-                "panic_const_coroutine_resumed_panic" => Some("coroutine resumed after panicking"),
-                "panic_const_async_fn_resumed_panic" => Some("`async fn` resumed after panicking"),
-                "panic_const_async_gen_fn_resumed_panic" => {
-                    Some("`async gen fn` resumed after panicking")
-                }
-                "panic_const_gen_fn_none_panic" => {
-                    Some("`gen fn` should just keep returning `None` after panicking")
-                }
-                "panic_const_coroutine_resumed_drop" => Some("coroutine resumed after async drop"),
-                "panic_const_async_fn_resumed_drop" => Some("`async fn` resumed after async drop"),
-                "panic_const_async_gen_fn_resumed_drop" => {
-                    Some("`async gen fn` resumed after async drop")
-                }
-                "panic_const_gen_fn_none_drop" => Some("`gen fn` resumed after async drop"),
-                _ => None,
-            }
-        };
-        let mut spill_value_to_local = |value: SpirvValue| {
-            let ptr_ty = builder.type_ptr_to(value.ty);
-
-            let ptr = {
-                // `OpVariable`s in functions must be inserted at the start of the
-                // first block, before any non-`OpVariable` instruction.
-                let mut emit = builder.emit();
-                emit.select_block(Some(0)).unwrap();
-                let index = {
-                    let block = &emit.module_ref().functions[emit.selected_function().unwrap()]
-                        .blocks[emit.selected_block().unwrap()];
-                    block
-                        .instructions
-                        .iter()
-                        .enumerate()
-                        .find_map(|(index, inst)| {
-                            (inst.class.opcode != Op::Variable)
-                                .then_some(InsertPoint::FromBegin(index))
-                        })
-                        .unwrap_or(InsertPoint::End)
-                };
-                let result_id = emit.id();
-                let inst = Instruction::new(
-                    Op::Variable,
-                    Some(ptr_ty),
-                    Some(result_id),
-                    vec![Operand::StorageClass(StorageClass::Function)],
-                );
-                emit.insert_into_block(index, inst).unwrap();
-                result_id.with_type(ptr_ty)
-            };
-
-            builder.store(value, ptr, Align::ONE);
-            match ptr.kind {
-                SpirvValueKind::Def(id) => Some(id),
-                _ => None,
-            }
-        };
-
-        if panic_def_id.is_some_and(|def_id| {
-            cx.tcx.def_path_str(def_id) == "core::panicking::panic_bounds_check"
-        }) && args.len() >= 2
-        {
-            let index = args[0];
-            let len = args[1];
-            if let (Some(len_ref_id), Some(index_ref_id)) =
-                (spill_value_to_local(len), spill_value_to_local(index))
-            {
-                decoded_format_args.const_pieces = Some(
-                    [
-                        "index out of bounds: the len is ".into(),
-                        " but the index is ".into(),
-                        String::new(),
-                    ]
-                    .into_iter()
-                    .collect(),
-                );
-                decoded_format_args.ref_arg_ids_with_ty_and_spec = [
-                    (len_ref_id, cx.tcx.types.usize, ' '),
-                    (index_ref_id, cx.tcx.types.usize, ' '),
-                ]
-                .into_iter()
-                .collect();
-                return Ok(decoded_format_args);
-            }
-        }
-
         let value_id = |value: SpirvValue| match value.kind {
             SpirvValueKind::Def(id) | SpirvValueKind::IllegalConst(id) => Some(id),
             _ => None,
         };
 
-        // HACK(eddyb) `panic_explicit` doesn't take any regular arguments,
-        // only an (implicit) `&'static panic::Location<'static>`.
-        if args.len() == 1 {
-            decoded_format_args.const_pieces = Some(
-                [panic_const_message().unwrap_or("explicit panic").into()]
-                    .into_iter()
-                    .collect(),
-            );
-            return Ok(decoded_format_args);
-        }
-
         // HACK(eddyb) some entry-points only take a `&str`, not `fmt::Arguments`.
         if let [a, b, other_args @ ..] = args
             && let (Some(a_id), Some(b_id)) = (value_id(*a), value_id(*b))
         {
-            let [a_ty, b_ty] = [a.ty, b.ty];
-
             // Optional panic flags and/or `&'static panic::Location<'static>`.
-            if other_args.len() <= 3
+            if other_args.len() <= 2
                 && let Some(const_msg) = const_str_as_utf8(&[a_id, b_id])
             {
                 decoded_format_args.const_pieces = Some([const_msg].into_iter().collect());
-                return Ok(decoded_format_args);
-            }
-
-            // Dynamic `&str` panic messages (e.g. `panic_display(&msg)` where
-            // `msg` isn't a directly recoverable constant).
-            if other_args.len() <= 3
-                && matches!(cx.lookup_type(a_ty), SpirvType::Pointer { .. })
-                && matches!(cx.lookup_type(b_ty), SpirvType::Integer(..))
-            {
-                decoded_format_args.const_pieces =
-                    Some(["<dynamic panic message>".into()].into_iter().collect());
                 return Ok(decoded_format_args);
             }
         }
@@ -606,10 +467,20 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                     try_rev_take(3).unwrap();
                     (lookup_fmt_args_ctor(callee_id)?, call_args_storage)
                 } else {
-                    // We failed to recover constructor metadata for an already-split
-                    // `fmt::Arguments` value. Keep panic lowering sound by falling
-                    // back to an unknown panic message, without requiring decompilation.
-                    return Ok(decoded_format_args);
+                    // HACK(eddyb) this gathers more context before reporting.
+                    let mut insts = try_rev_take(0).unwrap();
+                    insts.reverse();
+                    while let Some(extra_inst) = try_rev_take(1) {
+                        insts.extend(extra_inst);
+                        if insts.len() >= 32 {
+                            break;
+                        }
+                    }
+                    insts.reverse();
+
+                    return Err(FormatArgsNotRecognized(format!(
+                        "fmt::Arguments::new call sequence ({insts:?})",
+                    )));
                 }
             } else {
                 // Newer rustc can pass the `fmt::Arguments::new_*` result directly to
@@ -622,14 +493,10 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                     3
                 } else if let Some(&[Inst::Call(call_ret_id, callee_id, _)]) =
                     try_rev_take(-1).as_deref()
+                    && (call_ret_id == format_args_id
+                        || cx.fmt_args_new_fn_ids.borrow().contains_key(&callee_id))
                 {
-                    if call_ret_id == format_args_id
-                        || cx.fmt_args_new_fn_ids.borrow().contains_key(&callee_id)
-                    {
-                        1
-                    } else {
-                        0
-                    }
+                    1
                 } else if matches!(
                     try_rev_take(-5).as_deref(),
                     Some(&[
@@ -644,50 +511,10 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                         && inserted1 == format_args_id
                 ) {
                     5
-                } else if try_rev_take(-1).is_some() {
-                    0
                 } else {
-                    // HACK(eddyb) gather context for new call patterns before bailing.
-                    let mut insts = SmallVec::<[Inst<Word>; 32]>::new();
-                    while let Some(extra_inst) = try_rev_take(1) {
-                        insts.extend(extra_inst);
-                        if insts.len() >= 32 {
-                            break;
-                        }
-                    }
-                    insts.reverse();
-
-                    if insts.is_empty() {
-                        return Ok(decoded_format_args);
-                    }
-                    if !insts.iter().any(|inst| matches!(inst, Inst::Call(_, _, _))) {
-                        return Ok(decoded_format_args);
-                    }
-                    return Err(FormatArgsNotRecognized(format!(
-                        "fmt::Arguments::new call sequence ({insts:?})",
-                    )));
+                    // HACK(eddyb) this reaches the `return Err` below.
+                    0
                 };
-                if fmt_args_new_call_inst_count == 0 {
-                    // HACK(eddyb) gather context for new call patterns before bailing.
-                    let mut insts = SmallVec::<[Inst<Word>; 32]>::new();
-                    while let Some(extra_inst) = try_rev_take(1) {
-                        insts.extend(extra_inst);
-                        if insts.len() >= 32 {
-                            break;
-                        }
-                    }
-                    insts.reverse();
-
-                    if insts.is_empty() {
-                        return Ok(decoded_format_args);
-                    }
-                    if !insts.iter().any(|inst| matches!(inst, Inst::Call(_, _, _))) {
-                        return Ok(decoded_format_args);
-                    }
-                    return Err(FormatArgsNotRecognized(format!(
-                        "fmt::Arguments::new call sequence ({insts:?})",
-                    )));
-                }
                 let fmt_args_new_call_insts = try_rev_take(fmt_args_new_call_inst_count).unwrap();
                 match fmt_args_new_call_insts[..] {
                     [
