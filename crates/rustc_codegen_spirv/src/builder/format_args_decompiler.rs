@@ -3,13 +3,11 @@ use crate::builder::Builder;
 use crate::builder_spirv::{SpirvConst, SpirvValue, SpirvValueExt, SpirvValueKind};
 use crate::codegen_cx::FmtArgsCtor;
 use crate::custom_insts::CustomOp;
-use crate::spirv_type::SpirvType;
 use either::Either;
 use itertools::Itertools;
 use rspirv::dr::Operand;
 use rspirv::spirv::{Op, Word};
 use rustc_abi::BackendRepr;
-use rustc_data_structures::fx::FxHashSet;
 use rustc_middle::ty::Ty;
 use rustc_middle::ty::layout::LayoutOf;
 use smallvec::SmallVec;
@@ -86,20 +84,6 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                 return Some(elems.len());
             }
             None
-        };
-        let array_len_from_ptr_type = |ptr_ty_id: Word| {
-            let pointee_ty_id = match cx.lookup_type(ptr_ty_id) {
-                SpirvType::Pointer { pointee } => pointee,
-                _ => return None,
-            };
-            let count = match cx.lookup_type(pointee_ty_id) {
-                SpirvType::Array { count, .. } => count,
-                _ => return None,
-            };
-            match count.kind {
-                SpirvValueKind::Def(count_id) => const_u32_as_usize(count_id),
-                _ => None,
-            }
         };
         let const_slice_as_u8s = |ptr_id: Word, len: usize| {
             const_slice_as_elem_ids(ptr_id, len)?
@@ -209,53 +193,19 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
             }
         }
 
-        // Newer `core::fmt::Arguments` can be scalarized at the panic call-site
-        // (`template: *const u8`, `args: *const fmt::rt::Argument`), instead of
-        // being passed as one aggregate value.
-        let split_fmt_args = match *args {
+        let (template_id, rt_args_ptr_id) = match *args {
             [template, rt_args_or_tagged_len, ref trailing @ ..]
-                if trailing.len() <= 3
-                    && matches!(cx.lookup_type(template.ty), SpirvType::Pointer { .. })
-                    && matches!(
-                        cx.lookup_type(rt_args_or_tagged_len.ty),
-                        SpirvType::Pointer { .. } | SpirvType::Integer(..)
-                    )
+                if trailing.len() <= 2
                     && let (Some(template_id), Some(rt_args_or_tagged_len_id)) =
-                        (value_id(template), value_id(rt_args_or_tagged_len))
-                    && const_str_as_utf8(&[template_id, rt_args_or_tagged_len_id]).is_none() =>
+                        (value_id(template), value_id(rt_args_or_tagged_len)) =>
             {
-                let looks_like_bool = matches!(
-                    cx.builder.lookup_const_by_id(rt_args_or_tagged_len_id),
-                    Some(SpirvConst::Scalar(0 | 1))
-                );
-                if trailing.len() == 1 && looks_like_bool {
-                    None
-                } else {
-                    Some((
-                        template_id,
-                        template.ty,
-                        rt_args_or_tagged_len_id,
-                        rt_args_or_tagged_len.ty,
-                    ))
-                }
+                (template_id, rt_args_or_tagged_len_id)
             }
-            _ => None,
-        };
-
-        let format_args_id = if split_fmt_args.is_none() {
-            match *args {
-                // HACK(eddyb) `panic_nounwind_fmt` takes an extra argument.
-                [format_args, ref trailing @ ..] if trailing.len() <= 3 => value_id(format_args)
-                    .ok_or_else(|| FormatArgsNotRecognized("panic entry-point call args".into()))?,
-
-                _ => {
-                    return Err(FormatArgsNotRecognized(
-                        "panic entry-point call args".into(),
-                    ));
-                }
+            _ => {
+                return Err(FormatArgsNotRecognized(
+                    "panic entry-point call args".into(),
+                ));
             }
-        } else {
-            0
         };
 
         let custom_ext_inst_set_import = builder.ext_inst.borrow_mut().import_custom(builder);
@@ -269,21 +219,6 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
         let func_idx = builder.selected_function().unwrap();
         let block_idx = builder.selected_block().unwrap();
         let func = &mut builder.module_mut().functions[func_idx];
-
-        // HACK(eddyb) this is used to check that all `Op{Store,Load}`s
-        // that may get removed, operate on local `OpVariable`s,
-        // i.e. are not externally observable.
-        let local_var_ids: FxHashSet<_> = func.blocks[0]
-            .instructions
-            .iter()
-            .take_while(|inst| inst.class.opcode == Op::Variable)
-            .map(|inst| inst.result_id.unwrap())
-            .collect();
-        let require_local_var = |ptr_id, var| {
-            Some(())
-                .filter(|()| local_var_ids.contains(&ptr_id))
-                .ok_or_else(|| FormatArgsNotRecognized(format!("{var} storage not local")))
-        };
 
         let mut non_debug_insts = func.blocks[block_idx]
             .instructions
@@ -304,7 +239,6 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
         enum Inst<ID> {
             Bitcast(ID, ID),
             CompositeExtract(ID, ID, u32),
-            CompositeInsert(ID, ID, ID, u32),
             InBoundsAccessChain(ID, ID, u32),
             InBoundsAccessChain2(ID, ID, u32, u32),
             Store(ID, ID),
@@ -350,18 +284,6 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                         (inst.result_id, &inst.operands[..])
                 {
                     return Some(Inst::CompositeExtract(r, x, i));
-                }
-                if inst.class.opcode == Op::CompositeInsert
-                    && let (
-                        Some(r),
-                        &[
-                            Operand::IdRef(inserted),
-                            Operand::IdRef(base),
-                            Operand::LiteralBit32(i),
-                        ],
-                    ) = (inst.result_id, &inst.operands[..])
-                {
-                    return Some(Inst::CompositeInsert(r, inserted, base, i));
                 }
 
                 // HACK(eddyb) all instructions accepted below
@@ -419,143 +341,31 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                     FormatArgsNotRecognized("fmt::Arguments::new callee not registered".into())
                 })
         };
-        let (ctor, call_args_storage) =
-            if let Some((template_id, template_ty_id, rt_args_ptr_id, rt_args_ptr_ty_id)) =
-                split_fmt_args
-            {
-                if let (Some(template_len), Some(rt_args_count)) = (
-                    const_ptr_to_composite_len(template_id)
-                        .or_else(|| array_len_from_ptr_type(template_ty_id)),
-                    const_ptr_to_composite_len(rt_args_ptr_id)
-                        .or_else(|| array_len_from_ptr_type(rt_args_ptr_ty_id)),
-                ) {
-                    (
-                        FmtArgsCtor::NewTemplate {
-                            template_len,
-                            rt_args_count,
-                        },
-                        SmallVec::<[Word; 8]>::from_slice(&[template_id, rt_args_ptr_id]),
-                    )
-                } else if let Some(&[Inst::Call(_, callee_id, ref call_args)]) =
-                    try_rev_take(-1).as_deref()
-                    && call_args.len() == 2
-                    && [call_args[0], call_args[1]] == [template_id, rt_args_ptr_id]
-                {
-                    // Consume the matched call instruction.
-                    try_rev_take(1).unwrap();
-                    (
-                        lookup_fmt_args_ctor(callee_id)?,
-                        SmallVec::<[Word; 8]>::from_slice(&[template_id, rt_args_ptr_id]),
-                    )
-                } else if let Some(
-                    &[
-                        Inst::Call(call_ret_id, callee_id, ref call_args),
-                        Inst::CompositeExtract(extracted0, from0, 0),
-                        Inst::CompositeExtract(extracted1, from1, 1),
-                    ],
-                ) = try_rev_take(-3).as_deref()
-                    && [from0, from1] == [call_ret_id; 2]
-                    && [extracted0, extracted1] == [template_id, rt_args_ptr_id]
-                {
-                    // Newer rustc, since `BackendRepr::ScalarPair` args are no
-                    // longer forced to `PassMode::Direct`, returns the whole
-                    // `fmt::Arguments` from its `new_*` constructor as a scalar
-                    // pair, and splits it (via `OpCompositeExtract`s) into the
-                    // two scalar values passed to the panic entry-point.
-                    //
-                    // The constructor's own arguments (i.e. `pieces`/`template`
-                    // and the `rt::Argument` slice pointers) still carry the
-                    // recoverable const data, so use those, like the aggregate
-                    // (non-split) `Call`+`extract`+`insert` case does below.
-                    let call_args_storage = call_args.iter().copied().collect();
-                    // Consume the matched call + both `OpCompositeExtract`s.
-                    try_rev_take(3).unwrap();
-                    (lookup_fmt_args_ctor(callee_id)?, call_args_storage)
-                } else {
-                    // HACK(eddyb) this gathers more context before reporting.
-                    let mut insts = try_rev_take(0).unwrap();
-                    insts.reverse();
-                    while let Some(extra_inst) = try_rev_take(1) {
-                        insts.extend(extra_inst);
-                        if insts.len() >= 32 {
-                            break;
-                        }
-                    }
-                    insts.reverse();
-
-                    return Err(FormatArgsNotRecognized(format!(
-                        "fmt::Arguments::new call sequence ({insts:?})",
-                    )));
-                }
+        let (ctor, call_args_storage) = {
+            if let (Some(template_len), Some(rt_args_count)) = (
+                const_ptr_to_composite_len(template_id),
+                const_ptr_to_composite_len(rt_args_ptr_id),
+            ) {
+                (
+                    FmtArgsCtor::NewTemplate {
+                        template_len,
+                        rt_args_count,
+                    },
+                    SmallVec::<[Word; 8]>::from_slice(&[template_id, rt_args_ptr_id]),
+                )
             } else {
-                // Newer rustc can pass the `fmt::Arguments::new_*` result directly to
-                // panic entry points (single trailing call), while older versions go
-                // through a local temporary (`Call -> Store -> Load`).
-                let fmt_args_new_call_inst_count = if matches!(
-                    try_rev_take(-3).as_deref(),
-                    Some(&[Inst::Call(_, _, _), Inst::Store(_, _), Inst::Load(_, _)])
-                ) {
-                    3
-                } else if let Some(&[Inst::Call(call_ret_id, callee_id, _)]) =
-                    try_rev_take(-1).as_deref()
-                    && (call_ret_id == format_args_id
-                        || cx.fmt_args_new_fn_ids.borrow().contains_key(&callee_id))
-                {
-                    1
-                } else if matches!(
-                    try_rev_take(-5).as_deref(),
-                    Some(&[
-                        Inst::Call(call_ret_id, _, _),
-                        Inst::CompositeExtract(extracted0, from0, 0),
-                        Inst::CompositeExtract(extracted1, from1, 1),
-                        Inst::CompositeInsert(inserted0, value0, _, 0),
-                        Inst::CompositeInsert(inserted1, value1, inserted0_prev, 1),
-                    ]) if [from0, from1] == [call_ret_id; 2]
-                        && [value0, value1] == [extracted0, extracted1]
-                        && inserted0 == inserted0_prev
-                        && inserted1 == format_args_id
-                ) {
-                    5
-                } else {
-                    // HACK(eddyb) this reaches the `return Err` below.
-                    0
-                };
-                let fmt_args_new_call_insts = try_rev_take(fmt_args_new_call_inst_count).unwrap();
+                let fmt_args_new_call_insts = try_rev_take(3).ok_or_else(|| {
+                    FormatArgsNotRecognized(
+                        "fmt::Arguments::new call: ran out of instructions".into(),
+                    )
+                })?;
                 match fmt_args_new_call_insts[..] {
                     [
                         Inst::Call(call_ret_id, callee_id, ref call_args),
-                        Inst::Store(st_dst_id, st_val_id),
-                        Inst::Load(ld_val_id, ld_src_id),
-                    ] if call_ret_id == st_val_id
-                        && st_dst_id == ld_src_id
-                        && ld_val_id == format_args_id =>
-                    {
-                        require_local_var(st_dst_id, "fmt::Arguments::new destination")?;
-
-                        (
-                            lookup_fmt_args_ctor(callee_id)?,
-                            call_args.iter().copied().collect(),
-                        )
-                    }
-                    [Inst::Call(call_ret_id, callee_id, ref call_args)]
-                        if call_ret_id == format_args_id
-                            || cx.fmt_args_new_fn_ids.borrow().contains_key(&callee_id) =>
-                    {
-                        (
-                            lookup_fmt_args_ctor(callee_id)?,
-                            call_args.iter().copied().collect(),
-                        )
-                    }
-                    [
-                        Inst::Call(call_ret_id, callee_id, ref call_args),
                         Inst::CompositeExtract(extracted0, from0, 0),
                         Inst::CompositeExtract(extracted1, from1, 1),
-                        Inst::CompositeInsert(inserted0, value0, _, 0),
-                        Inst::CompositeInsert(inserted1, value1, inserted0_prev, 1),
                     ] if [from0, from1] == [call_ret_id; 2]
-                        && [value0, value1] == [extracted0, extracted1]
-                        && inserted0 == inserted0_prev
-                        && inserted1 == format_args_id =>
+                        && [extracted0, extracted1] == [template_id, rt_args_ptr_id] =>
                     {
                         (
                             lookup_fmt_args_ctor(callee_id)?,
@@ -579,7 +389,8 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                         )));
                     }
                 }
-            };
+            }
+        };
         let call_args = call_args_storage.as_slice();
         enum PiecesSource {
             EncodedTemplate { ptr_id: Word, len: usize },
