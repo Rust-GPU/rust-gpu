@@ -36,6 +36,11 @@ pub struct DecodedFormatArgs<'tcx> {
     /// * `&b` with `typeof b` and 'x'
     ref_arg_ids_with_ty_and_spec: SmallVec<[(Word, Ty<'tcx>, char); 2]>,
 
+    // FIXME(eddyb) the comment below is outdated, and the new approach
+    // (see `parse_encoded_template` below) can definitely handle any
+    // mapping of placeholders just fine (it already parses that mapping
+    // in order to determine when to set this to `Some`, i.e. "not 1:1").
+    //
     /// If `fmt::Arguments::new_v1_formatted` was used, this holds
     /// the length of the `&[fmt::rt::Placeholder]` slice, which
     /// currently cannot be directly supported, and therefore even
@@ -577,7 +582,6 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
             };
         let call_args = call_args_storage.as_slice();
         enum PiecesSource {
-            Slice { ptr_id: Word, len: usize },
             EncodedTemplate { ptr_id: Word, len: usize },
             DirectConstStr([Word; 2]),
         }
@@ -598,100 +602,9 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                 (Some(rt_args_slice_ptr_id), rt_args_count),
             ),
 
-            // `<core::fmt::Arguments>::new_v1_formatted`
-            //
-            // HACK(eddyb) this isn't fully supported,
-            // as that would require digging into unstable
-            // internals of `core::fmt::rt::Placeholder`s,
-            // but the whole call still needs to be removed,
-            // and both const str pieces and runtime args
-            // can still be printed (even if in jankier way).
-            (
-                FmtArgsCtor::NewV1FormattedDynamic,
-                &[
-                    pieces_slice_ptr_id,
-                    pieces_len_id,
-                    rt_args_slice_ptr_id,
-                    rt_args_len_id,
-                    fmt_placeholders_slice_ptr_id,
-                    fmt_placeholders_len_id,
-                ],
-            ) => {
-                let [pieces_len, rt_args_len, fmt_placeholders_len] =
-                    match [pieces_len_id, rt_args_len_id, fmt_placeholders_len_id]
-                        .map(const_u32_as_usize)
-                    {
-                        [Some(a), Some(b), Some(c)] => [a, b, c],
-                        _ => {
-                            return Err(FormatArgsNotRecognized(
-                                "fmt::Arguments::new_v1_formatted \
-                                             with dynamic lengths"
-                                    .into(),
-                            ));
-                        }
-                    };
-
-                let prepare_args_insts = try_rev_take(2).ok_or_else(|| {
-                    FormatArgsNotRecognized(
-                        "fmt::Arguments::new_v1_formatted call: ran out of instructions".into(),
-                    )
-                })?;
-                let (rt_args_slice_ptr_id, _fmt_placeholders_slice_ptr_id) =
-                    match prepare_args_insts[..] {
-                        [
-                            Inst::Bitcast(rt_args_cast_out_id, rt_args_cast_in_id),
-                            Inst::Bitcast(placeholders_cast_out_id, placeholders_cast_in_id),
-                        ] if rt_args_cast_out_id == rt_args_slice_ptr_id
-                            && placeholders_cast_out_id == fmt_placeholders_slice_ptr_id =>
-                        {
-                            (rt_args_cast_in_id, placeholders_cast_in_id)
-                        }
-                        _ => {
-                            return Err(FormatArgsNotRecognized(format!(
-                                "fmt::Arguments::new_v1_formatted call sequence ({prepare_args_insts:?})",
-                            )));
-                        }
-                    };
-
-                decoded_format_args.has_unknown_fmt_placeholder_to_args_mapping =
-                    Some(fmt_placeholders_len);
-
-                (
-                    PiecesSource::Slice {
-                        ptr_id: pieces_slice_ptr_id,
-                        len: pieces_len,
-                    },
-                    (Some(rt_args_slice_ptr_id), rt_args_len),
-                )
-            }
-
             // `<core::fmt::Arguments>::from_str`
             (FmtArgsCtor::FromStr, &[str_ptr_id, str_len_id]) => (
                 PiecesSource::DirectConstStr([str_ptr_id, str_len_id]),
-                (None, 0),
-            ),
-
-            // `<core::fmt::Arguments>::new_v1`
-            (
-                FmtArgsCtor::NewV1 {
-                    pieces_len,
-                    rt_args_count,
-                },
-                &[pieces_slice_ptr_id, rt_args_slice_ptr_id],
-            ) => (
-                PiecesSource::Slice {
-                    ptr_id: pieces_slice_ptr_id,
-                    len: pieces_len,
-                },
-                (Some(rt_args_slice_ptr_id), rt_args_count),
-            ),
-
-            // `<core::fmt::Arguments>::new_const`
-            (FmtArgsCtor::NewConst { pieces_len }, &[pieces_slice_ptr_id]) => (
-                PiecesSource::Slice {
-                    ptr_id: pieces_slice_ptr_id,
-                    len: pieces_len,
-                },
                 (None, 0),
             ),
 
@@ -900,60 +813,6 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                     pieces
                 },
             ),
-            PiecesSource::Slice {
-                ptr_id: pieces_slice_ptr_id,
-                len: pieces_len,
-            } => {
-                // If the `pieces: &[&str]` slice needs a bitcast, it'll be here.
-                // HACK(eddyb) `try_rev_take(-1)` is "peeking", not taking.
-                let pieces_slice_ptr_id = match try_rev_take(-1).as_deref() {
-                    Some(&[Inst::Bitcast(out_id, in_id)]) if out_id == pieces_slice_ptr_id => {
-                        // HACK(eddyb) consume the peeked instructions.
-                        try_rev_take(1).unwrap();
-
-                        in_id
-                    }
-                    _ => pieces_slice_ptr_id,
-                };
-
-                match const_slice_as_elem_ids(pieces_slice_ptr_id, pieces_len) {
-                    Some(piece_ids) => piece_ids
-                        .iter()
-                        .map(|&piece_id| match cx.builder.lookup_const_by_id(piece_id)? {
-                            SpirvConst::Composite(piece) => {
-                                const_str_as_utf8(piece.try_into().ok()?)
-                            }
-                            _ => None,
-                        })
-                        .collect::<Option<_>>(),
-                    // HACK(eddyb) minor upstream blunder results in at
-                    // least one instance of a runtime `[&str; 1]` array,
-                    // see also this comment left on the responsible PR:
-                    // https://github.com/rust-lang/rust/pull/129658#discussion_r2181834781
-                    // HACK(eddyb) `try_rev_take(-4)` is "peeking", not taking.
-                    None if pieces_len == 1 => match try_rev_take(-4).as_deref() {
-                        Some(
-                            &[
-                                Inst::InBoundsAccessChain2(field0_ptr, array_ptr_0, 0, 0),
-                                Inst::Store(st0_dst_ptr, st0_val),
-                                Inst::InBoundsAccessChain2(field1_ptr, array_ptr_1, 0, 1),
-                                Inst::Store(st1_dst_ptr, st1_val),
-                            ],
-                        ) if [array_ptr_0, array_ptr_1] == [pieces_slice_ptr_id; 2]
-                            && st0_dst_ptr == field0_ptr
-                            && st1_dst_ptr == field1_ptr =>
-                        {
-                            // HACK(eddyb) consume the peeked instructions.
-                            try_rev_take(4).unwrap();
-
-                            const_str_as_utf8(&[st0_val, st1_val])
-                                .map(|s| [s].into_iter().collect())
-                        }
-                        _ => None,
-                    },
-                    None => None,
-                }
-            }
         };
 
         if let Some((placeholder_count, placeholders_map_1_to_1)) = template_placeholder_info {
