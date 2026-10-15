@@ -237,35 +237,6 @@ impl<'tcx> CodegenCx<'tcx> {
                 );
             }
         }
-        if let Some(pieces_len) = demangled_symbol_name
-            .strip_prefix("<core::fmt::Arguments>::new_const::<")
-            .and_then(|s| s.strip_suffix(">"))
-        {
-            self.fmt_args_new_fn_ids.borrow_mut().insert(
-                fn_id,
-                FmtArgsCtor::NewConst {
-                    pieces_len: pieces_len.parse().unwrap(),
-                },
-            );
-        }
-        if let Some(generics) = demangled_symbol_name
-            .strip_prefix("<core::fmt::Arguments>::new_v1::<")
-            .and_then(|s| s.strip_suffix(">"))
-        {
-            let (pieces_len, rt_args_len) = generics.split_once(", ").unwrap();
-            self.fmt_args_new_fn_ids.borrow_mut().insert(
-                fn_id,
-                FmtArgsCtor::NewV1 {
-                    pieces_len: pieces_len.parse().unwrap(),
-                    rt_args_count: rt_args_len.parse().unwrap(),
-                },
-            );
-        }
-        if demangled_symbol_name == "<core::fmt::Arguments>::new_v1_formatted" {
-            self.fmt_args_new_fn_ids
-                .borrow_mut()
-                .insert(fn_id, FmtArgsCtor::NewV1FormattedDynamic);
-        }
         if demangled_symbol_name == "<core::fmt::Arguments>::from_str"
             || demangled_symbol_name == "<core::fmt::Arguments>::from_str_nonconst"
         {

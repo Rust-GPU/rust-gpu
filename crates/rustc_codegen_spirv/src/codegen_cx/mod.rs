@@ -53,15 +53,6 @@ pub enum FmtArgsCtor {
         template_len: usize,
         rt_args_count: usize,
     },
-    /// `Arguments::new_const(pieces)`.
-    NewConst { pieces_len: usize },
-    /// `Arguments::new_v1(pieces, args)`.
-    NewV1 {
-        pieces_len: usize,
-        rt_args_count: usize,
-    },
-    /// `Arguments::new_v1_formatted(..)` where lengths come from call operands.
-    NewV1FormattedDynamic,
     /// `Arguments::from_str(s)` / `Arguments::from_str_nonconst(s)`.
     FromStr,
 }
@@ -94,8 +85,7 @@ pub struct CodegenCx<'tcx> {
     /// of these lang items, which we always replace with an "abort".
     pub panic_entry_points: RefCell<FxHashSet<DefId>>,
 
-    /// `core::fmt::Arguments::{new,new_const,new_v1,new_v1_formatted,from_str,from_str_nonconst}`
-    /// instances (for Rust 2021 panics).
+    /// `core::fmt::Arguments::{new,from_str,from_str_nonconst}` instances.
     pub fmt_args_new_fn_ids: RefCell<FxHashMap<Word, FmtArgsCtor>>,
 
     /// `core::fmt::rt::Argument::new_*::<T>` instances (for panics' `format_args!`),
