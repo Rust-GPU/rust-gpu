@@ -142,6 +142,11 @@ impl Transformer for Validator<'_> {
                 self.validate_spv_inst(spv_inst)
             }
 
+            // HACK(eddyb) check against the equivalent SPIR-V instruction.
+            ConstKind::PtrToFunc(_) => {
+                self.validate_spv_inst(&self.wk.OpConstantFunctionPointerINTEL.into())
+            }
+
             ConstKind::PtrToGlobalVar(_)
             | ConstKind::SpvTypeOperand(_)
             | ConstKind::SpvStringLiteralForExtInst(_) => Ok(()),

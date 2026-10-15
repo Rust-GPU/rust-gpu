@@ -378,6 +378,9 @@ impl<'a> SelectiveEraser<'a> {
             wk.Uniform,
             wk.StorageBuffer,
             wk.PhysicalStorageBuffer,
+            // HACK(eddyb) not directly useful/needed, but avoiding (shallow)
+            // layout erasure in function pointers can reduce diagnostic noise.
+            wk.CodeSectionINTEL,
         ]
         .map(AddrSpace::SpvStorageClass)
         .contains(&addr_space)
