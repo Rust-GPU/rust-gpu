@@ -46,7 +46,12 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
     // HACK(eddyb) deduplicate with `diagnostics`.
     let name_from_attrs = |attrs: AttrSet| {
         cx[attrs].attrs.iter().find_map(|attr| match attr {
-            Attr::SpvAnnotation(spv_inst) if spv_inst.opcode == wk.OpName => {
+            Attr::SpvAnnotation {
+                spv_inst,
+                per_instance_const_inputs,
+            } if spv_inst.opcode == wk.OpName => {
+                assert!(per_instance_const_inputs.is_none());
+
                 Some(super::decode_spv_lit_str_with(&spv_inst.imms, |name| {
                     name.to_string()
                 }))

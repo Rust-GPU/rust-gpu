@@ -182,7 +182,12 @@ impl UseOrigin<'_> {
                 .attrs
                 .iter()
                 .find_map(|attr| match attr {
-                    Attr::SpvAnnotation(spv_inst) if spv_inst.opcode == wk.OpName => {
+                    Attr::SpvAnnotation {
+                        spv_inst,
+                        per_instance_const_inputs,
+                    } if spv_inst.opcode == wk.OpName => {
+                        assert!(per_instance_const_inputs.is_none());
+
                         Some(super::decode_spv_lit_str_with(&spv_inst.imms, |name| {
                             format!("`{name}`")
                         }))
@@ -211,8 +216,7 @@ impl UseOrigin<'_> {
                             match imms[..] {
                                 [em @ spv::Imm::Short(em_kind, _), ref name_imms @ ..] => {
                                     assert_eq!(em_kind, wk.ExecutionModel);
-                                    let em =
-                                        spv::print::operand_from_imms([em]).concat_to_plain_text();
+                                    let em = spv::print::operand([em], []).concat_to_plain_text();
                                     super::decode_spv_lit_str_with(name_imms, |name| {
                                         format!(
                                             "{} entry-point `{name}`",

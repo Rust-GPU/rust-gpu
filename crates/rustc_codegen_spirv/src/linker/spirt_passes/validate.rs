@@ -114,7 +114,9 @@ impl Transformer for Validator<'_> {
                 type_and_const_inputs: _,
             } => self.validate_spv_inst(spv_inst),
 
-            TypeKind::QPtr | TypeKind::SpvStringLiteralForExtInst => Ok(()),
+            TypeKind::QPtr | TypeKind::SpvTypeOperand | TypeKind::SpvStringLiteralForExtInst => {
+                Ok(())
+            }
         };
         let transformed = ty_def.inner_transform_with(self);
         match valid {
@@ -140,7 +142,9 @@ impl Transformer for Validator<'_> {
                 self.validate_spv_inst(spv_inst)
             }
 
-            ConstKind::PtrToGlobalVar(_) | ConstKind::SpvStringLiteralForExtInst(_) => Ok(()),
+            ConstKind::PtrToGlobalVar(_)
+            | ConstKind::SpvTypeOperand(_)
+            | ConstKind::SpvStringLiteralForExtInst(_) => Ok(()),
         };
         let transformed = ct_def.inner_transform_with(self);
         match valid {

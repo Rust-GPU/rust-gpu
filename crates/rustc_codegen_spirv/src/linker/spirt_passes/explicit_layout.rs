@@ -778,15 +778,20 @@ impl Transformer for EraseExplicitLayout<'_, '_> {
                     // FIXME(eddyb) `rustfmt` breaks down for `matches!`.
                     #[allow(clippy::match_like_matches_macro)]
                     let is_explicit_layout_decoration = match attr {
-                        Attr::SpvAnnotation(attr_spv_inst)
-                            if (attr_spv_inst.opcode == wk.OpDecorate
-                                && [wk.ArrayStride, wk.MatrixStride]
-                                    .map(|d| spv::Imm::Short(wk.Decoration, d))
-                                    .contains(&attr_spv_inst.imms[0]))
-                                || (attr_spv_inst.opcode == wk.OpMemberDecorate
-                                    && attr_spv_inst.imms[1]
-                                        == spv::Imm::Short(wk.Decoration, wk.Offset)) =>
+                        Attr::SpvAnnotation {
+                            spv_inst: attr_spv_inst,
+                            per_instance_const_inputs,
+                        } if (attr_spv_inst.opcode == wk.OpDecorate
+                            && [wk.ArrayStride, wk.MatrixStride]
+                                .map(|d| spv::Imm::Short(wk.Decoration, d))
+                                .contains(&attr_spv_inst.imms[0]))
+                            || (attr_spv_inst.opcode == wk.OpMemberDecorate
+                                && attr_spv_inst.imms[1]
+                                    == spv::Imm::Short(wk.Decoration, wk.Offset)) =>
                         {
+                            // FIXME(eddyb) support `ArrayStrideId` and `OffsetId`.
+                            assert!(per_instance_const_inputs.is_none());
+
                             true
                         }
 

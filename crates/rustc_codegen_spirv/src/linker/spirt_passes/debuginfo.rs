@@ -98,7 +98,14 @@ fn decode_all_custom_decorations(
 
     attrs_def.attrs.iter().filter_map(|attr| {
         let spv_inst = match attr {
-            Attr::SpvAnnotation(spv_inst) if spv_inst.opcode == wk.OpDecorateString => spv_inst,
+            Attr::SpvAnnotation {
+                spv_inst,
+                per_instance_const_inputs,
+            } if spv_inst.opcode == wk.OpDecorateString => {
+                assert!(per_instance_const_inputs.is_none());
+
+                spv_inst
+            }
             _ => return None,
         };
         let str_imms = spv_inst
