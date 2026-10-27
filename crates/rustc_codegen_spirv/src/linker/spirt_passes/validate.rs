@@ -2,8 +2,8 @@ use rustc_data_structures::fx::{FxHashMap, FxHashSet, FxIndexSet};
 use spirt::func_at::FuncAtMut;
 use spirt::transform::{InnerInPlaceTransform, InnerTransform, Transformed, Transformer};
 use spirt::{
-    Const, ConstDef, ConstKind, Context, DataInst, DataInstForm, DataInstKind, Diag, Func,
-    GlobalVar, Module, ModuleDialect, Type, TypeDef, TypeKind, spv,
+    Const, ConstDef, ConstKind, Context, DataInst, DataInstKind, Diag, Func, GlobalVar, Module,
+    ModuleDialect, Type, TypeDef, TypeKind, spv,
 };
 use std::collections::VecDeque;
 
@@ -25,7 +25,6 @@ pub fn validate(module: &mut Module) {
 
         transformed_types: FxHashMap::default(),
         transformed_consts: FxHashMap::default(),
-        transformed_data_inst_forms: FxHashMap::default(),
         seen_global_vars: FxHashSet::default(),
         global_var_queue: VecDeque::new(),
         seen_funcs: FxHashSet::default(),
@@ -54,7 +53,7 @@ struct Validator<'a> {
     cx: &'a Context,
     wk: &'static super::SpvWellKnownWithExtras,
     spv_spec_caps: &'static spv::spec::indexed::NamedIdxMap<
-        u16,
+        u32,
         spv::spec::Enumerant,
         spv::spec::indexed::KhrSegmented,
     >,
@@ -64,7 +63,6 @@ struct Validator<'a> {
     // FIXME(eddyb) build some automation to avoid ever repeating these.
     transformed_types: FxHashMap<Type, Transformed<Type>>,
     transformed_consts: FxHashMap<Const, Transformed<Const>>,
-    transformed_data_inst_forms: FxHashMap<DataInstForm, Transformed<DataInstForm>>,
     seen_global_vars: FxHashSet<GlobalVar>,
     global_var_queue: VecDeque<GlobalVar>,
     seen_funcs: FxHashSet<Func>,
@@ -93,20 +91,6 @@ impl Transformer for Validator<'_> {
         self.transformed_consts.insert(ct, transformed);
         transformed
     }
-    fn transform_data_inst_form_use(
-        &mut self,
-        data_inst_form: DataInstForm,
-    ) -> Transformed<DataInstForm> {
-        if let Some(&cached) = self.transformed_data_inst_forms.get(&data_inst_form) {
-            return cached;
-        }
-        let transformed = self
-            .transform_data_inst_form_def(&self.cx[data_inst_form])
-            .map(|data_inst_form_def| self.cx.intern(data_inst_form_def));
-        self.transformed_data_inst_forms
-            .insert(data_inst_form, transformed);
-        transformed
-    }
 
     fn transform_global_var_use(&mut self, gv: GlobalVar) -> Transformed<GlobalVar> {
         if self.seen_global_vars.insert(gv) {
@@ -130,7 +114,9 @@ impl Transformer for Validator<'_> {
                 type_and_const_inputs: _,
             } => self.validate_spv_inst(spv_inst),
 
-            TypeKind::QPtr | TypeKind::SpvStringLiteralForExtInst => Ok(()),
+            TypeKind::QPtr | TypeKind::SpvTypeOperand | TypeKind::SpvStringLiteralForExtInst => {
+                Ok(())
+            }
         };
         let transformed = ty_def.inner_transform_with(self);
         match valid {
@@ -156,7 +142,14 @@ impl Transformer for Validator<'_> {
                 self.validate_spv_inst(spv_inst)
             }
 
-            ConstKind::PtrToGlobalVar(_) | ConstKind::SpvStringLiteralForExtInst(_) => Ok(()),
+            // HACK(eddyb) check against the equivalent SPIR-V instruction.
+            ConstKind::PtrToFunc(_) => {
+                self.validate_spv_inst(&self.wk.OpConstantFunctionPointerINTEL.into())
+            }
+
+            ConstKind::PtrToGlobalVar(_)
+            | ConstKind::SpvTypeOperand(_)
+            | ConstKind::SpvStringLiteralForExtInst(_) => Ok(()),
         };
         let transformed = ct_def.inner_transform_with(self);
         match valid {
@@ -180,7 +173,7 @@ impl Transformer for Validator<'_> {
             .inner_in_place_transform_with(self);
 
         let inst_def = func_at_data_inst.def();
-        let valid = match &self.cx[inst_def.form].kind {
+        let valid = match &inst_def.kind {
             DataInstKind::SpvInst(spv_inst) => self.validate_spv_inst(spv_inst),
 
             DataInstKind::FuncCall(_) | DataInstKind::QPtr(_) | DataInstKind::SpvExtInst { .. } => {
@@ -258,9 +251,7 @@ impl Validator<'_> {
         if !enabled_by_default_or_cap {
             let caps = caps_enabling
                 .map(|cap| {
-                    let cap_name = u16::try_from(cap)
-                        .ok()
-                        .and_then(|cap| Some(self.spv_spec_caps.get_named(cap)?.0));
+                    let cap_name = self.spv_spec_caps.get_named(cap).map(|(name, _)| name);
                     match cap_name {
                         Some(name) => format!("`{name}`"),
                         None => format!("<unknown Capability 0x{cap:04x}>"),
@@ -299,7 +290,7 @@ impl Validator<'_> {
         let int_or_float = |type_name: &str, cap_name: &str| {
             // FIXME(eddyb) find a consistent style between all the error messages
             // (mentioning `OpCapability` seems unfortunate, for example).
-            match self.spv_spec_caps.lookup(cap_name).map(u32::from) {
+            match self.spv_spec_caps.lookup(cap_name) {
                 None => Err(format!("`{type_name}` type unsupported in SPIR-V")),
                 Some(cap) if !self.module_spv_dialect.capabilities.contains(&cap) => Err(format!(
                     "`{type_name}` type used without `OpCapability {cap_name}`"
@@ -346,9 +337,7 @@ impl Validator<'_> {
                             let (enum_name, enum_def) = kind.name_and_def();
                             let enumerant_name = match enum_def {
                                 spv::spec::OperandKindDef::ValueEnum { variants } => {
-                                    u16::try_from(imm)
-                                        .ok()
-                                        .and_then(|imm| Some(variants.get_named(imm)?.0))
+                                    variants.get_named(imm).map(|(name, _)| name)
                                 }
                                 _ => None,
                             };
