@@ -266,13 +266,7 @@ package = "rustc_codegen_spirv"
 
         let mut _file_lock = None;
 
-        let target_dir = &metadata.target_directory;
         let install_dir_target = install_dir.join("target");
-        let install_dir_target = match Path::exists(&install_dir_target) {
-            true => install_dir_target,
-            // if artifacts are missing, fall back to the global target dir
-            false => target_dir.clone().into_std_path_buf(),
-        };
 
         let (dest_dylib_path, do_build) = if source.is_path() {
             (
@@ -342,7 +336,9 @@ package = "rustc_codegen_spirv"
             cargo
                 .current_dir(&install_dir)
                 .arg(format!("+{toolchain_channel}"))
-                .args(["build", "--release"]);
+                .args(["build", "--release"])
+                .arg("--target-dir")
+                .arg(&install_dir_target);
             if source.is_path() {
                 cargo.args(["-p", "rustc_codegen_spirv", "--lib"]);
             }
