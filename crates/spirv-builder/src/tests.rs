@@ -174,12 +174,49 @@ mod rustflags {
         let builder = silent_builder().extra_arg("--from-builder");
         let env = EnvOverrides {
             codegen_args: Some("--from-env  --and-more".into()),
-            rustflags: Some("-Cfoo -Cbar".into()),
+            rustflags: Some(vec!["-Cfoo".into(), "-Cbar".into()]),
             cargoflags: None,
         };
         assert_eq!(
             extra_rustflags(&builder, &env),
             ["-Cllvm-args=--from-env --and-more", "-Cfoo", "-Cbar"]
         );
+    }
+}
+
+mod env_flags {
+    use crate::split_env_flags;
+
+    fn split(encoded: Option<&str>, plain: Option<&str>) -> Option<Vec<String>> {
+        split_env_flags(encoded.map(Into::into), plain.map(Into::into))
+    }
+
+    #[test]
+    fn unset() {
+        assert_eq!(split(None, None), None);
+    }
+
+    #[test]
+    fn plain_splits_on_whitespace() {
+        assert_eq!(
+            split(None, Some(" -Cfoo  -Zbar\t")),
+            Some(vec!["-Cfoo".into(), "-Zbar".into()])
+        );
+    }
+
+    #[test]
+    fn encoded_keeps_spaces_and_takes_precedence() {
+        assert_eq!(
+            split(
+                Some("--config\x1fbuild.rustflags=['-C a b']"),
+                Some("-Cignored")
+            ),
+            Some(vec!["--config".into(), "build.rustflags=['-C a b']".into()])
+        );
+    }
+
+    #[test]
+    fn empty_encoded_means_no_flags() {
+        assert_eq!(split(Some(""), Some("-Cignored")), Some(vec![]));
     }
 }

@@ -888,10 +888,25 @@ fn join_checking_for_separators(strings: Vec<impl Borrow<str>>, sep: &str) -> St
 struct EnvOverrides {
     /// `RUSTGPU_CODEGEN_ARGS`: replaces [`SpirvBuilder::extra_args`].
     codegen_args: Option<String>,
-    /// `RUSTGPU_RUSTFLAGS`: appended to the rustflags.
-    rustflags: Option<String>,
-    /// `RUSTGPU_CARGOFLAGS`: appended to the cargo args.
-    cargoflags: Option<String>,
+    /// `RUSTGPU_ENCODED_RUSTFLAGS` or `RUSTGPU_RUSTFLAGS`: appended to the rustflags.
+    rustflags: Option<Vec<String>>,
+    /// `RUSTGPU_ENCODED_CARGOFLAGS` or `RUSTGPU_CARGOFLAGS`: appended to the cargo args.
+    cargoflags: Option<Vec<String>>,
+}
+
+/// Splits flags from an env var pair, like Cargo's `CARGO_ENCODED_RUSTFLAGS` and `RUSTFLAGS`:
+/// the `encoded` one is split on `\x1f` (allowing spaces within flags) and takes precedence,
+/// the `plain` one is split on whitespace.
+fn split_env_flags(encoded: Option<String>, plain: Option<String>) -> Option<Vec<String>> {
+    if let Some(encoded) = encoded {
+        // like Cargo, an empty value means no flags rather than one empty flag
+        return Some(if encoded.is_empty() {
+            Vec::new()
+        } else {
+            encoded.split('\x1f').map(str::to_owned).collect()
+        });
+    }
+    plain.map(|plain| plain.split_whitespace().map(str::to_owned).collect())
 }
 
 impl SpirvBuilder {
@@ -943,7 +958,7 @@ impl SpirvBuilder {
         }
 
         if let Some(extra_rustflags) = &env_overrides.rustflags {
-            rustflags.extend(extra_rustflags.split_whitespace().map(|s| s.to_string()));
+            rustflags.extend(extra_rustflags.iter().cloned());
         }
 
         rustflags
@@ -1077,8 +1092,14 @@ impl SpirvBuilder {
         };
         let env_overrides = EnvOverrides {
             codegen_args: tracked_env_var_get("RUSTGPU_CODEGEN_ARGS"),
-            rustflags: tracked_env_var_get("RUSTGPU_RUSTFLAGS"),
-            cargoflags: tracked_env_var_get("RUSTGPU_CARGOFLAGS"),
+            rustflags: split_env_flags(
+                tracked_env_var_get("RUSTGPU_ENCODED_RUSTFLAGS"),
+                tracked_env_var_get("RUSTGPU_RUSTFLAGS"),
+            ),
+            cargoflags: split_env_flags(
+                tracked_env_var_get("RUSTGPU_ENCODED_CARGOFLAGS"),
+                tracked_env_var_get("RUSTGPU_CARGOFLAGS"),
+            ),
         };
         let rustflags = self.rustflags(&rustc_codegen_spirv, &env_overrides);
 
@@ -1125,7 +1146,7 @@ impl SpirvBuilder {
         }
 
         if let Some(extra_cargoflags) = &env_overrides.cargoflags {
-            cargo.args(extra_cargoflags.split_whitespace());
+            cargo.args(extra_cargoflags);
         }
 
         let target_spec_dir = target_dir.join("target-specs");
