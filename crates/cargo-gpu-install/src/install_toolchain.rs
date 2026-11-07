@@ -101,10 +101,7 @@ fn is_toolchain_installed(toolchain: &str, host_tuple: &str) -> anyhow::Result<b
     // check if toolchain is installed
     // CMD: `rustup toolchain list -q`
     let (list_toolchains, _) = run_cmd(Command::new("rustup").args(["toolchain", "list", "-q"]))?;
-    if !list_toolchains
-        .split_ascii_whitespace()
-        .any(|s| s == toolchain)
-    {
+    if !is_toolchain_listed(&list_toolchains, toolchain) {
         log::info!("toolchain {toolchain} is not installed");
         return Ok(false);
     }
@@ -123,25 +120,39 @@ fn is_toolchain_installed(toolchain: &str, host_tuple: &str) -> anyhow::Result<b
         "--installed",
     ]))?;
 
-    // components are listed as:
-    // * `llvm-tools-aarch64-unknown-linux-gnu` and we need to snippet off the host tuple from the end
-    // * `rust-src` since source code isn't target dependent
-    let component_host_suffix = format!("-{host_tuple}");
-    let mut required = REQUIRED_COMPONENTS.iter().copied().collect::<HashSet<_>>();
-    for component in components.split_ascii_whitespace() {
-        required.remove(
-            component
-                .strip_suffix(&component_host_suffix)
-                .unwrap_or(component),
-        );
-    }
-    if !required.is_empty() {
-        log::info!("components {required:?} missing for toolchain {toolchain}");
+    let missing = missing_components(&components, host_tuple);
+    if !missing.is_empty() {
+        log::info!("components {missing:?} missing for toolchain {toolchain}");
         return Ok(false);
     }
 
     log::info!("toolchain and required components are already installed");
     Ok(true)
+}
+
+/// Whether `toolchain` is in the output of `rustup toolchain list -q`.
+///
+/// Entries may carry annotations like `(active, default)`, so only exact words match.
+fn is_toolchain_listed(list_output: &str, toolchain: &str) -> bool {
+    list_output.split_ascii_whitespace().any(|s| s == toolchain)
+}
+
+/// The [`REQUIRED_COMPONENTS`] absent from the output of `rustup component list -q --installed`.
+///
+/// Components are listed either as:
+/// * `llvm-tools-aarch64-unknown-linux-gnu`, where we strip the host tuple from the end
+/// * `rust-src`, since source code isn't target dependent
+fn missing_components(list_output: &str, host_tuple: &str) -> HashSet<&'static str> {
+    let component_host_suffix = format!("-{host_tuple}");
+    let mut missing = REQUIRED_COMPONENTS.iter().copied().collect::<HashSet<_>>();
+    for component in list_output.split_ascii_whitespace() {
+        missing.remove(
+            component
+                .strip_suffix(&component_host_suffix)
+                .unwrap_or(component),
+        );
+    }
+    missing
 }
 
 pub fn run_cmd(cmd: &mut Command) -> anyhow::Result<(String, String)> {
@@ -151,7 +162,7 @@ pub fn run_cmd(cmd: &mut Command) -> anyhow::Result<(String, String)> {
             " ",
             std::iter::once(cmd.get_program())
                 .chain(cmd.get_args())
-                .map(|s| s.to_str().unwrap()),
+                .map(|s| s.to_string_lossy()),
         )
     };
     let output = output.with_context(|| format!("Failed to launch cmd `{}`", fmt_cmd()))?;
@@ -159,8 +170,8 @@ pub fn run_cmd(cmd: &mut Command) -> anyhow::Result<(String, String)> {
     let utf8_error = |e: FromUtf8Error, kind: &str| {
         anyhow::anyhow!(
             "Command `{}` {} contains invalid UTF-8: {} \n {:?}",
-            kind,
             fmt_cmd(),
+            kind,
             e.utf8_error(),
             e.into_bytes()
         )
@@ -178,12 +189,16 @@ pub fn run_cmd(cmd: &mut Command) -> anyhow::Result<(String, String)> {
     Ok((stdout, stderr))
 }
 
-/// Folds an [`Iterator`] of `&str` into a [`String`] while interspersing some `&str` between each element
-#[expect(clippy::string_add, reason = "Deliberately using String::add")]
-fn intersperse<'a>(intersperse: &str, iter: impl Iterator<Item = &'a str>) -> String {
-    let mut s = iter.fold(String::new(), |a, b| a + b + intersperse);
-    s.truncate(s.len() - intersperse.len());
-    s
+/// Joins the items of an [`Iterator`] into a [`String`], with `separator` between each of them.
+fn intersperse<S: AsRef<str>>(separator: &str, iter: impl Iterator<Item = S>) -> String {
+    let mut out = String::new();
+    for (i, item) in iter.enumerate() {
+        if i > 0 {
+            out.push_str(separator);
+        }
+        out.push_str(item.as_ref());
+    }
+    out
 }
 
 #[cfg(not(feature = "tty"))]
@@ -215,6 +230,8 @@ fn get_consent_for_toolchain_install(
 
     log::debug!("asking for consent to install the required toolchain");
     crossterm::terminal::enable_raw_mode().context("enabling raw mode")?;
+    // Restore the terminal even if reading the input fails below.
+    let raw_mode = RawModeGuard;
     user_output!("{prompt} [Y/n]: ");
     let mut input = crossterm::event::read().context("reading crossterm event")?;
 
@@ -228,7 +245,7 @@ fn get_consent_for_toolchain_install(
         // (see crossterm#124). If that happens, re-read the input.
         input = crossterm::event::read().context("re-reading crossterm event")?;
     }
-    crossterm::terminal::disable_raw_mode().context("disabling raw mode")?;
+    drop(raw_mode);
 
     #[expect(clippy::print_stdout, reason = "need a newline after crossterm input")]
     {
@@ -248,9 +265,95 @@ fn get_consent_for_toolchain_install(
     }
 }
 
+/// Disables terminal raw mode when dropped.
+#[cfg(feature = "tty")]
+struct RawModeGuard;
+
+#[cfg(feature = "tty")]
+impl Drop for RawModeGuard {
+    fn drop(&mut self) {
+        if let Err(err) = crossterm::terminal::disable_raw_mode() {
+            log::error!("failed to disable terminal raw mode: {err}");
+        }
+    }
+}
+
 fn no_tty() -> ! {
     user_output!("No TTY detected so can't ask for consent to install Rust toolchain.");
     log::error!("Attempted to ask for consent when there's no TTY");
     #[expect(clippy::exit, reason = "can't ask for user consent if there's no TTY")]
     std::process::exit(1);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const HOST: &str = "aarch64-unknown-linux-gnu";
+
+    #[test]
+    fn toolchain_listed_matches_exact_word_only() {
+        let list = "stable-aarch64-unknown-linux-gnu (default)\n\
+                    nightly-2024-04-24-aarch64-unknown-linux-gnu (active)\n";
+        assert!(is_toolchain_listed(
+            list,
+            "nightly-2024-04-24-aarch64-unknown-linux-gnu"
+        ));
+        assert!(!is_toolchain_listed(list, "nightly-2024-04-24"));
+        assert!(!is_toolchain_listed("", "stable-aarch64-unknown-linux-gnu"));
+    }
+
+    #[test]
+    fn all_components_installed() {
+        let list = format!(
+            "cargo-{HOST}\nclippy-{HOST}\nllvm-tools-{HOST}\nrust-src\n\
+             rust-std-{HOST}\nrustc-{HOST}\nrustc-dev-{HOST}\n"
+        );
+        assert_eq!(missing_components(&list, HOST), HashSet::new());
+    }
+
+    #[test]
+    fn reports_missing_components() {
+        let list = format!("cargo-{HOST}\nrust-src\nrust-std-{HOST}\nrustc-{HOST}\n");
+        assert_eq!(
+            missing_components(&list, HOST),
+            HashSet::from(["clippy", "rustc-dev", "llvm-tools"])
+        );
+    }
+
+    #[test]
+    fn components_of_another_host_dont_count() {
+        let list = "rustc-dev-x86_64-pc-windows-msvc\n";
+        assert!(missing_components(list, HOST).contains("rustc-dev"));
+    }
+
+    #[test]
+    fn intersperse_joins() {
+        assert_eq!(intersperse(", ", ["a", "b", "c"].into_iter()), "a, b, c");
+        assert_eq!(intersperse(", ", ["a"].into_iter()), "a");
+        // used to underflow and panic
+        assert_eq!(intersperse(", ", std::iter::empty::<&str>()), "");
+    }
+
+    /// The command and the stream name used to be swapped in this message.
+    #[cfg(unix)]
+    #[test]
+    fn run_cmd_invalid_utf8_names_command_then_stream() {
+        let err = run_cmd(Command::new("printf").arg("\\377")).unwrap_err();
+        assert!(
+            err.to_string()
+                .starts_with(r"Command `printf \377` stdout contains invalid UTF-8"),
+            "{err}"
+        );
+    }
+
+    #[test]
+    fn run_cmd_failure_names_the_command() {
+        let err = run_cmd(Command::new("cargo").args(["--definitely-not-a-flag"])).unwrap_err();
+        assert!(
+            err.to_string()
+                .starts_with("Command `cargo --definitely-not-a-flag` failed"),
+            "{err}"
+        );
+    }
 }
