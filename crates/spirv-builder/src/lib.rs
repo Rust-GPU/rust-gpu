@@ -114,6 +114,8 @@ pub enum SpirvBuilderError {
     RustcCodegenSpirvDylibDoesNotExist(PathBuf),
     #[error("build failed")]
     BuildFailed,
+    #[error("failed to run `cargo`: {0}")]
+    CargoSpawnFailed(#[source] std::io::Error),
     #[error(
         "`multimodule: true` build cannot be used together with `build_script.env_shader_spv_path: true`"
     )]
@@ -1143,7 +1145,9 @@ impl SpirvBuilder {
         }
         cargo.current_dir(path_to_crate);
         log::debug!("building shaders with `{cargo:?}`");
-        let build = cargo.output().expect("failed to execute cargo build");
+        let build = cargo
+            .output()
+            .map_err(SpirvBuilderError::CargoSpawnFailed)?;
 
         if self.build_script.get_forward_rustc_warnings() {
             let stderr = String::from_utf8_lossy(&build.stderr);
@@ -1155,7 +1159,9 @@ impl SpirvBuilder {
         // `get_last_artifact` has the side-effect of printing invalid lines, so
         // we do that even in case of an error, to let through any useful messages
         // that ended up on stdout instead of stderr.
-        let stdout = String::from_utf8(build.stdout).unwrap();
+        // Lossy, as cargo's JSON messages are UTF-8 anyway, and any other output is only
+        // forwarded to the user.
+        let stdout = String::from_utf8_lossy(&build.stdout).into_owned();
         if build.status.success() {
             let metadata_file = get_sole_artifact(&stdout)
                 .ok_or(SpirvBuilderError::NoArtifactProduced { stdout })?;
