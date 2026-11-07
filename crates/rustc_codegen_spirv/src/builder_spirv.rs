@@ -27,7 +27,7 @@ use std::hash::{Hash, Hasher};
 use std::iter;
 use std::ops::Range;
 use std::sync::Arc;
-use std::{fs::File, io::Write, path::Path};
+use std::{fs, io, path::Path};
 
 #[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub enum SpirvValueKind {
@@ -498,12 +498,12 @@ impl<'tcx> BuilderSpirv<'tcx> {
     }
 
     /// Helper function useful to place right before a crash, to debug the module state.
-    pub fn dump_module(&self, path: impl AsRef<Path>) {
+    ///
+    /// Returns an error instead of panicking, as it's typically called while
+    /// already panicking (where a second panic would abort the process).
+    pub fn dump_module(&self, path: impl AsRef<Path>) -> io::Result<()> {
         let module = self.builder.borrow().module_ref().assemble();
-        File::create(path)
-            .unwrap()
-            .write_all(spirv_tools::binary::from_binary(&module))
-            .unwrap();
+        fs::write(path, spirv_tools::binary::from_binary(&module))
     }
 
     /// See comment on `BuilderCursor`

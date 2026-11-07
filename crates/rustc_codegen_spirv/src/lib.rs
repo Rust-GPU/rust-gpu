@@ -510,7 +510,11 @@ impl Drop for DumpModuleOnPanic<'_, '_, '_> {
     fn drop(&mut self) {
         if std::thread::panicking() {
             if self.path.has_root() {
-                self.cx.builder.dump_module(self.path);
+                // NOTE never panic here: we're already unwinding, and a
+                // second panic would abort, losing the original panic message.
+                if let Err(err) = self.cx.builder.dump_module(self.path) {
+                    error!("failed to dump module to `{}`: {err}", self.path.display());
+                }
             } else {
                 error!("{}", self.cx.builder.dump_module_str());
             }
