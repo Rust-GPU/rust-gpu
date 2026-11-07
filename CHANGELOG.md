@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Toolchain: `nightly-2026-08-15` (rustc 1.99.0)
 
+### Added ⭐
+
+- [PR#696](https://github.com/Rust-GPU/rust-gpu/pull/696) add `RUSTGPU_ENCODED_RUSTFLAGS` and `RUSTGPU_ENCODED_CARGOFLAGS` env vars, split on `\x1f` like Cargo's `CARGO_ENCODED_RUSTFLAGS`, to allow spaces within flags
+
 ### Fixed 🩹
 
 - [PR#678](https://github.com/Rust-GPU/rust-gpu/pull/678) fix missing reexports in `spirv-std-nightly`
