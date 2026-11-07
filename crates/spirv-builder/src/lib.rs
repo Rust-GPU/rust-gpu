@@ -883,6 +883,142 @@ fn join_checking_for_separators(strings: Vec<impl Borrow<str>>, sep: &str) -> St
     strings.join(sep)
 }
 
+/// Overrides read from `RUSTGPU_*` environment variables, see [`SpirvBuilder::rustflags`].
+#[derive(Default)]
+struct EnvOverrides {
+    /// `RUSTGPU_CODEGEN_ARGS`: replaces [`SpirvBuilder::extra_args`].
+    codegen_args: Option<String>,
+    /// `RUSTGPU_RUSTFLAGS`: appended to the rustflags.
+    rustflags: Option<String>,
+    /// `RUSTGPU_CARGOFLAGS`: appended to the cargo args.
+    cargoflags: Option<String>,
+}
+
+impl SpirvBuilder {
+    /// The `rustc` flags (for `CARGO_ENCODED_RUSTFLAGS`) to build the shader crate with the
+    /// `rustc_codegen_spirv` backend at `codegen_backend`.
+    fn rustflags(&self, codegen_backend: &Path, env_overrides: &EnvOverrides) -> Vec<String> {
+        let mut rustflags = vec![
+            format!("-Zcodegen-backend={}", codegen_backend.display()),
+            // Ensure the codegen backend is emitted in `.d` files to force Cargo
+            // to rebuild crates compiled with it when it changes (this used to be
+            // the default until https://github.com/rust-lang/rust/pull/93969).
+            "-Zbinary-dep-depinfo".to_string(),
+            "-Csymbol-mangling-version=v0".to_string(),
+            "-Zcrate-attr=feature(register_tool)".to_string(),
+            "-Zcrate-attr=register_tool(rust_gpu)".to_string(),
+            // HACK(eddyb) this is the same configuration that we test with, and
+            // ensures no unwanted surprises from e.g. `core` debug assertions.
+            "-Coverflow-checks=off".to_string(),
+            "-Cdebug-assertions=off".to_string(),
+            // HACK(eddyb) we need this for `core::fmt::rt::Argument::new_*` calls
+            // to *never* be inlined, so we can pattern-match the calls themselves.
+            "-Zinline-mir=off".to_string(),
+            // HACK(eddyb) similar to turning MIR inlining off, we also can't allow
+            // optimizations that drastically impact (the quality of) codegen, and
+            // GVN currently can lead to the memcpy-out-of-const-alloc-global-var
+            // pattern, even for `ScalarPair` (e.g. `return None::<u32>;`).
+            "-Zmir-enable-passes=-GVN".to_string(),
+            // HACK(eddyb) avoid ever reusing instantiations from `compiler_builtins`
+            // which is special-cased to turn calls to functions that never return,
+            // into aborts, and this applies to the panics of UB-checking helpers
+            // (https://github.com/rust-lang/rust/pull/122580#issuecomment-3033026194)
+            // but while upstream that only loses the panic message, for us it's even
+            // worse, as we lose the chance to remove otherwise-dead `fmt::Arguments`.
+            "-Zshare-generics=off".to_string(),
+        ];
+
+        let llvm_args = join_checking_for_separators(self.llvm_args(env_overrides), " ");
+        if !llvm_args.is_empty() {
+            rustflags.push(["-Cllvm-args=", &llvm_args].concat());
+        }
+
+        let target_features = join_checking_for_separators(self.target_features(), ",");
+        if !target_features.is_empty() {
+            rustflags.push(["-Ctarget-feature=", &target_features].concat());
+        }
+
+        if self.deny_warnings {
+            rustflags.push("-Dwarnings".to_string());
+        }
+
+        if let Some(extra_rustflags) = &env_overrides.rustflags {
+            rustflags.extend(extra_rustflags.split_whitespace().map(|s| s.to_string()));
+        }
+
+        rustflags
+    }
+
+    /// The `rustc_codegen_spirv` args, passed via `-Cllvm-args`.
+    fn llvm_args(&self, env_overrides: &EnvOverrides) -> Vec<String> {
+        let mut llvm_args = vec![];
+        if self.multimodule {
+            llvm_args.push("--module-output=multiple".to_string());
+        }
+        match self.spirv_metadata {
+            SpirvMetadata::None => (),
+            SpirvMetadata::NameVariables => {
+                llvm_args.push("--spirv-metadata=name-variables".to_string());
+            }
+            SpirvMetadata::Full => llvm_args.push("--spirv-metadata=full".to_string()),
+        }
+        if self.validator.relax_struct_store {
+            llvm_args.push("--relax-struct-store".to_string());
+        }
+        if self.validator.relax_logical_pointer {
+            llvm_args.push("--relax-logical-pointer".to_string());
+        }
+        if self.validator.relax_block_layout.unwrap_or(false) {
+            llvm_args.push("--relax-block-layout".to_string());
+        }
+        if self.validator.uniform_buffer_standard_layout {
+            llvm_args.push("--uniform-buffer-standard-layout".to_string());
+        }
+        if self.validator.scalar_block_layout {
+            llvm_args.push("--scalar-block-layout".to_string());
+        }
+        if self.validator.skip_block_layout {
+            llvm_args.push("--skip-block-layout".to_string());
+        }
+        if self.optimizer.preserve_bindings {
+            llvm_args.push("--preserve-bindings".to_string());
+        }
+        let abort_strategy = match self.shader_panic_strategy {
+            ShaderPanicStrategy::SilentExit => None,
+            ShaderPanicStrategy::DebugPrintfThenExit {
+                print_inputs,
+                print_backtrace,
+            } => Some(format!(
+                "debug-printf{}{}",
+                if print_inputs { "+inputs" } else { "" },
+                if print_backtrace { "+backtrace" } else { "" }
+            )),
+            ShaderPanicStrategy::UNSOUND_DO_NOT_USE_UndefinedBehaviorViaUnreachable => {
+                Some("unreachable".into())
+            }
+        };
+        llvm_args.extend(abort_strategy.map(|strategy| format!("--abort-strategy={strategy}")));
+
+        if let Some(extra_codegen_args) = &env_overrides.codegen_args {
+            llvm_args.extend(extra_codegen_args.split_whitespace().map(|s| s.to_string()));
+        } else {
+            llvm_args.extend(self.extra_args.iter().cloned());
+        }
+        llvm_args
+    }
+
+    /// The target features (capabilities and extensions), passed via `-Ctarget-feature`.
+    fn target_features(&self) -> Vec<String> {
+        let mut target_features = vec![];
+        if let ShaderPanicStrategy::DebugPrintfThenExit { .. } = self.shader_panic_strategy {
+            target_features.push("+ext:SPV_KHR_non_semantic_info".into());
+        }
+        target_features.extend(self.capabilities.iter().map(|cap| format!("+{cap:?}")));
+        target_features.extend(self.extensions.iter().map(|ext| format!("+ext:{ext}")));
+        target_features
+    }
+}
+
 pub struct RustcOutput {
     pub compile_result: CompileResult,
     pub deps: Vec<RawString>,
@@ -932,121 +1068,19 @@ impl SpirvBuilder {
             ));
         }
 
-        let mut rustflags = vec![
-            format!("-Zcodegen-backend={}", rustc_codegen_spirv.display()),
-            // Ensure the codegen backend is emitted in `.d` files to force Cargo
-            // to rebuild crates compiled with it when it changes (this used to be
-            // the default until https://github.com/rust-lang/rust/pull/93969).
-            "-Zbinary-dep-depinfo".to_string(),
-            "-Csymbol-mangling-version=v0".to_string(),
-            "-Zcrate-attr=feature(register_tool)".to_string(),
-            "-Zcrate-attr=register_tool(rust_gpu)".to_string(),
-            // HACK(eddyb) this is the same configuration that we test with, and
-            // ensures no unwanted surprises from e.g. `core` debug assertions.
-            "-Coverflow-checks=off".to_string(),
-            "-Cdebug-assertions=off".to_string(),
-            // HACK(eddyb) we need this for `core::fmt::rt::Argument::new_*` calls
-            // to *never* be inlined, so we can pattern-match the calls themselves.
-            "-Zinline-mir=off".to_string(),
-            // HACK(eddyb) similar to turning MIR inlining off, we also can't allow
-            // optimizations that drastically impact (the quality of) codegen, and
-            // GVN currently can lead to the memcpy-out-of-const-alloc-global-var
-            // pattern, even for `ScalarPair` (e.g. `return None::<u32>;`).
-            "-Zmir-enable-passes=-GVN".to_string(),
-            // HACK(eddyb) avoid ever reusing instantiations from `compiler_builtins`
-            // which is special-cased to turn calls to functions that never return,
-            // into aborts, and this applies to the panics of UB-checking helpers
-            // (https://github.com/rust-lang/rust/pull/122580#issuecomment-3033026194)
-            // but while upstream that only loses the panic message, for us it's even
-            // worse, as we lose the chance to remove otherwise-dead `fmt::Arguments`.
-            "-Zshare-generics=off".to_string(),
-        ];
-
         // Wrapper for `env::var` that appropriately informs Cargo of the dependency.
         let tracked_env_var_get = |name| {
             if self.build_script.get_dependency_info() {
                 println!("cargo:rerun-if-env-changed={name}");
             }
-            env::var(name)
+            env::var(name).ok()
         };
-
-        let mut llvm_args = vec![];
-        if self.multimodule {
-            llvm_args.push("--module-output=multiple".to_string());
-        }
-        match self.spirv_metadata {
-            SpirvMetadata::None => (),
-            SpirvMetadata::NameVariables => {
-                llvm_args.push("--spirv-metadata=name-variables".to_string());
-            }
-            SpirvMetadata::Full => llvm_args.push("--spirv-metadata=full".to_string()),
-        }
-        if self.validator.relax_struct_store {
-            llvm_args.push("--relax-struct-store".to_string());
-        }
-        if self.validator.relax_logical_pointer {
-            llvm_args.push("--relax-logical-pointer".to_string());
-        }
-        if self.validator.relax_block_layout.unwrap_or(false) {
-            llvm_args.push("--relax-block-layout".to_string());
-        }
-        if self.validator.uniform_buffer_standard_layout {
-            llvm_args.push("--uniform-buffer-standard-layout".to_string());
-        }
-        if self.validator.scalar_block_layout {
-            llvm_args.push("--scalar-block-layout".to_string());
-        }
-        if self.validator.skip_block_layout {
-            llvm_args.push("--skip-block-layout".to_string());
-        }
-        if self.optimizer.preserve_bindings {
-            llvm_args.push("--preserve-bindings".to_string());
-        }
-        let mut target_features = vec![];
-        let abort_strategy = match self.shader_panic_strategy {
-            ShaderPanicStrategy::SilentExit => None,
-            ShaderPanicStrategy::DebugPrintfThenExit {
-                print_inputs,
-                print_backtrace,
-            } => {
-                target_features.push("+ext:SPV_KHR_non_semantic_info".into());
-                Some(format!(
-                    "debug-printf{}{}",
-                    if print_inputs { "+inputs" } else { "" },
-                    if print_backtrace { "+backtrace" } else { "" }
-                ))
-            }
-            ShaderPanicStrategy::UNSOUND_DO_NOT_USE_UndefinedBehaviorViaUnreachable => {
-                Some("unreachable".into())
-            }
+        let env_overrides = EnvOverrides {
+            codegen_args: tracked_env_var_get("RUSTGPU_CODEGEN_ARGS"),
+            rustflags: tracked_env_var_get("RUSTGPU_RUSTFLAGS"),
+            cargoflags: tracked_env_var_get("RUSTGPU_CARGOFLAGS"),
         };
-        llvm_args.extend(abort_strategy.map(|strategy| format!("--abort-strategy={strategy}")));
-
-        if let Ok(extra_codegen_args) = tracked_env_var_get("RUSTGPU_CODEGEN_ARGS") {
-            llvm_args.extend(extra_codegen_args.split_whitespace().map(|s| s.to_string()));
-        } else {
-            llvm_args.extend(self.extra_args.iter().cloned());
-        }
-
-        let llvm_args = join_checking_for_separators(llvm_args, " ");
-        if !llvm_args.is_empty() {
-            rustflags.push(["-Cllvm-args=", &llvm_args].concat());
-        }
-
-        target_features.extend(self.capabilities.iter().map(|cap| format!("+{cap:?}")));
-        target_features.extend(self.extensions.iter().map(|ext| format!("+ext:{ext}")));
-        let target_features = join_checking_for_separators(target_features, ",");
-        if !target_features.is_empty() {
-            rustflags.push(["-Ctarget-feature=", &target_features].concat());
-        }
-
-        if self.deny_warnings {
-            rustflags.push("-Dwarnings".to_string());
-        }
-
-        if let Ok(extra_rustflags) = tracked_env_var_get("RUSTGPU_RUSTFLAGS") {
-            rustflags.extend(extra_rustflags.split_whitespace().map(|s| s.to_string()));
-        }
+        let rustflags = self.rustflags(&rustc_codegen_spirv, &env_overrides);
 
         let target_dir_path = self
             .target_dir_path
@@ -1090,7 +1124,7 @@ impl SpirvBuilder {
             cargo.args(["--crate-type", "dylib"]);
         }
 
-        if let Ok(extra_cargoflags) = tracked_env_var_get("RUSTGPU_CARGOFLAGS") {
+        if let Some(extra_cargoflags) = &env_overrides.cargoflags {
             cargo.args(extra_cargoflags.split_whitespace());
         }
 

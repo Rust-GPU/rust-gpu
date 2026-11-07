@@ -102,3 +102,84 @@ mod dylib_lookup {
         );
     }
 }
+
+mod rustflags {
+    use crate::{Capability, EnvOverrides, ShaderPanicStrategy, SpirvBuilder, SpirvMetadata};
+    use std::path::Path;
+
+    const BACKEND: &str = "/backend/librustc_codegen_spirv.so";
+
+    fn builder() -> SpirvBuilder {
+        SpirvBuilder::new("/shader", "spirv-unknown-vulkan1.2")
+    }
+
+    fn rustflags(builder: &SpirvBuilder, env: &EnvOverrides) -> Vec<String> {
+        builder.rustflags(Path::new(BACKEND), env)
+    }
+
+    /// A builder that emits no configurable flags at all (the default panic strategy does).
+    fn silent_builder() -> SpirvBuilder {
+        builder().shader_panic_strategy(ShaderPanicStrategy::SilentExit)
+    }
+
+    /// The flags after the fixed ones every build gets.
+    fn extra_rustflags(builder: &SpirvBuilder, env: &EnvOverrides) -> Vec<String> {
+        let fixed = rustflags(&silent_builder(), &EnvOverrides::default()).len();
+        rustflags(builder, env)[fixed..].to_vec()
+    }
+
+    #[test]
+    fn fixed_flags_start_with_the_backend() {
+        let flags = rustflags(&builder(), &EnvOverrides::default());
+        assert_eq!(flags[0], format!("-Zcodegen-backend={BACKEND}"));
+        assert!(flags.contains(&"-Zbinary-dep-depinfo".to_string()));
+        assert!(flags.contains(&"-Zshare-generics=off".to_string()));
+    }
+
+    #[test]
+    fn silent_exit_has_no_llvm_args_or_target_features() {
+        let flags = extra_rustflags(&silent_builder(), &EnvOverrides::default());
+        assert_eq!(flags, Vec::<String>::new());
+    }
+
+    #[test]
+    fn builder_options_map_to_flags() {
+        let builder = builder()
+            .multimodule(true)
+            .spirv_metadata(SpirvMetadata::Full)
+            .relax_block_layout(true)
+            .preserve_bindings(true)
+            .shader_panic_strategy(ShaderPanicStrategy::DebugPrintfThenExit {
+                print_inputs: true,
+                print_backtrace: false,
+            })
+            .capability(Capability::Int8)
+            .extension("SPV_KHR_foo")
+            .extra_arg("--dump-post-link=/tmp/x")
+            .deny_warnings(true);
+        assert_eq!(
+            extra_rustflags(&builder, &EnvOverrides::default()),
+            [
+                "-Cllvm-args=--module-output=multiple --spirv-metadata=full \
+                 --relax-block-layout --preserve-bindings \
+                 --abort-strategy=debug-printf+inputs --dump-post-link=/tmp/x",
+                "-Ctarget-feature=+ext:SPV_KHR_non_semantic_info,+Int8,+ext:SPV_KHR_foo",
+                "-Dwarnings",
+            ]
+        );
+    }
+
+    #[test]
+    fn env_codegen_args_replace_extra_args_and_env_rustflags_are_appended() {
+        let builder = silent_builder().extra_arg("--from-builder");
+        let env = EnvOverrides {
+            codegen_args: Some("--from-env  --and-more".into()),
+            rustflags: Some("-Cfoo -Cbar".into()),
+            cargoflags: None,
+        };
+        assert_eq!(
+            extra_rustflags(&builder, &env),
+            ["-Cllvm-args=--from-env --and-more", "-Cfoo", "-Cbar"]
+        );
+    }
+}
