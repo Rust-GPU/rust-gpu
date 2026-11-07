@@ -120,6 +120,7 @@ impl SpirvWatcher {
             Err(TryRecvError::Disconnected) => return Err(SpirvWatcherError::WatcherDied.into()),
         }
 
+        self.pin_target_dir();
         let result = (|| {
             let out = self.builder.invoke_rustc()?;
             self.watch_leaf_deps(out.deps.iter().map(|d| d.as_ref()));
@@ -148,6 +149,20 @@ impl SpirvWatcher {
                 };
                 Err(err)
             }
+        }
+    }
+
+    /// Resolves a relative target dir to an absolute one once, so rebuilds don't each have to
+    /// run `cargo metadata`. Failures are left for [`SpirvBuilder::invoke_rustc`] to report, and
+    /// resolving is retried on the next build.
+    fn pin_target_dir(&mut self) {
+        let is_absolute = (self.builder.target_dir_path.as_ref()).is_some_and(|p| p.is_absolute());
+        if is_absolute || !self.path_to_crate.is_dir() {
+            return;
+        }
+        match self.builder.resolve_target_dir(&self.path_to_crate) {
+            Ok(target_dir) => self.builder.target_dir_path = Some(target_dir),
+            Err(err) => log::debug!("couldn't resolve target dir yet: {err}"),
         }
     }
 

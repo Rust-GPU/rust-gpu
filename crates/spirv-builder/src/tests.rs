@@ -102,3 +102,33 @@ mod dylib_lookup {
         );
     }
 }
+
+mod target_dir {
+    use crate::SpirvBuilder;
+    use std::path::{Path, PathBuf};
+
+    fn sky_shader() -> PathBuf {
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/shaders/sky-shader")
+    }
+
+    #[test]
+    fn absolute_target_dir_is_kept() {
+        let abs = std::env::temp_dir().join("my-spirv-target");
+        let mut builder = SpirvBuilder::new(sky_shader(), "spirv-unknown-vulkan1.2");
+        builder.target_dir_path = Some(abs.clone());
+        // a crate path without a `Cargo.toml`: `cargo metadata` would fail if it ran
+        let not_a_crate = std::env::temp_dir();
+        assert_eq!(builder.resolve_target_dir(&not_a_crate).unwrap(), abs);
+    }
+
+    #[test]
+    fn relative_target_dir_is_inside_cargo_target_dir() {
+        let builder = SpirvBuilder::new(sky_shader(), "spirv-unknown-vulkan1.2");
+        let resolved = builder.resolve_target_dir(&sky_shader()).unwrap();
+        assert!(resolved.is_absolute(), "{resolved:?}");
+        assert!(
+            resolved.ends_with("spirv-builder") && resolved != Path::new("spirv-builder"),
+            "{resolved:?}"
+        );
+    }
+}

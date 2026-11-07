@@ -883,6 +883,29 @@ fn join_checking_for_separators(strings: Vec<impl Borrow<str>>, sep: &str) -> St
     strings.join(sep)
 }
 
+impl SpirvBuilder {
+    /// The absolute target dir: [`Self::target_dir_path`] (default `spirv-builder`), relative to
+    /// the shader crate's cargo target dir unless already absolute.
+    ///
+    /// Relative paths need `cargo metadata`, which is slow, so the watcher resolves this only once.
+    fn resolve_target_dir(&self, path_to_crate: &Path) -> Result<PathBuf, cargo_metadata::Error> {
+        let target_dir_path = self
+            .target_dir_path
+            .clone()
+            .unwrap_or_else(|| PathBuf::from("spirv-builder"));
+        if target_dir_path.is_absolute() {
+            return Ok(target_dir_path);
+        }
+        let metadata = cargo_metadata::MetadataCommand::new()
+            .current_dir(path_to_crate)
+            .exec()?;
+        Ok(metadata
+            .target_directory
+            .into_std_path_buf()
+            .join(target_dir_path))
+    }
+}
+
 pub struct RustcOutput {
     pub compile_result: CompileResult,
     pub deps: Vec<RawString>,
@@ -1048,21 +1071,7 @@ impl SpirvBuilder {
             rustflags.extend(extra_rustflags.split_whitespace().map(|s| s.to_string()));
         }
 
-        let target_dir_path = self
-            .target_dir_path
-            .clone()
-            .unwrap_or_else(|| PathBuf::from("spirv-builder"));
-        let target_dir = if target_dir_path.is_absolute() {
-            target_dir_path
-        } else {
-            let metadata = cargo_metadata::MetadataCommand::new()
-                .current_dir(path_to_crate)
-                .exec()?;
-            metadata
-                .target_directory
-                .into_std_path_buf()
-                .join(target_dir_path)
-        };
+        let target_dir = self.resolve_target_dir(path_to_crate)?;
 
         let mut cargo = cargo_cmd::CargoCmd::new();
         if let Some(toolchain) = &self.toolchain_overwrite {
