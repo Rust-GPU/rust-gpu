@@ -20,7 +20,9 @@ mod clap {
 }
 
 mod dylib_lookup {
-    use crate::{find_rustc_codegen_spirv_in_paths, rustc_codegen_spirv_dylib_name};
+    use crate::{
+        SpirvBuilderError, find_rustc_codegen_spirv_in_paths, rustc_codegen_spirv_dylib_name,
+    };
     use std::fs;
     use std::path::{Path, PathBuf};
     use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -50,6 +52,43 @@ mod dylib_lookup {
         fn drop(&mut self) {
             let _ = fs::remove_dir_all(&self.0);
         }
+    }
+
+    #[test]
+    fn finds_nothing_in_empty_or_missing_dirs() {
+        let empty = TempDir::new("empty");
+        let missing = empty.path().join("does-not-exist");
+
+        assert_eq!(find_rustc_codegen_spirv_in_paths(vec![]), None);
+        assert_eq!(
+            find_rustc_codegen_spirv_in_paths(vec![empty.path().to_path_buf(), missing]),
+            None
+        );
+    }
+
+    #[test]
+    fn ignores_unrelated_dylibs() {
+        let dir = TempDir::new("unrelated");
+        let unrelated = dir.path().join(format!(
+            "{}some_other_backend{}",
+            std::env::consts::DLL_PREFIX,
+            std::env::consts::DLL_SUFFIX
+        ));
+        fs::File::create(&unrelated).expect("failed to create unrelated dylib file");
+
+        assert_eq!(
+            find_rustc_codegen_spirv_in_paths(vec![dir.path().to_path_buf()]),
+            None
+        );
+    }
+
+    /// A missing backend dylib is reported as an error (it used to `panic!`).
+    #[test]
+    fn not_found_error_names_the_dylib() {
+        let err = SpirvBuilderError::RustcCodegenSpirvDylibNotFound {
+            filename: rustc_codegen_spirv_dylib_name(),
+        };
+        assert!(err.to_string().contains(&rustc_codegen_spirv_dylib_name()));
     }
 
     #[test]

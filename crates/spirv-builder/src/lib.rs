@@ -110,6 +110,8 @@ pub enum SpirvBuilderError {
         "Without feature `rustc_codegen_spirv`, you need to set the path of the dylib with `rustc_codegen_spirv_location`"
     )]
     MissingRustcCodegenSpirvDylib,
+    #[error("could not find `{filename}` in the dynamic library search path")]
+    RustcCodegenSpirvDylibNotFound { filename: String },
     #[error("`rustc_codegen_spirv_location` path '{0}' is not a file")]
     RustcCodegenSpirvDylibDoesNotExist(PathBuf),
     #[error("build failed")]
@@ -863,11 +865,11 @@ fn find_rustc_codegen_spirv_in_paths(dylib_paths: Vec<PathBuf>) -> Option<PathBu
 
 fn find_rustc_codegen_spirv() -> Result<PathBuf, SpirvBuilderError> {
     if cfg!(feature = "rustc_codegen_spirv") {
-        if let Some(path) = find_rustc_codegen_spirv_in_paths(dylib_path()) {
-            return Ok(path);
-        }
-        let filename = rustc_codegen_spirv_dylib_name();
-        panic!("Could not find {filename} in library path");
+        find_rustc_codegen_spirv_in_paths(dylib_path()).ok_or_else(|| {
+            SpirvBuilderError::RustcCodegenSpirvDylibNotFound {
+                filename: rustc_codegen_spirv_dylib_name(),
+            }
+        })
     } else {
         Err(SpirvBuilderError::MissingRustcCodegenSpirvDylib)
     }
