@@ -5,7 +5,7 @@ use rustc_codegen_spirv_types::CompileResult;
 use std::sync::mpsc::TryRecvError;
 use std::{
     collections::HashSet,
-    path::PathBuf,
+    path::{Path, PathBuf},
     sync::mpsc::{Receiver, sync_channel},
 };
 
@@ -90,8 +90,13 @@ impl SpirvWatcher {
     ///
     /// See [`Self::try_recv`] for a non-blocking variant.
     pub fn recv(&mut self) -> Result<CompileResult, SpirvBuilderError> {
-        self.recv_inner(|rx| rx.recv().map_err(TryRecvError::from))
-            .map(|result| result.unwrap())
+        // A blocking `recv` never reports `Empty`, so this only loops if that invariant is ever broken,
+        // in which case waiting for the next change is the right thing to do anyway.
+        loop {
+            if let Some(result) = self.recv_inner(|rx| rx.recv().map_err(TryRecvError::from))? {
+                return Ok(result);
+            }
+        }
     }
 
     /// If a change is detected or this is the first invocation, builds the crate and returns the [`CompileResult`]
@@ -152,8 +157,7 @@ impl SpirvWatcher {
     }
 
     fn watch_leaf_deps<'a>(&mut self, deps: impl Iterator<Item = &'a RawStr>) {
-        for dep in deps {
-            let path = dep.to_path().unwrap();
+        for path in deps.filter_map(dep_to_path) {
             if self.watched_paths.insert(path.to_owned())
                 && let Err(err) = self.watcher.watch(path, RecursiveMode::NonRecursive)
             {
@@ -163,10 +167,50 @@ impl SpirvWatcher {
     }
 }
 
+/// Converts a dependency path from a rustc dep-file into a [`Path`].
+///
+/// Never fails on Unix. Elsewhere, non-UTF-8 paths are logged and skipped, as one
+/// unwatchable file shouldn't take down the whole watcher.
+fn dep_to_path(dep: &RawStr) -> Option<&Path> {
+    dep.to_path()
+        .inspect_err(|err| log::error!("cannot watch non-UTF-8 dependency path {dep:?}: {err}"))
+        .ok()
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum SpirvWatcherError {
     #[error("could not notify for changes: {0}")]
     NotifyFailed(#[from] notify::Error),
     #[error("watcher died and closed channel")]
     WatcherDied,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::dep_to_path;
+    use raw_string::RawStr;
+    use std::path::Path;
+
+    #[test]
+    fn dep_to_path_converts_utf8_paths() {
+        let dep = RawStr::from_str("src/lib.rs");
+        assert_eq!(dep_to_path(dep), Some(Path::new("src/lib.rs")));
+    }
+
+    #[test]
+    fn dep_to_path_handles_empty_path() {
+        assert_eq!(dep_to_path(RawStr::from_str("")), Some(Path::new("")));
+    }
+
+    /// Non-UTF-8 dep paths used to `unwrap()` and panic the watcher.
+    #[test]
+    fn dep_to_path_non_utf8() {
+        let dep = RawStr::from_bytes(b"src/\xFFlib.rs");
+        let path = dep_to_path(dep);
+        if cfg!(unix) {
+            assert!(path.is_some(), "Unix paths are arbitrary bytes");
+        } else {
+            assert_eq!(path, None);
+        }
+    }
 }
