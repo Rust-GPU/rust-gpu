@@ -265,14 +265,28 @@ pub fn get_channel_from_rustc_codegen_spirv_build_script(
 
     log::debug!("Parsing `build.rs` at {build_rs:?} for the used toolchain");
     let contents = fs::read_to_string(&build_rs)?;
+    parse_toolchain_channel(&contents)
+        .with_context(|| format!("can't find the toolchain channel in {build_rs:?}"))
+}
+
+/// Finds the toolchain channel in the contents of `rustc_codegen_spirv`'s `build.rs`.
+///
+/// Looks for the first line of the form `channel = "..."` (leading whitespace allowed).
+/// This format must keep working for older `rust-gpu` versions, so it can't be changed,
+/// only be made more lenient.
+///
+/// # Errors
+/// if no such line exists, or its closing `"` is missing or the channel is empty.
+fn parse_toolchain_channel(contents: &str) -> anyhow::Result<String> {
     let channel_start = "channel = \"";
-    let channel_line = contents
+    let rest = contents
         .lines()
-        .find_map(|line| line.strip_prefix(channel_start))
-        .context(format!("Can't find `{channel_start}` line in {build_rs:?}"))?;
-    let channel = channel_line
-        .get(..channel_line.find('"').context("ending \" missing")?)
-        .context("can't slice version")?;
+        .find_map(|line| line.trim_start().strip_prefix(channel_start))
+        .with_context(|| format!("no line starting with `{channel_start}`"))?;
+    let (channel, _) = rest
+        .split_once('"')
+        .context("missing closing `\"` after the channel")?;
+    anyhow::ensure!(!channel.is_empty(), "the channel is empty");
     Ok(channel.to_owned())
 }
 
@@ -363,5 +377,51 @@ mod test {
         .build()
         .unwrap();
         SpirvSource::parse_spirv_std_source_and_version(&package).unwrap()
+    }
+
+    fn repo_file(path: &str) -> String {
+        let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../..")
+            .join(path);
+        fs::read_to_string(&path).unwrap_or_else(|err| panic!("reading {path:?}: {err}"))
+    }
+
+    /// `cargo gpu install` relies on this, and `cargo xtask update-toolchain` rewrites
+    /// the very same line, so guard the real file against format drift.
+    #[test_log::test]
+    fn parse_toolchain_channel_of_real_build_script() {
+        let build_rs = repo_file("crates/rustc_codegen_spirv/build.rs");
+        let channel = parse_toolchain_channel(&build_rs).unwrap();
+        assert!(
+            channel.starts_with("nightly-"),
+            "unexpected channel {channel:?}"
+        );
+    }
+
+    #[test_log::test]
+    fn build_script_channel_matches_rust_toolchain_toml() {
+        let build_rs = parse_toolchain_channel(&repo_file("crates/rustc_codegen_spirv/build.rs"));
+        let toolchain = parse_toolchain_channel(&repo_file("rust-toolchain.toml"));
+        assert_eq!(build_rs.unwrap(), toolchain.unwrap());
+    }
+
+    #[test_log::test]
+    fn parse_toolchain_channel_takes_first_match_and_allows_indent() {
+        let contents = "const X: &str = r#\"[toolchain]\n    channel = \"nightly-2024-04-24\"\nchannel = \"other\"\"#;";
+        assert_eq!(
+            parse_toolchain_channel(contents).unwrap(),
+            "nightly-2024-04-24"
+        );
+    }
+
+    #[test_log::test]
+    fn parse_toolchain_channel_errors() {
+        let err = |contents: &str| parse_toolchain_channel(contents).unwrap_err().to_string();
+        assert_eq!(err("fn main() {}"), "no line starting with `channel = \"`");
+        assert_eq!(
+            err("channel = \"nightly"),
+            "missing closing `\"` after the channel"
+        );
+        assert_eq!(err("channel = \"\""), "the channel is empty");
     }
 }
