@@ -949,6 +949,18 @@ impl SpirvBuilder {
         rustflags
     }
 
+    /// `RUSTGPU_CODEGEN_ARGS` replaces [`Self::extra_args`], which is easy to miss when both are
+    /// set, so this warns about the ignored ones.
+    fn ignored_extra_args_warning(&self, env_overrides: &EnvOverrides) -> Option<String> {
+        (env_overrides.codegen_args.is_some() && !self.extra_args.is_empty()).then(|| {
+            format!(
+                "`RUSTGPU_CODEGEN_ARGS` is set, ignoring the codegen args set via \
+                 `SpirvBuilder::extra_arg`: {:?}",
+                self.extra_args
+            )
+        })
+    }
+
     /// The `rustc_codegen_spirv` args, passed via `-Cllvm-args`.
     fn llvm_args(&self, env_overrides: &EnvOverrides) -> Vec<String> {
         let mut llvm_args = vec![];
@@ -1080,6 +1092,13 @@ impl SpirvBuilder {
             rustflags: tracked_env_var_get("RUSTGPU_RUSTFLAGS"),
             cargoflags: tracked_env_var_get("RUSTGPU_CARGOFLAGS"),
         };
+        if let Some(warning) = self.ignored_extra_args_warning(&env_overrides) {
+            if self.build_script.get_forward_rustc_warnings() {
+                println!("cargo::warning={warning}");
+            } else {
+                log::warn!("{warning}");
+            }
+        }
         let rustflags = self.rustflags(&rustc_codegen_spirv, &env_overrides);
 
         let target_dir_path = self

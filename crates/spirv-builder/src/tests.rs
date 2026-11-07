@@ -170,6 +170,28 @@ mod rustflags {
     }
 
     #[test]
+    fn warns_about_extra_args_replaced_by_env_codegen_args() {
+        let env = EnvOverrides {
+            codegen_args: Some("--from-env".into()),
+            ..EnvOverrides::default()
+        };
+        let with_extra_args = silent_builder().extra_arg("--from-builder");
+        assert_eq!(
+            with_extra_args.ignored_extra_args_warning(&env).as_deref(),
+            Some(
+                "`RUSTGPU_CODEGEN_ARGS` is set, ignoring the codegen args set via \
+                 `SpirvBuilder::extra_arg`: [\"--from-builder\"]"
+            )
+        );
+        // nothing ignored
+        assert_eq!(silent_builder().ignored_extra_args_warning(&env), None);
+        assert_eq!(
+            with_extra_args.ignored_extra_args_warning(&EnvOverrides::default()),
+            None
+        );
+    }
+
+    #[test]
     fn env_codegen_args_replace_extra_args_and_env_rustflags_are_appended() {
         let builder = silent_builder().extra_arg("--from-builder");
         let env = EnvOverrides {
