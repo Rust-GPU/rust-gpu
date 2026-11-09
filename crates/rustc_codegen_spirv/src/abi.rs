@@ -19,7 +19,7 @@ use rustc_middle::ty::{
     self, Const, CoroutineArgs, CoroutineArgsExt as _, FloatTy, IntTy, PolyFnSig, Ty, TyCtxt,
     TyKind, UintTy, ValTreeKindExt,
 };
-use rustc_middle::ty::{GenericArgsRef, ScalarInt};
+use rustc_middle::ty::{GenericArgs, ScalarInt};
 use rustc_middle::util::Providers;
 use rustc_session::config::OptLevel;
 use rustc_span::DUMMY_SP;
@@ -922,7 +922,7 @@ fn trans_intrinsic_type<'tcx>(
     cx: &CodegenCx<'tcx>,
     span: Span,
     ty: TyAndLayout<'tcx>,
-    args: GenericArgsRef<'tcx>,
+    args: GenericArgs<'tcx>,
     intrinsic_type_attr: IntrinsicType,
 ) -> Result<Word, ErrorGuaranteed> {
     trait FromScalarInt: Sized {
@@ -1219,7 +1219,7 @@ fn trans_glam_like_struct<'tcx>(
     cx: &CodegenCx<'tcx>,
     span: Span,
     ty: TyAndLayout<'tcx>,
-    args: GenericArgsRef<'tcx>,
+    args: GenericArgs<'tcx>,
     err_attr_name: &str,
 ) -> Result<(Word, u32), ErrorGuaranteed> {
     let tcx = cx.tcx;

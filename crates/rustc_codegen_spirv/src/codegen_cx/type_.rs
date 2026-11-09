@@ -6,7 +6,6 @@ use crate::abi::ConvSpirvType;
 use crate::spirv_type::SpirvType;
 use rspirv::spirv::Word;
 use rustc_abi::{AddressSpace, Reg};
-use rustc_codegen_ssa::common::TypeKind;
 use rustc_codegen_ssa::traits::{BaseTypeCodegenMethods, LayoutTypeCodegenMethods};
 use rustc_middle::ty::Ty;
 use rustc_middle::ty::layout::{
@@ -159,53 +158,11 @@ impl BaseTypeCodegenMethods for CodegenCx<'_> {
         }
         .def(DUMMY_SP, self)
     }
-    fn type_kind(&self, ty: Self::Type) -> TypeKind {
-        match self.lookup_type(ty) {
-            SpirvType::Void => TypeKind::Void,
-            SpirvType::Bool | // thanks llvm
-            SpirvType::Integer(_, _) => TypeKind::Integer,
-            SpirvType::Float(width) => match width {
-                16 => TypeKind::Half,
-                32 => TypeKind::Float,
-                64 => TypeKind::Double,
-                128 => TypeKind::FP128,
-                other => self
-                    .tcx
-                    .dcx()
-                    .fatal(format!("Invalid float width in type_kind: {other}")),
-            },
-            SpirvType::Adt { .. } | SpirvType::InterfaceBlock { .. } => {
-                TypeKind::Struct
-            }
-            SpirvType::Vector { .. } => TypeKind::Vector,
-            SpirvType::Array { .. } | SpirvType::RuntimeArray { .. } | SpirvType::Matrix { .. } => TypeKind::Array,
-            SpirvType::Pointer { .. } => TypeKind::Pointer,
-            SpirvType::Function { .. } => TypeKind::Function,
-            // HACK(eddyb) this is probably the closest `TypeKind` (which is still
-            // very much LLVM-specific, sadly) has to offer to "resource handle".
-            | SpirvType::Image { .. }
-            | SpirvType::Sampler
-            | SpirvType::SampledImage { .. }
-            | SpirvType::AccelerationStructureKhr
-            | SpirvType::RayQueryKhr
-            | SpirvType::CooperativeMatrixKhr { .. }
-                => TypeKind::Token,
-        }
-    }
     fn type_ptr(&self) -> Self::Type {
         self.type_ptr_to(SpirvType::Void.def(DUMMY_SP, self))
     }
     fn type_ptr_ext(&self, address_space: AddressSpace) -> Self::Type {
         self.type_ptr_to_ext(SpirvType::Void.def(DUMMY_SP, self), address_space)
-    }
-    fn element_type(&self, ty: Self::Type) -> Self::Type {
-        match self.lookup_type(ty) {
-            SpirvType::Pointer { pointee } => pointee,
-            SpirvType::Vector { element, .. } => element,
-            spirv_type => self.tcx.dcx().fatal(format!(
-                "element_type called on invalid type: {spirv_type:?}"
-            )),
-        }
     }
 
     /// Returns the number of elements in `self` if it is a LLVM vector type.
@@ -216,16 +173,6 @@ impl BaseTypeCodegenMethods for CodegenCx<'_> {
                 .tcx
                 .dcx()
                 .fatal(format!("vector_length called on non-vector type: {ty:?}")),
-        }
-    }
-
-    fn float_width(&self, ty: Self::Type) -> usize {
-        match self.lookup_type(ty) {
-            SpirvType::Float(width) => width as usize,
-            ty => self
-                .tcx
-                .dcx()
-                .fatal(format!("float_width called on non-float type: {ty:?}")),
         }
     }
 

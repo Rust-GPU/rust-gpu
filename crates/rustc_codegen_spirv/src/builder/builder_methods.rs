@@ -17,7 +17,7 @@ use rustc_abi::{Align, BackendRepr, Scalar, Size, WrappingRange};
 use rustc_apfloat::{Float, Round, Status, ieee};
 use rustc_codegen_ssa::MemFlags;
 use rustc_codegen_ssa::common::{
-    AtomicRmwBinOp, IntPredicate, RealPredicate, SynchronizationScope, TypeKind,
+    AtomicRmwBinOp, IntPredicate, RealPredicate, SynchronizationScope,
 };
 use rustc_codegen_ssa::mir::operand::{OperandRef, OperandValue};
 use rustc_codegen_ssa::mir::place::PlaceRef;
@@ -2013,15 +2013,13 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         // ignore
     }
 
-    fn store(&mut self, val: Self::Value, ptr: Self::Value, _align: Align) -> Self::Value {
+    fn store(&mut self, val: Self::Value, ptr: Self::Value, _align: Align) {
         let (ptr, access_ty) = self.adjust_pointer_for_typed_access(ptr, val.ty);
         let val = self.bitcast(val, access_ty);
 
         self.emit()
             .store(ptr.def(self), val.def(self), None, empty())
             .unwrap();
-        // FIXME(eddyb) this is meant to be a handle the store instruction itself.
-        val
     }
 
     fn store_with_flags(
@@ -2030,7 +2028,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         ptr: Self::Value,
         align: Align,
         flags: MemFlags,
-    ) -> Self::Value {
+    ) {
         let allowed_flags = MemFlags::CAPTURES_READ_ONLY;
         if !(flags & !allowed_flags).is_empty() {
             self.err(format!("store_with_flags is not supported yet: {flags:?}"));
