@@ -385,7 +385,6 @@ impl WriteBackendMethods for SpirvCodegenBackend {
             .unwrap(),
             name: thin_module.name().to_string(),
             kind: ModuleKind::Regular,
-            thin_lto_buffer: None,
         };
         Self::optimize_common(cgcx, &mut module);
         Self::codegen(cgcx, prof, shared_emitter, module, &cgcx.module_config)
@@ -498,7 +497,6 @@ impl ExtraBackendMethods for SpirvCodegenBackend {
                 name: cgu_name.to_string(),
                 module_llvm: cx.finalize_module(),
                 kind: ModuleKind::Regular,
-                thin_lto_buffer: None,
             },
             0,
         )

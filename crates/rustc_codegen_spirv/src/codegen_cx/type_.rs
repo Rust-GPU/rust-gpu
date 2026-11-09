@@ -148,6 +148,9 @@ impl BaseTypeCodegenMethods for CodegenCx<'_> {
     fn type_f128(&self) -> Self::Type {
         SpirvType::Float(128).def(DUMMY_SP, self)
     }
+    fn type_ppcf128(&self) -> Self::Type {
+        panic!("ppcf128 is unsupported")
+    }
 
     fn type_array(&self, ty: Self::Type, len: u64) -> Self::Type {
         SpirvType::Array {
