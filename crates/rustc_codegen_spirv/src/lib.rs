@@ -164,7 +164,9 @@ use rustc_middle::mono::{MonoItem, MonoItemData};
 use rustc_middle::ty::print::with_no_trimmed_paths;
 use rustc_middle::ty::{InstanceKind, TyCtxt};
 use rustc_session::config::{self, OutputFilenames, OutputType};
-use rustc_session::{CodegenBackendInit, EarlySession, IncrCompSession, Session};
+use rustc_session::{
+    BorrowedIncrCompSession, CodegenBackendInit, EarlySession, IncrCompSession, Session,
+};
 use rustc_span::symbol::Symbol;
 use std::any::Any;
 use std::fs;
@@ -349,6 +351,7 @@ impl WriteBackendMethods for SpirvCodegenBackend {
     fn run_thin_lto(
         _cgcx: &CodegenContext,
         _prof: &SelfProfilerRef,
+        _incr_comp_session: Option<&BorrowedIncrCompSession>,
         _dcx: DiagCtxtHandle<'_>,
         _exported_symbols_for_lto: &[String],
         _each_linked_rlib_for_lto: &[PathBuf],
