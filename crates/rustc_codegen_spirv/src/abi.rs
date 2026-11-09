@@ -14,6 +14,7 @@ use rustc_abi::{
 use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::ErrorGuaranteed;
 use rustc_index::Idx;
+use rustc_middle::ty::consts::ConstExt;
 use rustc_middle::ty::layout::{FnAbiOf, LayoutOf, TyAndLayout};
 use rustc_middle::ty::{
     self, Const, CoroutineArgs, CoroutineArgsExt as _, FloatTy, IntTy, PolyFnSig, Ty, TyCtxt,
@@ -21,11 +22,11 @@ use rustc_middle::ty::{
 };
 use rustc_middle::ty::{GenericArgsRef, ScalarInt};
 use rustc_middle::util::Providers;
-use rustc_middle::{bug, span_bug};
 use rustc_session::config::OptLevel;
 use rustc_span::DUMMY_SP;
 use rustc_span::def_id::DefId;
 use rustc_span::{Span, Symbol};
+use rustc_span::{bug, span_bug};
 use rustc_target::callconv::{ArgAbi, ArgAttributes, FnAbi, PassMode};
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
@@ -927,7 +928,7 @@ fn trans_intrinsic_type<'tcx>(
 
     impl FromScalarInt for u32 {
         fn from_scalar_int(n: ScalarInt) -> Option<Self> {
-            Some(n.try_to_bits(Size::from_bits(32)).ok()?.try_into().unwrap())
+            Some(n.to_bits(Size::from_bits(32)).try_into().unwrap())
         }
     }
 
@@ -1173,7 +1174,7 @@ fn trans_intrinsic_type<'tcx>(
                             format!("{err_attr_name} type fields must all be vectors"),
                         )
                         .with_note(format!("field type is {}", ty.debug(element, cx)))
-                        .emit());
+                        .emit_err());
                 }
             }
             Ok(SpirvType::Matrix { element, count }.def(span, cx))
@@ -1195,7 +1196,7 @@ fn trans_intrinsic_type<'tcx>(
                             ),
                         )
                         .with_note(format!("field type is {}", ty.debug(element, cx)))
-                        .emit());
+                        .emit_err());
                 }
             }
             Ok(SpirvType::Vector {

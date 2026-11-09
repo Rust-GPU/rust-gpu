@@ -196,7 +196,7 @@ fn check_tys_equal(
                 "export type: {}",
                 format_ty_(&ty_defs, export_type)
             ))
-            .emit())
+            .emit_err())
     }
 }
 

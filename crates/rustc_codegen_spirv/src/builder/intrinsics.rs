@@ -15,11 +15,11 @@ use rustc_codegen_ssa::mir::IntrinsicResult;
 use rustc_codegen_ssa::mir::operand::{OperandRef, OperandValue};
 use rustc_codegen_ssa::mir::place::{PlaceRef, PlaceValue};
 use rustc_codegen_ssa::traits::{BuilderMethods, IntrinsicCallBuilderMethods};
+use rustc_middle::ty;
 use rustc_middle::ty::layout::LayoutOf;
 use rustc_middle::ty::{FnDef, Instance, Ty, TyKind, TypingEnv};
-use rustc_middle::{bug, ty};
-use rustc_span::sym;
 use rustc_span::{Span, Symbol};
+use rustc_span::{bug, sym};
 
 fn int_type_width_signed(ty: Ty<'_>, cx: &CodegenCx<'_>) -> Option<(u64, bool)> {
     match ty.kind() {
@@ -163,30 +163,18 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
                 let float = self.sitofp(args[1].immediate(), args[0].immediate().ty);
                 self.gl_op(GLOp::Pow, ret_ty, [args[0].immediate(), float])
             }
-            sym::sinf32 | sym::sinf64 | sym::sinf128 => {
-                self.gl_op(GLOp::Sin, ret_ty, [args[0].immediate()])
-            }
-            sym::cosf32 | sym::cosf64 | sym::cosf128 => {
-                self.gl_op(GLOp::Cos, ret_ty, [args[0].immediate()])
-            }
+            sym::sin => self.gl_op(GLOp::Sin, ret_ty, [args[0].immediate()]),
+            sym::cos => self.gl_op(GLOp::Cos, ret_ty, [args[0].immediate()]),
             sym::powf32 | sym::powf64 | sym::powf128 => self.gl_op(
                 GLOp::Pow,
                 ret_ty,
                 [args[0].immediate(), args[1].immediate()],
             ),
-            sym::expf32 | sym::expf64 | sym::expf128 => {
-                self.gl_op(GLOp::Exp, ret_ty, [args[0].immediate()])
-            }
-            sym::exp2f32 | sym::exp2f64 | sym::exp2f128 => {
-                self.gl_op(GLOp::Exp2, ret_ty, [args[0].immediate()])
-            }
-            sym::logf32 | sym::logf64 | sym::logf128 => {
-                self.gl_op(GLOp::Log, ret_ty, [args[0].immediate()])
-            }
-            sym::log2f32 | sym::log2f64 | sym::log2f128 => {
-                self.gl_op(GLOp::Log2, ret_ty, [args[0].immediate()])
-            }
-            sym::log10f32 | sym::log10f64 | sym::log10f128 => {
+            sym::exp => self.gl_op(GLOp::Exp, ret_ty, [args[0].immediate()]),
+            sym::exp2 => self.gl_op(GLOp::Exp2, ret_ty, [args[0].immediate()]),
+            sym::log => self.gl_op(GLOp::Log, ret_ty, [args[0].immediate()]),
+            sym::log2 => self.gl_op(GLOp::Log2, ret_ty, [args[0].immediate()]),
+            sym::log10 => {
                 // spir-v glsl doesn't have log10, so,
                 // log10(x) == (1 / ln(10)) * ln(x)
                 let mul = self.constant_float(args[0].immediate().ty, 1.0 / 10.0f64.ln());
