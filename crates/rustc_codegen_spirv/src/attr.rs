@@ -5,11 +5,12 @@
 use crate::codegen_cx::CodegenCx;
 use crate::symbols::Symbols;
 use rspirv::spirv::{BuiltIn, ExecutionMode, ExecutionModel, StorageClass};
+use rustc_ast::attr::AttributeExt;
 use rustc_ast::{LitKind, MetaItemInner, MetaItemLit};
 use rustc_attr_ir::Attribute;
 use rustc_attr_ir::target::{MethodKind, Target};
 use rustc_hir as hir;
-use rustc_hir::def_id::LocalModId;
+use rustc_hir::def_id::{DefId, LocalModId};
 use rustc_hir::intravisit::{self, Visitor};
 use rustc_hir::{CRATE_HIR_ID, HirId};
 use rustc_middle::hir::nested_filter;
@@ -577,7 +578,7 @@ where
                                 } else {
                                     // #[rust_gpu::spirv]
                                     Err((
-                                        attr.span(),
+                                        attr.path_span().unwrap(),
                                         "#[spirv(..)] attribute must have at least one argument"
                                             .to_string(),
                                     ))
@@ -589,11 +590,11 @@ where
                                     // #[rust_gpu::vector::v1]
                                     Some(version) if *version == sym.v1 => {
                                         Ok(SmallVec::from_iter([
-                                            Ok((attr.span(), SpirvAttribute::IntrinsicType(IntrinsicType::Vector)))
+                                            Ok((attr.path_span().unwrap(), SpirvAttribute::IntrinsicType(IntrinsicType::Vector)))
                                         ]))
                                     },
                                     _ => Err((
-                                        attr.span(),
+                                        attr.path_span().unwrap(),
                                         "unknown `rust_gpu::vector` version, expected `rust_gpu::vector::v1`"
                                             .to_string(),
                                     )),
@@ -603,7 +604,7 @@ where
                                 // #[rust_gpu::...] but not a know version
                                 let spirv = sym.spirv_attr_with_version.as_str();
                                 Err((
-                                    attr.span(),
+                                    attr.path_span().unwrap(),
                                     format!("unknown `rust_gpu` attribute, expected `rust_gpu::{spirv}`. \
                                 Do the versions of `spirv-std` and `rustc_codegen_spirv` match?"),
                                 ))
@@ -899,4 +900,30 @@ fn parse_entry_attrs(
         _ => {}
     }
     Ok(entry)
+}
+
+pub trait TyCtxtAttrExt<'tcx>: Sized {
+    /// Removed in https://github.com/rust-lang/rust/pull/164744
+    fn get_attrs_by_path(
+        self,
+        did: DefId,
+        attr: &[Symbol],
+    ) -> impl Iterator<Item = &'tcx Attribute>;
+}
+
+impl<'tcx> TyCtxtAttrExt<'tcx> for TyCtxt<'tcx> {
+    fn get_attrs_by_path(
+        self,
+        did: DefId,
+        attr: &[Symbol],
+    ) -> impl Iterator<Item = &'tcx Attribute> {
+        let filter_fn = move |a: &&Attribute| a.path_matches(attr);
+        if let Some(did) = did.as_local() {
+            self.hir_attrs(self.local_def_id_to_hir_id(did))
+                .iter()
+                .filter(filter_fn)
+        } else {
+            self.attrs_for_def(did).iter().filter(filter_fn)
+        }
+    }
 }

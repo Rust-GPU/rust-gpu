@@ -3,7 +3,7 @@ use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 
 use super::{CodegenCx, FmtArgsCtor};
 use crate::abi::ConvSpirvType;
-use crate::attr::AggregatedSpirvAttributes;
+use crate::attr::{AggregatedSpirvAttributes, TyCtxtAttrExt};
 use crate::builder_spirv::{SpirvConst, SpirvFunctionCursor, SpirvValue, SpirvValueExt};
 use crate::custom_decorations::{CustomDecoration, SrcLocDecoration};
 use crate::spirv_type::SpirvType;
