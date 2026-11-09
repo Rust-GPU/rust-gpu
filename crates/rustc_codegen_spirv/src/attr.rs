@@ -564,7 +564,7 @@ where
         .map(move |attr| {
             // parse the #[rust_gpu::spirv(...)] attr and return the inner list
             match attr {
-                Attribute::Unparsed(item) => {
+                Attribute::Tool(item) => {
                     // #[...]
                     let s = &item.path.segments;
                     if let Some(rust_gpu) = s.get(0) && *rust_gpu == sym.rust_gpu {
@@ -615,7 +615,7 @@ where
                         Ok(Default::default())
                     }
                 }
-                Attribute::Parsed(_) => Ok(Default::default()),
+                _ => Ok(Default::default()),
             }
         })
         .flat_map(|result| {
