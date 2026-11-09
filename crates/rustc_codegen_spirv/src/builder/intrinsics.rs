@@ -389,6 +389,10 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
         cond
     }
 
+    fn ctpop(&mut self, val: Self::Value) -> Self::Value {
+        self.count_ones(val)
+    }
+
     fn type_checked_load(
         &mut self,
         _llvtable: Self::Value,

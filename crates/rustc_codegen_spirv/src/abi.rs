@@ -14,7 +14,6 @@ use rustc_abi::{
 use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::ErrorGuaranteed;
 use rustc_index::Idx;
-use rustc_middle::ty::consts::ConstExt;
 use rustc_middle::ty::layout::{FnAbiOf, LayoutOf, TyAndLayout};
 use rustc_middle::ty::{
     self, Const, CoroutineArgs, CoroutineArgsExt as _, FloatTy, IntTy, PolyFnSig, Ty, TyCtxt,
@@ -290,7 +289,7 @@ impl<'tcx> ConvSpirvType<'tcx> for FnAbi<'tcx, Ty<'tcx>> {
         let return_type = match self.ret.mode {
             PassMode::Ignore => SpirvType::Void.def(span, cx),
             PassMode::Direct(_) | PassMode::Pair(..) => self.ret.layout.spirv_type(span, cx),
-            PassMode::Cast { .. } | PassMode::Indirect { .. } => span_bug!(
+            PassMode::Cast { .. } | PassMode::Indirect { .. } | PassMode::IndirectUnsized { .. } => span_bug!(
                 span,
                 "query hooks should've made this `PassMode` impossible: {:#?}",
                 self.ret
@@ -306,7 +305,7 @@ impl<'tcx> ConvSpirvType<'tcx> for FnAbi<'tcx, Ty<'tcx>> {
                     argument_types.push(scalar_pair_element_backend_type(cx, span, arg.layout, 1));
                     continue;
                 }
-                PassMode::Cast { .. } | PassMode::Indirect { .. } => span_bug!(
+                PassMode::Cast { .. } | PassMode::Indirect { .. } | PassMode::IndirectUnsized { .. } => span_bug!(
                     span,
                     "query hooks should've made this `PassMode` impossible: {:#?}",
                     arg

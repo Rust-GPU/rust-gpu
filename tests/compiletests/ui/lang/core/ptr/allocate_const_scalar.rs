@@ -3,15 +3,13 @@
 
 // build-fail
 
-#![feature(ptr_internals)]
-
 use spirv_std::spirv;
 
-use core::ptr::Unique;
+use core::ptr::NonNull;
 
-const POINTER: Unique<()> = Unique::<()>::dangling();
+const POINTER: NonNull<()> = NonNull::<()>::dangling();
 
 #[spirv(fragment)]
-pub fn main(output: &mut Unique<()>) {
+pub fn main(output: &mut NonNull<()>) {
     *output = POINTER;
 }
