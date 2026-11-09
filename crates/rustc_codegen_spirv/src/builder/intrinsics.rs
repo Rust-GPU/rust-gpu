@@ -100,7 +100,7 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
             }
 
             sym::breakpoint => {
-                self.abort();
+                self.abort_immediate();
                 assert!(result.layout.ty.is_unit());
                 return IntrinsicResult::WroteIntoPlace;
             }
@@ -156,16 +156,14 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
                 result
             }
 
-            sym::sqrtf32 | sym::sqrtf64 | sym::sqrtf128 => {
-                self.gl_op(GLOp::Sqrt, ret_ty, [args[0].immediate()])
-            }
-            sym::powif32 | sym::powif64 | sym::powif128 => {
+            sym::sqrt => self.gl_op(GLOp::Sqrt, ret_ty, [args[0].immediate()]),
+            sym::powi => {
                 let float = self.sitofp(args[1].immediate(), args[0].immediate().ty);
                 self.gl_op(GLOp::Pow, ret_ty, [args[0].immediate(), float])
             }
             sym::sin => self.gl_op(GLOp::Sin, ret_ty, [args[0].immediate()]),
             sym::cos => self.gl_op(GLOp::Cos, ret_ty, [args[0].immediate()]),
-            sym::powf32 | sym::powf64 | sym::powf128 => self.gl_op(
+            sym::powf => self.gl_op(
                 GLOp::Pow,
                 ret_ty,
                 [args[0].immediate(), args[1].immediate()],
@@ -181,7 +179,7 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
                 let ln = self.gl_op(GLOp::Log, ret_ty, [args[0].immediate()]);
                 self.fmul(mul, ln)
             }
-            sym::fmaf32 | sym::fmaf64 | sym::fmaf128 => self.gl_op(
+            sym::fma => self.gl_op(
                 GLOp::Fma,
                 ret_ty,
                 [
@@ -206,21 +204,11 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
                 let sign = args[1].immediate();
                 self.copysign(val, sign)
             }
-            sym::floorf32 | sym::floorf64 | sym::floorf128 => {
-                self.gl_op(GLOp::Floor, ret_ty, [args[0].immediate()])
-            }
-            sym::ceilf32 | sym::ceilf64 | sym::ceilf128 => {
-                self.gl_op(GLOp::Ceil, ret_ty, [args[0].immediate()])
-            }
-            sym::truncf32 | sym::truncf64 | sym::truncf128 => {
-                self.gl_op(GLOp::Trunc, ret_ty, [args[0].immediate()])
-            }
-            sym::round_ties_even_f32 | sym::round_ties_even_f64 | sym::round_ties_even_f128 => {
-                self.gl_op(GLOp::RoundEven, ret_ty, [args[0].immediate()])
-            }
-            sym::roundf32 | sym::roundf64 | sym::roundf128 => {
-                self.gl_op(GLOp::Round, ret_ty, [args[0].immediate()])
-            }
+            sym::floor => self.gl_op(GLOp::Floor, ret_ty, [args[0].immediate()]),
+            sym::ceil => self.gl_op(GLOp::Ceil, ret_ty, [args[0].immediate()]),
+            sym::trunc => self.gl_op(GLOp::Trunc, ret_ty, [args[0].immediate()]),
+            sym::round_ties_even => self.gl_op(GLOp::RoundEven, ret_ty, [args[0].immediate()]),
+            sym::round => self.gl_op(GLOp::Round, ret_ty, [args[0].immediate()]),
 
             sym::rotate_left | sym::rotate_right => {
                 let is_left = name == sym::rotate_left;
@@ -376,7 +364,7 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
         bug!("LLVM intrinsic call not supported in SPIR-V backend: {instance:?}")
     }
 
-    fn abort(&mut self) {
+    fn abort_immediate(&mut self) {
         self.abort_with_kind_and_message_debug_printf("abort", "intrinsics::abort() called", []);
     }
 
@@ -387,6 +375,10 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
     fn expect(&mut self, cond: Self::Value, _expected: bool) -> Self::Value {
         // TODO: llvm.expect
         cond
+    }
+
+    fn ctpop(&mut self, val: Self::Value) -> Self::Value {
+        self.count_ones(val)
     }
 
     fn type_checked_load(

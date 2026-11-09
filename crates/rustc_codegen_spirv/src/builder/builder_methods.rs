@@ -28,8 +28,8 @@ use rustc_codegen_ssa::traits::{
 use rustc_middle::middle::codegen_fn_attrs::CodegenFnAttrs;
 use rustc_middle::ty::layout::TyAndLayout;
 use rustc_middle::ty::{self, AtomicOrdering, Ty};
-use rustc_span::Span;
 use rustc_span::bug;
+use rustc_span::{DUMMY_SP, Span};
 use rustc_target::callconv::FnAbi;
 use smallvec::SmallVec;
 use std::iter::{self, empty};
@@ -1870,7 +1870,14 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         self.declare_func_local_var(ty, align)
     }
     fn alloca(&mut self, size: Size, align: Align) -> Self::Value {
-        self.declare_func_local_var(self.type_array(self.type_i8(), size.bytes()), align)
+        self.declare_func_local_var(
+            SpirvType::Array {
+                element: self.type_i8(),
+                count: self.constant_u64(DUMMY_SP, size.bytes()),
+            }
+            .def(DUMMY_SP, self),
+            align,
+        )
     }
 
     fn load(&mut self, ty: Self::Type, ptr: Self::Value, _align: Align) -> Self::Value {
