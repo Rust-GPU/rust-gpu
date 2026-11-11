@@ -586,6 +586,12 @@ pub fn link(
         }
 
         {
+            let timer = before_pass("spirt_passes::physical_storage_buffer::align_accesses");
+            spirt_passes::physical_storage_buffer::align_accesses(module);
+            after_pass(Some(module), timer);
+        }
+
+        {
             let timer = before_pass("spirt_passes::validate");
             spirt_passes::validate::validate(module);
             after_pass(Some(module), timer);
