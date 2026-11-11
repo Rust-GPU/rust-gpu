@@ -216,6 +216,23 @@ pub struct RayQuery {
 
 /// Constructs an uninitialized ray query variable. Using the syntax
 /// `let (mut)? <name>`. Where `name` is the name of the ray query variable.
+///
+/// # Example
+/// ```
+/// use spirv_std::glam::Vec3;
+/// use spirv_std::ray_query;
+/// use spirv_std::ray_tracing::{AccelerationStructure, CommittedIntersection, RayFlags, RayQuery};
+///
+/// fn is_hit(accel: &AccelerationStructure, origin: Vec3, direction: Vec3) -> bool {
+///     ray_query!(let mut query);
+///     unsafe {
+///         query.initialize(accel, RayFlags::OPAQUE, 0xff, origin, 0.0, direction, 1000.0);
+///         while query.proceed() {}
+///         query.get_committed_intersection_type() != CommittedIntersection::None
+///     }
+/// }
+/// # std::hint::black_box(is_hit as fn(_, _, _) -> _);
+/// ```
 #[macro_export]
 macro_rules! ray_query {
     (let $name:ident) => {
@@ -225,6 +242,7 @@ macro_rules! ray_query {
         $crate::ray_query!(@inner $name, mut)
     };
     (@inner $name:ident $(, $mut:tt)?) => {
+        #[cfg(target_arch = "spirv")]
         let $name: &$($mut)? RayQuery = unsafe {
             let $name : *mut RayQuery;
             ::core::arch::asm! {
@@ -235,6 +253,13 @@ macro_rules! ray_query {
             }
 
             &$($mut)? *$name
+        };
+        #[cfg(not(target_arch = "spirv"))]
+        let $name: &$($mut)? RayQuery = {
+            fn gpu_only<T>() -> T {
+                ::core::unimplemented!("`ray_query!` is only available on SPIR-V platforms.")
+            }
+            gpu_only()
         };
     }
 }
