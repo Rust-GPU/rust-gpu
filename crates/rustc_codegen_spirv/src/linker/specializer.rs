@@ -49,6 +49,7 @@
 //!     expand_params: Option<Vec<usize>>,
 //!     ```
 
+use crate::custom_decorations::{CustomDecoration, ZombieDecoration};
 use crate::linker::ipo::CallGraph;
 use crate::spirv_type_constraints::{self, InstSig, StorageClassPat, TyListPat, TyPat};
 use indexmap::{IndexMap, IndexSet};
@@ -132,6 +133,9 @@ pub fn specialize(
         debug_names,
         generics: IndexMap::new(),
         int_consts: FxHashMap::default(),
+        zombie_ids: ZombieDecoration::decode_all(&module)
+            .map(|(id, _)| id)
+            .collect(),
     };
 
     specializer.collect_generics(&module);
@@ -534,6 +538,9 @@ struct Specializer<S: Specialization> {
     /// Integer `OpConstant`s (i.e. containing a `LiteralBit32`), to be used
     /// for interpreting `TyPat::IndexComposite` (such as for `OpAccessChain`).
     int_consts: FxHashMap<Word, u32>,
+
+    /// IDs with a `ZombieDecoration` (see `instantiate_instruction` for its use).
+    zombie_ids: FxHashSet<Word>,
 }
 
 impl<S: Specialization> Specializer<S> {
@@ -1027,6 +1034,10 @@ struct Match<'a> {
     /// `StorageClassPat::Var(i)` (currently `i` is always `0`, aka `StorageClassPat::S`).
     storage_class_var_found: SmallIntMap<[SmallVec<[InferOperand; 2]>; 1]>,
 
+    /// `storage_class_concrete_found[..]` holds all the `InferOperand`s matched by
+    /// `StorageClassPat::Concrete(_)`, each paired with that concrete storage class.
+    storage_class_concrete_found: SmallVec<[(InferOperand, StorageClass); 1]>,
+
     /// `ty_var_found[i][..]` holds all the `InferOperand`s matched by
     /// `TyPat::Var(i)` (currently `i` is always `0`, aka `TyPat::T`).
     ty_var_found: SmallIntMap<[SmallVec<[InferOperand; 4]>; 1]>,
@@ -1047,6 +1058,7 @@ impl<'a> Match<'a> {
         let Match {
             ambiguous,
             storage_class_var_found,
+            storage_class_concrete_found,
             ty_var_found,
             index_composite_ty_var_found,
             ty_list_var_found,
@@ -1058,6 +1070,7 @@ impl<'a> Match<'a> {
                 .get_mut_or_default(i)
                 .extend(other_found);
         }
+        storage_class_concrete_found.extend(other.storage_class_concrete_found);
         for (i, other_found) in other.ty_var_found {
             ty_var_found.get_mut_or_default(i).extend(other_found);
         }
@@ -1078,6 +1091,7 @@ impl<'a> Match<'a> {
         let Match {
             ambiguous,
             storage_class_var_found,
+            storage_class_concrete_found,
             ty_var_found,
             index_composite_ty_var_found,
             ty_list_var_found,
@@ -1091,6 +1105,7 @@ impl<'a> Match<'a> {
                 .map_or(&[][..], |xs| &xs[..]);
             self_found.retain(|x| other_found.contains(x));
         }
+        storage_class_concrete_found.retain(|x| other.storage_class_concrete_found.contains(x));
         for (i, self_found) in ty_var_found {
             let other_found = other.ty_var_found.get(i).map_or(&[][..], |xs| &xs[..]);
             self_found.retain(|x| other_found.contains(x));
@@ -1136,6 +1151,7 @@ impl<'a> Match<'a> {
             let Self {
                 ambiguous,
                 storage_class_var_found,
+                storage_class_concrete_found,
                 ty_var_found,
                 index_composite_ty_var_found,
                 ty_list_var_found,
@@ -1144,6 +1160,9 @@ impl<'a> Match<'a> {
             let mut list = f.debug_list();
             list.entries(debug_var_found(storage_class_var_found, &move |operand| {
                 operand.display_with_infer_cx(cx)
+            }));
+            list.entries(storage_class_concrete_found.iter().map(|(operand, sc)| {
+                FmtBy(move |f| write!(f, "{} = {sc:?}", operand.display_with_infer_cx(cx)))
             }));
             list.entries(debug_var_found(ty_var_found, &move |operand| {
                 operand.display_with_infer_cx(cx)
@@ -1216,6 +1235,11 @@ impl<'a, S: Specialization> InferCx<'a, S> {
                 m.storage_class_var_found
                     .get_mut_or_default(*i)
                     .push(storage_class);
+                m
+            }
+            StorageClassPat::Concrete(sc) => {
+                let mut m = Match::default();
+                m.storage_class_concrete_found.push((storage_class, *sc));
                 m
             }
         }
@@ -1738,6 +1762,7 @@ impl<'a, S: Specialization> InferCx<'a, S> {
             ambiguous: _,
 
             storage_class_var_found,
+            storage_class_concrete_found,
             ty_var_found,
             index_composite_ty_var_found,
             ty_list_var_found,
@@ -1748,6 +1773,11 @@ impl<'a, S: Specialization> InferCx<'a, S> {
             if let Some(first) = found.next() {
                 found.try_fold(first, |a, b| self.equate_infer_operands(a, b))?;
             }
+        }
+
+        for (found, sc) in storage_class_concrete_found {
+            let sc = InferOperand::Concrete(CopyOperand::StorageClass(sc));
+            self.equate_infer_operands(found, sc)?;
         }
 
         for (i, found) in ty_var_found {
@@ -1956,8 +1986,17 @@ impl<'a, S: Specialization> InferCx<'a, S> {
             debug!("");
         };
 
+        // Zombie `OpConvertUToPtr`s (from `Builder::inttoptr`) skip their signature,
+        // keeping their inference unchanged: they're errors to be reported later, and a
+        // `PhysicalStorageBuffer` inference conflict would abort compilation before that.
+        let zombie_ids = &self.specializer.zombie_ids;
+        let is_zombie_convert_u_to_ptr =
+            inst.class.opcode == Op::ConvertUToPtr && zombie_ids.contains(&inst.result_id.unwrap());
+
         // If we have some instruction signatures for `inst`, enforce them.
-        if let Some(sigs) = spirv_type_constraints::instruction_signatures(inst.class.opcode) {
+        if let Some(sigs) = spirv_type_constraints::instruction_signatures(inst.class.opcode)
+            && !is_zombie_convert_u_to_ptr
+        {
             // HACK(eddyb) workaround for `OpFunction`, see earlier HACK comment.
             // (specifically, `type_of_result` isn't *Result Type* for `OpFunction`)
             assert_ne!(inst.class.opcode, Op::Function);
