@@ -752,6 +752,13 @@ pub fn link(
             dce::dce(output);
         }
 
+        // This has to be after DCE, so that only pointer types that are
+        // still used by this output module are taken into account.
+        {
+            let _timer = sess.timer("link_set_physical_storage_buffer_addressing_model");
+            simple_passes::set_physical_storage_buffer_addressing_model(output);
+        }
+
         // HACK(eddyb) this has to be after DCE, to not break SPIR-T w/ dead decorations.
         if let Some(dir) = &opts.dump_post_split {
             let mut file_name = disambiguated_crate_name_for_dumps.to_os_string();
