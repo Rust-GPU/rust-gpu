@@ -553,6 +553,12 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             .sizeof(self)
             .expect("Memset on unsized values not supported");
         let count = size_bytes / size_elem.bytes();
+        if !size_bytes.is_multiple_of(size_elem.bytes()) {
+            self.err(format!(
+                "memset of {size_bytes} bytes into `{}` is not supported yet",
+                self.debug_type(pat.ty)
+            ));
+        }
         if count == 1 {
             self.store(pat, ptr, Align::from_bytes(0).unwrap());
         } else {
@@ -2940,6 +2946,19 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             .builder
             .lookup_const_scalar(size)
             .and_then(|size| Some(Size::from_bytes(u64::try_from(size).ok()?)));
+        if const_size == Some(Size::ZERO) {
+            // Nothing to do!
+            return;
+        }
+        if self.builder.lookup_const(fill_byte) == Some(SpirvConst::Undef) {
+            // Nothing to do: the fill leaves the memory uninitialized.
+            return;
+        }
+
+        // `ptr` can point to an enclosing aggregate, e.g. the struct for a fill of its first field
+        let ptr = const_size
+            .and_then(|size| self.adjust_pointer_for_sized_access(ptr, size))
+            .map_or(ptr, |(ptr, _)| ptr);
 
         let elem_ty = match self.lookup_type(ptr.ty) {
             SpirvType::Pointer { pointee } => pointee,
