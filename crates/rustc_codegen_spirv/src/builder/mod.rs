@@ -128,13 +128,12 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         SpirvType::Pointer { pointee: ty }.def(self.span(), self)
     }
 
-    // TODO: Definitely add tests to make sure this impl is right.
     fn rotate(&mut self, value: SpirvValue, shift: SpirvValue, is_left: bool) -> SpirvValue {
-        let width = match self.lookup_type(shift.ty) {
+        let width = match self.lookup_type(value.ty) {
             SpirvType::Integer(width, _) => width,
             other => self.fatal(format!(
                 "cannot rotate non-integer type: {}",
-                other.debug(shift.ty, self)
+                other.debug(value.ty, self)
             )),
         };
         let int_size = self.constant_int(shift.ty, width.into());
