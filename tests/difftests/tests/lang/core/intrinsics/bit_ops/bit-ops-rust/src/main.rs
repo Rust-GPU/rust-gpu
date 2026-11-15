@@ -1,11 +1,11 @@
 #[cfg(not(target_arch = "spirv"))]
 fn main() {
+    use bit_ops_rust::{TEST_DATA, WORDS_PER_CASE};
     use difftest::config::{Config, TestMetadata};
     use difftest::scaffold::compute::{
         AshBackend, BufferConfig, BufferUsage, ComputeShaderTest, RustComputeShader,
     };
     use difftest::spirv_builder::Capability;
-    use trailing_zeros_64_rust::TEST_DATA;
 
     let config = Config::from_path(std::env::args().nth(1).unwrap()).unwrap();
 
@@ -22,7 +22,7 @@ fn main() {
     #[cfg(not(target_os = "macos"))]
     {
         let input_bytes: Vec<u8> = bytemuck::cast_slice(&TEST_DATA).to_vec();
-        let output_size = (TEST_DATA.len() * std::mem::size_of::<u32>()) as u64;
+        let output_size = (TEST_DATA.len() * WORDS_PER_CASE * std::mem::size_of::<u32>()) as u64;
 
         let buffers = vec![
             BufferConfig {
@@ -37,8 +37,11 @@ fn main() {
             },
         ];
 
-        // Use Ash backend since wgpu/naga doesn't support Int64
-        let shader = RustComputeShader::default().with_capability(Capability::Int64);
+        // Use Ash backend since wgpu/naga doesn't support Int8, Int16 and Int64
+        let shader = RustComputeShader::default()
+            .with_capability(Capability::Int8)
+            .with_capability(Capability::Int16)
+            .with_capability(Capability::Int64);
         let num_workgroups = TEST_DATA.len() as u32;
         let test = ComputeShaderTest::<AshBackend, _>::new(shader, [num_workgroups, 1, 1], buffers)
             .unwrap();

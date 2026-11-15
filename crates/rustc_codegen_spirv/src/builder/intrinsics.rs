@@ -573,8 +573,8 @@ impl Builder<'_, '_> {
                             )
                             .unwrap();
                         // the glsl op returns the Msb bit, not the amount of leading zeros of this u32
-                        // leading zeros = 31 - Msb bit
-                        let const_offset = this.constant_i32(this.span(), 31 - offset).def(this);
+                        // leading zeros = 31 - Msb bit, and `offset` is added to them
+                        let const_offset = this.constant_i32(this.span(), 31 + offset).def(this);
                         this.emit().i_sub(u32, None, const_offset, msb_bit).unwrap()
                     }
                 };
@@ -611,8 +611,8 @@ impl Builder<'_, '_> {
                         } else {
                             let use_higher =
                                 self.emit().i_equal(bool, None, higher, u32_0).unwrap();
-                            let lower_bits = find_xsb(self, lower, 0);
-                            let higher_bits = find_xsb(self, higher, 32);
+                            let lower_bits = find_xsb(self, lower, 32);
+                            let higher_bits = find_xsb(self, higher, 0);
                             self.emit()
                                 .select(u32, None, use_higher, lower_bits, higher_bits)
                                 .unwrap()
