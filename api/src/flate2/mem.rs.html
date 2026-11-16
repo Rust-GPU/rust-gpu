@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/flate2-1.1.10/src/mem.rs`."><title>mem.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-0c87338a.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="flate2" data-themes="" data-resource-suffix="" data-rustdoc-version="1.99.0-nightly (d453bdd8f 2026-08-14)" data-channel="nightly" data-search-js="search-cf4fc35e.js" data-stringdex-js="stringdex-b5109af9.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-9f56287d.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">flate2/</div>mem.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span><span class="kw">crate</span>::error::Error;
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/flate2-1.1.11/src/mem.rs`."><title>mem.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-0c87338a.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="flate2" data-themes="" data-resource-suffix="" data-rustdoc-version="1.99.0-nightly (d453bdd8f 2026-08-14)" data-channel="nightly" data-search-js="search-cf4fc35e.js" data-stringdex-js="stringdex-b5109af9.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-9f56287d.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">flate2/</div>mem.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span><span class="kw">crate</span>::error::Error;
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span><span class="kw">crate</span>::io;
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span>alloc::vec::Vec;
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span>core::fmt;
@@ -724,106 +724,201 @@
 <a href=#724 id=724 data-nosnippet>724</a>        <span class="macro">assert!</span>(dst.starts_with(string));
 <a href=#725 id=725 data-nosnippet>725</a>    }
 <a href=#726 id=726 data-nosnippet>726</a>
-<a href=#727 id=727 data-nosnippet>727</a>    <span class="attr">#[cfg(feature = <span class="string">"any_zlib"</span>)]
+<a href=#727 id=727 data-nosnippet>727</a>    <span class="attr">#[cfg(all(not(feature = <span class="string">"any_zlib"</span>), feature = <span class="string">"miniz_oxide"</span>))]
 <a href=#728 id=728 data-nosnippet>728</a>    #[test]
-<a href=#729 id=729 data-nosnippet>729</a>    </span><span class="kw">fn </span>test_gzip_flate() {
-<a href=#730 id=730 data-nosnippet>730</a>        <span class="kw">let </span>string = <span class="string">"hello, hello!"</span>.as_bytes();
-<a href=#731 id=731 data-nosnippet>731</a>
-<a href=#732 id=732 data-nosnippet>732</a>        <span class="kw">let </span><span class="kw-2">mut </span>encoded = Vec::with_capacity(<span class="number">1024</span>);
-<a href=#733 id=733 data-nosnippet>733</a>
-<a href=#734 id=734 data-nosnippet>734</a>        <span class="kw">let </span><span class="kw-2">mut </span>encoder = Compress::new_gzip(Compression::default(), <span class="number">9</span>);
-<a href=#735 id=735 data-nosnippet>735</a>
-<a href=#736 id=736 data-nosnippet>736</a>        encoder
-<a href=#737 id=737 data-nosnippet>737</a>            .compress_vec(string, <span class="kw-2">&amp;mut </span>encoded, FlushCompress::Finish)
-<a href=#738 id=738 data-nosnippet>738</a>            .unwrap();
-<a href=#739 id=739 data-nosnippet>739</a>
-<a href=#740 id=740 data-nosnippet>740</a>        <span class="macro">assert_eq!</span>(encoder.total_in(), string.len() <span class="kw">as </span>u64);
-<a href=#741 id=741 data-nosnippet>741</a>        <span class="macro">assert_eq!</span>(encoder.total_out(), encoded.len() <span class="kw">as </span>u64);
+<a href=#729 id=729 data-nosnippet>729</a>    </span><span class="kw">fn </span>reset_clears_miniz_oxide_dictionary() {
+<a href=#730 id=730 data-nosnippet>730</a>        <span class="kw">let </span>secret = [<span class="string">b'A'</span>; <span class="number">32 </span>* <span class="number">1024</span>];
+<a href=#731 id=731 data-nosnippet>731</a>        <span class="comment">// A raw DEFLATE stream containing one final, uncompressed (stored) block:
+<a href=#732 id=732 data-nosnippet>732</a>        // 0x01 sets BFINAL=1 and BTYPE=00, followed by padding to a byte boundary.
+<a href=#733 id=733 data-nosnippet>733</a>        // LEN is the payload length; NLEN is its one's complement.
+<a href=#734 id=734 data-nosnippet>734</a>        // The payload fills the entire 32 KiB dictionary with secret bytes.
+<a href=#735 id=735 data-nosnippet>735</a>        </span><span class="kw">let </span>len = secret.len() <span class="kw">as </span>u16;
+<a href=#736 id=736 data-nosnippet>736</a>        <span class="kw">let </span>nlen = !len;
+<a href=#737 id=737 data-nosnippet>737</a>        <span class="kw">let </span><span class="kw-2">mut </span>victim_stream = Vec::with_capacity(secret.len() + <span class="number">5</span>);
+<a href=#738 id=738 data-nosnippet>738</a>        victim_stream.push(<span class="number">0x01</span>);
+<a href=#739 id=739 data-nosnippet>739</a>        victim_stream.extend_from_slice(<span class="kw-2">&amp;</span>len.to_le_bytes());
+<a href=#740 id=740 data-nosnippet>740</a>        victim_stream.extend_from_slice(<span class="kw-2">&amp;</span>nlen.to_le_bytes());
+<a href=#741 id=741 data-nosnippet>741</a>        victim_stream.extend_from_slice(<span class="kw-2">&amp;</span>secret);
 <a href=#742 id=742 data-nosnippet>742</a>
-<a href=#743 id=743 data-nosnippet>743</a>        <span class="kw">let </span><span class="kw-2">mut </span>decoder = Decompress::new_gzip(<span class="number">9</span>);
-<a href=#744 id=744 data-nosnippet>744</a>
-<a href=#745 id=745 data-nosnippet>745</a>        <span class="kw">let </span><span class="kw-2">mut </span>decoded = [<span class="number">0</span>; <span class="number">1024</span>];
-<a href=#746 id=746 data-nosnippet>746</a>        decoder
-<a href=#747 id=747 data-nosnippet>747</a>            .decompress(<span class="kw-2">&amp;</span>encoded, <span class="kw-2">&amp;mut </span>decoded, FlushDecompress::Finish)
-<a href=#748 id=748 data-nosnippet>748</a>            .unwrap();
-<a href=#749 id=749 data-nosnippet>749</a>
-<a href=#750 id=750 data-nosnippet>750</a>        <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>decoded[..decoder.total_out() <span class="kw">as </span>usize], string);
-<a href=#751 id=751 data-nosnippet>751</a>    }
+<a href=#743 id=743 data-nosnippet>743</a>        <span class="kw">let </span><span class="kw-2">mut </span>decoder = Decompress::new(<span class="bool-val">false</span>);
+<a href=#744 id=744 data-nosnippet>744</a>        <span class="kw">let </span><span class="kw-2">mut </span>victim_output = [<span class="number">0</span>; <span class="number">32 </span>* <span class="number">1024</span>];
+<a href=#745 id=745 data-nosnippet>745</a>        decoder
+<a href=#746 id=746 data-nosnippet>746</a>            .decompress(<span class="kw-2">&amp;</span>victim_stream, <span class="kw-2">&amp;mut </span>victim_output, FlushDecompress::None)
+<a href=#747 id=747 data-nosnippet>747</a>            .unwrap();
+<a href=#748 id=748 data-nosnippet>748</a>        <span class="macro">assert_eq!</span>(
+<a href=#749 id=749 data-nosnippet>749</a>            victim_output, secret,
+<a href=#750 id=750 data-nosnippet>750</a>            <span class="string">"the first stream must fill the 32 KiB dictionary with secret bytes"
+<a href=#751 id=751 data-nosnippet>751</a>        </span>);
 <a href=#752 id=752 data-nosnippet>752</a>
-<a href=#753 id=753 data-nosnippet>753</a>    <span class="attr">#[cfg(feature = <span class="string">"any_zlib"</span>)]
-<a href=#754 id=754 data-nosnippet>754</a>    #[test]
-<a href=#755 id=755 data-nosnippet>755</a>    </span><span class="kw">fn </span>test_error_message() {
-<a href=#756 id=756 data-nosnippet>756</a>        <span class="kw">let </span><span class="kw-2">mut </span>decoder = Decompress::new(<span class="bool-val">false</span>);
-<a href=#757 id=757 data-nosnippet>757</a>        <span class="kw">let </span><span class="kw-2">mut </span>decoded = [<span class="number">0</span>; <span class="number">128</span>];
-<a href=#758 id=758 data-nosnippet>758</a>        <span class="kw">let </span>garbage = <span class="string">b"xbvxzi"</span>;
-<a href=#759 id=759 data-nosnippet>759</a>
-<a href=#760 id=760 data-nosnippet>760</a>        <span class="kw">let </span>err = decoder
-<a href=#761 id=761 data-nosnippet>761</a>            .decompress(garbage, <span class="kw-2">&amp;mut </span>decoded, FlushDecompress::Finish)
-<a href=#762 id=762 data-nosnippet>762</a>            .unwrap_err();
-<a href=#763 id=763 data-nosnippet>763</a>
-<a href=#764 id=764 data-nosnippet>764</a>        <span class="macro">assert_eq!</span>(err.message(), <span class="prelude-val">Some</span>(<span class="string">"invalid stored block lengths"</span>));
-<a href=#765 id=765 data-nosnippet>765</a>    }
-<a href=#766 id=766 data-nosnippet>766</a>
-<a href=#767 id=767 data-nosnippet>767</a>    <span class="kw">fn </span>compress_with_flush(flush: FlushCompress) -&gt; Vec&lt;u8&gt; {
-<a href=#768 id=768 data-nosnippet>768</a>        <span class="kw">let </span>incompressible = (<span class="number">0</span>..=<span class="number">255</span>).collect::&lt;Vec&lt;u8&gt;&gt;();
-<a href=#769 id=769 data-nosnippet>769</a>        <span class="kw">let </span><span class="kw-2">mut </span>output = <span class="macro">vec!</span>[<span class="number">0</span>; <span class="number">1024</span>];
-<a href=#770 id=770 data-nosnippet>770</a>
-<a href=#771 id=771 data-nosnippet>771</a>        <span class="comment">// Feed in the incompressible data followed by the indicated flush type.
-<a href=#772 id=772 data-nosnippet>772</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>w = Compress::new(Compression::default(), <span class="bool-val">false</span>);
-<a href=#773 id=773 data-nosnippet>773</a>        w.compress(<span class="kw-2">&amp;</span>incompressible, <span class="kw-2">&amp;mut </span>output, flush).unwrap();
-<a href=#774 id=774 data-nosnippet>774</a>
-<a href=#775 id=775 data-nosnippet>775</a>        <span class="kw">if </span>flush != FlushCompress::None {
-<a href=#776 id=776 data-nosnippet>776</a>            <span class="comment">// The first instance of incompressible input should have been written uncompressed.
-<a href=#777 id=777 data-nosnippet>777</a>            </span><span class="macro">assert!</span>(w.total_out() &gt;= <span class="number">261</span>);
-<a href=#778 id=778 data-nosnippet>778</a>            <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>output[<span class="number">0</span>..<span class="number">5</span>], <span class="kw-2">&amp;</span>[<span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">0xff</span>, !<span class="number">1</span>]);
-<a href=#779 id=779 data-nosnippet>779</a>            <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>output[<span class="number">5</span>..<span class="number">261</span>], <span class="kw-2">&amp;</span>incompressible);
-<a href=#780 id=780 data-nosnippet>780</a>        }
-<a href=#781 id=781 data-nosnippet>781</a>
-<a href=#782 id=782 data-nosnippet>782</a>        <span class="comment">// Feed in the same data again.
-<a href=#783 id=783 data-nosnippet>783</a>        </span><span class="kw">let </span>len = w.total_out() <span class="kw">as </span>usize;
-<a href=#784 id=784 data-nosnippet>784</a>        w.compress(<span class="kw-2">&amp;</span>incompressible, <span class="kw-2">&amp;mut </span>output[len..], FlushCompress::Finish)
-<a href=#785 id=785 data-nosnippet>785</a>            .unwrap();
-<a href=#786 id=786 data-nosnippet>786</a>
-<a href=#787 id=787 data-nosnippet>787</a>        <span class="kw">if </span>flush != FlushCompress::Full {
-<a href=#788 id=788 data-nosnippet>788</a>            <span class="comment">// This time, the data should have been compressed (because it is an exact duplicate of
-<a href=#789 id=789 data-nosnippet>789</a>            // the earlier block).
-<a href=#790 id=790 data-nosnippet>790</a>            </span><span class="macro">assert!</span>(w.total_out() &lt; <span class="number">300</span>);
-<a href=#791 id=791 data-nosnippet>791</a>        }
-<a href=#792 id=792 data-nosnippet>792</a>
-<a href=#793 id=793 data-nosnippet>793</a>        <span class="comment">// Assert that all input has been processed.
-<a href=#794 id=794 data-nosnippet>794</a>        </span><span class="macro">assert_eq!</span>(w.total_in(), <span class="number">256 </span>* <span class="number">2</span>);
+<a href=#753 id=753 data-nosnippet>753</a>        decoder.reset(<span class="bool-val">false</span>);
+<a href=#754 id=754 data-nosnippet>754</a>
+<a href=#755 id=755 data-nosnippet>755</a>        <span class="kw">let </span><span class="kw-2">mut </span>attacker_output = [<span class="number">0</span>; <span class="number">258</span>];
+<a href=#756 id=756 data-nosnippet>756</a>        <span class="kw">let _ </span>= decoder.decompress(
+<a href=#757 id=757 data-nosnippet>757</a>            <span class="kw-2">&amp;</span>[<span class="number">0x1b</span>, <span class="number">0xbd</span>, <span class="number">0xff</span>, <span class="number">0x1f</span>, <span class="number">0x00</span>],
+<a href=#758 id=758 data-nosnippet>758</a>            <span class="kw-2">&amp;mut </span>attacker_output,
+<a href=#759 id=759 data-nosnippet>759</a>            FlushDecompress::None,
+<a href=#760 id=760 data-nosnippet>760</a>        );
+<a href=#761 id=761 data-nosnippet>761</a>        <span class="macro">assert!</span>(
+<a href=#762 id=762 data-nosnippet>762</a>            !attacker_output.contains(<span class="kw-2">&amp;</span><span class="string">b'A'</span>),
+<a href=#763 id=763 data-nosnippet>763</a>            <span class="string">"reset must clear the dictionary: a distance-32768 match leaked bytes \
+<a href=#764 id=764 data-nosnippet>764</a>             from the previous stream; both FullReset and the current upstream \
+<a href=#765 id=765 data-nosnippet>765</a>             reset() prevent this, but MinReset does not"
+<a href=#766 id=766 data-nosnippet>766</a>        </span>);
+<a href=#767 id=767 data-nosnippet>767</a>    }
+<a href=#768 id=768 data-nosnippet>768</a>
+<a href=#769 id=769 data-nosnippet>769</a>    <span class="attr">#[test]
+<a href=#770 id=770 data-nosnippet>770</a>    </span><span class="kw">fn </span>unfinished_compressor_can_be_dropped() {
+<a href=#771 id=771 data-nosnippet>771</a>        <span class="kw">let </span><span class="kw-2">mut </span>encoder = Compress::new(Compression::default(), <span class="bool-val">false</span>);
+<a href=#772 id=772 data-nosnippet>772</a>        encoder
+<a href=#773 id=773 data-nosnippet>773</a>            .compress(<span class="string">b"hello"</span>, <span class="kw-2">&amp;mut </span>[<span class="number">0</span>; <span class="number">1024</span>], FlushCompress::None)
+<a href=#774 id=774 data-nosnippet>774</a>            .unwrap();
+<a href=#775 id=775 data-nosnippet>775</a>        <span class="macro">assert_eq!</span>(encoder.total_in(), <span class="number">5</span>);
+<a href=#776 id=776 data-nosnippet>776</a>    }
+<a href=#777 id=777 data-nosnippet>777</a>
+<a href=#778 id=778 data-nosnippet>778</a>    <span class="attr">#[cfg(feature = <span class="string">"any_zlib"</span>)]
+<a href=#779 id=779 data-nosnippet>779</a>    #[test]
+<a href=#780 id=780 data-nosnippet>780</a>    </span><span class="kw">fn </span>reset_preserves_gzip_configuration() {
+<a href=#781 id=781 data-nosnippet>781</a>        <span class="kw">let </span>string = <span class="string">"hello, hello!"</span>.as_bytes();
+<a href=#782 id=782 data-nosnippet>782</a>
+<a href=#783 id=783 data-nosnippet>783</a>        <span class="kw">let </span><span class="kw-2">mut </span>encoded = Vec::with_capacity(<span class="number">1024</span>);
+<a href=#784 id=784 data-nosnippet>784</a>        <span class="kw">let </span><span class="kw-2">mut </span>encoder = Compress::new_gzip(Compression::default(), <span class="number">9</span>);
+<a href=#785 id=785 data-nosnippet>785</a>        encoder
+<a href=#786 id=786 data-nosnippet>786</a>            .compress_vec(string, <span class="kw-2">&amp;mut </span>encoded, FlushCompress::Finish)
+<a href=#787 id=787 data-nosnippet>787</a>            .unwrap();
+<a href=#788 id=788 data-nosnippet>788</a>
+<a href=#789 id=789 data-nosnippet>789</a>        <span class="kw">let </span><span class="kw-2">mut </span>decoder = Decompress::new_gzip(<span class="number">9</span>);
+<a href=#790 id=790 data-nosnippet>790</a>        <span class="kw">let </span><span class="kw-2">mut </span>decoded = [<span class="number">0</span>; <span class="number">1024</span>];
+<a href=#791 id=791 data-nosnippet>791</a>        decoder
+<a href=#792 id=792 data-nosnippet>792</a>            .decompress(<span class="kw-2">&amp;</span>encoded, <span class="kw-2">&amp;mut </span>decoded, FlushDecompress::Finish)
+<a href=#793 id=793 data-nosnippet>793</a>            .unwrap();
+<a href=#794 id=794 data-nosnippet>794</a>        <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>decoded[..decoder.total_out() <span class="kw">as </span>usize], string);
 <a href=#795 id=795 data-nosnippet>795</a>
-<a href=#796 id=796 data-nosnippet>796</a>        output.resize(w.total_out() <span class="kw">as </span>usize, <span class="number">0</span>);
-<a href=#797 id=797 data-nosnippet>797</a>        output
-<a href=#798 id=798 data-nosnippet>798</a>    }
-<a href=#799 id=799 data-nosnippet>799</a>
-<a href=#800 id=800 data-nosnippet>800</a>    <span class="attr">#[test]
-<a href=#801 id=801 data-nosnippet>801</a>    </span><span class="kw">fn </span>test_partial_flush() {
-<a href=#802 id=802 data-nosnippet>802</a>        <span class="kw">let </span>output = compress_with_flush(FlushCompress::Partial);
+<a href=#796 id=796 data-nosnippet>796</a>        decoder.reset(<span class="bool-val">true</span>);
+<a href=#797 id=797 data-nosnippet>797</a>        <span class="kw">let </span><span class="kw-2">mut </span>decoded = [<span class="number">0</span>; <span class="number">1024</span>];
+<a href=#798 id=798 data-nosnippet>798</a>        decoder
+<a href=#799 id=799 data-nosnippet>799</a>            .decompress(<span class="kw-2">&amp;</span>encoded, <span class="kw-2">&amp;mut </span>decoded, FlushDecompress::Finish)
+<a href=#800 id=800 data-nosnippet>800</a>            .expect(<span class="string">"reset must preserve the gzip wrapper selected at construction"</span>);
+<a href=#801 id=801 data-nosnippet>801</a>        <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>decoded[..decoder.total_out() <span class="kw">as </span>usize], string);
+<a href=#802 id=802 data-nosnippet>802</a>    }
 <a href=#803 id=803 data-nosnippet>803</a>
-<a href=#804 id=804 data-nosnippet>804</a>        <span class="comment">// Check for partial flush marker.
-<a href=#805 id=805 data-nosnippet>805</a>        </span><span class="macro">assert_eq!</span>(output[<span class="number">261</span>], <span class="number">0x2</span>);
-<a href=#806 id=806 data-nosnippet>806</a>        <span class="macro">assert_eq!</span>(output[<span class="number">262</span>] &amp; <span class="number">0x7</span>, <span class="number">0x4</span>);
-<a href=#807 id=807 data-nosnippet>807</a>    }
-<a href=#808 id=808 data-nosnippet>808</a>
-<a href=#809 id=809 data-nosnippet>809</a>    <span class="attr">#[test]
-<a href=#810 id=810 data-nosnippet>810</a>    </span><span class="kw">fn </span>test_sync_flush() {
-<a href=#811 id=811 data-nosnippet>811</a>        <span class="kw">let </span>output = compress_with_flush(FlushCompress::Sync);
-<a href=#812 id=812 data-nosnippet>812</a>
-<a href=#813 id=813 data-nosnippet>813</a>        <span class="comment">// Check for sync flush marker.
-<a href=#814 id=814 data-nosnippet>814</a>        </span><span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>output[<span class="number">261</span>..][..<span class="number">5</span>], <span class="kw-2">&amp;</span>[<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0xff</span>, <span class="number">0xff</span>]);
-<a href=#815 id=815 data-nosnippet>815</a>    }
-<a href=#816 id=816 data-nosnippet>816</a>
-<a href=#817 id=817 data-nosnippet>817</a>    <span class="attr">#[test]
-<a href=#818 id=818 data-nosnippet>818</a>    </span><span class="kw">fn </span>test_full_flush() {
-<a href=#819 id=819 data-nosnippet>819</a>        <span class="kw">let </span>output = compress_with_flush(FlushCompress::Full);
-<a href=#820 id=820 data-nosnippet>820</a>        <span class="macro">assert_eq!</span>(output.len(), <span class="number">527</span>);
+<a href=#804 id=804 data-nosnippet>804</a>    <span class="attr">#[cfg(feature = <span class="string">"any_zlib"</span>)]
+<a href=#805 id=805 data-nosnippet>805</a>    #[test]
+<a href=#806 id=806 data-nosnippet>806</a>    </span><span class="kw">fn </span>reset_preserves_window_bits() {
+<a href=#807 id=807 data-nosnippet>807</a>        <span class="comment">// A valid zlib header declaring a 32 KiB (15-bit) window: CMF 0x78, FLG 0x9c.
+<a href=#808 id=808 data-nosnippet>808</a>        </span><span class="kw">let </span>header_15_bit_window = [<span class="number">0x78</span>, <span class="number">0x9c</span>];
+<a href=#809 id=809 data-nosnippet>809</a>        <span class="kw">let </span><span class="kw-2">mut </span>decoded = [<span class="number">0</span>; <span class="number">64</span>];
+<a href=#810 id=810 data-nosnippet>810</a>
+<a href=#811 id=811 data-nosnippet>811</a>        <span class="kw">let </span><span class="kw-2">mut </span>decoder = Decompress::new_with_window_bits(<span class="bool-val">true</span>, <span class="number">9</span>);
+<a href=#812 id=812 data-nosnippet>812</a>        decoder
+<a href=#813 id=813 data-nosnippet>813</a>            .decompress(<span class="kw-2">&amp;</span>header_15_bit_window, <span class="kw-2">&amp;mut </span>decoded, FlushDecompress::None)
+<a href=#814 id=814 data-nosnippet>814</a>            .expect_err(<span class="string">"a 15-bit-window stream must be rejected by a 9-bit-window decoder"</span>);
+<a href=#815 id=815 data-nosnippet>815</a>
+<a href=#816 id=816 data-nosnippet>816</a>        decoder.reset(<span class="bool-val">true</span>);
+<a href=#817 id=817 data-nosnippet>817</a>        decoder
+<a href=#818 id=818 data-nosnippet>818</a>            .decompress(<span class="kw-2">&amp;</span>header_15_bit_window, <span class="kw-2">&amp;mut </span>decoded, FlushDecompress::None)
+<a href=#819 id=819 data-nosnippet>819</a>            .expect_err(<span class="string">"reset must preserve the window size selected at construction"</span>);
+<a href=#820 id=820 data-nosnippet>820</a>    }
 <a href=#821 id=821 data-nosnippet>821</a>
-<a href=#822 id=822 data-nosnippet>822</a>        <span class="comment">// Check for sync flush marker.
-<a href=#823 id=823 data-nosnippet>823</a>        </span><span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>output[<span class="number">261</span>..][..<span class="number">5</span>], <span class="kw-2">&amp;</span>[<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0xff</span>, <span class="number">0xff</span>]);
-<a href=#824 id=824 data-nosnippet>824</a>
-<a href=#825 id=825 data-nosnippet>825</a>        <span class="comment">// Check that the second instance of incompressible input was also written uncompressed.
-<a href=#826 id=826 data-nosnippet>826</a>        </span><span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>output[<span class="number">266</span>..][..<span class="number">5</span>], <span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">0xff</span>, !<span class="number">1</span>]);
-<a href=#827 id=827 data-nosnippet>827</a>    }
-<a href=#828 id=828 data-nosnippet>828</a>}
+<a href=#822 id=822 data-nosnippet>822</a>    <span class="attr">#[cfg(feature = <span class="string">"any_zlib"</span>)]
+<a href=#823 id=823 data-nosnippet>823</a>    #[test]
+<a href=#824 id=824 data-nosnippet>824</a>    </span><span class="kw">fn </span>test_gzip_flate() {
+<a href=#825 id=825 data-nosnippet>825</a>        <span class="kw">let </span>string = <span class="string">"hello, hello!"</span>.as_bytes();
+<a href=#826 id=826 data-nosnippet>826</a>
+<a href=#827 id=827 data-nosnippet>827</a>        <span class="kw">let </span><span class="kw-2">mut </span>encoded = Vec::with_capacity(<span class="number">1024</span>);
+<a href=#828 id=828 data-nosnippet>828</a>
+<a href=#829 id=829 data-nosnippet>829</a>        <span class="kw">let </span><span class="kw-2">mut </span>encoder = Compress::new_gzip(Compression::default(), <span class="number">9</span>);
+<a href=#830 id=830 data-nosnippet>830</a>
+<a href=#831 id=831 data-nosnippet>831</a>        encoder
+<a href=#832 id=832 data-nosnippet>832</a>            .compress_vec(string, <span class="kw-2">&amp;mut </span>encoded, FlushCompress::Finish)
+<a href=#833 id=833 data-nosnippet>833</a>            .unwrap();
+<a href=#834 id=834 data-nosnippet>834</a>
+<a href=#835 id=835 data-nosnippet>835</a>        <span class="macro">assert_eq!</span>(encoder.total_in(), string.len() <span class="kw">as </span>u64);
+<a href=#836 id=836 data-nosnippet>836</a>        <span class="macro">assert_eq!</span>(encoder.total_out(), encoded.len() <span class="kw">as </span>u64);
+<a href=#837 id=837 data-nosnippet>837</a>
+<a href=#838 id=838 data-nosnippet>838</a>        <span class="kw">let </span><span class="kw-2">mut </span>decoder = Decompress::new_gzip(<span class="number">9</span>);
+<a href=#839 id=839 data-nosnippet>839</a>
+<a href=#840 id=840 data-nosnippet>840</a>        <span class="kw">let </span><span class="kw-2">mut </span>decoded = [<span class="number">0</span>; <span class="number">1024</span>];
+<a href=#841 id=841 data-nosnippet>841</a>        decoder
+<a href=#842 id=842 data-nosnippet>842</a>            .decompress(<span class="kw-2">&amp;</span>encoded, <span class="kw-2">&amp;mut </span>decoded, FlushDecompress::Finish)
+<a href=#843 id=843 data-nosnippet>843</a>            .unwrap();
+<a href=#844 id=844 data-nosnippet>844</a>
+<a href=#845 id=845 data-nosnippet>845</a>        <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>decoded[..decoder.total_out() <span class="kw">as </span>usize], string);
+<a href=#846 id=846 data-nosnippet>846</a>    }
+<a href=#847 id=847 data-nosnippet>847</a>
+<a href=#848 id=848 data-nosnippet>848</a>    <span class="attr">#[cfg(feature = <span class="string">"any_zlib"</span>)]
+<a href=#849 id=849 data-nosnippet>849</a>    #[test]
+<a href=#850 id=850 data-nosnippet>850</a>    </span><span class="kw">fn </span>test_error_message() {
+<a href=#851 id=851 data-nosnippet>851</a>        <span class="kw">let </span><span class="kw-2">mut </span>decoder = Decompress::new(<span class="bool-val">false</span>);
+<a href=#852 id=852 data-nosnippet>852</a>        <span class="kw">let </span><span class="kw-2">mut </span>decoded = [<span class="number">0</span>; <span class="number">128</span>];
+<a href=#853 id=853 data-nosnippet>853</a>        <span class="kw">let </span>garbage = <span class="string">b"xbvxzi"</span>;
+<a href=#854 id=854 data-nosnippet>854</a>
+<a href=#855 id=855 data-nosnippet>855</a>        <span class="kw">let </span>err = decoder
+<a href=#856 id=856 data-nosnippet>856</a>            .decompress(garbage, <span class="kw-2">&amp;mut </span>decoded, FlushDecompress::Finish)
+<a href=#857 id=857 data-nosnippet>857</a>            .unwrap_err();
+<a href=#858 id=858 data-nosnippet>858</a>
+<a href=#859 id=859 data-nosnippet>859</a>        <span class="macro">assert_eq!</span>(err.message(), <span class="prelude-val">Some</span>(<span class="string">"invalid stored block lengths"</span>));
+<a href=#860 id=860 data-nosnippet>860</a>    }
+<a href=#861 id=861 data-nosnippet>861</a>
+<a href=#862 id=862 data-nosnippet>862</a>    <span class="kw">fn </span>compress_with_flush(flush: FlushCompress) -&gt; Vec&lt;u8&gt; {
+<a href=#863 id=863 data-nosnippet>863</a>        <span class="kw">let </span>incompressible = (<span class="number">0</span>..=<span class="number">255</span>).collect::&lt;Vec&lt;u8&gt;&gt;();
+<a href=#864 id=864 data-nosnippet>864</a>        <span class="kw">let </span><span class="kw-2">mut </span>output = <span class="macro">vec!</span>[<span class="number">0</span>; <span class="number">1024</span>];
+<a href=#865 id=865 data-nosnippet>865</a>
+<a href=#866 id=866 data-nosnippet>866</a>        <span class="comment">// Feed in the incompressible data followed by the indicated flush type.
+<a href=#867 id=867 data-nosnippet>867</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>w = Compress::new(Compression::default(), <span class="bool-val">false</span>);
+<a href=#868 id=868 data-nosnippet>868</a>        w.compress(<span class="kw-2">&amp;</span>incompressible, <span class="kw-2">&amp;mut </span>output, flush).unwrap();
+<a href=#869 id=869 data-nosnippet>869</a>
+<a href=#870 id=870 data-nosnippet>870</a>        <span class="kw">if </span>flush != FlushCompress::None {
+<a href=#871 id=871 data-nosnippet>871</a>            <span class="comment">// The first instance of incompressible input should have been written uncompressed.
+<a href=#872 id=872 data-nosnippet>872</a>            </span><span class="macro">assert!</span>(w.total_out() &gt;= <span class="number">261</span>);
+<a href=#873 id=873 data-nosnippet>873</a>            <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>output[<span class="number">0</span>..<span class="number">5</span>], <span class="kw-2">&amp;</span>[<span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">0xff</span>, !<span class="number">1</span>]);
+<a href=#874 id=874 data-nosnippet>874</a>            <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>output[<span class="number">5</span>..<span class="number">261</span>], <span class="kw-2">&amp;</span>incompressible);
+<a href=#875 id=875 data-nosnippet>875</a>        }
+<a href=#876 id=876 data-nosnippet>876</a>
+<a href=#877 id=877 data-nosnippet>877</a>        <span class="comment">// Feed in the same data again.
+<a href=#878 id=878 data-nosnippet>878</a>        </span><span class="kw">let </span>len = w.total_out() <span class="kw">as </span>usize;
+<a href=#879 id=879 data-nosnippet>879</a>        w.compress(<span class="kw-2">&amp;</span>incompressible, <span class="kw-2">&amp;mut </span>output[len..], FlushCompress::Finish)
+<a href=#880 id=880 data-nosnippet>880</a>            .unwrap();
+<a href=#881 id=881 data-nosnippet>881</a>
+<a href=#882 id=882 data-nosnippet>882</a>        <span class="kw">if </span>flush != FlushCompress::Full {
+<a href=#883 id=883 data-nosnippet>883</a>            <span class="comment">// This time, the data should have been compressed (because it is an exact duplicate of
+<a href=#884 id=884 data-nosnippet>884</a>            // the earlier block).
+<a href=#885 id=885 data-nosnippet>885</a>            </span><span class="macro">assert!</span>(w.total_out() &lt; <span class="number">300</span>);
+<a href=#886 id=886 data-nosnippet>886</a>        }
+<a href=#887 id=887 data-nosnippet>887</a>
+<a href=#888 id=888 data-nosnippet>888</a>        <span class="comment">// Assert that all input has been processed.
+<a href=#889 id=889 data-nosnippet>889</a>        </span><span class="macro">assert_eq!</span>(w.total_in(), <span class="number">256 </span>* <span class="number">2</span>);
+<a href=#890 id=890 data-nosnippet>890</a>
+<a href=#891 id=891 data-nosnippet>891</a>        output.resize(w.total_out() <span class="kw">as </span>usize, <span class="number">0</span>);
+<a href=#892 id=892 data-nosnippet>892</a>        output
+<a href=#893 id=893 data-nosnippet>893</a>    }
+<a href=#894 id=894 data-nosnippet>894</a>
+<a href=#895 id=895 data-nosnippet>895</a>    <span class="attr">#[test]
+<a href=#896 id=896 data-nosnippet>896</a>    </span><span class="kw">fn </span>test_partial_flush() {
+<a href=#897 id=897 data-nosnippet>897</a>        <span class="kw">let </span>output = compress_with_flush(FlushCompress::Partial);
+<a href=#898 id=898 data-nosnippet>898</a>
+<a href=#899 id=899 data-nosnippet>899</a>        <span class="comment">// Check for partial flush marker.
+<a href=#900 id=900 data-nosnippet>900</a>        </span><span class="macro">assert_eq!</span>(output[<span class="number">261</span>], <span class="number">0x2</span>);
+<a href=#901 id=901 data-nosnippet>901</a>        <span class="macro">assert_eq!</span>(output[<span class="number">262</span>] &amp; <span class="number">0x7</span>, <span class="number">0x4</span>);
+<a href=#902 id=902 data-nosnippet>902</a>    }
+<a href=#903 id=903 data-nosnippet>903</a>
+<a href=#904 id=904 data-nosnippet>904</a>    <span class="attr">#[test]
+<a href=#905 id=905 data-nosnippet>905</a>    </span><span class="kw">fn </span>test_sync_flush() {
+<a href=#906 id=906 data-nosnippet>906</a>        <span class="kw">let </span>output = compress_with_flush(FlushCompress::Sync);
+<a href=#907 id=907 data-nosnippet>907</a>
+<a href=#908 id=908 data-nosnippet>908</a>        <span class="comment">// Check for sync flush marker.
+<a href=#909 id=909 data-nosnippet>909</a>        </span><span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>output[<span class="number">261</span>..][..<span class="number">5</span>], <span class="kw-2">&amp;</span>[<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0xff</span>, <span class="number">0xff</span>]);
+<a href=#910 id=910 data-nosnippet>910</a>    }
+<a href=#911 id=911 data-nosnippet>911</a>
+<a href=#912 id=912 data-nosnippet>912</a>    <span class="attr">#[test]
+<a href=#913 id=913 data-nosnippet>913</a>    </span><span class="kw">fn </span>test_full_flush() {
+<a href=#914 id=914 data-nosnippet>914</a>        <span class="kw">let </span>output = compress_with_flush(FlushCompress::Full);
+<a href=#915 id=915 data-nosnippet>915</a>        <span class="macro">assert_eq!</span>(output.len(), <span class="number">527</span>);
+<a href=#916 id=916 data-nosnippet>916</a>
+<a href=#917 id=917 data-nosnippet>917</a>        <span class="comment">// Check for sync flush marker.
+<a href=#918 id=918 data-nosnippet>918</a>        </span><span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>output[<span class="number">261</span>..][..<span class="number">5</span>], <span class="kw-2">&amp;</span>[<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0xff</span>, <span class="number">0xff</span>]);
+<a href=#919 id=919 data-nosnippet>919</a>
+<a href=#920 id=920 data-nosnippet>920</a>        <span class="comment">// Check that the second instance of incompressible input was also written uncompressed.
+<a href=#921 id=921 data-nosnippet>921</a>        </span><span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>output[<span class="number">266</span>..][..<span class="number">5</span>], <span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">0xff</span>, !<span class="number">1</span>]);
+<a href=#922 id=922 data-nosnippet>922</a>    }
+<a href=#923 id=923 data-nosnippet>923</a>}
 </code></pre></div></section></main></body></html>

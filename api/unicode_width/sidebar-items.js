@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["UNICODE_VERSION"],"trait":["UnicodeWidthChar","UnicodeWidthStr"]};
+window.SIDEBAR_ITEMS = {"constant":["UNICODE_VERSION"],"fn":["char_iter_width","char_iter_width_cjk"],"trait":["UnicodeWidthChar","UnicodeWidthStr"]};

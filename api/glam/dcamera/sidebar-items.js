@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["lh","rh"]};
+window.SIDEBAR_ITEMS = {"mod":["lh","model","rh"]};
