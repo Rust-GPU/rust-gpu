@@ -212,7 +212,10 @@ fn match_vector_or_scalars_operand(
         let operands = results
             .iter()
             .map(|inst| match inst.operands[operand_index] {
-                Operand::IdRef(id) => Some(id),
+                Operand::IdRef(id) => {
+                    let def = defs.get(&id).or_else(|| types.get(&id))?;
+                    (def.result_type == inst.result_type).then_some(id)
+                }
                 _ => None,
             })
             .collect::<Option<Vec<_>>>()?;
