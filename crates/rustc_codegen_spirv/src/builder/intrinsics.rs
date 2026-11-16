@@ -542,39 +542,22 @@ impl Builder<'_, '_> {
                 let u32 = SpirvType::Integer(32, false).def(self.span(), self);
 
                 let glsl = self.ext_inst.borrow_mut().import_glsl(self);
-                let find_xsb = |this: &mut Self, arg, offset: i32| {
+                let opgl = |this: &mut Self, op: GLOp, arg| {
+                    this.emit()
+                        .ext_inst(u32, None, glsl, op as u32, [Operand::IdRef(arg)])
+                        .unwrap()
+                };
+                let find_xsb = |this: &mut Self, arg| {
                     if trailing {
-                        let lsb = this
-                            .emit()
-                            .ext_inst(
-                                u32,
-                                None,
-                                glsl,
-                                GLOp::FindILsb as u32,
-                                [Operand::IdRef(arg)],
-                            )
-                            .unwrap();
-                        if offset == 0 {
-                            lsb
-                        } else {
-                            let const_offset = this.constant_i32(this.span(), offset).def(this);
-                            this.emit().i_add(u32, None, const_offset, lsb).unwrap()
-                        }
+                        // trailing zeros = lsb bit
+                        opgl(this, GLOp::FindILsb, arg)
                     } else {
                         // rust is always unsigned, so FindUMsb
-                        let msb_bit = this
-                            .emit()
-                            .ext_inst(
-                                u32,
-                                None,
-                                glsl,
-                                GLOp::FindUMsb as u32,
-                                [Operand::IdRef(arg)],
-                            )
-                            .unwrap();
+                        let msb_bit = opgl(this, GLOp::FindUMsb, arg);
                         // the glsl op returns the Msb bit, not the amount of leading zeros of this u32
-                        // leading zeros = 31 - Msb bit, and `offset` is added to them
-                        let const_offset = this.constant_i32(this.span(), 31 + offset).def(this);
+                        // leading zeros = bits - 1 - Msb bit
+                        let const_offset =
+                            this.constant_i32(this.span(), bits as i32 - 1).def(this);
                         this.emit().i_sub(u32, None, const_offset, msb_bit).unwrap()
                     }
                 };
@@ -582,13 +565,9 @@ impl Builder<'_, '_> {
                 let converted = match bits {
                     8 | 16 => {
                         let arg = self.emit().u_convert(u32, None, arg.def(self)).unwrap();
-                        if trailing {
-                            find_xsb(self, arg, 0)
-                        } else {
-                            find_xsb(self, arg, bits as i32 - 32)
-                        }
+                        find_xsb(self, arg)
                     }
-                    32 => find_xsb(self, arg.def(self), 0),
+                    32 => find_xsb(self, arg.def(self)),
                     64 => {
                         let u32_0 = self.constant_int(u32, 0).def(self);
                         let u32_32 = self.constant_u32(self.span(), 32).def(self);
@@ -602,19 +581,26 @@ impl Builder<'_, '_> {
                         let higher = self.emit().u_convert(u32, None, higher).unwrap();
 
                         if trailing {
-                            let use_lower = self.emit().i_equal(bool, None, lower, u32_0).unwrap();
-                            let lower_bits = find_xsb(self, lower, 0);
-                            let higher_bits = find_xsb(self, higher, 32);
+                            let lower_bits = opgl(self, GLOp::FindILsb, lower);
+                            let higher_bits = opgl(self, GLOp::FindILsb, higher);
+                            let higher_bits =
+                                self.emit().i_add(u32, None, higher_bits, u32_32).unwrap();
+                            let use_higher = self.emit().i_equal(bool, None, lower, u32_0).unwrap();
                             self.emit()
-                                .select(u32, None, use_lower, higher_bits, lower_bits)
+                                .select(u32, None, use_higher, higher_bits, lower_bits)
                                 .unwrap()
                         } else {
-                            let use_higher =
-                                self.emit().i_equal(bool, None, higher, u32_0).unwrap();
-                            let lower_bits = find_xsb(self, lower, 32);
-                            let higher_bits = find_xsb(self, higher, 0);
+                            let lower_bits = opgl(self, GLOp::FindUMsb, lower);
+                            let u32_63 = self.constant_u32(self.span(), 63).def(self);
+                            let lower_bits =
+                                self.emit().i_sub(u32, None, u32_63, lower_bits).unwrap();
+                            let higher_bits = opgl(self, GLOp::FindUMsb, higher);
+                            let u32_31 = self.constant_u32(self.span(), 31).def(self);
+                            let higher_bits =
+                                self.emit().i_sub(u32, None, u32_31, higher_bits).unwrap();
+                            let use_lower = self.emit().i_equal(bool, None, higher, u32_0).unwrap();
                             self.emit()
-                                .select(u32, None, use_higher, lower_bits, higher_bits)
+                                .select(u32, None, use_lower, lower_bits, higher_bits)
                                 .unwrap()
                         }
                     }
