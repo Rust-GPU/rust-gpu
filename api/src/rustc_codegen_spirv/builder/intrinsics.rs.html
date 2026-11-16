@@ -542,161 +542,147 @@
 <a href=#542 id=542 data-nosnippet>542</a>                <span class="kw">let </span>u32 = SpirvType::Integer(<span class="number">32</span>, <span class="bool-val">false</span>).def(<span class="self">self</span>.span(), <span class="self">self</span>);
 <a href=#543 id=543 data-nosnippet>543</a>
 <a href=#544 id=544 data-nosnippet>544</a>                <span class="kw">let </span>glsl = <span class="self">self</span>.ext_inst.borrow_mut().import_glsl(<span class="self">self</span>);
-<a href=#545 id=545 data-nosnippet>545</a>                <span class="kw">let </span>find_xsb = |this: <span class="kw-2">&amp;mut </span><span class="self">Self</span>, arg, offset: i32| {
-<a href=#546 id=546 data-nosnippet>546</a>                    <span class="kw">if </span>trailing {
-<a href=#547 id=547 data-nosnippet>547</a>                        <span class="kw">let </span>lsb = this
-<a href=#548 id=548 data-nosnippet>548</a>                            .emit()
-<a href=#549 id=549 data-nosnippet>549</a>                            .ext_inst(
-<a href=#550 id=550 data-nosnippet>550</a>                                u32,
-<a href=#551 id=551 data-nosnippet>551</a>                                <span class="prelude-val">None</span>,
-<a href=#552 id=552 data-nosnippet>552</a>                                glsl,
-<a href=#553 id=553 data-nosnippet>553</a>                                GLOp::FindILsb <span class="kw">as </span>u32,
-<a href=#554 id=554 data-nosnippet>554</a>                                [Operand::IdRef(arg)],
-<a href=#555 id=555 data-nosnippet>555</a>                            )
-<a href=#556 id=556 data-nosnippet>556</a>                            .unwrap();
-<a href=#557 id=557 data-nosnippet>557</a>                        <span class="kw">if </span>offset == <span class="number">0 </span>{
-<a href=#558 id=558 data-nosnippet>558</a>                            lsb
-<a href=#559 id=559 data-nosnippet>559</a>                        } <span class="kw">else </span>{
-<a href=#560 id=560 data-nosnippet>560</a>                            <span class="kw">let </span>const_offset = this.constant_i32(this.span(), offset).def(this);
-<a href=#561 id=561 data-nosnippet>561</a>                            this.emit().i_add(u32, <span class="prelude-val">None</span>, const_offset, lsb).unwrap()
-<a href=#562 id=562 data-nosnippet>562</a>                        }
-<a href=#563 id=563 data-nosnippet>563</a>                    } <span class="kw">else </span>{
-<a href=#564 id=564 data-nosnippet>564</a>                        <span class="comment">// rust is always unsigned, so FindUMsb
-<a href=#565 id=565 data-nosnippet>565</a>                        </span><span class="kw">let </span>msb_bit = this
-<a href=#566 id=566 data-nosnippet>566</a>                            .emit()
-<a href=#567 id=567 data-nosnippet>567</a>                            .ext_inst(
-<a href=#568 id=568 data-nosnippet>568</a>                                u32,
-<a href=#569 id=569 data-nosnippet>569</a>                                <span class="prelude-val">None</span>,
-<a href=#570 id=570 data-nosnippet>570</a>                                glsl,
-<a href=#571 id=571 data-nosnippet>571</a>                                GLOp::FindUMsb <span class="kw">as </span>u32,
-<a href=#572 id=572 data-nosnippet>572</a>                                [Operand::IdRef(arg)],
-<a href=#573 id=573 data-nosnippet>573</a>                            )
-<a href=#574 id=574 data-nosnippet>574</a>                            .unwrap();
-<a href=#575 id=575 data-nosnippet>575</a>                        <span class="comment">// the glsl op returns the Msb bit, not the amount of leading zeros of this u32
-<a href=#576 id=576 data-nosnippet>576</a>                        // leading zeros = 31 - Msb bit
-<a href=#577 id=577 data-nosnippet>577</a>                        </span><span class="kw">let </span>const_offset = this.constant_i32(this.span(), <span class="number">31 </span>- offset).def(this);
-<a href=#578 id=578 data-nosnippet>578</a>                        this.emit().i_sub(u32, <span class="prelude-val">None</span>, const_offset, msb_bit).unwrap()
-<a href=#579 id=579 data-nosnippet>579</a>                    }
-<a href=#580 id=580 data-nosnippet>580</a>                };
-<a href=#581 id=581 data-nosnippet>581</a>
-<a href=#582 id=582 data-nosnippet>582</a>                <span class="kw">let </span>converted = <span class="kw">match </span>bits {
-<a href=#583 id=583 data-nosnippet>583</a>                    <span class="number">8 </span>| <span class="number">16 </span>=&gt; {
-<a href=#584 id=584 data-nosnippet>584</a>                        <span class="kw">let </span>arg = <span class="self">self</span>.emit().u_convert(u32, <span class="prelude-val">None</span>, arg.def(<span class="self">self</span>)).unwrap();
-<a href=#585 id=585 data-nosnippet>585</a>                        <span class="kw">if </span>trailing {
-<a href=#586 id=586 data-nosnippet>586</a>                            find_xsb(<span class="self">self</span>, arg, <span class="number">0</span>)
-<a href=#587 id=587 data-nosnippet>587</a>                        } <span class="kw">else </span>{
-<a href=#588 id=588 data-nosnippet>588</a>                            find_xsb(<span class="self">self</span>, arg, bits <span class="kw">as </span>i32 - <span class="number">32</span>)
-<a href=#589 id=589 data-nosnippet>589</a>                        }
-<a href=#590 id=590 data-nosnippet>590</a>                    }
-<a href=#591 id=591 data-nosnippet>591</a>                    <span class="number">32 </span>=&gt; find_xsb(<span class="self">self</span>, arg.def(<span class="self">self</span>), <span class="number">0</span>),
-<a href=#592 id=592 data-nosnippet>592</a>                    <span class="number">64 </span>=&gt; {
-<a href=#593 id=593 data-nosnippet>593</a>                        <span class="kw">let </span>u32_0 = <span class="self">self</span>.constant_int(u32, <span class="number">0</span>).def(<span class="self">self</span>);
-<a href=#594 id=594 data-nosnippet>594</a>                        <span class="kw">let </span>u32_32 = <span class="self">self</span>.constant_u32(<span class="self">self</span>.span(), <span class="number">32</span>).def(<span class="self">self</span>);
-<a href=#595 id=595 data-nosnippet>595</a>
-<a href=#596 id=596 data-nosnippet>596</a>                        <span class="kw">let </span>arg = arg.def(<span class="self">self</span>);
-<a href=#597 id=597 data-nosnippet>597</a>                        <span class="kw">let </span>lower = <span class="self">self</span>.emit().u_convert(u32, <span class="prelude-val">None</span>, arg).unwrap();
-<a href=#598 id=598 data-nosnippet>598</a>                        <span class="kw">let </span>higher = <span class="self">self
-<a href=#599 id=599 data-nosnippet>599</a>                            </span>.emit()
-<a href=#600 id=600 data-nosnippet>600</a>                            .shift_right_logical(ty, <span class="prelude-val">None</span>, arg, u32_32)
-<a href=#601 id=601 data-nosnippet>601</a>                            .unwrap();
-<a href=#602 id=602 data-nosnippet>602</a>                        <span class="kw">let </span>higher = <span class="self">self</span>.emit().u_convert(u32, <span class="prelude-val">None</span>, higher).unwrap();
-<a href=#603 id=603 data-nosnippet>603</a>
-<a href=#604 id=604 data-nosnippet>604</a>                        <span class="kw">if </span>trailing {
-<a href=#605 id=605 data-nosnippet>605</a>                            <span class="kw">let </span>use_lower = <span class="self">self</span>.emit().i_equal(bool, <span class="prelude-val">None</span>, lower, u32_0).unwrap();
-<a href=#606 id=606 data-nosnippet>606</a>                            <span class="kw">let </span>lower_bits = find_xsb(<span class="self">self</span>, lower, <span class="number">0</span>);
-<a href=#607 id=607 data-nosnippet>607</a>                            <span class="kw">let </span>higher_bits = find_xsb(<span class="self">self</span>, higher, <span class="number">32</span>);
-<a href=#608 id=608 data-nosnippet>608</a>                            <span class="self">self</span>.emit()
-<a href=#609 id=609 data-nosnippet>609</a>                                .select(u32, <span class="prelude-val">None</span>, use_lower, higher_bits, lower_bits)
-<a href=#610 id=610 data-nosnippet>610</a>                                .unwrap()
-<a href=#611 id=611 data-nosnippet>611</a>                        } <span class="kw">else </span>{
-<a href=#612 id=612 data-nosnippet>612</a>                            <span class="kw">let </span>use_higher =
-<a href=#613 id=613 data-nosnippet>613</a>                                <span class="self">self</span>.emit().i_equal(bool, <span class="prelude-val">None</span>, higher, u32_0).unwrap();
-<a href=#614 id=614 data-nosnippet>614</a>                            <span class="kw">let </span>lower_bits = find_xsb(<span class="self">self</span>, lower, <span class="number">0</span>);
-<a href=#615 id=615 data-nosnippet>615</a>                            <span class="kw">let </span>higher_bits = find_xsb(<span class="self">self</span>, higher, <span class="number">32</span>);
-<a href=#616 id=616 data-nosnippet>616</a>                            <span class="self">self</span>.emit()
-<a href=#617 id=617 data-nosnippet>617</a>                                .select(u32, <span class="prelude-val">None</span>, use_higher, lower_bits, higher_bits)
-<a href=#618 id=618 data-nosnippet>618</a>                                .unwrap()
-<a href=#619 id=619 data-nosnippet>619</a>                        }
-<a href=#620 id=620 data-nosnippet>620</a>                    }
-<a href=#621 id=621 data-nosnippet>621</a>                    <span class="kw">_ </span>=&gt; {
-<a href=#622 id=622 data-nosnippet>622</a>                        <span class="kw">return </span><span class="self">self</span>.undef_zombie(ty, <span class="kw-2">&amp;</span><span class="macro">format!</span>(
-<a href=#623 id=623 data-nosnippet>623</a>                            <span class="string">"count_leading_trailing_zeros() on unsupported {ty:?} bit integer type"
-<a href=#624 id=624 data-nosnippet>624</a>                        </span>));
-<a href=#625 id=625 data-nosnippet>625</a>                    }
-<a href=#626 id=626 data-nosnippet>626</a>                };
-<a href=#627 id=627 data-nosnippet>627</a>
-<a href=#628 id=628 data-nosnippet>628</a>                <span class="kw">if </span>non_zero {
-<a href=#629 id=629 data-nosnippet>629</a>                    converted
-<a href=#630 id=630 data-nosnippet>630</a>                } <span class="kw">else </span>{
-<a href=#631 id=631 data-nosnippet>631</a>                    <span class="kw">let </span>int_0 = <span class="self">self</span>.constant_int(ty, <span class="number">0</span>).def(<span class="self">self</span>);
-<a href=#632 id=632 data-nosnippet>632</a>                    <span class="kw">let </span>int_bits = <span class="self">self</span>.constant_int(u32, bits <span class="kw">as </span>u128).def(<span class="self">self</span>);
-<a href=#633 id=633 data-nosnippet>633</a>                    <span class="kw">let </span>is_0 = <span class="self">self
-<a href=#634 id=634 data-nosnippet>634</a>                        </span>.emit()
-<a href=#635 id=635 data-nosnippet>635</a>                        .i_equal(bool, <span class="prelude-val">None</span>, arg.def(<span class="self">self</span>), int_0)
-<a href=#636 id=636 data-nosnippet>636</a>                        .unwrap();
-<a href=#637 id=637 data-nosnippet>637</a>                    <span class="self">self</span>.emit()
-<a href=#638 id=638 data-nosnippet>638</a>                        .select(u32, <span class="prelude-val">None</span>, is_0, int_bits, converted)
-<a href=#639 id=639 data-nosnippet>639</a>                        .unwrap()
-<a href=#640 id=640 data-nosnippet>640</a>                }
-<a href=#641 id=641 data-nosnippet>641</a>                .with_type(u32)
-<a href=#642 id=642 data-nosnippet>642</a>            }
-<a href=#643 id=643 data-nosnippet>643</a>            SpirvType::Integer(bits, <span class="bool-val">true</span>) =&gt; {
-<a href=#644 id=644 data-nosnippet>644</a>                <span class="comment">// rustc wants `[i8,i16,i32,i64]::leading_zeros()` with `non_zero: true` for some reason. I do not know
-<a href=#645 id=645 data-nosnippet>645</a>                // how these are reachable, marking them as zombies makes none of our compiletests fail.
-<a href=#646 id=646 data-nosnippet>646</a>                </span><span class="kw">let </span>unsigned = SpirvType::Integer(bits, <span class="bool-val">false</span>).def(<span class="self">self</span>.span(), <span class="self">self</span>);
-<a href=#647 id=647 data-nosnippet>647</a>                <span class="kw">let </span>arg = <span class="self">self
-<a href=#648 id=648 data-nosnippet>648</a>                    </span>.emit()
-<a href=#649 id=649 data-nosnippet>649</a>                    .bitcast(unsigned, <span class="prelude-val">None</span>, arg.def(<span class="self">self</span>))
-<a href=#650 id=650 data-nosnippet>650</a>                    .unwrap()
-<a href=#651 id=651 data-nosnippet>651</a>                    .with_type(unsigned);
-<a href=#652 id=652 data-nosnippet>652</a>                <span class="kw">let </span>result = <span class="self">self</span>.count_leading_trailing_zeros(arg, trailing, non_zero);
-<a href=#653 id=653 data-nosnippet>653</a>                <span class="self">self</span>.emit()
-<a href=#654 id=654 data-nosnippet>654</a>                    .bitcast(ty, <span class="prelude-val">None</span>, result.def(<span class="self">self</span>))
-<a href=#655 id=655 data-nosnippet>655</a>                    .unwrap()
-<a href=#656 id=656 data-nosnippet>656</a>                    .with_type(ty)
-<a href=#657 id=657 data-nosnippet>657</a>            }
-<a href=#658 id=658 data-nosnippet>658</a>            e =&gt; {
-<a href=#659 id=659 data-nosnippet>659</a>                <span class="self">self</span>.fatal(<span class="macro">format!</span>(
-<a href=#660 id=660 data-nosnippet>660</a>                    <span class="string">"count_leading_trailing_zeros(trailing: {trailing}, non_zero: {non_zero}) expected an integer type, got {e:?}"</span>,
-<a href=#661 id=661 data-nosnippet>661</a>                ));
-<a href=#662 id=662 data-nosnippet>662</a>            }
-<a href=#663 id=663 data-nosnippet>663</a>        }
-<a href=#664 id=664 data-nosnippet>664</a>    }
-<a href=#665 id=665 data-nosnippet>665</a>
-<a href=#666 id=666 data-nosnippet>666</a>    <span class="kw">pub fn </span>abort_with_kind_and_message_debug_printf(
-<a href=#667 id=667 data-nosnippet>667</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-<a href=#668 id=668 data-nosnippet>668</a>        kind: <span class="kw-2">&amp;</span>str,
-<a href=#669 id=669 data-nosnippet>669</a>        message_debug_printf_fmt_str: <span class="kw">impl </span>Into&lt;String&gt;,
-<a href=#670 id=670 data-nosnippet>670</a>        message_debug_printf_args: <span class="kw">impl </span>IntoIterator&lt;Item = SpirvValue&gt;,
-<a href=#671 id=671 data-nosnippet>671</a>    ) {
-<a href=#672 id=672 data-nosnippet>672</a>        <span class="comment">// FIXME(eddyb) this should be cached more efficiently.
-<a href=#673 id=673 data-nosnippet>673</a>        </span><span class="kw">let </span>void_ty = SpirvType::Void.def(rustc_span::DUMMY_SP, <span class="self">self</span>);
-<a href=#674 id=674 data-nosnippet>674</a>
-<a href=#675 id=675 data-nosnippet>675</a>        <span class="comment">// HACK(eddyb) there is no `abort` or `trap` instruction in SPIR-V,
-<a href=#676 id=676 data-nosnippet>676</a>        // so the best thing we can do is use our own custom instruction.
-<a href=#677 id=677 data-nosnippet>677</a>        </span><span class="kw">let </span>kind_id = <span class="self">self</span>.emit().string(kind);
-<a href=#678 id=678 data-nosnippet>678</a>        <span class="kw">let </span>message_debug_printf_fmt_str_id = <span class="self">self</span>.emit().string(message_debug_printf_fmt_str);
-<a href=#679 id=679 data-nosnippet>679</a>        <span class="self">self</span>.custom_inst(
-<a href=#680 id=680 data-nosnippet>680</a>            void_ty,
-<a href=#681 id=681 data-nosnippet>681</a>            CustomInst::Abort {
-<a href=#682 id=682 data-nosnippet>682</a>                kind: Operand::IdRef(kind_id),
-<a href=#683 id=683 data-nosnippet>683</a>                message_debug_printf: [message_debug_printf_fmt_str_id]
-<a href=#684 id=684 data-nosnippet>684</a>                    .into_iter()
-<a href=#685 id=685 data-nosnippet>685</a>                    .chain(
-<a href=#686 id=686 data-nosnippet>686</a>                        message_debug_printf_args
-<a href=#687 id=687 data-nosnippet>687</a>                            .into_iter()
-<a href=#688 id=688 data-nosnippet>688</a>                            .map(|arg| arg.def(<span class="self">self</span>)),
-<a href=#689 id=689 data-nosnippet>689</a>                    )
-<a href=#690 id=690 data-nosnippet>690</a>                    .map(Operand::IdRef)
-<a href=#691 id=691 data-nosnippet>691</a>                    .collect(),
-<a href=#692 id=692 data-nosnippet>692</a>            },
-<a href=#693 id=693 data-nosnippet>693</a>        );
-<a href=#694 id=694 data-nosnippet>694</a>        <span class="self">self</span>.unreachable();
-<a href=#695 id=695 data-nosnippet>695</a>
-<a href=#696 id=696 data-nosnippet>696</a>        <span class="comment">// HACK(eddyb) we still need an active block in case the user of this
-<a href=#697 id=697 data-nosnippet>697</a>        // `Builder` will continue to emit instructions after the `.abort()`.
-<a href=#698 id=698 data-nosnippet>698</a>        </span><span class="kw">let </span>post_abort_dead_bb = <span class="self">self</span>.append_sibling_block(<span class="string">"post_abort_dead"</span>);
-<a href=#699 id=699 data-nosnippet>699</a>        <span class="self">self</span>.switch_to_block(post_abort_dead_bb);
-<a href=#700 id=700 data-nosnippet>700</a>    }
-<a href=#701 id=701 data-nosnippet>701</a>}
+<a href=#545 id=545 data-nosnippet>545</a>                <span class="kw">let </span>opgl = |this: <span class="kw-2">&amp;mut </span><span class="self">Self</span>, op: GLOp, arg| {
+<a href=#546 id=546 data-nosnippet>546</a>                    this.emit()
+<a href=#547 id=547 data-nosnippet>547</a>                        .ext_inst(u32, <span class="prelude-val">None</span>, glsl, op <span class="kw">as </span>u32, [Operand::IdRef(arg)])
+<a href=#548 id=548 data-nosnippet>548</a>                        .unwrap()
+<a href=#549 id=549 data-nosnippet>549</a>                };
+<a href=#550 id=550 data-nosnippet>550</a>                <span class="kw">let </span>find_xsb = |this: <span class="kw-2">&amp;mut </span><span class="self">Self</span>, arg| {
+<a href=#551 id=551 data-nosnippet>551</a>                    <span class="kw">if </span>trailing {
+<a href=#552 id=552 data-nosnippet>552</a>                        <span class="comment">// trailing zeros = lsb bit
+<a href=#553 id=553 data-nosnippet>553</a>                        </span>opgl(this, GLOp::FindILsb, arg)
+<a href=#554 id=554 data-nosnippet>554</a>                    } <span class="kw">else </span>{
+<a href=#555 id=555 data-nosnippet>555</a>                        <span class="comment">// rust is always unsigned, so FindUMsb
+<a href=#556 id=556 data-nosnippet>556</a>                        </span><span class="kw">let </span>msb_bit = opgl(this, GLOp::FindUMsb, arg);
+<a href=#557 id=557 data-nosnippet>557</a>                        <span class="comment">// the glsl op returns the Msb bit, not the amount of leading zeros of this u32
+<a href=#558 id=558 data-nosnippet>558</a>                        // leading zeros = bits - 1 - Msb bit
+<a href=#559 id=559 data-nosnippet>559</a>                        </span><span class="kw">let </span>const_offset =
+<a href=#560 id=560 data-nosnippet>560</a>                            this.constant_i32(this.span(), bits <span class="kw">as </span>i32 - <span class="number">1</span>).def(this);
+<a href=#561 id=561 data-nosnippet>561</a>                        this.emit().i_sub(u32, <span class="prelude-val">None</span>, const_offset, msb_bit).unwrap()
+<a href=#562 id=562 data-nosnippet>562</a>                    }
+<a href=#563 id=563 data-nosnippet>563</a>                };
+<a href=#564 id=564 data-nosnippet>564</a>
+<a href=#565 id=565 data-nosnippet>565</a>                <span class="kw">let </span>converted = <span class="kw">match </span>bits {
+<a href=#566 id=566 data-nosnippet>566</a>                    <span class="number">8 </span>| <span class="number">16 </span>=&gt; {
+<a href=#567 id=567 data-nosnippet>567</a>                        <span class="kw">let </span>arg = <span class="self">self</span>.emit().u_convert(u32, <span class="prelude-val">None</span>, arg.def(<span class="self">self</span>)).unwrap();
+<a href=#568 id=568 data-nosnippet>568</a>                        find_xsb(<span class="self">self</span>, arg)
+<a href=#569 id=569 data-nosnippet>569</a>                    }
+<a href=#570 id=570 data-nosnippet>570</a>                    <span class="number">32 </span>=&gt; find_xsb(<span class="self">self</span>, arg.def(<span class="self">self</span>)),
+<a href=#571 id=571 data-nosnippet>571</a>                    <span class="number">64 </span>=&gt; {
+<a href=#572 id=572 data-nosnippet>572</a>                        <span class="kw">let </span>u32_0 = <span class="self">self</span>.constant_int(u32, <span class="number">0</span>).def(<span class="self">self</span>);
+<a href=#573 id=573 data-nosnippet>573</a>                        <span class="kw">let </span>u32_32 = <span class="self">self</span>.constant_u32(<span class="self">self</span>.span(), <span class="number">32</span>).def(<span class="self">self</span>);
+<a href=#574 id=574 data-nosnippet>574</a>
+<a href=#575 id=575 data-nosnippet>575</a>                        <span class="kw">let </span>arg = arg.def(<span class="self">self</span>);
+<a href=#576 id=576 data-nosnippet>576</a>                        <span class="kw">let </span>lower = <span class="self">self</span>.emit().u_convert(u32, <span class="prelude-val">None</span>, arg).unwrap();
+<a href=#577 id=577 data-nosnippet>577</a>                        <span class="kw">let </span>higher = <span class="self">self
+<a href=#578 id=578 data-nosnippet>578</a>                            </span>.emit()
+<a href=#579 id=579 data-nosnippet>579</a>                            .shift_right_logical(ty, <span class="prelude-val">None</span>, arg, u32_32)
+<a href=#580 id=580 data-nosnippet>580</a>                            .unwrap();
+<a href=#581 id=581 data-nosnippet>581</a>                        <span class="kw">let </span>higher = <span class="self">self</span>.emit().u_convert(u32, <span class="prelude-val">None</span>, higher).unwrap();
+<a href=#582 id=582 data-nosnippet>582</a>
+<a href=#583 id=583 data-nosnippet>583</a>                        <span class="kw">if </span>trailing {
+<a href=#584 id=584 data-nosnippet>584</a>                            <span class="kw">let </span>lower_bits = opgl(<span class="self">self</span>, GLOp::FindILsb, lower);
+<a href=#585 id=585 data-nosnippet>585</a>                            <span class="kw">let </span>higher_bits = opgl(<span class="self">self</span>, GLOp::FindILsb, higher);
+<a href=#586 id=586 data-nosnippet>586</a>                            <span class="kw">let </span>higher_bits =
+<a href=#587 id=587 data-nosnippet>587</a>                                <span class="self">self</span>.emit().i_add(u32, <span class="prelude-val">None</span>, higher_bits, u32_32).unwrap();
+<a href=#588 id=588 data-nosnippet>588</a>                            <span class="kw">let </span>use_higher = <span class="self">self</span>.emit().i_equal(bool, <span class="prelude-val">None</span>, lower, u32_0).unwrap();
+<a href=#589 id=589 data-nosnippet>589</a>                            <span class="self">self</span>.emit()
+<a href=#590 id=590 data-nosnippet>590</a>                                .select(u32, <span class="prelude-val">None</span>, use_higher, higher_bits, lower_bits)
+<a href=#591 id=591 data-nosnippet>591</a>                                .unwrap()
+<a href=#592 id=592 data-nosnippet>592</a>                        } <span class="kw">else </span>{
+<a href=#593 id=593 data-nosnippet>593</a>                            <span class="kw">let </span>lower_bits = opgl(<span class="self">self</span>, GLOp::FindUMsb, lower);
+<a href=#594 id=594 data-nosnippet>594</a>                            <span class="kw">let </span>u32_63 = <span class="self">self</span>.constant_u32(<span class="self">self</span>.span(), <span class="number">63</span>).def(<span class="self">self</span>);
+<a href=#595 id=595 data-nosnippet>595</a>                            <span class="kw">let </span>lower_bits =
+<a href=#596 id=596 data-nosnippet>596</a>                                <span class="self">self</span>.emit().i_sub(u32, <span class="prelude-val">None</span>, u32_63, lower_bits).unwrap();
+<a href=#597 id=597 data-nosnippet>597</a>                            <span class="kw">let </span>higher_bits = opgl(<span class="self">self</span>, GLOp::FindUMsb, higher);
+<a href=#598 id=598 data-nosnippet>598</a>                            <span class="kw">let </span>u32_31 = <span class="self">self</span>.constant_u32(<span class="self">self</span>.span(), <span class="number">31</span>).def(<span class="self">self</span>);
+<a href=#599 id=599 data-nosnippet>599</a>                            <span class="kw">let </span>higher_bits =
+<a href=#600 id=600 data-nosnippet>600</a>                                <span class="self">self</span>.emit().i_sub(u32, <span class="prelude-val">None</span>, u32_31, higher_bits).unwrap();
+<a href=#601 id=601 data-nosnippet>601</a>                            <span class="kw">let </span>use_lower = <span class="self">self</span>.emit().i_equal(bool, <span class="prelude-val">None</span>, higher, u32_0).unwrap();
+<a href=#602 id=602 data-nosnippet>602</a>                            <span class="self">self</span>.emit()
+<a href=#603 id=603 data-nosnippet>603</a>                                .select(u32, <span class="prelude-val">None</span>, use_lower, lower_bits, higher_bits)
+<a href=#604 id=604 data-nosnippet>604</a>                                .unwrap()
+<a href=#605 id=605 data-nosnippet>605</a>                        }
+<a href=#606 id=606 data-nosnippet>606</a>                    }
+<a href=#607 id=607 data-nosnippet>607</a>                    <span class="kw">_ </span>=&gt; {
+<a href=#608 id=608 data-nosnippet>608</a>                        <span class="kw">return </span><span class="self">self</span>.undef_zombie(ty, <span class="kw-2">&amp;</span><span class="macro">format!</span>(
+<a href=#609 id=609 data-nosnippet>609</a>                            <span class="string">"count_leading_trailing_zeros() on unsupported {ty:?} bit integer type"
+<a href=#610 id=610 data-nosnippet>610</a>                        </span>));
+<a href=#611 id=611 data-nosnippet>611</a>                    }
+<a href=#612 id=612 data-nosnippet>612</a>                };
+<a href=#613 id=613 data-nosnippet>613</a>
+<a href=#614 id=614 data-nosnippet>614</a>                <span class="kw">if </span>non_zero {
+<a href=#615 id=615 data-nosnippet>615</a>                    converted
+<a href=#616 id=616 data-nosnippet>616</a>                } <span class="kw">else </span>{
+<a href=#617 id=617 data-nosnippet>617</a>                    <span class="kw">let </span>int_0 = <span class="self">self</span>.constant_int(ty, <span class="number">0</span>).def(<span class="self">self</span>);
+<a href=#618 id=618 data-nosnippet>618</a>                    <span class="kw">let </span>int_bits = <span class="self">self</span>.constant_int(u32, bits <span class="kw">as </span>u128).def(<span class="self">self</span>);
+<a href=#619 id=619 data-nosnippet>619</a>                    <span class="kw">let </span>is_0 = <span class="self">self
+<a href=#620 id=620 data-nosnippet>620</a>                        </span>.emit()
+<a href=#621 id=621 data-nosnippet>621</a>                        .i_equal(bool, <span class="prelude-val">None</span>, arg.def(<span class="self">self</span>), int_0)
+<a href=#622 id=622 data-nosnippet>622</a>                        .unwrap();
+<a href=#623 id=623 data-nosnippet>623</a>                    <span class="self">self</span>.emit()
+<a href=#624 id=624 data-nosnippet>624</a>                        .select(u32, <span class="prelude-val">None</span>, is_0, int_bits, converted)
+<a href=#625 id=625 data-nosnippet>625</a>                        .unwrap()
+<a href=#626 id=626 data-nosnippet>626</a>                }
+<a href=#627 id=627 data-nosnippet>627</a>                .with_type(u32)
+<a href=#628 id=628 data-nosnippet>628</a>            }
+<a href=#629 id=629 data-nosnippet>629</a>            SpirvType::Integer(bits, <span class="bool-val">true</span>) =&gt; {
+<a href=#630 id=630 data-nosnippet>630</a>                <span class="comment">// rustc wants `[i8,i16,i32,i64]::leading_zeros()` with `non_zero: true` for some reason. I do not know
+<a href=#631 id=631 data-nosnippet>631</a>                // how these are reachable, marking them as zombies makes none of our compiletests fail.
+<a href=#632 id=632 data-nosnippet>632</a>                </span><span class="kw">let </span>unsigned = SpirvType::Integer(bits, <span class="bool-val">false</span>).def(<span class="self">self</span>.span(), <span class="self">self</span>);
+<a href=#633 id=633 data-nosnippet>633</a>                <span class="kw">let </span>arg = <span class="self">self
+<a href=#634 id=634 data-nosnippet>634</a>                    </span>.emit()
+<a href=#635 id=635 data-nosnippet>635</a>                    .bitcast(unsigned, <span class="prelude-val">None</span>, arg.def(<span class="self">self</span>))
+<a href=#636 id=636 data-nosnippet>636</a>                    .unwrap()
+<a href=#637 id=637 data-nosnippet>637</a>                    .with_type(unsigned);
+<a href=#638 id=638 data-nosnippet>638</a>                <span class="kw">let </span>result = <span class="self">self</span>.count_leading_trailing_zeros(arg, trailing, non_zero);
+<a href=#639 id=639 data-nosnippet>639</a>                <span class="self">self</span>.emit()
+<a href=#640 id=640 data-nosnippet>640</a>                    .bitcast(ty, <span class="prelude-val">None</span>, result.def(<span class="self">self</span>))
+<a href=#641 id=641 data-nosnippet>641</a>                    .unwrap()
+<a href=#642 id=642 data-nosnippet>642</a>                    .with_type(ty)
+<a href=#643 id=643 data-nosnippet>643</a>            }
+<a href=#644 id=644 data-nosnippet>644</a>            e =&gt; {
+<a href=#645 id=645 data-nosnippet>645</a>                <span class="self">self</span>.fatal(<span class="macro">format!</span>(
+<a href=#646 id=646 data-nosnippet>646</a>                    <span class="string">"count_leading_trailing_zeros(trailing: {trailing}, non_zero: {non_zero}) expected an integer type, got {e:?}"</span>,
+<a href=#647 id=647 data-nosnippet>647</a>                ));
+<a href=#648 id=648 data-nosnippet>648</a>            }
+<a href=#649 id=649 data-nosnippet>649</a>        }
+<a href=#650 id=650 data-nosnippet>650</a>    }
+<a href=#651 id=651 data-nosnippet>651</a>
+<a href=#652 id=652 data-nosnippet>652</a>    <span class="kw">pub fn </span>abort_with_kind_and_message_debug_printf(
+<a href=#653 id=653 data-nosnippet>653</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+<a href=#654 id=654 data-nosnippet>654</a>        kind: <span class="kw-2">&amp;</span>str,
+<a href=#655 id=655 data-nosnippet>655</a>        message_debug_printf_fmt_str: <span class="kw">impl </span>Into&lt;String&gt;,
+<a href=#656 id=656 data-nosnippet>656</a>        message_debug_printf_args: <span class="kw">impl </span>IntoIterator&lt;Item = SpirvValue&gt;,
+<a href=#657 id=657 data-nosnippet>657</a>    ) {
+<a href=#658 id=658 data-nosnippet>658</a>        <span class="comment">// FIXME(eddyb) this should be cached more efficiently.
+<a href=#659 id=659 data-nosnippet>659</a>        </span><span class="kw">let </span>void_ty = SpirvType::Void.def(rustc_span::DUMMY_SP, <span class="self">self</span>);
+<a href=#660 id=660 data-nosnippet>660</a>
+<a href=#661 id=661 data-nosnippet>661</a>        <span class="comment">// HACK(eddyb) there is no `abort` or `trap` instruction in SPIR-V,
+<a href=#662 id=662 data-nosnippet>662</a>        // so the best thing we can do is use our own custom instruction.
+<a href=#663 id=663 data-nosnippet>663</a>        </span><span class="kw">let </span>kind_id = <span class="self">self</span>.emit().string(kind);
+<a href=#664 id=664 data-nosnippet>664</a>        <span class="kw">let </span>message_debug_printf_fmt_str_id = <span class="self">self</span>.emit().string(message_debug_printf_fmt_str);
+<a href=#665 id=665 data-nosnippet>665</a>        <span class="self">self</span>.custom_inst(
+<a href=#666 id=666 data-nosnippet>666</a>            void_ty,
+<a href=#667 id=667 data-nosnippet>667</a>            CustomInst::Abort {
+<a href=#668 id=668 data-nosnippet>668</a>                kind: Operand::IdRef(kind_id),
+<a href=#669 id=669 data-nosnippet>669</a>                message_debug_printf: [message_debug_printf_fmt_str_id]
+<a href=#670 id=670 data-nosnippet>670</a>                    .into_iter()
+<a href=#671 id=671 data-nosnippet>671</a>                    .chain(
+<a href=#672 id=672 data-nosnippet>672</a>                        message_debug_printf_args
+<a href=#673 id=673 data-nosnippet>673</a>                            .into_iter()
+<a href=#674 id=674 data-nosnippet>674</a>                            .map(|arg| arg.def(<span class="self">self</span>)),
+<a href=#675 id=675 data-nosnippet>675</a>                    )
+<a href=#676 id=676 data-nosnippet>676</a>                    .map(Operand::IdRef)
+<a href=#677 id=677 data-nosnippet>677</a>                    .collect(),
+<a href=#678 id=678 data-nosnippet>678</a>            },
+<a href=#679 id=679 data-nosnippet>679</a>        );
+<a href=#680 id=680 data-nosnippet>680</a>        <span class="self">self</span>.unreachable();
+<a href=#681 id=681 data-nosnippet>681</a>
+<a href=#682 id=682 data-nosnippet>682</a>        <span class="comment">// HACK(eddyb) we still need an active block in case the user of this
+<a href=#683 id=683 data-nosnippet>683</a>        // `Builder` will continue to emit instructions after the `.abort()`.
+<a href=#684 id=684 data-nosnippet>684</a>        </span><span class="kw">let </span>post_abort_dead_bb = <span class="self">self</span>.append_sibling_block(<span class="string">"post_abort_dead"</span>);
+<a href=#685 id=685 data-nosnippet>685</a>        <span class="self">self</span>.switch_to_block(post_abort_dead_bb);
+<a href=#686 id=686 data-nosnippet>686</a>    }
+<a href=#687 id=687 data-nosnippet>687</a>}
 </code></pre></div></section></main></body></html>
