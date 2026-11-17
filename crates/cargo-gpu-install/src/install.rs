@@ -265,9 +265,12 @@ package = "rustc_codegen_spirv"
         }
 
         let mut _file_lock = None;
+
+        let install_dir_target = install_dir.join("target");
+
         let (dest_dylib_path, do_build) = if source.is_path() {
             (
-                install_dir.join("target/release").join(&dylib_filename),
+                install_dir_target.join("release").join(&dylib_filename),
                 // if `source` is a path, always rebuild and rely on incremental builds
                 true,
             )
@@ -333,7 +336,9 @@ package = "rustc_codegen_spirv"
             cargo
                 .current_dir(&install_dir)
                 .arg(format!("+{toolchain_channel}"))
-                .args(["build", "--release"]);
+                .args(["build", "--release"])
+                .arg("--target-dir")
+                .arg(&install_dir_target);
             if source.is_path() {
                 cargo.args(["-p", "rustc_codegen_spirv", "--lib"]);
             }
@@ -353,7 +358,7 @@ package = "rustc_codegen_spirv"
                 })
                 .context("running build command")?;
 
-            let target = install_dir.join("target");
+            let target = install_dir_target;
             let dylib_path = target.join("release").join(&dylib_filename);
             if dylib_path.is_file() {
                 log::info!("successfully built {}", dylib_path.display());
