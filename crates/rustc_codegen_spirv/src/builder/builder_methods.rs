@@ -2383,16 +2383,32 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 .unwrap()
                 .with_type(dest_ty),
             // width change, and optional sign change
-            (SpirvType::Integer(_, _), SpirvType::Integer(_, dest_signedness)) => {
-                // spir-v spec doesn't seem to say that signedness needs to match the operands, only that the signedness
-                // of the destination type must match the instruction's signedness.
-                if dest_signedness {
-                    self.emit().s_convert(dest_ty, None, val.def(self))
+            (
+                SpirvType::Integer(val_width, _),
+                SpirvType::Integer(dest_width, dest_signedness),
+            ) => {
+                // Extension depends on the signedness of the source (`is_signed`), while truncation
+                // works the same either way. `OpUConvert` requires an unsigned result type, unlike
+                // `OpSConvert`, so zero extension to a signed type goes through a bitcast.
+                if is_signed || (dest_signedness && val_width > dest_width) {
+                    self.emit()
+                        .s_convert(dest_ty, None, val.def(self))
+                        .unwrap()
+                        .with_type(dest_ty)
+                } else if !dest_signedness {
+                    self.emit()
+                        .u_convert(dest_ty, None, val.def(self))
+                        .unwrap()
+                        .with_type(dest_ty)
                 } else {
-                    self.emit().u_convert(dest_ty, None, val.def(self))
+                    let unsigned_ty = SpirvType::Integer(dest_width, false).def(self.span(), self);
+                    let extended = self
+                        .emit()
+                        .u_convert(unsigned_ty, None, val.def(self))
+                        .unwrap()
+                        .with_type(unsigned_ty);
+                    self.bitcast(extended, dest_ty)
                 }
-                .unwrap()
-                .with_type(dest_ty)
             }
             // bools are ints in llvm, so we have to implement this here
             (SpirvType::Bool, SpirvType::Integer(_, _)) => {
