@@ -8,9 +8,9 @@ use spirt::func_at::{FuncAt, FuncAtMut};
 use spirt::transform::{InnerInPlaceTransform, InnerTransform, Transformed, Transformer};
 use spirt::visit::InnerVisit as _;
 use spirt::{
-    AddrSpace, Attr, AttrSetDef, Const, ConstKind, Context, ControlNode, ControlNodeKind, DataInst,
-    DataInstDef, DataInstForm, DataInstFormDef, DataInstKind, DeclDef, Diag, Func, FuncDecl,
-    GlobalVar, GlobalVarDecl, Module, Type, TypeDef, TypeKind, TypeOrConst, Value, spv,
+    AddrSpace, Attr, AttrSetDef, Const, ConstKind, Context, DataInst, DataInstDef, DataInstKind,
+    DeclDef, Diag, Func, FuncDecl, GlobalVar, GlobalVarDecl, Module, Node, NodeKind, Type, TypeDef,
+    TypeKind, TypeOrConst, Value, spv,
 };
 use std::cmp::Ordering;
 use std::collections::VecDeque;
@@ -29,7 +29,6 @@ pub fn erase_when_invalid(module: &mut Module) {
 
         transformed_types: FxHashMap::default(),
         transformed_consts: FxHashMap::default(),
-        transformed_data_inst_forms: FxHashMap::default(),
         seen_global_vars: FxHashSet::default(),
         global_var_queue: VecDeque::new(),
         seen_funcs: FxHashSet::default(),
@@ -62,7 +61,6 @@ struct SelectiveEraser<'a> {
     // FIXME(eddyb) build some automation to avoid ever repeating these.
     transformed_types: FxHashMap<Type, Transformed<Type>>,
     transformed_consts: FxHashMap<Const, Transformed<Const>>,
-    transformed_data_inst_forms: FxHashMap<DataInstForm, Transformed<DataInstForm>>,
     seen_global_vars: FxHashSet<GlobalVar>,
     global_var_queue: VecDeque<GlobalVar>,
     seen_funcs: FxHashSet<Func>,
@@ -76,7 +74,7 @@ struct SelectiveEraser<'a> {
 
     // HACK(eddyb) this is to allow `in_place_transform_data_inst_def` inject
     // new instructions into its parent block.
-    parent_block: Option<ControlNode>,
+    parent_block: Option<Node>,
 }
 
 impl Transformer for SelectiveEraser<'_> {
@@ -99,20 +97,6 @@ impl Transformer for SelectiveEraser<'_> {
             .transform_const_def(&self.cx[ct])
             .map(|ct_def| self.cx.intern(ct_def));
         self.transformed_consts.insert(ct, transformed);
-        transformed
-    }
-    fn transform_data_inst_form_use(
-        &mut self,
-        data_inst_form: DataInstForm,
-    ) -> Transformed<DataInstForm> {
-        if let Some(&cached) = self.transformed_data_inst_forms.get(&data_inst_form) {
-            return cached;
-        }
-        let transformed = self
-            .transform_data_inst_form_def(&self.cx[data_inst_form])
-            .map(|data_inst_form_def| self.cx.intern(data_inst_form_def));
-        self.transformed_data_inst_forms
-            .insert(data_inst_form, transformed);
         transformed
     }
 
@@ -171,11 +155,11 @@ impl Transformer for SelectiveEraser<'_> {
         // region input/node output declarations in the function body may change.
         if let DeclDef::Present(func_def_body) = &mut func_decl.def {
             let mut errors_to_attach = vec![];
-            func_def_body.inner_visit_with(&mut super::VisitAllControlRegionsAndNodes {
+            func_def_body.inner_visit_with(&mut super::VisitAllRegionsAndNodes {
                 state: (),
-                visit_control_region: |_: &mut _, _| {},
-                visit_control_node: |_: &mut _, func_at_node: FuncAt<'_, ControlNode>| {
-                    if let ControlNodeKind::Block { insts } = func_at_node.def().kind {
+                visit_region: |_: &mut _, _| {},
+                visit_node: |_: &mut _, func_at_node: FuncAt<'_, Node>| {
+                    if let NodeKind::Block { insts } = func_at_node.def().kind {
                         for func_at_inst in func_at_node.at(insts) {
                             if let Err(e) = self.pre_check_data_inst(func_at_inst) {
                                 errors_to_attach.push((func_at_inst.position, e));
@@ -196,15 +180,12 @@ impl Transformer for SelectiveEraser<'_> {
         func_decl.inner_in_place_transform_with(self);
     }
 
-    fn in_place_transform_control_node_def(
-        &mut self,
-        mut func_at_control_node: FuncAtMut<'_, ControlNode>,
-    ) {
+    fn in_place_transform_node_def(&mut self, mut func_at_node: FuncAtMut<'_, Node>) {
         let old_parent_block = self.parent_block.take();
-        if let ControlNodeKind::Block { .. } = func_at_control_node.reborrow().def().kind {
-            self.parent_block = Some(func_at_control_node.position);
+        if let NodeKind::Block { .. } = func_at_node.reborrow().def().kind {
+            self.parent_block = Some(func_at_node.position);
         }
-        func_at_control_node.inner_in_place_transform_with(self);
+        func_at_node.inner_in_place_transform_with(self);
         self.parent_block = old_parent_block;
     }
 
@@ -219,7 +200,6 @@ impl Transformer for SelectiveEraser<'_> {
         let func_at_data_inst_frozen = func_at_data_inst.reborrow().freeze();
         let data_inst = func_at_data_inst_frozen.position;
         let data_inst_def = func_at_data_inst_frozen.def();
-        let data_inst_form_def = &cx[data_inst_def.form];
         let func = func_at_data_inst_frozen.at(());
         let type_of_val = |v: Value| func.at(v).type_of(cx);
         let pointee_type_of_ptr_val = |p: Value| match &cx[type_of_val(p)].kind {
@@ -233,7 +213,7 @@ impl Transformer for SelectiveEraser<'_> {
             _ => None,
         };
 
-        let DataInstKind::SpvInst(spv_inst) = &data_inst_form_def.kind else {
+        let DataInstKind::SpvInst(spv_inst) = &data_inst_def.kind else {
             return;
         };
 
@@ -243,23 +223,20 @@ impl Transformer for SelectiveEraser<'_> {
 
         let mk_bitcast_def = |in_value, out_type| DataInstDef {
             attrs,
-            form: cx.intern(DataInstFormDef {
-                kind: DataInstKind::SpvInst(wk.OpBitcast.into()),
-                output_type: Some(out_type),
-            }),
+            kind: DataInstKind::SpvInst(wk.OpBitcast.into()),
             inputs: [in_value].into_iter().collect(),
+            output_type: Some(out_type),
         };
 
         if spv_inst.opcode == wk.OpLoad {
             let pointee_type = pointee_type_of_ptr_val(data_inst_def.inputs[0]);
-            let value_type = data_inst_form_def.output_type.unwrap();
+            let value_type = data_inst_def.output_type.unwrap();
             // FIXME(eddyb) leave a BUG diagnostic in the `None` case?
             if pointee_type.is_some_and(|ty| {
                 ty != value_type && ty == self.erase_explicit_layout_in_type(value_type)
             }) {
                 let func = func_at_data_inst.at(());
-                let ControlNodeKind::Block { insts } =
-                    &mut func.control_nodes[self.parent_block.unwrap()].kind
+                let NodeKind::Block { insts } = &mut func.nodes[self.parent_block.unwrap()].kind
                 else {
                     unreachable!()
                 };
@@ -267,12 +244,8 @@ impl Transformer for SelectiveEraser<'_> {
                 let fixed_load_inst = func.data_insts.define(
                     cx,
                     DataInstDef {
-                        attrs,
-                        form: cx.intern(DataInstFormDef {
-                            kind: data_inst_form_def.kind.clone(),
-                            output_type: Some(pointee_type.unwrap()),
-                        }),
-                        inputs: func.data_insts[data_inst].inputs.clone(),
+                        output_type: Some(pointee_type.unwrap()),
+                        ..DataInstDef::clone(&func.data_insts[data_inst])
                     }
                     .into(),
                 );
@@ -299,8 +272,8 @@ impl Transformer for SelectiveEraser<'_> {
                 } else {
                     let original_stored_value = *stored_value;
 
-                    let ControlNodeKind::Block { insts } =
-                        &mut func.control_nodes[self.parent_block.unwrap()].kind
+                    let NodeKind::Block { insts } =
+                        &mut func.nodes[self.parent_block.unwrap()].kind
                     else {
                         unreachable!()
                     };
@@ -346,9 +319,11 @@ impl Transformer for SelectiveEraser<'_> {
                         _ => unreachable!(),
                     };
 
+                let [dst_imms, src_imms] =
+                    [dst_imms, src_imms].map(|imms| imms.iter().copied().collect());
+
                 let func = func_at_data_inst.at(());
-                let ControlNodeKind::Block { insts } =
-                    &mut func.control_nodes[self.parent_block.unwrap()].kind
+                let NodeKind::Block { insts } = &mut func.nodes[self.parent_block.unwrap()].kind
                 else {
                     unreachable!()
                 };
@@ -357,14 +332,12 @@ impl Transformer for SelectiveEraser<'_> {
                     cx,
                     DataInstDef {
                         attrs,
-                        form: cx.intern(DataInstFormDef {
-                            kind: DataInstKind::SpvInst(spv::Inst {
-                                opcode: wk.OpLoad,
-                                imms: src_imms.iter().copied().collect(),
-                            }),
-                            output_type: Some(src_pointee_type.unwrap()),
+                        kind: DataInstKind::SpvInst(spv::Inst {
+                            opcode: wk.OpLoad,
+                            imms: src_imms,
                         }),
                         inputs: [src_ptr].into_iter().collect(),
+                        output_type: Some(src_pointee_type.unwrap()),
                     }
                     .into(),
                 );
@@ -378,16 +351,14 @@ impl Transformer for SelectiveEraser<'_> {
 
                 *func.data_insts[data_inst] = DataInstDef {
                     attrs,
-                    form: cx.intern(DataInstFormDef {
-                        kind: DataInstKind::SpvInst(spv::Inst {
-                            opcode: wk.OpStore,
-                            imms: dst_imms.iter().copied().collect(),
-                        }),
-                        output_type: None,
+                    kind: DataInstKind::SpvInst(spv::Inst {
+                        opcode: wk.OpStore,
+                        imms: dst_imms,
                     }),
                     inputs: [dst_ptr, Value::DataInstOutput(cast_inst)]
                         .into_iter()
                         .collect(),
+                    output_type: None,
                 };
 
                 self.disaggregate_bitcast(func.at(cast_inst));
@@ -407,6 +378,9 @@ impl<'a> SelectiveEraser<'a> {
             wk.Uniform,
             wk.StorageBuffer,
             wk.PhysicalStorageBuffer,
+            // HACK(eddyb) not directly useful/needed, but avoiding (shallow)
+            // layout erasure in function pointers can reduce diagnostic noise.
+            wk.CodeSectionINTEL,
         ]
         .map(AddrSpace::SpvStorageClass)
         .contains(&addr_space)
@@ -480,15 +454,14 @@ impl<'a> SelectiveEraser<'a> {
 
         let cast_inst = func_at_cast_inst.position;
         let cast_def = func_at_cast_inst.reborrow().freeze().def().clone();
-        let cast_form_def = &cx[cast_def.form];
 
         // FIXME(eddyb) filter attributes into debuginfo and
         // semantic, and understand the semantic ones.
         let attrs = cast_def.attrs;
 
-        assert!(cast_form_def.kind == DataInstKind::SpvInst(wk.OpBitcast.into()));
+        assert!(cast_def.kind == DataInstKind::SpvInst(wk.OpBitcast.into()));
         let in_value = cast_def.inputs[0];
-        let out_type = cast_form_def.output_type.unwrap();
+        let out_type = cast_def.output_type.unwrap();
 
         let mut func = func_at_cast_inst.reborrow();
         let in_type = func.reborrow().freeze().at(in_value).type_of(cx);
@@ -534,22 +507,19 @@ impl<'a> SelectiveEraser<'a> {
                     cx,
                     DataInstDef {
                         attrs,
-                        form: cx.intern(DataInstFormDef {
-                            kind: DataInstKind::SpvInst(spv::Inst {
-                                opcode: wk.OpCompositeExtract,
-                                imms: [spv::Imm::Short(wk.LiteralInteger, component_idx)]
-                                    .into_iter()
-                                    .collect(),
-                            }),
-                            output_type: Some(component_in_type),
+                        kind: DataInstKind::SpvInst(spv::Inst {
+                            opcode: wk.OpCompositeExtract,
+                            imms: [spv::Imm::Short(wk.LiteralInteger, component_idx)]
+                                .into_iter()
+                                .collect(),
                         }),
                         inputs: [in_value].into_iter().collect(),
+                        output_type: Some(component_in_type),
                     }
                     .into(),
                 );
 
-                let ControlNodeKind::Block { insts } =
-                    &mut func.control_nodes[self.parent_block.unwrap()].kind
+                let NodeKind::Block { insts } = &mut func.nodes[self.parent_block.unwrap()].kind
                 else {
                     unreachable!()
                 };
@@ -560,13 +530,11 @@ impl<'a> SelectiveEraser<'a> {
                         cx,
                         DataInstDef {
                             attrs,
-                            form: cx.intern(DataInstFormDef {
-                                kind: DataInstKind::SpvInst(wk.OpBitcast.into()),
-                                output_type: Some(component_out_type),
-                            }),
+                            kind: DataInstKind::SpvInst(wk.OpBitcast.into()),
                             inputs: [Value::DataInstOutput(component_extract_inst)]
                                 .into_iter()
                                 .collect(),
+                            output_type: Some(component_out_type),
                         }
                         .into(),
                     );
@@ -585,11 +553,9 @@ impl<'a> SelectiveEraser<'a> {
 
         *func.at(cast_inst).def() = DataInstDef {
             attrs,
-            form: cx.intern(DataInstFormDef {
-                kind: DataInstKind::SpvInst(wk.OpCompositeConstruct.into()),
-                output_type: Some(out_type),
-            }),
+            kind: DataInstKind::SpvInst(wk.OpCompositeConstruct.into()),
             inputs: components,
+            output_type: Some(out_type),
         };
     }
 
@@ -601,10 +567,9 @@ impl<'a> SelectiveEraser<'a> {
         let wk = self.wk;
 
         let data_inst_def = func_at_inst.def();
-        let data_inst_form_def = &cx[data_inst_def.form];
 
         // FIXME(eddyb) consider preserving the actual type change in the error.
-        let any_types_will_change = (data_inst_form_def.output_type.into_iter())
+        let any_types_will_change = (data_inst_def.output_type.into_iter())
             .chain(
                 data_inst_def
                     .inputs
@@ -620,7 +585,7 @@ impl<'a> SelectiveEraser<'a> {
             return Ok(());
         }
 
-        let spv_inst = match &data_inst_form_def.kind {
+        let spv_inst = match &data_inst_def.kind {
             DataInstKind::FuncCall(_) => return Ok(()),
 
             DataInstKind::SpvInst(spv_inst)
@@ -775,9 +740,6 @@ impl Transformer for EraseExplicitLayout<'_, '_> {
             .insert(ct, transformed);
         transformed
     }
-    fn transform_data_inst_form_use(&mut self, _: DataInstForm) -> Transformed<DataInstForm> {
-        unreachable!()
-    }
 
     fn transform_global_var_use(&mut self, gv: GlobalVar) -> Transformed<GlobalVar> {
         self.0.transform_global_var_use(gv)
@@ -819,15 +781,20 @@ impl Transformer for EraseExplicitLayout<'_, '_> {
                     // FIXME(eddyb) `rustfmt` breaks down for `matches!`.
                     #[allow(clippy::match_like_matches_macro)]
                     let is_explicit_layout_decoration = match attr {
-                        Attr::SpvAnnotation(attr_spv_inst)
-                            if (attr_spv_inst.opcode == wk.OpDecorate
-                                && [wk.ArrayStride, wk.MatrixStride]
-                                    .map(|d| spv::Imm::Short(wk.Decoration, d))
-                                    .contains(&attr_spv_inst.imms[0]))
-                                || (attr_spv_inst.opcode == wk.OpMemberDecorate
-                                    && attr_spv_inst.imms[1]
-                                        == spv::Imm::Short(wk.Decoration, wk.Offset)) =>
+                        Attr::SpvAnnotation {
+                            spv_inst: attr_spv_inst,
+                            per_instance_const_inputs,
+                        } if (attr_spv_inst.opcode == wk.OpDecorate
+                            && [wk.ArrayStride, wk.MatrixStride]
+                                .map(|d| spv::Imm::Short(wk.Decoration, d))
+                                .contains(&attr_spv_inst.imms[0]))
+                            || (attr_spv_inst.opcode == wk.OpMemberDecorate
+                                && attr_spv_inst.imms[1]
+                                    == spv::Imm::Short(wk.Decoration, wk.Offset)) =>
                         {
+                            // FIXME(eddyb) support `ArrayStrideId` and `OffsetId`.
+                            assert!(per_instance_const_inputs.is_none());
+
                             true
                         }
 

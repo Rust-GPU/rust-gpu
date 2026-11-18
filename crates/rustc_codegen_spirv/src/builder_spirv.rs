@@ -596,19 +596,6 @@ impl<'tcx> BuilderSpirv<'tcx> {
 
         // FIXME(eddyb) make this an extension method on `rspirv::dr::Builder`?
         let const_op = |builder: &mut Builder, op, lhs, maybe_rhs: Option<_>| {
-            // HACK(eddyb) remove after `OpSpecConstantOp` support gets added to SPIR-T.
-            let spirt_has_const_op = false;
-
-            if !spirt_has_const_op {
-                let zombie = builder.undef(ty, None);
-                cx.zombie_with_span(
-                    zombie,
-                    DUMMY_SP,
-                    &format!("unsupported constant of type `{}`", cx.debug_type(ty)),
-                );
-                return zombie;
-            }
-
             let id = builder.id();
             builder
                 .module_mut()

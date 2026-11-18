@@ -183,15 +183,6 @@ Dump the `SPIR-🇹` module, similar to `--dump-spirt-passes`, but only the fina
 
 Mutually exclusive with `--dump-spirt-passes` (which takes precedence over this).
 
-### `--spirt-strip-custom-debuginfo-from-dumps`
-
-When dumping (pretty-printed) `SPIR-🇹` (e.g. with `--dump-spirt-passes`), strip
-all the custom (Rust-GPU-specific) debuginfo instructions, by converting them
-to the standard SPIR-V debuginfo (which `SPIR-🇹` understands more directly).
-
-The default (keeping the custom instructions) is more verbose, but also lossless,
-if you want to see all instructions exactly as e.g. `--spirt-passes` see them.
-
 ### `--spirt-keep-debug-sources-in-dumps`
 
 When dumping (pretty-printed) `SPIR-🇹` (e.g. with `--dump-spirt-passes`), preserve
