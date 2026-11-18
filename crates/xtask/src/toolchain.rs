@@ -1,5 +1,4 @@
 use anyhow::Context;
-use chrono::{Datelike, Utc};
 use std::env;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
@@ -18,12 +17,12 @@ impl SetToolchain {
         // figure out version and commit-hash
         let version = self.version.as_ref().map_or_else(
             || {
-                let time = Utc::now();
+                let utc = time::OffsetDateTime::now_utc();
                 format!(
                     "nightly-{:04}-{:02}-{:02}",
-                    time.year(),
-                    time.month(),
-                    time.day()
+                    utc.year(),
+                    u8::from(utc.month()),
+                    utc.day()
                 )
             },
             |version| {
