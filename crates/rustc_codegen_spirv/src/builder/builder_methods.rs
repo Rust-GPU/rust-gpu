@@ -342,6 +342,44 @@ fn memset_dynamic_scalar(
 }
 
 impl<'a, 'tcx> Builder<'a, 'tcx> {
+    /// Lowers `unbounded_shl`/`unbounded_shr` without branching. Shifting by the bit width or more
+    /// is undefined in SPIR-V, so the result is selected based on whether `shift` is in range.
+    fn unbounded_shift(
+        &mut self,
+        is_left: bool,
+        value: SpirvValue,
+        shift: SpirvValue,
+    ) -> SpirvValue {
+        let (width, signed) = match self.lookup_type(value.ty) {
+            SpirvType::Integer(width, signed) => (width, signed),
+            other => self.fatal(format!(
+                "cannot shift non-integer type: {}",
+                other.debug(value.ty, self)
+            )),
+        };
+        let int_size = self.constant_int(shift.ty, width.into());
+        let in_range = self.icmp(IntPredicate::IntULT, shift, int_size);
+
+        if !is_left && signed {
+            // Shifting by `width - 1` fills the result with the sign bit, same as an unbounded shift
+            let max_shift = self.constant_int(shift.ty, (width - 1).into());
+            let shift = self.select(in_range, shift, max_shift);
+            return self.ashr(value, shift);
+        }
+
+        let zero = self.constant_int(value.ty, 0);
+        // Avoid emitting (or constant folding) a shift that is out of range
+        if let Some(ConstValue::Bool(false)) = self.try_get_const_value(in_range) {
+            return zero;
+        }
+        let shifted = if is_left {
+            self.shl(value, shift)
+        } else {
+            self.lshr(value, shift)
+        };
+        self.select(in_range, shifted, zero)
+    }
+
     #[instrument(level = "trace", skip(self))]
     fn ordering_to_semantics_def(&mut self, ordering: AtomicOrdering) -> SpirvValue {
         let mut invalid_seq_cst = false;
@@ -3414,6 +3452,14 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             .is_some_and(|def_id| self.panic_entry_points.borrow().contains(&def_id));
         let from_trait_impl =
             instance_def_id.and_then(|def_id| self.from_trait_impls.borrow().get(&def_id).copied());
+        let unbounded_shift_is_left =
+            instance_def_id.and_then(|def_id| self.unbounded_shifts.borrow().get(&def_id).copied());
+
+        if let Some(is_left) = unbounded_shift_is_left
+            && let &[value, shift] = args
+        {
+            return self.unbounded_shift(is_left, value, shift);
+        }
 
         if let Some(libm_intrinsic) = libm_intrinsic {
             let result = self.call_libm_intrinsic(libm_intrinsic, result_type, args);

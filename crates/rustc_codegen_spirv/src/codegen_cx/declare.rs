@@ -205,6 +205,20 @@ impl<'tcx> CodegenCx<'tcx> {
             }
         }
 
+        // Inherent `unbounded_shl`/`unbounded_shr` methods of integer types in `core`
+        if self.tcx.crate_name(def_id.krate) == rustc_span::sym::core
+            && let Some(impl_def_id) = self.tcx.impl_of_assoc(def_id)
+            && self.tcx.impl_opt_trait_ref(impl_def_id).is_none()
+            && fn_abi.ret.layout.ty.is_integral()
+        {
+            let item_name = self.tcx.item_name(def_id);
+            if item_name == self.sym.unbounded_shl || item_name == self.sym.unbounded_shr {
+                self.unbounded_shifts
+                    .borrow_mut()
+                    .insert(def_id, item_name == self.sym.unbounded_shl);
+            }
+        }
+
         if [
             self.tcx.lang_items().panic_fn(),
             self.tcx.lang_items().panic_fmt(),

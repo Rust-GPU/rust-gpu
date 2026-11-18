@@ -102,6 +102,11 @@ pub struct CodegenCx<'tcx> {
     /// Used to optimize constant conversions like `u32::from(42u8)` to avoid creating the source type.
     pub from_trait_impls: RefCell<FxHashMap<DefId, (Ty<'tcx>, Ty<'tcx>)>>,
 
+    /// Maps `DefId`s of `unbounded_shl`/`unbounded_shr` integer methods from `core` to whether
+    /// they shift left. Their library implementation branches on the shift amount, which can be
+    /// replaced with a branchless `OpSelect`.
+    pub unbounded_shifts: RefCell<FxHashMap<DefId, bool>>,
+
     /// Some runtimes (e.g. intel-compute-runtime) disallow atomics on i8 and i16, even though it's allowed by the spec.
     /// This enables/disables them.
     pub i8_i16_atomics_allowed: bool,
@@ -233,6 +238,7 @@ impl<'tcx> CodegenCx<'tcx> {
             buffer_load_intrinsics: Default::default(),
             buffer_store_intrinsics: Default::default(),
             from_trait_impls: Default::default(),
+            unbounded_shifts: Default::default(),
             i8_i16_atomics_allowed: false,
             codegen_args,
         }

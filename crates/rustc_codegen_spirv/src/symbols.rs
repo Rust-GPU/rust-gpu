@@ -18,6 +18,8 @@ pub struct Symbols {
     pub vector: Symbol,
     pub v1: Symbol,
     pub libm: Symbol,
+    pub unbounded_shl: Symbol,
+    pub unbounded_shr: Symbol,
     pub entry_point_name: Symbol,
     pub spv_khr_vulkan_memory_model: Symbol,
 
@@ -421,6 +423,8 @@ impl Symbols {
             vector: Symbol::intern("vector"),
             v1: Symbol::intern("v1"),
             libm: Symbol::intern("libm"),
+            unbounded_shl: Symbol::intern("unbounded_shl"),
+            unbounded_shr: Symbol::intern("unbounded_shr"),
             entry_point_name: Symbol::intern("entry_point_name"),
             spv_khr_vulkan_memory_model: Symbol::intern("SPV_KHR_vulkan_memory_model"),
 
