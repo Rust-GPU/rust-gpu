@@ -199,6 +199,9 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             PassMode::Indirect { .. } => {
                 self.fatal("PassMode::Indirect not supported in codegen_buffer_load_intrinsic")
             }
+            PassMode::IndirectUnsized { .. } => {
+                self.fatal("PassMode::Indirect not supported in codegen_buffer_load_intrinsic")
+            }
         }
 
         // Signature: fn load<T>(array: &[u32], index: u32) -> T;
@@ -379,6 +382,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             PassMode::Indirect { .. } => {
                 self.fatal("PassMode::Indirect not supported in codegen_buffer_store_intrinsic")
             }
+            PassMode::IndirectUnsized { .. } => self
+                .fatal("PassMode::IndirectUnsized not supported in codegen_buffer_store_intrinsic"),
         };
         let expected_args = if is_pair { 5 } else { 4 };
         if args.len() != expected_args {

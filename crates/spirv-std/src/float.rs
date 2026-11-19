@@ -80,7 +80,7 @@ impl f32 {
     #[inline]
     #[rustc_allow_incoherent_impl]
     pub fn powi(self, n: i32) -> f32 {
-        intrinsics::powif32(self, n)
+        intrinsics::powi(self, n)
     }
 
     /// Returns the square root of a number.
@@ -196,7 +196,7 @@ impl f64 {
     #[inline]
     #[rustc_allow_incoherent_impl]
     pub fn powi(self, n: i32) -> f64 {
-        intrinsics::powif64(self, n)
+        intrinsics::powi(self, n)
     }
 
     /// Returns the square root of a number.
