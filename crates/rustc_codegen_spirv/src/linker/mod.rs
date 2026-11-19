@@ -660,6 +660,7 @@ pub fn link(
             peephole_opts::composite_construct(&types, func);
             peephole_opts::vector_ops(output.header.as_mut().unwrap(), &types, func);
             peephole_opts::bool_fusion(output.header.as_mut().unwrap(), &types, func);
+            peephole_opts::fold_array_bitcast_access_chain(&types, func);
         }
     }
 
