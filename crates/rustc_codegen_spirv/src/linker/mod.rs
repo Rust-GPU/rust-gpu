@@ -509,7 +509,7 @@ pub fn link(
                 .struct_err(format!("{e}"))
                 .with_note("while lowering SPIR-V module to SPIR-T (spirt::spv::lower)")
                 .with_note(format!("input SPIR-V module {was_saved_msg}"))
-                .emit()
+                .emit_err()
         })?;
 
         let mut dump_guard = SpirtDumpGuard {

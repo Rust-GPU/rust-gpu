@@ -224,7 +224,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         if original_type != value.ty {
             err.note(format!("due to containing type {}", value.ty));
         }
-        Err(err.emit())
+        Err(err.emit_err())
     }
 
     fn store_u32(

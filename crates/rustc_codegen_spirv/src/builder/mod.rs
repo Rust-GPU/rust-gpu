@@ -27,14 +27,13 @@ use rustc_codegen_ssa::traits::{
 };
 use rustc_errors::{Diag, DiagMessage};
 use rustc_middle::mir::coverage::CoverageKind;
-use rustc_middle::span_bug;
 use rustc_middle::ty::layout::{
     FnAbiError, FnAbiOfHelpers, FnAbiRequest, HasTyCtxt, HasTypingEnv, LayoutError,
     LayoutOfHelpers, TyAndLayout,
 };
 use rustc_middle::ty::{Instance, Ty, TyCtxt, TypingEnv};
-use rustc_span::Span;
 use rustc_span::def_id::DefId;
+use rustc_span::{Span, span_bug};
 use rustc_target::callconv::{ArgAbi, FnAbi, PassMode};
 use rustc_target::spec::{HasTargetSpec, Target};
 use std::ops::{Deref, Range};

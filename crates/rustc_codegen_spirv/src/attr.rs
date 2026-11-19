@@ -6,10 +6,12 @@ use crate::codegen_cx::CodegenCx;
 use crate::symbols::Symbols;
 use rspirv::spirv::{BuiltIn, ExecutionMode, ExecutionModel, StorageClass};
 use rustc_ast::{LitKind, MetaItemInner, MetaItemLit};
+use rustc_attr_ir::Attribute;
+use rustc_attr_ir::target::{MethodKind, Target};
 use rustc_hir as hir;
 use rustc_hir::def_id::LocalModId;
 use rustc_hir::intravisit::{self, Visitor};
-use rustc_hir::{Attribute, CRATE_HIR_ID, HirId, MethodKind, Target};
+use rustc_hir::{CRATE_HIR_ID, HirId};
 use rustc_middle::hir::nested_filter;
 use rustc_middle::query::Providers;
 use rustc_middle::ty::TyCtxt;
@@ -260,9 +262,8 @@ impl AggregatedSpirvAttributes {
 }
 
 // FIXME(eddyb) make this reusable from somewhere in `rustc`.
-fn target_from_impl_item(tcx: TyCtxt<'_>, impl_item: &hir::ImplItem<'_>) -> Target {
+fn target_from_impl_item(tcx: TyCtxt<'_>, impl_item: &hir::ImplItem<'_>) -> Option<Target> {
     match impl_item.kind {
-        hir::ImplItemKind::Const(..) => Target::AssocConst,
         hir::ImplItemKind::Fn(..) => {
             let parent_owner_id = tcx.hir_get_parent_item(impl_item.hir_id());
             let containing_item = tcx.hir_expect_item(parent_owner_id.def_id);
@@ -271,12 +272,12 @@ fn target_from_impl_item(tcx: TyCtxt<'_>, impl_item: &hir::ImplItem<'_>) -> Targ
                 _ => unreachable!("parent of an ImplItem must be an Impl"),
             };
             if containing_impl_is_for_trait {
-                Target::Method(MethodKind::Trait { body: true })
+                Some(Target::Method(MethodKind::Trait { body: true }))
             } else {
-                Target::Method(MethodKind::Inherent)
+                Some(Target::Method(MethodKind::Inherent))
             }
         }
-        hir::ImplItemKind::Type(..) => Target::AssocTy,
+        hir::ImplItemKind::Const(..) | hir::ImplItemKind::Type(..) => None,
     }
 }
 
@@ -467,8 +468,9 @@ impl<'tcx> Visitor<'tcx> for CheckSpirvAttrVisitor<'tcx> {
     }
 
     fn visit_impl_item(&mut self, impl_item: &'tcx hir::ImplItem<'tcx>) {
-        let target = target_from_impl_item(self.tcx, impl_item);
-        self.check_spirv_attributes(impl_item.hir_id(), target);
+        if let Some(target) = target_from_impl_item(self.tcx, impl_item) {
+            self.check_spirv_attributes(impl_item.hir_id(), target);
+        }
         intravisit::walk_impl_item(self, impl_item);
     }
 
