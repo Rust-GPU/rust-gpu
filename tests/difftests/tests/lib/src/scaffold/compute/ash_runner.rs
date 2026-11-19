@@ -10,6 +10,7 @@ pub struct AshBackend {
     queue: vk::Queue,
     command_pool: vk::CommandPool,
     memory_properties: vk::PhysicalDeviceMemoryProperties,
+    buffer_device_address: bool,
     _entry: ash::Entry,
 }
 
@@ -29,12 +30,15 @@ impl AshBackend {
 
     fn create_buffer(&self, config: &BufferConfig) -> Result<(vk::Buffer, vk::DeviceMemory)> {
         unsafe {
-            let usage = match config.usage {
+            let mut usage = match config.usage {
                 BufferUsage::Storage | BufferUsage::StorageReadOnly => {
                     vk::BufferUsageFlags::STORAGE_BUFFER
                 }
                 BufferUsage::Uniform => vk::BufferUsageFlags::UNIFORM_BUFFER,
             };
+            if self.buffer_device_address {
+                usage |= vk::BufferUsageFlags::SHADER_DEVICE_ADDRESS;
+            }
             let buffer = self
                 .device
                 .create_buffer(
@@ -57,14 +61,17 @@ impl AshBackend {
                     vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
                 )
                 .context("Failed to find suitable memory type")?;
+            let mut allocate_flags_info = vk::MemoryAllocateFlagsInfo::default()
+                .flags(vk::MemoryAllocateFlags::DEVICE_ADDRESS);
+            let mut allocate_info = vk::MemoryAllocateInfo::default()
+                .allocation_size(memory_requirements.size)
+                .memory_type_index(memory_type_index);
+            if self.buffer_device_address {
+                allocate_info = allocate_info.push_next(&mut allocate_flags_info);
+            }
             let memory = self
                 .device
-                .allocate_memory(
-                    &vk::MemoryAllocateInfo::default()
-                        .allocation_size(memory_requirements.size)
-                        .memory_type_index(memory_type_index),
-                    None,
-                )
+                .allocate_memory(&allocate_info, None)
                 .context("Failed to allocate memory")?;
             self.device
                 .bind_buffer_memory(buffer, memory, 0)
@@ -72,23 +79,41 @@ impl AshBackend {
 
             // Initialize buffer if initial data provided
             if let Some(data) = &config.initial_data {
-                let mapped_ptr = self
-                    .device
-                    .map_memory(memory, 0, config.size, vk::MemoryMapFlags::empty())
-                    .context("Failed to map memory")?;
-
-                std::ptr::copy_nonoverlapping(data.as_ptr(), mapped_ptr.cast::<u8>(), data.len());
-
-                self.device.unmap_memory(memory);
+                self.write_memory(memory, config.size, data)?;
             }
 
             Ok((buffer, memory))
         }
     }
-}
 
-impl ComputeBackend for AshBackend {
-    fn init() -> Result<Self> {
+    /// Copies `data` to the start of `memory`, which is host-visible and `size` bytes long.
+    fn write_memory(&self, memory: vk::DeviceMemory, size: u64, data: &[u8]) -> Result<()> {
+        anyhow::ensure!(
+            data.len() as u64 <= size,
+            "{} bytes of data for a {size}-byte buffer",
+            data.len()
+        );
+        unsafe {
+            let mapped_ptr = self
+                .device
+                .map_memory(memory, 0, size, vk::MemoryMapFlags::empty())
+                .context("Failed to map memory")?;
+
+            std::ptr::copy_nonoverlapping(data.as_ptr(), mapped_ptr.cast::<u8>(), data.len());
+
+            self.device.unmap_memory(memory);
+        }
+        Ok(())
+    }
+
+    /// Like [`ComputeBackend::init`], but with the `bufferDeviceAddress` and `shaderInt64`
+    /// features enabled, and all buffers created device-addressable. `None` if the device
+    /// lacks those features.
+    pub fn init_with_buffer_device_address() -> Result<Option<Self>> {
+        Self::new(true)
+    }
+
+    fn new(buffer_device_address: bool) -> Result<Option<Self>> {
         unsafe {
             let entry = ash::Entry::load().context("Failed to load Vulkan entry")?;
 
@@ -126,17 +151,42 @@ impl ComputeBackend for AshBackend {
                 .map(|(index, _)| index as u32)
                 .context("No compute queue family found")?;
 
+            // Select device features
+            let mut features = vk::PhysicalDeviceFeatures::default();
+            let mut vulkan_12_features = vk::PhysicalDeviceVulkan12Features::default();
+            if buffer_device_address {
+                let mut supported_12 = vk::PhysicalDeviceVulkan12Features::default();
+                let mut supported =
+                    vk::PhysicalDeviceFeatures2::default().push_next(&mut supported_12);
+                let api_version = instance
+                    .get_physical_device_properties(physical_device)
+                    .api_version;
+                if api_version >= vk::API_VERSION_1_2 {
+                    instance.get_physical_device_features2(physical_device, &mut supported);
+                }
+                let shader_int64 = supported.features.shader_int64;
+                if shader_int64 == vk::FALSE || supported_12.buffer_device_address == vk::FALSE {
+                    instance.destroy_instance(None);
+                    return Ok(None);
+                }
+                features.shader_int64 = vk::TRUE;
+                vulkan_12_features.buffer_device_address = vk::TRUE;
+                // rust-gpu's Vulkan targets declare the Vulkan memory model.
+                vulkan_12_features.vulkan_memory_model = supported_12.vulkan_memory_model;
+            }
+
             // Create device
+            let queue_create_infos = [vk::DeviceQueueCreateInfo::default()
+                .queue_family_index(queue_family_index)
+                .queue_priorities(&[1.0])];
+            let mut device_create_info = vk::DeviceCreateInfo::default()
+                .queue_create_infos(&queue_create_infos)
+                .enabled_features(&features);
+            if buffer_device_address {
+                device_create_info = device_create_info.push_next(&mut vulkan_12_features);
+            }
             let device = instance
-                .create_device(
-                    physical_device,
-                    &vk::DeviceCreateInfo::default()
-                        .queue_create_infos(&[vk::DeviceQueueCreateInfo::default()
-                            .queue_family_index(queue_family_index)
-                            .queue_priorities(&[1.0])])
-                        .enabled_features(&vk::PhysicalDeviceFeatures::default()),
-                    None,
-                )
+                .create_device(physical_device, &device_create_info, None)
                 .context("Failed to create Vulkan device")?;
             let queue = device.get_device_queue(queue_family_index, 0);
 
@@ -148,23 +198,29 @@ impl ComputeBackend for AshBackend {
                 )
                 .context("Failed to create command pool")?;
 
-            Ok(Self {
+            Ok(Some(Self {
                 instance,
                 device,
                 queue,
                 command_pool,
                 memory_properties,
+                buffer_device_address,
                 _entry: entry,
-            })
+            }))
         }
     }
 
-    fn run_compute(
+    /// Like [`ComputeBackend::run_compute`], but `init` is given each buffer's device address
+    /// (in `buffers` order; `0` unless the backend has `bufferDeviceAddress`) once they all
+    /// exist, and returns contents to upload before the dispatch (`None`, or no entry,
+    /// leaves a buffer as created).
+    pub fn run_compute_with_addresses(
         &self,
         spirv_bytes: &[u8],
         entry_point: &str,
         dispatch: [u32; 3],
         buffers: Vec<BufferConfig>,
+        init: impl FnOnce(&[vk::DeviceAddress]) -> Vec<Option<Vec<u8>>>,
     ) -> Result<Vec<Vec<u8>>> {
         unsafe {
             // Create descriptor set layout
@@ -236,6 +292,32 @@ impl ComputeBackend for AshBackend {
                 let (buffer, memory) = self.create_buffer(buffer_config)?;
                 vk_buffers.push(buffer);
                 buffer_memories.push(memory);
+            }
+
+            // Upload contents that depend on the buffers' device addresses
+            let addresses = vk_buffers
+                .iter()
+                .map(|&buffer| {
+                    if self.buffer_device_address {
+                        self.device.get_buffer_device_address(
+                            &vk::BufferDeviceAddressInfo::default().buffer(buffer),
+                        )
+                    } else {
+                        0
+                    }
+                })
+                .collect::<Vec<_>>();
+            let contents = init(&addresses);
+            anyhow::ensure!(
+                contents.len() <= buffers.len(),
+                "contents for {} buffers, but only {} exist",
+                contents.len(),
+                buffers.len()
+            );
+            for ((memory, config), data) in buffer_memories.iter().zip(&buffers).zip(contents) {
+                if let Some(data) = data {
+                    self.write_memory(*memory, config.size, &data)?;
+                }
             }
 
             // Allocate descriptor set
@@ -381,6 +463,22 @@ impl ComputeBackend for AshBackend {
 
             Ok(results)
         }
+    }
+}
+
+impl ComputeBackend for AshBackend {
+    fn init() -> Result<Self> {
+        Ok(Self::new(false)?.expect("only `bufferDeviceAddress` can be unsupported"))
+    }
+
+    fn run_compute(
+        &self,
+        spirv_bytes: &[u8],
+        entry_point: &str,
+        dispatch: [u32; 3],
+        buffers: Vec<BufferConfig>,
+    ) -> Result<Vec<Vec<u8>>> {
+        self.run_compute_with_addresses(spirv_bytes, entry_point, dispatch, buffers, |_| Vec::new())
     }
 }
 

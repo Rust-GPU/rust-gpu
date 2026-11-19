@@ -100,6 +100,7 @@ pub mod image;
 pub mod indirect_command;
 pub mod matrix;
 pub mod memory;
+pub mod ptr;
 pub mod ray_tracing;
 mod runtime_array;
 mod sampler;

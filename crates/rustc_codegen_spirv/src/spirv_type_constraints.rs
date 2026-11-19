@@ -2,9 +2,10 @@
 //! or for inference purposes.
 //!
 //! Only type/storage-class equality is currently handled here, no concrete
-//! type/storage-class constraints, nor anything involving non-type/storage-class
-//! operands. While more constraints could be supported, encoding all the possible
-//! rules for them may be challenging.
+//! type/storage-class constraints (except for `TyPat::Void` and
+//! `StorageClassPat::Concrete`, see their docs), nor anything involving
+//! non-type/storage-class operands. While more constraints could be supported,
+//! encoding all the possible rules for them may be challenging.
 //!
 //! Type constraints could be provided in two representations:
 //! * static/generic: the constraints are built up from generic types
@@ -20,7 +21,7 @@
 //! If the "static representation" ends up being required (for performance reasons),
 //! the "dynamic representation" could be generated from it using associated `const`s.
 
-use rspirv::spirv::Op;
+use rspirv::spirv::{Op, StorageClass};
 
 /// Helper trait to allow macros to work uniformly across different pattern types.
 trait Pat {
@@ -38,6 +39,12 @@ pub enum StorageClassPat {
     /// identical storage classes. For convenience, these associated consts are provided:
     /// * `StorageClassPat::S` for `StorageClassPat::Var(0)`
     Var(usize),
+
+    /// Concrete storage class: this is the only exception to the limitations of
+    /// "no concrete storage class constraints", and is used solely for the result
+    /// of `OpConvertUToPtr`, which in shaders can only be a pointer with the
+    /// `PhysicalStorageBuffer` storage class.
+    Concrete(StorageClass),
 }
 
 impl Pat for StorageClassPat {
@@ -184,6 +191,9 @@ pub fn instruction_signatures(op: Op) -> Option<&'static [InstSig<'static>]> {
     // Restrict the names the `pat!` macro can take as pattern constructors.
     mod pat_ctors {
         pub const S: super::StorageClassPat = super::StorageClassPat::S;
+        #[allow(non_upper_case_globals)]
+        pub const PhysicalStorageBuffer: super::StorageClassPat =
+            super::StorageClassPat::Concrete(super::StorageClass::PhysicalStorageBuffer);
         // NOTE(eddyb) it would be really nice if we could import `TyPat::{* - Any, Var}`,
         // i.e. all but those two variants.
         pub use super::TyPat::{
@@ -424,7 +434,8 @@ pub fn instruction_signatures(op: Op) -> Option<&'static [InstSig<'static>]> {
         | Op::SConvert
         | Op::FConvert => {}
         Op::QuantizeToF16 => sig! { (T) -> T },
-        Op::ConvertPtrToU | Op::SatConvertSToU | Op::SatConvertUToS | Op::ConvertUToPtr => {}
+        Op::ConvertPtrToU | Op::SatConvertSToU | Op::SatConvertUToS => {}
+        Op::ConvertUToPtr => sig! { (_) -> Pointer(PhysicalStorageBuffer, _) },
         Op::PtrCastToGeneric | Op::GenericCastToPtr => sig! { (Pointer(_, T)) -> Pointer(_, T) },
         Op::GenericCastToPtrExplicit => sig! { {S} (Pointer(_, T)) -> Pointer(S, T) },
         Op::Bitcast => {}

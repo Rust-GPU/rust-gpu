@@ -5,6 +5,7 @@ pub(crate) mod debuginfo;
 pub(crate) mod diagnostics;
 pub(crate) mod explicit_layout;
 mod fuse_selects;
+pub(crate) mod physical_storage_buffer;
 mod reduce;
 pub(crate) mod validate;
 

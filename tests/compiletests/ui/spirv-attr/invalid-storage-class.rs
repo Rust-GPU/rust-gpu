@@ -11,5 +11,6 @@ fn _entry(
     #[spirv(private)] _: (),
     #[spirv(function)] _: (),
     #[spirv(generic)] _: (),
+    #[spirv(physical_storage_buffer)] _: (),
 ) {
 }

@@ -586,6 +586,12 @@ pub fn link(
         }
 
         {
+            let timer = before_pass("spirt_passes::physical_storage_buffer::align_accesses");
+            spirt_passes::physical_storage_buffer::align_accesses(module);
+            after_pass(Some(module), timer);
+        }
+
+        {
             let timer = before_pass("spirt_passes::validate");
             spirt_passes::validate::validate(module);
             after_pass(Some(module), timer);
@@ -750,6 +756,13 @@ pub fn link(
         {
             let _timer = sess.timer("link_dce-post-split");
             dce::dce(output);
+        }
+
+        // This has to be after DCE, so that only pointer types that are
+        // still used by this output module are taken into account.
+        {
+            let _timer = sess.timer("link_set_physical_storage_buffer_addressing_model");
+            simple_passes::set_physical_storage_buffer_addressing_model(output);
         }
 
         // HACK(eddyb) this has to be after DCE, to not break SPIR-T w/ dead decorations.

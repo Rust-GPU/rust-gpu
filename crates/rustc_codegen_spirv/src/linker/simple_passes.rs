@@ -1,6 +1,6 @@
 use super::{get_name, get_names};
-use rspirv::dr::{Block, Function, Module};
-use rspirv::spirv::{Decoration, ExecutionModel, Op, Word};
+use rspirv::dr::{Block, Function, Module, Operand};
+use rspirv::spirv::{AddressingModel, Decoration, ExecutionModel, Op, StorageClass, Word};
 use rustc_codegen_spirv_types::Capability;
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 use rustc_session::Session;
@@ -364,4 +364,20 @@ pub fn remove_non_uniform_decorations(_sess: &Session, module: &mut Module) -> s
         });
     }
     Ok(())
+}
+
+/// Switch to the [`AddressingModel::PhysicalStorageBuffer64`] addressing model iff this module
+/// has any `OpTypePointer` with the [`StorageClass::PhysicalStorageBuffer`] storage class.
+///
+/// Capabilities are intentionally ignored: `PhysicalStorageBuffer64` turns off `spirv-val`'s
+/// logical pointer checks for the whole module, so it should only be used when actually needed.
+pub fn set_physical_storage_buffer_addressing_model(module: &mut Module) {
+    let has_physical_storage_buffer_pointers = module.types_global_values.iter().any(|inst| {
+        inst.class.opcode == Op::TypePointer
+            && inst.operands[0].unwrap_storage_class() == StorageClass::PhysicalStorageBuffer
+    });
+    if has_physical_storage_buffer_pointers {
+        module.memory_model.as_mut().unwrap().operands[0] =
+            Operand::AddressingModel(AddressingModel::PhysicalStorageBuffer64);
+    }
 }
